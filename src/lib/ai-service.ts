@@ -2,7 +2,8 @@ import { GameState } from "./types";
 
 // Configuration
 const AI_WORKER_URL =
-  process.env.NEXT_PUBLIC_AI_WORKER_URL || "http://localhost:8787";
+  process.env.NEXT_PUBLIC_AI_WORKER_URL ||
+  "https://rgou-ai-worker.rob-gilks.workers.dev";
 
 export interface AIResponse {
   move: number;
