@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+worker/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -16,9 +17,11 @@
 # next.js
 /.next/
 /out/
+/dist
 
 # production
 /build
+worker/dist
 
 # misc
 .DS_Store
@@ -39,3 +42,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
