@@ -10,12 +10,10 @@ ENVIRONMENT = "production"
 # account_id = "your-account-id"
 # workers_dev = true
 
-[[routes]]
-pattern = "api.yourdomain.com/*"
-zone_name = "yourdomain.com"
-
-[build]
-command = "npm run build"
+# Remove routes for now - will be configured during deployment
+# [[routes]]
+# pattern = "api.yourdomain.com/*"
+# zone_name = "yourdomain.com"
 
 [env.development]
 name = "rgou-ai-worker-dev"

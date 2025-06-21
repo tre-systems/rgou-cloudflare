@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { GameState, GameAction } from "@/lib/types";
+import { GameState } from "@/lib/types";
 import { initializeGame, processDiceRoll, makeMove } from "@/lib/game-logic";
 import { AIService } from "@/lib/ai-service";
 import GameBoard from "./GameBoard";
@@ -60,7 +60,7 @@ export default function RoyalGameOfUr() {
     gameState.gameStatus,
   ]);
 
-  // Make AI move when it's AI's turn and can move
+  // Make AI move when it&apos;s AI&apos;s turn and can move
   useEffect(() => {
     if (
       isAIGame &&
@@ -193,8 +193,8 @@ export default function RoyalGameOfUr() {
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">🛡️ Combat</h4>
                 <p>
-                  Land on an opponent's piece to send it back to start (except
-                  on rosettes).
+                  Land on an opponent&apos;s piece to send it back to start
+                  (except on rosettes).
                 </p>
 
                 <h4 className="font-semibold text-gray-800 mt-4 mb-2">

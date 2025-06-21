@@ -1,5 +1,15 @@
+/// <reference types="@cloudflare/workers-types" />
+
 export interface Env {
   // Environment variables can be defined here
+}
+
+// Add ExecutionContext type for Cloudflare Workers
+declare global {
+  interface ExecutionContext {
+    waitUntil(promise: Promise<any>): void;
+    passThroughOnException(): void;
+  }
 }
 
 // Interface matching the TypeScript game types

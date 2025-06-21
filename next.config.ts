@@ -2,9 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    runtime: "edge", // Enable edge runtime for Cloudflare
-  },
   // Enable static exports for Cloudflare Pages
   output: "export",
   trailingSlash: true,

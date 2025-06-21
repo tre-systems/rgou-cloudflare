@@ -19,7 +19,7 @@ export interface EvaluationResponse {
 export class AIService {
   private static async makeRequest<T>(
     endpoint: string,
-    data?: any
+    data?: GameState | Record<string, unknown>
   ): Promise<T> {
     const url = `${AI_WORKER_URL}${endpoint}`;
 

@@ -15,15 +15,9 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
   const renderSquare = (squareIndex: number, row: number, col: number) => {
     const isRosette = ROSETTE_SQUARES.includes(squareIndex);
     const piece = gameState.board[squareIndex];
-    const isValidMoveTarget = gameState.validMoves.some((moveIndex) => {
-      const currentPieces =
-        gameState.currentPlayer === "player1"
-          ? gameState.player1Pieces
-          : gameState.player2Pieces;
-      const movePiece = currentPieces[moveIndex];
-      // This is a simplified check - in a real implementation you'd calculate the exact target
-      return true; // We'll handle highlighting differently
-    });
+    // Check if this square could be a valid move target
+    const isValidMoveTarget =
+      gameState.canMove && gameState.validMoves.length > 0;
 
     return (
       <motion.div

@@ -1,7 +1,6 @@
 import {
   GameState,
   Player,
-  Move,
   PiecePosition,
   ROSETTE_SQUARES,
   TRACK_LENGTH,

@@ -1,12 +1,15 @@
 {
   "name": "rgou-cloudflare",
   "version": "0.1.0",
+  "description": "Royal Game of Ur - Ancient Mesopotamian board game with AI opponent",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "build:cf": "next build && npx @cloudflare/next-on-pages",
     "deploy:cf": "npm run build:cf && wrangler pages deploy .next/static",
     "dev:worker": "cd worker && npm run dev",

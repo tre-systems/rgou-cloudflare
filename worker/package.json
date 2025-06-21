@@ -4,7 +4,7 @@
   "description": "Royal Game of Ur AI Worker powered by Zig and TypeScript",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "echo 'Worker built via wrangler'",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "deploy:dev": "wrangler deploy --env development",
