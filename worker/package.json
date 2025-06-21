@@ -1,0 +1,31 @@
+{
+  "name": "rgou-ai-worker",
+  "version": "1.0.0",
+  "description": "Royal Game of Ur AI Worker powered by Zig and TypeScript",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env development",
+    "deploy:staging": "wrangler deploy --env staging",
+    "tail": "wrangler tail",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "royal-game-of-ur",
+    "ai",
+    "zig",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231218.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.22.0"
+  },
+  "dependencies": {}
+}

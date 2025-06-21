@@ -1,0 +1,26 @@
+name = "rgou-ai-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Uncomment and configure these when ready to deploy
+# account_id = "your-account-id"
+# workers_dev = true
+
+[[routes]]
+pattern = "api.yourdomain.com/*"
+zone_name = "yourdomain.com"
+
+[build]
+command = "npm run build"
+
+[env.development]
+name = "rgou-ai-worker-dev"
+workers_dev = true
+
+[env.staging]
+name = "rgou-ai-worker-staging"
+workers_dev = true
