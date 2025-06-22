@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "production"
 
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # Uncomment and configure these when ready to deploy
 # account_id = "your-account-id"
 # workers_dev = true

@@ -55,3 +55,9 @@ wrangler.toml.backup
 
 # OS
 Thumbs.db
+
+# Zig build artifacts
+worker/zig-out
+worker/zig-cache
+worker/*.o
+worker/*.a

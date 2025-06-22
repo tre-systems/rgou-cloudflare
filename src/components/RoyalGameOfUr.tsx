@@ -12,36 +12,26 @@ export default function RoyalGameOfUr() {
   const [isAIGame, setIsAIGame] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
 
-  // Enhanced AI move logic using the Cloudflare Worker
   const makeAIMove = useCallback(async (currentState: GameState) => {
     if (currentState.currentPlayer !== "player2" || !currentState.canMove)
       return;
-
     setAiThinking(true);
-
     try {
-      // Try to get move from AI service
       const aiResponse = await AIService.getAIMove(currentState);
-
-      // Delay to make AI moves visible and show thinking process
       setTimeout(() => {
         setGameState((prevState) => makeMove(prevState, aiResponse.move));
         setAiThinking(false);
-      }, 1500);
+      }, 1000);
     } catch (error) {
       console.warn("AI service unavailable, using fallback:", error);
-
-      // Fallback to simple AI if service is unavailable
       const fallbackMove = AIService.getFallbackAIMove(currentState);
-
       setTimeout(() => {
         setGameState((prevState) => makeMove(prevState, fallbackMove));
         setAiThinking(false);
-      }, 1000);
+      }, 500);
     }
   }, []);
 
-  // Auto-roll dice for AI
   useEffect(() => {
     if (
       isAIGame &&
@@ -49,9 +39,7 @@ export default function RoyalGameOfUr() {
       !gameState.canMove &&
       gameState.gameStatus === "playing"
     ) {
-      setTimeout(() => {
-        setGameState((prevState) => processDiceRoll(prevState));
-      }, 1000);
+      setTimeout(() => setGameState(processDiceRoll), 500);
     }
   }, [
     isAIGame,
@@ -60,7 +48,6 @@ export default function RoyalGameOfUr() {
     gameState.gameStatus,
   ]);
 
-  // Make AI move when it&apos;s AI&apos;s turn and can move
   useEffect(() => {
     if (
       isAIGame &&
@@ -77,10 +64,7 @@ export default function RoyalGameOfUr() {
     gameState,
   ]);
 
-  const handleRollDice = useCallback(() => {
-    setGameState((prevState) => processDiceRoll(prevState));
-  }, []);
-
+  const handleRollDice = useCallback(() => setGameState(processDiceRoll), []);
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
       if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
@@ -90,130 +74,49 @@ export default function RoyalGameOfUr() {
     [gameState.canMove, gameState.validMoves]
   );
 
-  const handleResetGame = useCallback(() => {
+  const handleReset = (aiGame: boolean) => {
+    setIsAIGame(aiGame);
     setGameState(initializeGame());
-  }, []);
-
-  const handleStartAIGame = useCallback(() => {
-    setIsAIGame(true);
-    setGameState(initializeGame());
-  }, []);
-
-  const handleStartTwoPlayerGame = useCallback(() => {
-    setIsAIGame(false);
-    setGameState(initializeGame());
-  }, []);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100 py-8">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Game Info */}
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-amber-900 mb-4">
-              🏺 Royal Game of Ur 🏺
-            </h1>
-            <p className="text-lg text-amber-700 max-w-2xl mx-auto">
-              Experience the ancient Mesopotamian board game dating back 4,500
-              years. Race your pieces around the board and be the first to get
-              all 7 pieces home!
-            </p>
-          </div>
+    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-2">
+      <div className="w-full max-w-sm mx-auto bg-white rounded-lg shadow-lg p-4 space-y-4">
+        <h1 className="text-center text-2xl font-bold text-stone-800">
+          Royal Game of Ur
+        </h1>
 
-          {/* Game Controls */}
-          <div className="flex justify-center">
-            <GameControls
-              gameState={gameState}
-              onRollDice={handleRollDice}
-              onResetGame={handleResetGame}
-              onStartAIGame={handleStartAIGame}
-              isAIGame={isAIGame}
-              aiThinking={aiThinking}
-            />
-          </div>
+        <GameControls
+          gameState={gameState}
+          onRollDice={handleRollDice}
+          onResetGame={() => handleReset(isAIGame)}
+          isAIGame={isAIGame}
+          aiThinking={aiThinking}
+        />
 
-          {/* Game Board */}
-          <GameBoard gameState={gameState} onPieceClick={handlePieceClick} />
+        <GameBoard gameState={gameState} onPieceClick={handlePieceClick} />
 
-          {/* Game Mode Toggle */}
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={handleStartTwoPlayerGame}
-              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                !isAIGame
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              👥 Two Player Mode
-            </button>
-            <button
-              onClick={handleStartAIGame}
-              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                isAIGame
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-            >
-              🤖 Play vs AI
-            </button>
-          </div>
-
-          {/* Game Rules */}
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-4xl mx-auto">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">
-              How to Play
-            </h3>
-            <div className="grid md:grid-cols-2 gap-6 text-sm text-gray-600">
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-2">
-                  🎯 Objective
-                </h4>
-                <p>
-                  Be the first to move all 7 of your pieces around the board and
-                  off the finish.
-                </p>
-
-                <h4 className="font-semibold text-gray-800 mt-4 mb-2">
-                  🎲 Dice
-                </h4>
-                <p>
-                  Roll 4 binary dice. The number of marked sides determines your
-                  move distance (0-4).
-                </p>
-
-                <h4 className="font-semibold text-gray-800 mt-4 mb-2">
-                  ⭐ Rosettes
-                </h4>
-                <p>
-                  Special starred squares are safe zones and grant an extra turn
-                  when landed on.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-2">🛡️ Combat</h4>
-                <p>
-                  Land on an opponent&apos;s piece to send it back to start
-                  (except on rosettes).
-                </p>
-
-                <h4 className="font-semibold text-gray-800 mt-4 mb-2">
-                  🏁 Winning
-                </h4>
-                <p>
-                  Move all pieces through your path and off the board to win!
-                </p>
-
-                <h4 className="font-semibold text-gray-800 mt-4 mb-2">
-                  📍 Path
-                </h4>
-                <p>
-                  Each player has their own safe path at the start and end, with
-                  a shared battle zone in the middle.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="flex justify-around">
+          <button
+            onClick={() => handleReset(false)}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              !isAIGame
+                ? "bg-blue-600 text-white"
+                : "bg-stone-200 text-stone-700 hover:bg-stone-300"
+            }`}
+          >
+            Two Player
+          </button>
+          <button
+            onClick={() => handleReset(true)}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              isAIGame
+                ? "bg-emerald-600 text-white"
+                : "bg-stone-200 text-stone-700 hover:bg-stone-300"
+            }`}
+          >
+            Play vs AI
+          </button>
         </div>
       </div>
     </div>

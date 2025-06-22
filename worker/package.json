@@ -4,13 +4,15 @@
   "description": "Royal Game of Ur AI Worker powered by Zig and TypeScript",
   "main": "src/index.ts",
   "scripts": {
-    "build": "echo 'Worker built via wrangler'",
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "deploy:dev": "wrangler deploy --env development",
-    "deploy:staging": "wrangler deploy --env staging",
+    "build:wasm": "zig build -Doptimize=ReleaseSmall && cp zig-out/bin/ai.wasm src/",
+    "build": "npm run build:wasm && echo 'Worker built via wrangler'",
+    "dev": "npm run build:wasm && wrangler dev",
+    "deploy": "npm run build:wasm && wrangler deploy",
+    "deploy:dev": "npm run build:wasm && wrangler deploy --env development",
+    "deploy:staging": "npm run build:wasm && wrangler deploy --env staging",
     "tail": "wrangler tail",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "clean": "rm -rf dist zig-out .zig-cache *.a *.o src/ai.wasm"
   },
   "keywords": [
     "cloudflare",

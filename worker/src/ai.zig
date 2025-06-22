@@ -1,6 +1,9 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+extern fn js_log(ptr: [*]const u8, len: usize) void;
+extern fn js_log_int(val: i32) void;
+
 // Game constants
 const PIECES_PER_PLAYER = 7;
 const BOARD_SIZE = 20;
@@ -259,6 +262,11 @@ const AI = struct {
         const valid_moves = try state.getValidMoves(allocator);
         defer allocator.free(valid_moves);
 
+        var log_buffer = std.ArrayList(u8).init(allocator);
+        defer log_buffer.deinit();
+        try std.fmt.format(log_buffer.writer(), "[Zig AI] Valid moves: {any}", .{valid_moves});
+        js_log(log_buffer.items.ptr, log_buffer.items.len);
+
         if (valid_moves.len == 0) return 0;
         if (valid_moves.len == 1) return valid_moves[0];
 
@@ -287,6 +295,12 @@ const AI = struct {
                 best_move = move;
             }
         }
+
+        var final_log_buffer = std.ArrayList(u8).init(allocator);
+        defer final_log_buffer.deinit();
+        try std.fmt.format(final_log_buffer.writer(), "[Zig AI] Best move: {d} with avg score", .{best_move});
+        js_log(final_log_buffer.items.ptr, final_log_buffer.items.len);
+        js_log_int(best_score);
 
         return best_move;
     }
@@ -349,6 +363,45 @@ const AI = struct {
 };
 
 // Export functions for JavaScript
+export fn updateGameState(
+    state_ptr: *GameState,
+    p1_squares: *const [PIECES_PER_PLAYER]i8,
+    p2_squares: *const [PIECES_PER_PLAYER]i8,
+    current_player_val: u8,
+    dice_roll_val: u8,
+) void {
+    const state = state_ptr;
+    state.dice_roll = dice_roll_val;
+    state.current_player = @enumFromInt(current_player_val);
+
+    // Clear board
+    state.board = [_]?PiecePosition{null} ** BOARD_SIZE;
+
+    // Update player 1 pieces
+    for (0..PIECES_PER_PLAYER) |i| {
+        const square_val = p1_squares[i];
+        state.player1_pieces[i] = PiecePosition{
+            .square = square_val,
+            .player = Player.player1,
+        };
+        if (square_val >= 0 and square_val < BOARD_SIZE) {
+            state.board[@intCast(square_val)] = state.player1_pieces[i];
+        }
+    }
+
+    // Update player 2 pieces
+    for (0..PIECES_PER_PLAYER) |i| {
+        const square_val = p2_squares[i];
+        state.player2_pieces[i] = PiecePosition{
+            .square = square_val,
+            .player = Player.player2,
+        };
+        if (square_val >= 0 and square_val < BOARD_SIZE) {
+            state.board[@intCast(square_val)] = state.player2_pieces[i];
+        }
+    }
+}
+
 export fn createGameState() *GameState {
     const allocator = std.heap.page_allocator;
     const state = allocator.create(GameState) catch unreachable;
@@ -368,4 +421,15 @@ export fn getAIMove(state: *const GameState) u8 {
 
 export fn evaluatePosition(state: *const GameState) i32 {
     return state.evaluate();
+}
+
+export fn wasm_alloc(size: usize) *anyopaque {
+    const allocator = std.heap.page_allocator;
+    const ptr = allocator.alloc(u8, size) catch unreachable;
+    return ptr.ptr;
+}
+
+export fn wasm_free(ptr: [*]u8, len: usize) void {
+    const allocator = std.heap.page_allocator;
+    allocator.free(ptr[0..len]);
 }
