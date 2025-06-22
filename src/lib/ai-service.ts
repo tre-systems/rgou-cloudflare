@@ -1,6 +1,6 @@
 import { GameState } from "./types";
 
-// Configuration
+// Configuration for health check, not used for main AI logic anymore
 const AI_WORKER_URL =
   process.env.NEXT_PUBLIC_AI_WORKER_URL ||
   "https://rgou-ai-worker.rob-gilks.workers.dev";
@@ -20,17 +20,19 @@ export interface EvaluationResponse {
 export class AIService {
   private static async makeRequest<T>(
     endpoint: string,
-    data?: GameState | Record<string, unknown>
+    data?: GameState | Record<string, unknown>,
+    isProxy = false
   ): Promise<T> {
-    const url = `${AI_WORKER_URL}${endpoint}`;
-    const secret = process.env.AI_WORKER_SECRET;
+    const url = isProxy ? endpoint : `${AI_WORKER_URL}${endpoint}`;
+    const secret = process.env.AI_WORKER_SECRET; // Only used for health check now
 
     try {
       const response = await fetch(url, {
         method: data ? "POST" : "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
+          // Auth header is now handled by the proxy for AI moves
+          ...(isProxy ? {} : { Authorization: `Bearer ${secret}` }),
         },
         body: data ? JSON.stringify(data) : undefined,
       });
@@ -47,7 +49,8 @@ export class AIService {
   }
 
   static async getAIMove(gameState: GameState): Promise<AIResponse> {
-    return this.makeRequest<AIResponse>("/ai-move", gameState);
+    // Call the local proxy API route
+    return this.makeRequest<AIResponse>("/api/ai-move", gameState, true);
   }
 
   static async evaluatePosition(
@@ -61,6 +64,7 @@ export class AIService {
     timestamp: string;
     version: string;
   }> {
+    // Health check still goes directly to the worker
     return this.makeRequest("/health");
   }
 
