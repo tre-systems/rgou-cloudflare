@@ -74,7 +74,6 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
   const renderPlayerArea = (player: Player) => {
     const pieces =
       player === "player1" ? gameState.player1Pieces : gameState.player2Pieces;
-    const startPieces = pieces.filter((p) => p.square === -1);
     const finishedPieces = pieces.filter((p) => p.square === 20);
 
     return (
