@@ -370,3 +370,44 @@ For higher traffic:
 - [ ] Domain configured (if using custom domain)
 - [ ] Monitoring setup
 - [ ] Documentation updated with URLs
+
+## Deploying the AI Worker
+
+The AI worker is a separate application that needs to be deployed to Cloudflare Workers.
+
+### 1. Configure `wrangler.toml`
+
+Navigate to the `worker` directory and open `wrangler.toml`. You will need to uncomment and fill in your Cloudflare `account_id`.
+
+```toml
+# worker/wrangler.toml
+
+# ... other config
+# Uncomment and configure these when ready to deploy
+account_id = "your-account-id"
+# workers_dev = true
+```
+
+You may also want to configure routes if you are using a custom domain.
+
+### 2. Set API Secret
+
+The worker uses an `API_SECRET` environment variable for authentication. You need to set this secret in your Cloudflare Worker's settings.
+
+```bash
+cd worker
+npx wrangler secret put API_SECRET
+```
+
+Wrangler will prompt you to enter the secret value.
+
+### 3. Deploy the Worker
+
+Once configured, you can deploy the worker using Wrangler:
+
+```bash
+cd worker
+npx wrangler deploy
+```
+
+This command will build and deploy the worker to your Cloudflare account. The output will give you the URL of your deployed worker. This URL should be used as the `NEXT_PUBLIC_AI_API_URL` environment variable in your Next.js application deployment.
