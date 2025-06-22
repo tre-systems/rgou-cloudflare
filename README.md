@@ -261,3 +261,15 @@ MIT License - see LICENSE file for details.
 - Irving Finkel for rule interpretation
 - Cloudflare for hosting platform
 - Zig community for performance insights
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+
+The AI worker implementation is documented in detail in the [Cloudflare Worker Documentation](./docs/cloudflare-worker.md).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+```
