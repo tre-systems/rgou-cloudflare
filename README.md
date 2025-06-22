@@ -118,7 +118,7 @@ rgou-cloudflare/
 
 ## 🤖 AI Implementation
 
-The AI is implemented in Zig for maximum performance and compiled to WebAssembly for Cloudflare Workers.
+The AI is implemented in Zig for maximum performance and compiled to WebAssembly for Cloudflare Workers. For a detailed explanation of the worker, see the [Cloudflare Worker Documentation](./docs/cloudflare-worker.md).
 
 ### AI Features:
 
@@ -136,32 +136,7 @@ The AI is implemented in Zig for maximum performance and compiled to WebAssembly
 
 ## 🚀 Deployment
 
-### Cloudflare Pages (Frontend)
-
-1. **Build the app:**
-
-   ```bash
-   npm run build:cf
-   ```
-
-2. **Deploy to Cloudflare Pages:**
-   ```bash
-   npm run deploy:cf
-   ```
-
-### Cloudflare Workers (AI)
-
-1. **Configure wrangler.toml:**
-
-   ```toml
-   name = "rgou-ai-worker"
-   account_id = "your-account-id"
-   ```
-
-2. **Deploy the worker:**
-   ```bash
-   npm run deploy:worker
-   ```
+Deployment is handled in two parts: the Next.js frontend and the Cloudflare AI worker. For detailed instructions, see the [Deployment Guide](./DEPLOYMENT.md).
 
 ### Environment Variables
 
@@ -205,9 +180,11 @@ Evaluate the current position.
 }
 ```
 
-### GET /health
+## 🙏 Acknowledgements
 
-Health check endpoint.
+- **Vercel** for their seamless Next.js hosting platform.
+- **Cloudflare** for their powerful Workers and Pages products.
+- The **Zig community** for their invaluable help and insights into optimizing for WebAssembly.
 
 ## 🧪 Testing
 
@@ -255,16 +232,7 @@ The Royal Game of Ur dates back to 2600-2400 BCE and was discovered in the Royal
 
 MIT License - see LICENSE file for details.
 
-## 🙏 Acknowledgments
-
-- British Museum for historical research
-- Irving Finkel for rule interpretation
-- Cloudflare for hosting platform
-- Zig community for performance insights
-
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
-The AI worker implementation is documented in detail in the [Cloudflare Worker Documentation](./docs/cloudflare-worker.md).
 
 ## Getting Started
 
