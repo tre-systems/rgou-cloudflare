@@ -23,6 +23,9 @@ head_sampling_rate = 1
 name = "rgou-ai-worker-dev"
 workers_dev = true
 
+[env.development.vars]
+API_SECRET = "dev-secret-key"
+
 [env.staging]
 name = "rgou-ai-worker-staging"
 workers_dev = true

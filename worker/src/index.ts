@@ -3,6 +3,7 @@ import { initializeWasm, ZigAI } from "./ai-wasm";
 
 export interface Env {
   // Environment variables can be defined here
+  API_SECRET: string;
 }
 
 // Add ExecutionContext type for Cloudflare Workers
@@ -49,7 +50,19 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      });
+    }
+
+    // Check for API secret on other requests
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || authHeader !== `Bearer ${env.API_SECRET}`) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
         },
       });
     }

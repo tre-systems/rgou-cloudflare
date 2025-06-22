@@ -23,12 +23,14 @@ export class AIService {
     data?: GameState | Record<string, unknown>
   ): Promise<T> {
     const url = `${AI_WORKER_URL}${endpoint}`;
+    const secret = process.env.AI_WORKER_SECRET;
 
     try {
       const response = await fetch(url, {
         method: data ? "POST" : "GET",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${secret}`,
         },
         body: data ? JSON.stringify(data) : undefined,
       });

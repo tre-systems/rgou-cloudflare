@@ -5,7 +5,7 @@
 - paragraph: Experience the ancient Mesopotamian board game dating back 4,500 years. Race your pieces around the board and be the first to get all 7 pieces home!
 - heading "Royal Game of Ur" [level=2]
 - paragraph: Player 1, select a piece to move
-- text: "Dice roll: ● ● ● ○ = 3"
+- text: "Dice roll: ● ● ○ ○ = 2"
 - button "Reset Game"
 - button "Play vs AI"
 - text: 👥 Two Player Mode
