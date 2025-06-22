@@ -47,6 +47,7 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
 
     const pieceIndex = piece ? getPieceIndex(squareIndex, piece.player) : -1;
     const isClickable =
+      piece &&
       pieceIndex !== -1 &&
       gameState.validMoves.includes(pieceIndex) &&
       gameState.currentPlayer === piece.player;
