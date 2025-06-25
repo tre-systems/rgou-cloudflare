@@ -14,6 +14,7 @@ import { Sparkles, Crown, Zap } from "lucide-react";
 export default function RoyalGameOfUr() {
   const [gameState, setGameState] = useState<GameState>(() => initializeGame());
   const [aiThinking, setAiThinking] = useState(false);
+
   const [lastMove, setLastMove] = useState<{
     type: "move" | "capture" | "rosette" | "finish";
     player: string;
@@ -52,7 +53,7 @@ export default function RoyalGameOfUr() {
           }
 
           // Check for rosette landing
-          if ([4, 8, 14].includes(newPiece.square)) {
+          if ([0, 7, 13, 15, 16].includes(newPiece.square)) {
             setTimeout(() => soundEffects.rosetteLanding(), 200);
             setLastMove({ type: "rosette", player: "player2" });
           }
@@ -131,7 +132,7 @@ export default function RoyalGameOfUr() {
           }
 
           // Check for rosette landing
-          if ([4, 8, 14].includes(newPiece.square)) {
+          if ([0, 7, 13, 15, 16].includes(newPiece.square)) {
             setTimeout(() => soundEffects.rosetteLanding(), 200);
             setLastMove({ type: "rosette", player: "player1" });
           }

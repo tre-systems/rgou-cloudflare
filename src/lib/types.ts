@@ -31,8 +31,8 @@ export type GameAction =
 
 // Royal Game of Ur board layout:
 // The track goes: start -> 0-3 -> 4-11 (shared middle track) -> 12-15 -> finish
-// Special squares: 4, 8, 14 are rosette squares (safe squares)
-export const ROSETTE_SQUARES = [4, 8, 14];
+// Authentic rosette squares: 0, 7, 13, 15, 16 (safe squares)
+export const ROSETTE_SQUARES = [0, 7, 13, 15, 16];
 export const TRACK_LENGTH = 20;
 export const PIECES_PER_PLAYER = 7;
 

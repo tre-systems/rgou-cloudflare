@@ -5,7 +5,7 @@ use worker::*;
 // Game constants
 const PIECES_PER_PLAYER: usize = 7;
 const BOARD_SIZE: usize = 20;
-const ROSETTE_SQUARES: [u8; 3] = [4, 8, 14];
+const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const PLAYER2_TRACK: [u8; 16] = [16, 17, 18, 19, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
@@ -433,6 +433,8 @@ struct TranspositionEntry {
 
 struct AI {
     transposition_table: HashMap<u64, TranspositionEntry>,
+    nodes_evaluated: u32,
+    transposition_hits: u32,
 }
 
 impl AI {
@@ -442,24 +444,40 @@ impl AI {
     fn new() -> Self {
         AI {
             transposition_table: HashMap::with_capacity(Self::TRANSPOSITION_TABLE_SIZE),
+            nodes_evaluated: 0,
+            transposition_hits: 0,
         }
     }
 
-    fn get_best_move(&mut self, state: &GameState) -> u8 {
+    fn get_best_move(&mut self, state: &GameState, depth: u8) -> (u8, Vec<MoveEvaluation>) {
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
-            return 0;
+            return (0, Vec::new());
         }
         if valid_moves.len() == 1 {
-            return valid_moves[0];
+            let move_eval = MoveEvaluation {
+                piece_index: valid_moves[0],
+                score: 0.0,
+                move_type: "only_move".to_string(),
+                from_square: state.get_pieces(state.current_player)[valid_moves[0] as usize].square,
+                to_square: None,
+            };
+            return (valid_moves[0], vec![move_eval]);
         }
 
         // Check for immediate wins first
         for &move_idx in &valid_moves {
             let mut test_state = state.clone();
             if test_state.make_move(move_idx) {
-                return move_idx; // Winning move - take it immediately
+                let win_eval = MoveEvaluation {
+                    piece_index: move_idx,
+                    score: 10000.0,
+                    move_type: "winning_move".to_string(),
+                    from_square: state.get_pieces(state.current_player)[move_idx as usize].square,
+                    to_square: None,
+                };
+                return (move_idx, vec![win_eval]); // Winning move - take it immediately
             }
         }
 
@@ -475,9 +493,13 @@ impl AI {
                 test_state.make_move(move_idx);
                 test_state.dice_roll = dice_roll;
 
-                let score =
-                    self.minimax(&test_state, Self::MAX_DEPTH - 1, false, i32::MIN, i32::MAX)
-                        as f32;
+                let score = self.minimax(
+                    &test_state,
+                    depth.saturating_sub(1),
+                    false,
+                    i32::MIN,
+                    i32::MAX,
+                ) as f32;
 
                 total_score += score * DICE_PROBABILITIES[dice_roll as usize];
             }
@@ -488,7 +510,40 @@ impl AI {
         // Sort moves by score (best first) for better alpha-beta pruning
         move_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
-        move_scores[0].0
+        // Create detailed move evaluations for diagnostics
+        let mut move_evaluations = Vec::new();
+        for (move_idx, score) in &move_scores {
+            let piece = &state.get_pieces(state.current_player)[*move_idx as usize];
+            let track = GameState::get_player_track(state.current_player);
+
+            let (move_type, to_square) = if piece.square == -1 {
+                ("enter".to_string(), Some(track[0]))
+            } else if let Some(track_pos) = track.iter().position(|&sq| sq as i8 == piece.square) {
+                let new_track_pos = track_pos + state.dice_roll as usize;
+                if new_track_pos >= track.len() {
+                    ("finish".to_string(), None)
+                } else {
+                    let new_square = track[new_track_pos];
+                    if state.board[new_square as usize].is_some() {
+                        ("capture".to_string(), Some(new_square))
+                    } else {
+                        ("move".to_string(), Some(new_square))
+                    }
+                }
+            } else {
+                ("invalid".to_string(), None)
+            };
+
+            move_evaluations.push(MoveEvaluation {
+                piece_index: *move_idx,
+                score: *score,
+                move_type,
+                from_square: piece.square,
+                to_square,
+            });
+        }
+
+        (move_scores[0].0, move_evaluations)
     }
 
     fn minimax(
@@ -503,9 +558,12 @@ impl AI {
         let state_hash = state.hash();
         if let Some(entry) = self.transposition_table.get(&state_hash) {
             if entry.depth >= depth {
+                self.transposition_hits += 1;
                 return entry.evaluation;
             }
         }
+
+        self.nodes_evaluated += 1;
 
         if depth == 0 {
             let eval = state.evaluate();
@@ -671,7 +729,7 @@ impl AI {
 }
 
 // JSON input structures
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct GameStateRequest {
     #[serde(rename = "player1Pieces")]
     player1_pieces: Vec<JsonPiece>,
@@ -683,7 +741,7 @@ struct GameStateRequest {
     dice_roll: Option<u8>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct JsonPiece {
     square: i8,
 }
@@ -694,6 +752,52 @@ struct AIResponse {
     evaluation: i32,
     thinking: String,
     timings: Timings,
+    diagnostics: Diagnostics,
+}
+
+#[derive(Serialize)]
+struct Diagnostics {
+    #[serde(rename = "searchDepth")]
+    search_depth: u8,
+    #[serde(rename = "validMoves")]
+    valid_moves: Vec<u8>,
+    #[serde(rename = "moveEvaluations")]
+    move_evaluations: Vec<MoveEvaluation>,
+    #[serde(rename = "transpositionHits")]
+    transposition_hits: usize,
+    #[serde(rename = "nodesEvaluated")]
+    nodes_evaluated: u32,
+    #[serde(rename = "gamePhase")]
+    game_phase: String,
+    #[serde(rename = "boardControl")]
+    board_control: i32,
+    #[serde(rename = "piecePositions")]
+    piece_positions: PiecePositions,
+}
+
+#[derive(Serialize)]
+struct MoveEvaluation {
+    #[serde(rename = "pieceIndex")]
+    piece_index: u8,
+    score: f32,
+    #[serde(rename = "moveType")]
+    move_type: String,
+    #[serde(rename = "fromSquare")]
+    from_square: i8,
+    #[serde(rename = "toSquare")]
+    to_square: Option<u8>,
+}
+
+#[derive(Serialize)]
+struct PiecePositions {
+    #[serde(rename = "player1OnBoard")]
+    player1_on_board: u8,
+    #[serde(rename = "player1Finished")]
+    player1_finished: u8,
+    #[serde(rename = "player2OnBoard")]
+    player2_on_board: u8,
+    #[serde(rename = "player2Finished")]
+    player2_finished: u8,
 }
 
 #[derive(Serialize)]
@@ -736,7 +840,7 @@ fn cors_headers() -> Headers {
     headers
 }
 
-fn convert_json_to_game_state(json_state: GameStateRequest) -> GameState {
+fn convert_json_to_game_state(json_state: &GameStateRequest) -> GameState {
     let mut game_state = GameState::new();
 
     // Set current player and dice roll
@@ -789,7 +893,7 @@ pub async fn main(mut req: Request, _env: Env, _ctx: worker::Context) -> Result<
 
     // No authentication needed for a game AI service
 
-    let start_time = Date::now().as_millis();
+    let start_time = js_sys::Date::now();
 
     match (req.method(), url.path()) {
         (Method::Post, "/ai-move") => {
@@ -805,26 +909,81 @@ pub async fn main(mut req: Request, _env: Env, _ctx: worker::Context) -> Result<
                     .with_headers(cors_headers()));
             }
 
-            let ai_start = Date::now().as_millis();
-            let game_state = convert_json_to_game_state(game_state_request);
+            let ai_start = js_sys::Date::now();
+            let ai_depth = 8; // Fixed expert-level AI depth
+            let game_state = convert_json_to_game_state(&game_state_request);
             let mut ai = AI::new();
-            let ai_move = ai.get_best_move(&game_state);
+            let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
             let evaluation = game_state.evaluate();
-            let ai_end = Date::now().as_millis();
-            let end_time = Date::now().as_millis();
+            let ai_end = js_sys::Date::now();
+            let end_time = js_sys::Date::now();
+
+            // Calculate piece positions for diagnostics
+            let mut player1_on_board = 0;
+            let mut player1_finished = 0;
+            let mut player2_on_board = 0;
+            let mut player2_finished = 0;
+
+            for piece in &game_state.player1_pieces {
+                if piece.square == -1 {
+                    // Not entered yet
+                } else if piece.square >= 16 {
+                    player1_finished += 1;
+                } else {
+                    player1_on_board += 1;
+                }
+            }
+
+            for piece in &game_state.player2_pieces {
+                if piece.square == -1 {
+                    // Not entered yet
+                } else if piece.square >= 16 {
+                    player2_finished += 1;
+                } else {
+                    player2_on_board += 1;
+                }
+            }
+
+            // Determine game phase
+            let total_pieces_in_play =
+                player1_on_board + player1_finished + player2_on_board + player2_finished;
+            let game_phase = if total_pieces_in_play <= 4 {
+                "opening"
+            } else if player1_finished + player2_finished >= 6 {
+                "endgame"
+            } else {
+                "middlegame"
+            };
 
             let response = AIResponse {
                 r#move: ai_move,
                 evaluation,
                 thinking: format!(
-                    "Advanced minimax AI (depth {}) evaluated position: score {}. Transposition table entries: {}",
-                    AI::MAX_DEPTH,
-                    evaluation,
-                    ai.transposition_table.len()
+                    "AI (depth {}) chose move {} with score {:.1}. Evaluated {} nodes, {} cache hits.",
+                    ai_depth,
+                    ai_move,
+                    move_evaluations.first().map(|m| m.score).unwrap_or(0.0),
+                    ai.nodes_evaluated,
+                    ai.transposition_hits
                 ),
                 timings: Timings {
-                    ai_move_calculation: (ai_end - ai_start) as u32,
-                    total_handler_time: (end_time - start_time) as u32,
+                    ai_move_calculation: ((ai_end - ai_start) as u32).max(1),
+                    total_handler_time: ((end_time - start_time) as u32).max(1),
+                },
+                diagnostics: Diagnostics {
+                    search_depth: ai_depth,
+                    valid_moves: game_state.get_valid_moves(),
+                    move_evaluations,
+                    transposition_hits: ai.transposition_hits as usize,
+                    nodes_evaluated: ai.nodes_evaluated,
+                    game_phase: game_phase.to_string(),
+                    board_control: game_state.evaluate_board_control(),
+                    piece_positions: PiecePositions {
+                        player1_on_board,
+                        player1_finished,
+                        player2_on_board,
+                        player2_finished,
+                    },
                 },
             };
 

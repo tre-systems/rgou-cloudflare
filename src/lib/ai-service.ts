@@ -42,7 +42,7 @@ export class AIService {
   }
 
   static async getAIMove(gameState: GameState): Promise<AIResponse> {
-    // Call the production AI service directly
+    // Call the production AI service directly (uses fixed depth 8)
     return this.makeRequest<AIResponse>("/ai-move", gameState);
   }
 
