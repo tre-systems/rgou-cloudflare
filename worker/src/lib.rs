@@ -487,7 +487,7 @@ fn convert_json_to_game_state(json_state: GameStateRequest) -> GameState {
 }
 
 #[event(fetch)]
-pub async fn main(mut req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
+pub async fn main(mut req: Request, _env: Env, _ctx: worker::Context) -> Result<Response> {
     console_error_panic_hook::set_once();
 
     let url = req.url()?;
