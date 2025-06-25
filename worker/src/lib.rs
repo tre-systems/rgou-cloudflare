@@ -730,6 +730,8 @@ fn cors_headers() -> Headers {
             "Content-Type, Authorization",
         )
         .unwrap();
+    // Cache preflight for 24 hours (86400 seconds) to reduce latency
+    headers.set("Access-Control-Max-Age", "86400").unwrap();
     headers.set("Content-Type", "application/json").unwrap();
     headers
 }

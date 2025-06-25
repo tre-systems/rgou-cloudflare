@@ -86,7 +86,7 @@ export default function RoyalGameOfUr() {
     if (gameState.currentPlayer === "player2" && gameState.canMove) {
       makeAIMove(gameState);
     }
-  }, [gameState.currentPlayer, gameState.canMove, makeAIMove, gameState]);
+  }, [gameState.currentPlayer, gameState.canMove, makeAIMove]);
 
   // Handle game end sound effects
   useEffect(() => {

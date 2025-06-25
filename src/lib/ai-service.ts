@@ -21,7 +21,6 @@ export class AIService {
     data?: GameState | Record<string, unknown>
   ): Promise<T> {
     const url = `${AI_WORKER_URL}${endpoint}`;
-
     try {
       const response = await fetch(url, {
         method: data ? "POST" : "GET",
