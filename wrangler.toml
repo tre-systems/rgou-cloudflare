@@ -1,5 +1,5 @@
 name = "rgou-main"
-main = "./.open-next/server-functions/default/index.mjs"
+main = "./.open-next/middleware/handler.mjs"
 compatibility_date = "2025-06-14"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 account_id = "571f130502618993d848f58d27ae288d"
@@ -24,10 +24,6 @@ head_sampling_rate = 1
 [[routes]]
 pattern = "rgou.tre.systems/*"
 zone_name = "tre.systems"
-
-[env.development]
-name = "rgou-main-dev"
-workers_dev = true
 
 [env.development.vars]
 NEXT_PUBLIC_AI_WORKER_URL = "http://localhost:8787"
