@@ -61,3 +61,7 @@ worker/zig-out
 worker/zig-cache
 worker/*.o
 worker/*.a
+
+worker/.zig-cache
+
+.open-next

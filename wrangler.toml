@@ -1,0 +1,40 @@
+name = "rgou-main"
+main = "./.open-next/server-functions/default/index.mjs"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Account configuration
+account_id = "571f130502618993d848f58d27ae288d"
+workers_dev = true
+
+[vars]
+ENVIRONMENT = "production"
+# Add your AI worker URL - update this after deploying
+NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-minmax.tre.systems"
+# Add AI worker secret for direct worker-to-worker communication
+AI_WORKER_SECRET = "production-secret-2024"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Custom domain configuration
+[[routes]]
+pattern = "rgou.tre.systems/*"
+zone_name = "tre.systems"
+
+[env.development]
+name = "rgou-main-dev"
+workers_dev = true
+
+[env.development.vars]
+NEXT_PUBLIC_AI_WORKER_URL = "http://localhost:8787"
+AI_WORKER_SECRET = "dev-secret-key"
+
+[env.staging]
+name = "rgou-main-staging"
+workers_dev = true
+
+[env.staging.vars]
+NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-ai-worker-staging.rob-gilks.workers.dev"
+AI_WORKER_SECRET = "staging-secret-key"
