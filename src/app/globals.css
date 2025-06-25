@@ -162,8 +162,7 @@ body {
 
 /* Cyberpunk-style text effects */
 .neon-text {
-  text-shadow: 0 0 5px currentColor, 0 0 10px currentColor,
-    0 0 15px currentColor;
+  text-shadow: 0 0 3px currentColor, 0 0 6px currentColor;
 }
 
 /* Custom scrollbar */
