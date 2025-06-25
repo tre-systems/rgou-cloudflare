@@ -1,10 +1,10 @@
 {
   "name": "rgou-ai-worker",
   "version": "1.0.0",
-  "description": "Royal Game of Ur AI Worker powered by Zig and TypeScript",
+  "description": "Royal Game of Ur AI Worker powered by Rust and TypeScript",
   "main": "src/index.ts",
   "scripts": {
-    "build:wasm": "zig build -Doptimize=ReleaseSmall && cp zig-out/bin/ai.wasm src/",
+    "build:wasm": "wasm-pack build --target bundler --out-dir src && cp src/rgou_ai_wasm_bg.wasm src/",
     "build": "npm run build:wasm && echo 'Worker built via wrangler'",
     "dev": "npm run build:wasm && wrangler dev",
     "deploy": "npm run build:wasm && wrangler deploy",
@@ -12,15 +12,16 @@
     "deploy:staging": "npm run build:wasm && wrangler deploy --env staging",
     "tail": "wrangler tail",
     "test": "echo \"No tests yet\" && exit 0",
-    "clean": "rm -rf dist zig-out .zig-cache *.a *.o src/ai.wasm"
+    "clean": "rm -rf dist pkg src/rgou_ai_wasm* src/*.wasm .wasm-pack-cache target"
   },
   "keywords": [
     "cloudflare",
     "workers",
     "royal-game-of-ur",
     "ai",
-    "zig",
-    "typescript"
+    "rust",
+    "typescript",
+    "wasm"
   ],
   "author": "Your Name",
   "license": "MIT",

@@ -1,5 +1,6 @@
-// WebAssembly interface for Zig AI
-import wasmModule from "./ai.wasm";
+// WebAssembly interface for Rust AI
+import init, { RustGameState } from "./rgou_ai_wasm";
+import wasm from "./rgou_ai_wasm_bg.wasm";
 
 // This GameState must match the structure sent from the client
 interface GameState {
@@ -16,102 +17,68 @@ interface PiecePosition {
   player: "player1" | "player2";
 }
 
-interface ZigAIExports {
-  createGameState(): number;
-  destroyGameState(statePtr: number): void;
-  updateGameState(
-    statePtr: number,
-    p1_squares_ptr: number,
-    p2_squares_ptr: number,
-    currentPlayer: number,
-    diceRoll: number
-  ): void;
-  getAIMove(statePtr: number): number;
-  evaluatePosition(statePtr: number): number;
-  wasm_alloc(size: number): number;
-  wasm_free(ptr: number, size: number): void;
-  memory: WebAssembly.Memory;
-}
+let wasmInitialized = false;
 
-let wasmInstance: ZigAIExports | null = null;
-
-export async function initializeWasm(): Promise<ZigAIExports> {
-  if (wasmInstance) {
-    return wasmInstance;
+export async function initializeWasm(): Promise<void> {
+  if (wasmInitialized) {
+    return;
   }
 
-  const importObject = {
-    env: {
-      js_log: (ptr: number, len: number) => {
-        const memory = wasmInstance?.memory;
-        if (memory) {
-          const buffer = new Uint8Array(memory.buffer, ptr, len);
-          const text = new TextDecoder("utf-8").decode(buffer);
-          console.log(text);
-        }
-      },
-      js_log_int: (val: number) => {
-        console.log(val);
-      },
-    },
-  };
-
-  const instance = await WebAssembly.instantiate(wasmModule, importObject);
-  wasmInstance = instance.exports as unknown as ZigAIExports;
-  return wasmInstance;
+  await init(wasm);
+  wasmInitialized = true;
+  console.log("Rust WASM module initialized");
 }
 
-export class ZigAI {
-  private statePtr: number;
-  private wasm: ZigAIExports;
-  private p1PiecesPtr: number;
-  private p2PiecesPtr: number;
+export class RustAI {
+  private gameState: RustGameState;
   private readonly PIECES_PER_PLAYER = 7;
 
-  constructor(wasm: ZigAIExports) {
-    this.wasm = wasm;
-    this.statePtr = this.wasm.createGameState();
-    this.p1PiecesPtr = this.wasm.wasm_alloc(this.PIECES_PER_PLAYER);
-    this.p2PiecesPtr = this.wasm.wasm_alloc(this.PIECES_PER_PLAYER);
+  constructor() {
+    this.gameState = new RustGameState();
   }
 
   updateGameState(gameState: GameState): void {
-    const p1Squares = new Int8Array(
-      this.wasm.memory.buffer,
-      this.p1PiecesPtr,
-      this.PIECES_PER_PLAYER
-    );
-    const p2Squares = new Int8Array(
-      this.wasm.memory.buffer,
-      this.p2PiecesPtr,
-      this.PIECES_PER_PLAYER
-    );
+    const p1Squares = new Array(this.PIECES_PER_PLAYER).fill(-1);
+    const p2Squares = new Array(this.PIECES_PER_PLAYER).fill(-1);
 
-    for (let i = 0; i < this.PIECES_PER_PLAYER; i++) {
+    for (
+      let i = 0;
+      i < this.PIECES_PER_PLAYER && i < gameState.player1Pieces.length;
+      i++
+    ) {
       p1Squares[i] = gameState.player1Pieces[i]?.square ?? -1;
+    }
+
+    for (
+      let i = 0;
+      i < this.PIECES_PER_PLAYER && i < gameState.player2Pieces.length;
+      i++
+    ) {
       p2Squares[i] = gameState.player2Pieces[i]?.square ?? -1;
     }
 
     const currentPlayer = gameState.currentPlayer === "player1" ? 0 : 1;
     const diceRoll = gameState.diceRoll ?? 0;
 
-    this.wasm.updateGameState(
-      this.statePtr,
-      this.p1PiecesPtr,
-      this.p2PiecesPtr,
+    this.gameState.update_game_state(
+      new Int8Array(p1Squares),
+      new Int8Array(p2Squares),
       currentPlayer,
       diceRoll
     );
   }
 
   getAIMove(): number {
-    return this.wasm.getAIMove(this.statePtr);
+    return this.gameState.get_ai_move();
+  }
+
+  getEvaluation(): number {
+    return this.gameState.evaluate_position();
   }
 
   destroy(): void {
-    this.wasm.destroyGameState(this.statePtr);
-    this.wasm.wasm_free(this.p1PiecesPtr, this.PIECES_PER_PLAYER);
-    this.wasm.wasm_free(this.p2PiecesPtr, this.PIECES_PER_PLAYER);
+    // Rust handles memory management automatically
+    // No explicit cleanup needed
   }
 }
 
@@ -121,16 +88,13 @@ export function createHybridAI() {
     async getAIMove(gameState: any): Promise<number> {
       try {
         await initializeWasm();
-        const zigAI = new ZigAI(wasmInstance);
-        zigAI.updateGameState(gameState);
-
-        // For now, fall back to TypeScript implementation
-        // In full implementation, we'd convert gameState to WASM format
-        zigAI.destroy();
-
-        return getTypeScriptAIMove(gameState);
+        const rustAI = new RustAI();
+        rustAI.updateGameState(gameState);
+        const move = rustAI.getAIMove();
+        rustAI.destroy();
+        return move;
       } catch (error) {
-        console.warn("WASM AI failed, falling back to TypeScript:", error);
+        console.warn("Rust WASM AI failed, falling back to TypeScript:", error);
         return getTypeScriptAIMove(gameState);
       }
     },

@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/workers-types" />
-import { initializeWasm, ZigAI } from "./ai-wasm";
+import { initializeWasm, RustAI } from "./ai-wasm";
 
 export interface Env {
   // Environment variables can be defined here
@@ -72,7 +72,7 @@ export default {
       const handlerStart = Date.now();
       try {
         const wasmReadyStart = Date.now();
-        const wasm = await wasmReady;
+        await wasmReady;
         const wasmReadyEnd = Date.now();
 
         const gameState: GameState = await request.json();
@@ -88,15 +88,16 @@ export default {
         }
 
         const aiSetupStart = Date.now();
-        const zigAI = new ZigAI(wasm);
-        zigAI.updateGameState(gameState);
+        const rustAI = new RustAI();
+        rustAI.updateGameState(gameState);
         const aiSetupEnd = Date.now();
 
         const aiMoveStart = Date.now();
-        const aiMove = zigAI.getAIMove();
+        const aiMove = rustAI.getAIMove();
+        const evaluation = rustAI.getEvaluation();
         const aiMoveEnd = Date.now();
 
-        zigAI.destroy();
+        rustAI.destroy();
         const handlerEnd = Date.now();
 
         const timings = {
@@ -111,8 +112,8 @@ export default {
         return new Response(
           JSON.stringify({
             move: aiMove,
-            evaluation: 0, // evaluation not implemented yet in this path
-            thinking: `Zig WASM AI has decided.`,
+            evaluation: evaluation,
+            thinking: `Rust WASM AI has decided.`,
             timings: timings,
           }),
           {
@@ -147,7 +148,7 @@ export default {
         JSON.stringify({
           status: "healthy",
           timestamp: new Date().toISOString(),
-          version: "1.1.0-wasm",
+          version: "1.2.0-rust-wasm",
         }),
         {
           status: 200,
