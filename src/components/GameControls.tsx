@@ -47,22 +47,22 @@ export default function GameControls({
   };
 
   const renderDice = () => {
-    if (gameState.diceRoll === null) return <div className="h-8"></div>;
+    if (gameState.diceRoll === null) return <div className="h-6"></div>;
 
     return (
       <motion.div
-        className="flex items-center justify-center space-x-3"
+        className="flex items-center justify-center space-x-2"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
-        <span className="text-sm font-semibold text-white/80">Roll:</span>
+        <span className="text-xs font-semibold text-white/80">Roll:</span>
         <div className="flex space-x-1">
           {Array.from({ length: 4 }).map((_, i) => (
             <motion.div
               key={i}
               className={cn(
-                "w-3 h-3 rounded-full border-2",
+                "w-2.5 h-2.5 rounded-full border-2",
                 i < gameState.diceRoll!
                   ? "bg-amber-400 border-amber-300 shadow-lg"
                   : "bg-white/20 border-white/40"
@@ -80,7 +80,7 @@ export default function GameControls({
           ))}
         </div>
         <motion.span
-          className="text-xl font-bold text-amber-400 neon-text min-w-[24px] text-center"
+          className="text-lg font-bold text-amber-400 neon-text min-w-[20px] text-center"
           animate={{
             scale: [1, 1.2, 1],
             textShadow: [
@@ -142,7 +142,7 @@ export default function GameControls({
 
   return (
     <motion.div
-      className="glass rounded-2xl p-4 space-y-4 relative overflow-hidden"
+      className="glass rounded-lg p-3 space-y-3 relative overflow-hidden"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -150,12 +150,14 @@ export default function GameControls({
       {/* Status Section */}
       <div className="text-center">
         <motion.div
-          className="flex items-center justify-center space-x-2 mb-2"
+          className="flex items-center justify-center space-x-2 mb-1"
           animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
           transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
         >
-          <StatusIcon className={cn("w-5 h-5", status.color)} />
-          <span className={cn("font-bold text-lg", status.color, "neon-text")}>
+          <StatusIcon className={cn("w-4 h-4", status.color)} />
+          <span
+            className={cn("font-bold text-base", status.color, "neon-text")}
+          >
             {status.text}
           </span>
         </motion.div>
@@ -172,9 +174,9 @@ export default function GameControls({
               {[...Array(3)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 bg-pink-400 rounded-full"
+                  className="w-1.5 h-1.5 bg-pink-400 rounded-full"
                   animate={{
-                    y: [0, -8, 0],
+                    y: [0, -6, 0],
                     opacity: [0.3, 1, 0.3],
                   }}
                   transition={{
@@ -200,14 +202,14 @@ export default function GameControls({
           {/* Sound Toggle */}
           <motion.button
             onClick={toggleSound}
-            className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+            className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             {soundEnabled ? (
-              <Volume2 className="w-4 h-4" />
+              <Volume2 className="w-3.5 h-3.5" />
             ) : (
-              <VolumeX className="w-4 h-4" />
+              <VolumeX className="w-3.5 h-3.5" />
             )}
           </motion.button>
 
@@ -217,7 +219,7 @@ export default function GameControls({
               onClick={handleRollDice}
               disabled={gameState.currentPlayer === "player2"}
               className={cn(
-                "px-4 py-2 rounded-lg font-semibold transition-all duration-200",
+                "px-3 py-1.5 rounded-lg font-semibold transition-all duration-200 text-sm",
                 "bg-gradient-to-r from-blue-500 to-purple-600 text-white",
                 "disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50",
                 "hover:from-blue-600 hover:to-purple-700",
@@ -235,7 +237,7 @@ export default function GameControls({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5">
                 <motion.div
                   animate={{
                     rotate:
@@ -243,7 +245,7 @@ export default function GameControls({
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                 >
-                  <Dice6 className="w-4 h-4" />
+                  <Dice6 className="w-3.5 h-3.5" />
                 </motion.div>
                 <span>Roll</span>
               </div>
@@ -253,7 +255,7 @@ export default function GameControls({
           {/* Reset Button */}
           <motion.button
             onClick={handleResetGame}
-            className="p-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
+            className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
             whileHover={{
               scale: 1.05,
               boxShadow: "0 0 15px rgba(107, 114, 128, 0.5)",
@@ -267,7 +269,7 @@ export default function GameControls({
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.3 }}
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5" />
             </motion.div>
           </motion.button>
         </div>

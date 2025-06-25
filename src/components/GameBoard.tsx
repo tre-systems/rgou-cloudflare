@@ -69,9 +69,9 @@ const MemoizedPiece = React.memo(function Piece({
       {/* Player icon */}
       <div className="absolute inset-0 flex items-center justify-center">
         {player === "player1" ? (
-          <Crown className="w-4 h-4 text-white drop-shadow-lg" />
+          <Crown className="w-3 h-3 text-white drop-shadow-lg" />
         ) : (
-          <Zap className="w-4 h-4 text-white drop-shadow-lg" />
+          <Zap className="w-3 h-3 text-white drop-shadow-lg" />
         )}
       </div>
 
@@ -176,7 +176,7 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
           {piece && (
             <motion.div
               key={`${piece.player}-${pieceIndex}`}
-              className="w-4/5 h-4/5 p-1"
+              className="w-3/5 h-3/5 p-0.5"
               layoutId={`piece-${piece.player}-${pieceIndex}`}
             >
               <MemoizedPiece player={piece.player} isClickable={isClickable} />
@@ -211,7 +211,7 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
     return (
       <motion.div
         className={cn(
-          "glass rounded-xl p-4 relative overflow-hidden",
+          "glass rounded-lg p-3 relative overflow-hidden",
           isCurrentPlayer && "ring-2 ring-white/50"
         )}
         animate={{
@@ -222,16 +222,16 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
         transition={{ duration: 0.5 }}
       >
         {/* Player header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             {isAI ? (
-              <Zap className="w-5 h-5 text-pink-400" />
+              <Zap className="w-4 h-4 text-pink-400" />
             ) : (
-              <Crown className="w-5 h-5 text-blue-400" />
+              <Crown className="w-4 h-4 text-blue-400" />
             )}
             <h3
               className={cn(
-                "font-bold text-lg neon-text",
+                "font-bold text-base neon-text",
                 isAI ? "text-pink-400" : "text-blue-400",
                 isCurrentPlayer && "animate-pulse"
               )}
@@ -242,25 +242,25 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
 
           {/* Score display */}
           <div className="flex items-center space-x-1">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-amber-400 font-bold">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span className="text-amber-400 font-bold text-sm">
               {finishedPieces.length}/7
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {/* Starting area */}
-          <div className="glass-dark rounded-lg p-3">
-            <p className="text-xs text-white/70 text-center mb-2 font-semibold">
+          <div className="glass-dark rounded-lg p-2">
+            <p className="text-xs text-white/70 text-center mb-1 font-semibold">
               START
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-1">
               {pieces.map((p, i) =>
                 p.square === -1 ? (
                   <motion.div
                     key={i}
-                    className="aspect-square"
+                    className="w-6 h-6"
                     whileHover={{ scale: 1.05 }}
                     onClick={() =>
                       gameState.validMoves.includes(i) && onPieceClick(i)
@@ -274,7 +274,7 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
                 ) : (
                   <div
                     key={i}
-                    className="aspect-square opacity-20 rounded-full border border-white/20"
+                    className="w-6 h-6 opacity-20 rounded-full border border-white/20"
                   />
                 )
               )}
@@ -282,17 +282,17 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
           </div>
 
           {/* Finish area */}
-          <div className="glass-dark rounded-lg p-3">
-            <p className="text-xs text-white/70 text-center mb-2 font-semibold">
+          <div className="glass-dark rounded-lg p-2">
+            <p className="text-xs text-white/70 text-center mb-1 font-semibold">
               FINISH
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-1">
               {Array(7)
                 .fill(0)
                 .map((_, i) => (
                   <motion.div
                     key={i}
-                    className="aspect-square rounded-full flex items-center justify-center relative"
+                    className="w-6 h-6 rounded-full flex items-center justify-center relative"
                     style={{
                       background:
                         i < finishedPieces.length
@@ -341,21 +341,21 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
   ];
 
   return (
-    <div className="w-full max-w-lg mx-auto space-y-6">
+    <div className="w-full max-w-sm mx-auto space-y-3">
       {/* AI Player Area */}
       {renderPlayerArea("player2")}
 
       {/* Game Board */}
       <motion.div
-        className="glass mystical-glow rounded-2xl p-6 relative"
+        className="glass mystical-glow rounded-xl p-4 relative"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {/* Board title */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-3">
           <motion.h3
-            className="text-lg font-bold text-white/90 neon-text"
+            className="text-base font-bold text-white/90 neon-text"
             animate={{ opacity: [0.7, 1, 0.7] }}
             transition={{ repeat: Infinity, duration: 3 }}
           >
@@ -364,7 +364,7 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
         </div>
 
         {/* The game board grid */}
-        <div className="grid grid-cols-8 gap-1 bg-black/20 p-3 rounded-xl backdrop-blur">
+        <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
           {boardLayout
             .flat()
             .map((sq, i) =>

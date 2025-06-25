@@ -153,20 +153,20 @@ export default function RoyalGameOfUr() {
       <AnimatedBackground />
       <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
         <motion.div
-          className="w-full max-w-md mx-auto space-y-6"
+          className="w-full max-w-sm mx-auto space-y-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           {/* Header */}
           <motion.div
-            className="text-center space-y-2"
+            className="text-center space-y-1"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
             <motion.h1
-              className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 neon-text"
+              className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 neon-text"
               animate={{
                 backgroundPosition: ["0%", "100%", "0%"],
               }}
@@ -187,11 +187,11 @@ export default function RoyalGameOfUr() {
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ repeat: Infinity, duration: 2.5 }}
             >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span className="text-white/80 font-medium">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span className="text-white/80 font-medium text-sm">
                 Ancient Mesopotamian Board Game
               </span>
-              <Sparkles className="w-4 h-4 text-amber-400" />
+              <Sparkles className="w-3 h-3 text-amber-400" />
             </motion.div>
           </motion.div>
 
