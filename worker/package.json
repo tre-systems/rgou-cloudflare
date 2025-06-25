@@ -26,8 +26,6 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20231218.0",
-    "typescript": "^5.0.0",
     "wrangler": "^4.20.5"
   }
 }

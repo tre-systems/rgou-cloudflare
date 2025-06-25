@@ -1,45 +1,13 @@
-/// <reference types="@cloudflare/workers-types" />
-import { initializeWasm, RustAI } from "./ai-wasm";
+import init, {
+  get_ai_move_from_json,
+  evaluate_position_from_json,
+} from "../pkg/rgou_ai_wasm";
+import wasm from "../pkg/rgou_ai_wasm_bg.wasm";
 
-export interface Env {
-  // Environment variables can be defined here
-  API_SECRET: string;
-}
+const wasmReady = init(wasm);
 
-// Add ExecutionContext type for Cloudflare Workers
-declare global {
-  interface ExecutionContext {
-    waitUntil(promise: Promise<any>): void;
-    passThroughOnException(): void;
-  }
-}
-
-// Interface matching the TypeScript game types
-interface GameState {
-  board: (PiecePosition | null)[];
-  player1Pieces: PiecePosition[];
-  player2Pieces: PiecePosition[];
-  currentPlayer: "player1" | "player2";
-  gameStatus: "waiting" | "playing" | "finished";
-  winner: "player1" | "player2" | null;
-  diceRoll: number | null;
-  canMove: boolean;
-  validMoves: number[];
-}
-
-interface PiecePosition {
-  square: number;
-  player: "player1" | "player2";
-}
-
-let wasmReady = initializeWasm();
-
-export default {
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<Response> {
+const worker = {
+  async fetch(request, env) {
     const url = new URL(request.url);
     console.log(`[Worker] Received request: ${request.method} ${request.url}`);
 
@@ -75,7 +43,7 @@ export default {
         await wasmReady;
         const wasmReadyEnd = Date.now();
 
-        const gameState: GameState = await request.json();
+        const gameState = await request.json();
 
         if (gameState.currentPlayer !== "player2") {
           return new Response(JSON.stringify({ error: "Not AI turn" }), {
@@ -88,16 +56,13 @@ export default {
         }
 
         const aiSetupStart = Date.now();
-        const rustAI = new RustAI();
-        rustAI.updateGameState(gameState);
+        const gameStateJson = JSON.stringify(gameState);
         const aiSetupEnd = Date.now();
 
         const aiMoveStart = Date.now();
-        const aiMove = rustAI.getAIMove();
-        const evaluation = rustAI.getEvaluation();
+        const aiMove = get_ai_move_from_json(gameStateJson);
+        const evaluation = evaluate_position_from_json(gameStateJson);
         const aiMoveEnd = Date.now();
-
-        rustAI.destroy();
         const handlerEnd = Date.now();
 
         const timings = {
@@ -124,7 +89,7 @@ export default {
             },
           }
         );
-      } catch (error: any) {
+      } catch (error) {
         console.error("[Worker] Error getting AI move:", error);
         return new Response(
           JSON.stringify({
@@ -167,3 +132,5 @@ export default {
     });
   },
 };
+
+export default worker;
