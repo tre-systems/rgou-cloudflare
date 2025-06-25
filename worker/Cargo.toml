@@ -17,6 +17,7 @@ worker = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 console_error_panic_hook = "0.1"
+rgou-ai-core = { path = "./rust_ai_core" }
 
 [profile.release]
 # Optimize for size and performance

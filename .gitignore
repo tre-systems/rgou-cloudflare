@@ -67,3 +67,14 @@ worker/.zig-cache
 .open-next
 
 worker/target
+
+# Rust and wasm-pack
+/worker/rust_ai_core/pkg/
+/worker/rust_ai_core/target/
+/src/lib/wasm/
+/public/wasm/
+Cargo.lock
+
+# Cloudflare
+.wrangler/
+/worker/build/

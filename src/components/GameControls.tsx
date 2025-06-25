@@ -10,16 +10,22 @@ import {
   Trophy,
   Zap,
   Crown,
+  Server,
+  Cloud,
 } from "lucide-react";
 import { GameState } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { soundEffects } from "@/lib/sound-effects";
+
+export type AISource = "server" | "client";
 
 interface GameControlsProps {
   gameState: GameState;
   onRollDice: () => void;
   onResetGame: () => void;
   aiThinking?: boolean;
+  aiSource: AISource;
+  onAiSourceChange: (source: AISource) => void;
 }
 
 export default function GameControls({
@@ -27,6 +33,8 @@ export default function GameControls({
   onRollDice,
   onResetGame,
   aiThinking = false,
+  aiSource,
+  onAiSourceChange,
 }: GameControlsProps) {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
@@ -199,6 +207,24 @@ export default function GameControls({
 
         {/* Action Buttons */}
         <div className="flex items-center space-x-2">
+          {/* AI Source Toggle */}
+          <motion.button
+            onClick={() =>
+              onAiSourceChange(aiSource === "server" ? "client" : "server")
+            }
+            className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title={`Switch to ${
+              aiSource === "server" ? "Client" : "Server"
+            } AI`}
+          >
+            {aiSource === "server" ? (
+              <Cloud className="w-3.5 h-3.5" />
+            ) : (
+              <Server className="w-3.5 h-3.5" />
+            )}
+          </motion.button>
           {/* Sound Toggle */}
           <motion.button
             onClick={toggleSound}
