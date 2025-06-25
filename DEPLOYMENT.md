@@ -7,6 +7,7 @@ This guide walks you through deploying the Royal Game of Ur to Cloudflare Pages 
 - [Cloudflare account](https://cloudflare.com)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
 - Node.js 18+ and npm
+- Rust and Cargo (for AI worker development)
 - Git repository (GitHub, GitLab, etc.)
 
 ## 📋 Setup Checklist
@@ -17,11 +18,19 @@ This guide walks you through deploying the Royal Game of Ur to Cloudflare Pages 
 - [ ] Note your Account ID (found in right sidebar of dashboard)
 - [ ] Create API token with appropriate permissions
 
-### 2. Install Wrangler
+### 2. Install Required Tools
 
 ```bash
+# Install Wrangler CLI
 npm install -g wrangler
 wrangler auth login
+
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# Install worker-build tool
+cargo install worker-build
 ```
 
 ### 3. Configure Environment Variables
@@ -58,13 +67,19 @@ account_id = "your-account-id-here"
 workers_dev = true
 ```
 
-### 2. Deploy Worker
+### 2. Build and Deploy Worker
 
 ```bash
 cd worker
+
+# Install dependencies and build
 npm install
-npm run build
-npm run deploy
+
+# Build Rust worker
+cargo build --release
+
+# Deploy to Cloudflare Workers
+wrangler deploy
 ```
 
 ### 3. Note Worker URL

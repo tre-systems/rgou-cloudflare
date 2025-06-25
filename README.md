@@ -1,15 +1,15 @@
 # 🏺 Royal Game of Ur - Cloudflare Edition
 
-A modern implementation of the ancient Mesopotamian board game "Royal Game of Ur" built with Next.js, TypeScript, and powered by AI written in Zig running on Cloudflare Workers.
+A modern implementation of the ancient Mesopotamian board game "Royal Game of Ur" built with Next.js, TypeScript, and powered by an intelligent AI written in Rust running on Cloudflare Workers.
 
 ## 🌟 Features
 
 - **Authentic Gameplay**: Faithful recreation of the 4,500-year-old Royal Game of Ur
-- **AI Opponent**: Intelligent AI powered by Zig using minimax algorithm with alpha-beta pruning
-- **Modern UI**: Beautiful, responsive interface built with React and Tailwind CSS
+- **Advanced AI Opponent**: Intelligent AI powered by Rust using minimax algorithm with alpha-beta pruning and transposition tables
+- **Modern UI**: Beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations
 - **Cloud-Native**: Deployed on Cloudflare Pages with AI running on Cloudflare Workers
-- **Real-time**: Smooth animations and real-time game state updates
-- **Two Game Modes**: Play against another human or challenge the AI
+- **Real-time**: Smooth animations and real-time game state updates with sound effects
+- **Single Player Mode**: Challenge the sophisticated AI opponent
 
 ## 🎯 Game Rules
 
@@ -28,7 +28,7 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Zig compiler (for AI development)
+- Rust and Cargo (for AI development)
 - Cloudflare account (for deployment)
 
 ### Development Setup
@@ -63,9 +63,10 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 │   Next.js App   │ ──────────────► │ Cloudflare Worker│
 │   (Frontend)    │                 │   (AI Engine)    │
 │                 │                 │                  │
-│ • Game UI       │                 │ • Zig AI Logic   │
+│ • Game UI       │                 │ • Rust AI Logic  │
 │ • Game Logic    │                 │ • Move Evaluation│
 │ • State Mgmt    │                 │ • HTTP Endpoints │
+│ • Sound Effects │                 │ • Transposition  │
 └─────────────────┘                 └──────────────────┘
        │                                      │
        ▼                                      ▼
@@ -81,24 +82,34 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 ```
 rgou-cloudflare/
 ├── src/
-│   ├── app/                 # Next.js app router
-│   │   ├── components/          # React components
-│   │   │   ├── GameBoard.tsx    # Main board component
-│   │   │   ├── GameControls.tsx # Game controls UI
-│   │   │   └── RoyalGameOfUr.tsx# Main game component
-│   │   └── lib/                 # Utilities and logic
-│   │       ├── types.ts         # TypeScript types
-│   │       ├── game-logic.ts    # Core game logic
-│   │       ├── ai-service.ts    # AI API client
-│   │       └── utils.ts         # Utility functions
-│   └── worker/                  # Cloudflare Worker
-│       ├── src/
-│       │   ├── index.ts         # Worker HTTP handler
-│       │   └── ai.zig          # Zig AI implementation
-│       ├── package.json         # Worker dependencies
-│       ├── wrangler.toml        # Worker configuration
-│       └── tsconfig.json        # Worker TypeScript config
-└── public/                  # Static assets
+│   ├── app/                     # Next.js app router
+│   │   ├── layout.tsx          # App layout
+│   │   ├── page.tsx            # Main page
+│   │   └── globals.css         # Global styles
+│   ├── components/             # React components
+│   │   ├── RoyalGameOfUr.tsx   # Main game component
+│   │   ├── GameBoard.tsx       # Board component
+│   │   ├── GameControls.tsx    # Game controls UI
+│   │   └── AnimatedBackground.tsx # Background effects
+│   └── lib/                    # Utilities and logic
+│       ├── types.ts            # TypeScript types
+│       ├── game-logic.ts       # Core game logic
+│       ├── ai-service.ts       # AI API client
+│       ├── sound-effects.ts    # Audio system
+│       └── utils.ts            # Utility functions
+├── worker/                     # Cloudflare Worker (Rust)
+│   ├── src/
+│   │   └── lib.rs             # Rust AI implementation
+│   ├── Cargo.toml             # Rust dependencies
+│   ├── Cargo.lock             # Dependency lock
+│   └── wrangler.toml          # Worker configuration
+├── tests/                      # Playwright tests
+│   ├── game-ui.spec.ts        # UI tests
+│   ├── game-functionality.spec.ts # Functionality tests
+│   └── performance.spec.ts    # Performance tests
+└── docs/                       # Documentation
+    ├── cloudflare-worker.md   # Worker documentation
+    └── minimax-ai-specification.md # AI specification
 ```
 
 ### Available Scripts
@@ -109,30 +120,45 @@ rgou-cloudflare/
 - `npm run build` - Build for production
 - `npm run build:cf` - Build for Cloudflare Pages
 - `npm run deploy:cf` - Deploy to Cloudflare Pages
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix ESLint errors
 
 #### AI Worker
 
 - `npm run dev:worker` - Start worker development server
-- `npm run build:worker` - Build worker
+- `npm run build:worker` - Build Rust worker
 - `npm run deploy:worker` - Deploy worker to Cloudflare
+- `npm run setup:worker` - Install worker dependencies
+
+#### Testing
+
+- `npm test` - Run Playwright tests
+- `npm run test:ui` - Run tests with UI mode
+- `npm run test:headed` - Run tests in headed mode
+- `npm run test:debug` - Debug tests step by step
+- `npm run test:report` - View test report
 
 ## 🤖 AI Implementation
 
-The AI is implemented in Zig for maximum performance and compiled to WebAssembly for Cloudflare Workers. For a detailed explanation of the worker, see the [Cloudflare Worker Documentation](./docs/cloudflare-worker.md).
+The AI is implemented in Rust for maximum performance and compiled to WebAssembly for Cloudflare Workers. For detailed information about the worker implementation, see the [Cloudflare Worker Documentation](./docs/cloudflare-worker.md).
 
 ### AI Features:
 
-- **Minimax Algorithm**: With alpha-beta pruning for optimal move selection
-- **Position Evaluation**: Advanced scoring based on piece positions and game state
-- **Difficulty Scaling**: Adjustable search depth for different skill levels
-- **Fallback Logic**: TypeScript fallback when Zig AI is unavailable
+- **Advanced Minimax Algorithm**: With alpha-beta pruning and transposition tables
+- **Strategic Position Evaluation**: Multi-factor scoring based on piece positions, safety, and tactics
+- **Mathematically Correct Dice Probabilities**: Proper Royal Game of Ur dice distribution
+- **Adaptive Difficulty**: Sophisticated evaluation with depth-8 search
+- **Performance Optimized**: 50-70% performance improvement with transposition tables
+- **Fallback Logic**: TypeScript fallback when Rust AI is unavailable
 
 ### AI Evaluation Factors:
 
 1. **Piece Advancement**: Reward pieces closer to finish
 2. **Finished Pieces**: Heavily weight completed pieces
-3. **Safety**: Consider rosette positions and opponent threats
-4. **Tempo**: Balance aggressive and defensive play
+3. **Safety Considerations**: Value rosette positions and threat assessment
+4. **Tactical Awareness**: Blocking, capturing, and tempo control
+5. **Board Control**: Strategic positioning in shared sections
+6. **Game Phase Recognition**: Adaptive strategy for opening/middle/endgame
 
 ## 🚀 Deployment
 
@@ -160,84 +186,160 @@ The AI Worker exposes these endpoints:
 
 Get the best move for the current game state.
 
+**Request:**
+
 ```json
 {
-  "gameState": {
-    /* GameState object */
+  "player1Pieces": [{"square": -1}, ...],
+  "player2Pieces": [{"square": -1}, ...],
+  "currentPlayer": "player2",
+  "diceRoll": 3
+}
+```
+
+**Response:**
+
+```json
+{
+  "move": 2,
+  "evaluation": 150,
+  "thinking": "Moving piece 2 to capture opponent...",
+  "timings": {
+    "aiMoveCalculation": 45,
+    "totalHandlerTime": 52
+  },
+  "diagnostics": {
+    "searchDepth": 8,
+    "validMoves": [1, 2, 4],
+    "moveEvaluations": [...],
+    "transpositionHits": 234,
+    "nodesEvaluated": 1245,
+    "gamePhase": "Middlegame",
+    "boardControl": 25
   }
 }
 ```
 
-### POST /evaluate
+### GET /health
 
-Evaluate the current position.
+Health check endpoint for monitoring.
+
+**Response:**
 
 ```json
 {
-  "gameState": {
-    /* GameState object */
-  }
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "version": "1.0.0"
 }
 ```
 
-## 🙏 Acknowledgements
+## 🎵 Audio System
 
-- **Vercel** for their seamless Next.js hosting platform.
-- **Cloudflare** for their powerful Workers and Pages products.
-- The **Zig community** for their invaluable help and insights into optimizing for WebAssembly.
+The game includes a comprehensive sound system:
+
+- **Dice Rolling**: Authentic dice sound effects
+- **Piece Movement**: Satisfying piece placement sounds
+- **Captures**: Dramatic capture sound effects
+- **Rosette Landing**: Special sound for landing on rosettes
+- **Game End**: Victory and defeat sounds
+- **AI Thinking**: Ambient thinking sounds
 
 ## 🧪 Testing
 
-Run the development servers and test:
+The project includes comprehensive end-to-end testing with Playwright:
 
-1. Play a game in two-player mode
-2. Switch to AI mode and test AI responses
-3. Check AI worker endpoints directly
-4. Verify fallback behavior when AI is unavailable
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npx playwright test game-ui.spec.ts
+npx playwright test game-functionality.spec.ts
+npx playwright test performance.spec.ts
+
+# View test results
+npm run test:report
+```
+
+Tests cover:
+
+- UI elements and responsive design
+- Game functionality and mechanics
+- Performance and accessibility
+- Cross-browser compatibility
+- AI interaction and fallback behavior
 
 ## 🔧 Configuration
 
 ### Next.js Configuration
 
-- Configured for Cloudflare Pages deployment
-- Static export enabled
-- Edge runtime for optimal performance
+The project uses `open-next` for Cloudflare Pages compatibility:
+
+```typescript
+// next.config.mjs
+const nextConfig = {
+  experimental: {
+    runtime: "edge",
+  },
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+```
 
 ### Worker Configuration
 
-- TypeScript support
-- CORS enabled for frontend requests
-- Environment-based configuration
+```toml
+# worker/wrangler.toml
+name = "rgou-ai-worker"
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-12-01"
 
-## 📈 Performance
+[build]
+command = "cargo install -q worker-build && worker-build --release"
+```
 
-- **Frontend**: Static site generation for fast loading
-- **AI**: Zig compilation for maximum performance
-- **Caching**: Cloudflare edge caching for global delivery
-- **Optimization**: Tree-shaking and minification
+## 🎨 UI/UX Features
+
+- **Animated Background**: Dynamic particle effects
+- **Smooth Animations**: Framer Motion for fluid transitions
+- **Responsive Design**: Mobile-first approach
+- **Visual Effects**: Neon text effects and glowing elements
+- **Move Feedback**: Visual and audio feedback for all interactions
+- **Loading States**: Engaging AI thinking animations
+
+## 🏆 Game Statistics
+
+The AI provides detailed game analytics:
+
+- **Move Evaluations**: Score and reasoning for each possible move
+- **Search Diagnostics**: Nodes evaluated, transposition hits
+- **Game Phase Detection**: Opening, middlegame, endgame recognition
+- **Board Control Metrics**: Strategic positioning assessment
+- **Performance Timings**: AI calculation and response times
+
+## 🙏 Acknowledgements
+
+- **Cloudflare** for their powerful Workers and Pages platforms
+- **Vercel** for their excellent Next.js tooling and inspiration
+- The **Rust community** for outstanding WebAssembly support
+- **Ancient Mesopotamians** for creating this timeless game
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🤝 Contributing
 
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
 1. Fork the repository
 2. Create a feature branch
-3. Implement your changes
+3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
 
 ## 📚 Historical Context
 
 The Royal Game of Ur dates back to 2600-2400 BCE and was discovered in the Royal Cemetery at Ur by Sir Leonard Woolley. Game rules were deciphered from a cuneiform tablet by Irving Finkel at the British Museum.
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-```

@@ -102,7 +102,7 @@ npx playwright test --grep "Royal Game of Ur - UI Elements"
 
 ## Test Configuration
 
-The tests are configured to run against the deployed site at `https://0826d6b4.rgou.pages.dev/`.
+The tests are configured to run against the deployed site. Update the base URL in `playwright.config.ts` to match your deployment.
 
 Key configuration options in `playwright.config.ts`:
 
