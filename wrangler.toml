@@ -1,11 +1,13 @@
 name = "rgou-main"
-main = "./.open-next/server-functions/default/index.mjs"
-compatibility_date = "2024-09-23"
-compatibility_flags = ["nodejs_compat"]
-
-# Account configuration
+main = "./.open-next/worker.js"
+compatibility_date = "2025-06-14"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 account_id = "571f130502618993d848f58d27ae288d"
 workers_dev = true
+
+[assets]
+directory = "./.open-next/assets"
+binding = "ASSETS"
 
 [vars]
 ENVIRONMENT = "production"

@@ -2,22 +2,21 @@ name = "rgou-ai-worker"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "571f130502618993d848f58d27ae288d"
+workers_dev = true
 
 [vars]
 ENVIRONMENT = "production"
+API_SECRET = "production-secret-2024"
 
 [observability]
 enabled = true
 head_sampling_rate = 1
 
-# Uncomment and configure these when ready to deploy
-# account_id = "your-account-id"
-# workers_dev = true
-
-# Remove routes for now - will be configured during deployment
-# [[routes]]
-# pattern = "api.yourdomain.com/*"
-# zone_name = "yourdomain.com"
+# AI worker routes
+[[routes]]
+pattern = "rgou-minmax.tre.systems/*"
+zone_name = "tre.systems"
 
 [env.development]
 name = "rgou-ai-worker-dev"
@@ -29,3 +28,6 @@ API_SECRET = "dev-secret-key"
 [env.staging]
 name = "rgou-ai-worker-staging"
 workers_dev = true
+
+[env.staging.vars]
+API_SECRET = "staging-secret-key"
