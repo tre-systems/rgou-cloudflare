@@ -1,12 +1,11 @@
 name = "rgou-main"
-main = "./.open-next/middleware/handler.mjs"
+main = "worker.js"
 compatibility_date = "2025-06-14"
-compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 account_id = "571f130502618993d848f58d27ae288d"
 workers_dev = true
 
 [assets]
-directory = "./.open-next/assets"
+directory = "./out"
 binding = "ASSETS"
 
 [vars]
