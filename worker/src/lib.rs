@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use worker::*;
 
 // Game constants
@@ -8,10 +9,32 @@ const ROSETTE_SQUARES: [u8; 3] = [4, 8, 14];
 const PLAYER1_TRACK: [u8; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const PLAYER2_TRACK: [u8; 16] = [16, 17, 18, 19, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
+// Evaluation constants
+const WIN_SCORE: i32 = 10000;
+const FINISHED_PIECE_VALUE: i32 = 1000;
+const POSITION_WEIGHT: i32 = 15;
+const SAFETY_BONUS: i32 = 25;
+const BLOCKING_BONUS: i32 = 30;
+const ROSETTE_CONTROL_BONUS: i32 = 40;
+const ADVANCEMENT_BONUS: i32 = 5;
+
+// Dice probabilities for Royal Game of Ur (4 binary dice)
+// 0: 1/16, 1: 4/16, 2: 6/16, 3: 4/16, 4: 1/16
+const DICE_PROBABILITIES: [f32; 5] = [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Player {
     Player1 = 0,
     Player2 = 1,
+}
+
+impl Player {
+    fn opponent(self) -> Player {
+        match self {
+            Player::Player1 => Player::Player2,
+            Player::Player2 => Player::Player1,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -20,7 +43,7 @@ struct PiecePosition {
     player: Player,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct GameState {
     board: [Option<PiecePosition>; BOARD_SIZE],
     player1_pieces: [PiecePosition; PIECES_PER_PLAYER],
@@ -50,6 +73,13 @@ impl GameState {
         match player {
             Player::Player1 => &self.player1_pieces,
             Player::Player2 => &self.player2_pieces,
+        }
+    }
+
+    fn get_pieces_mut(&mut self, player: Player) -> &mut [PiecePosition] {
+        match player {
+            Player::Player1 => &mut self.player1_pieces,
+            Player::Player2 => &mut self.player2_pieces,
         }
     }
 
@@ -106,9 +136,11 @@ impl GameState {
         valid_moves
     }
 
+    // Enhanced evaluation function with strategic considerations
     fn evaluate(&self) -> i32 {
         let mut score = 0i32;
 
+        // Count finished pieces
         let p1_finished = self
             .player1_pieces
             .iter()
@@ -120,44 +152,105 @@ impl GameState {
             .filter(|p| p.square == 20)
             .count() as i32;
 
-        score += (p2_finished - p1_finished) * 1000;
-
+        // Game-ending conditions
         if p1_finished == PIECES_PER_PLAYER as i32 {
-            return -10000;
+            return -WIN_SCORE;
         }
         if p2_finished == PIECES_PER_PLAYER as i32 {
-            return 10000;
+            return WIN_SCORE;
         }
 
-        let mut p1_position_score = 0i32;
-        let mut p2_position_score = 0i32;
+        // Finished pieces advantage
+        score += (p2_finished - p1_finished) * FINISHED_PIECE_VALUE;
 
-        for piece in &self.player1_pieces {
-            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
-                let track = Self::get_player_track(Player::Player1);
-                if let Some(pos) = track
-                    .iter()
-                    .position(|&square| square as i8 == piece.square)
-                {
-                    p1_position_score += pos as i32 + 1;
-                }
-            }
-        }
+        // Advanced piece positioning and strategic bonuses
+        let (p1_pos_score, p1_strategic_score) = self.evaluate_player_position(Player::Player1);
+        let (p2_pos_score, p2_strategic_score) = self.evaluate_player_position(Player::Player2);
 
-        for piece in &self.player2_pieces {
-            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
-                let track = Self::get_player_track(Player::Player2);
-                if let Some(pos) = track
-                    .iter()
-                    .position(|&square| square as i8 == piece.square)
-                {
-                    p2_position_score += pos as i32 + 1;
-                }
-            }
-        }
+        score += (p2_pos_score - p1_pos_score) * POSITION_WEIGHT / 10;
+        score += p2_strategic_score - p1_strategic_score;
 
-        score += (p2_position_score - p1_position_score) * 10;
+        // Control of key squares
+        score += self.evaluate_board_control();
+
         score
+    }
+
+    fn evaluate_player_position(&self, player: Player) -> (i32, i32) {
+        let pieces = self.get_pieces(player);
+        let track = Self::get_player_track(player);
+        let mut position_score = 0i32;
+        let mut strategic_score = 0i32;
+
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                if let Some(track_pos) = track
+                    .iter()
+                    .position(|&square| square as i8 == piece.square)
+                {
+                    // Base advancement score
+                    position_score += track_pos as i32 + 1;
+
+                    // Safety bonus for pieces on rosettes
+                    if Self::is_rosette(piece.square as u8) {
+                        strategic_score += SAFETY_BONUS;
+                    }
+
+                    // Bonus for pieces in the middle section (more valuable)
+                    if track_pos >= 4 && track_pos <= 11 {
+                        strategic_score += ADVANCEMENT_BONUS;
+                    }
+
+                    // Bonus for pieces near the end
+                    if track_pos >= 12 {
+                        strategic_score += ADVANCEMENT_BONUS * 2;
+                    }
+                }
+            }
+        }
+
+        (position_score, strategic_score)
+    }
+
+    fn evaluate_board_control(&self) -> i32 {
+        let mut control_score = 0i32;
+
+        // Control of rosette squares
+        for &rosette in &ROSETTE_SQUARES {
+            if let Some(occupant) = self.board[rosette as usize] {
+                if occupant.player == Player::Player2 {
+                    control_score += ROSETTE_CONTROL_BONUS;
+                } else {
+                    control_score -= ROSETTE_CONTROL_BONUS;
+                }
+            }
+        }
+
+        // Blocking opportunities
+        control_score += self.evaluate_blocking_potential();
+
+        control_score
+    }
+
+    fn evaluate_blocking_potential(&self) -> i32 {
+        let mut blocking_score = 0i32;
+
+        // Check if AI pieces are blocking human advancement
+        for p1_piece in &self.player1_pieces {
+            if p1_piece.square >= 4 && p1_piece.square <= 14 {
+                // In shared section, check if AI has a piece nearby that could threaten
+                for p2_piece in &self.player2_pieces {
+                    if p2_piece.square >= 4
+                        && p2_piece.square <= 14
+                        && (p2_piece.square - p1_piece.square).abs() <= 4
+                    {
+                        blocking_score += BLOCKING_BONUS / 4;
+                    }
+                }
+            }
+        }
+
+        blocking_score
     }
 
     fn make_move(&mut self, piece_index: u8) -> bool {
@@ -169,10 +262,7 @@ impl GameState {
         let dice_roll = self.dice_roll;
         let current_player = self.current_player;
 
-        let old_square = match current_player {
-            Player::Player1 => self.player1_pieces[piece_index as usize].square,
-            Player::Player2 => self.player2_pieces[piece_index as usize].square,
-        };
+        let old_square = self.get_pieces(current_player)[piece_index as usize].square;
 
         let current_track_pos = if old_square == -1 {
             -1
@@ -186,92 +276,176 @@ impl GameState {
 
         let new_track_pos = current_track_pos + dice_roll as i8;
 
+        // Remove piece from old position
         if old_square >= 0 && old_square < BOARD_SIZE as i8 {
             self.board[old_square as usize] = None;
         }
 
         if new_track_pos >= track.len() as i8 {
-            match current_player {
-                Player::Player1 => self.player1_pieces[piece_index as usize].square = 20,
-                Player::Player2 => self.player2_pieces[piece_index as usize].square = 20,
-            }
+            // Finishing the piece
+            self.get_pieces_mut(current_player)[piece_index as usize].square = 20;
         } else {
             let new_actual_pos = track[new_track_pos as usize];
             let occupant = self.board[new_actual_pos as usize];
 
+            // Handle captures
             if let Some(opp_piece) = occupant {
                 if opp_piece.player != current_player {
-                    match opp_piece.player {
-                        Player::Player1 => {
-                            for piece in &mut self.player1_pieces {
-                                if piece.square == new_actual_pos as i8 {
-                                    piece.square = -1;
-                                    break;
-                                }
-                            }
-                        }
-                        Player::Player2 => {
-                            for piece in &mut self.player2_pieces {
-                                if piece.square == new_actual_pos as i8 {
-                                    piece.square = -1;
-                                    break;
-                                }
-                            }
+                    let opponent_pieces = self.get_pieces_mut(opp_piece.player);
+                    for piece in opponent_pieces.iter_mut() {
+                        if piece.square == new_actual_pos as i8 {
+                            piece.square = -1;
+                            break;
                         }
                     }
                 }
             }
 
+            // Place piece in new position
             let new_piece = PiecePosition {
                 square: new_actual_pos as i8,
                 player: current_player,
             };
 
-            match current_player {
-                Player::Player1 => self.player1_pieces[piece_index as usize] = new_piece,
-                Player::Player2 => self.player2_pieces[piece_index as usize] = new_piece,
-            }
-
+            self.get_pieces_mut(current_player)[piece_index as usize] = new_piece;
             self.board[new_actual_pos as usize] = Some(new_piece);
         }
 
-        let finished_pieces = match current_player {
-            Player::Player1 => self
-                .player1_pieces
-                .iter()
-                .filter(|p| p.square == 20)
-                .count(),
-            Player::Player2 => self
-                .player2_pieces
-                .iter()
-                .filter(|p| p.square == 20)
-                .count(),
-        };
+        // Check for win
+        let finished_pieces = self
+            .get_pieces(current_player)
+            .iter()
+            .filter(|p| p.square == 20)
+            .count();
 
         if finished_pieces == PIECES_PER_PLAYER {
             return true; // Game won
         }
 
+        // Handle rosette landings
         let landed_on_rosette =
             new_track_pos < track.len() as i8 && Self::is_rosette(track[new_track_pos as usize]);
 
         if !landed_on_rosette {
-            self.current_player = match self.current_player {
-                Player::Player1 => Player::Player2,
-                Player::Player2 => Player::Player1,
-            };
+            self.current_player = self.current_player.opponent();
         }
 
         false // Game continues
     }
+
+    // Simple hash for transposition table
+    fn hash(&self) -> u64 {
+        let mut hash = 0u64;
+
+        // Hash piece positions
+        for (i, piece) in self.player1_pieces.iter().enumerate() {
+            hash ^= ((piece.square as u64) << (i * 5));
+        }
+        for (i, piece) in self.player2_pieces.iter().enumerate() {
+            hash ^= ((piece.square as u64) << (i * 5 + 35));
+        }
+
+        // Hash current player
+        if self.current_player == Player::Player2 {
+            hash ^= 1u64 << 63;
+        }
+
+        hash
+    }
+
+    // Validate that the game state is consistent
+    fn validate(&self) -> bool {
+        // Check board consistency with piece positions
+        for (i, square) in self.board.iter().enumerate() {
+            if let Some(piece) = square {
+                let found_in_pieces = match piece.player {
+                    Player::Player1 => self.player1_pieces.iter().any(|p| p.square == i as i8),
+                    Player::Player2 => self.player2_pieces.iter().any(|p| p.square == i as i8),
+                };
+                if !found_in_pieces {
+                    return false;
+                }
+            }
+        }
+
+        // Check that pieces on board match board state
+        for piece in &self.player1_pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                if let Some(board_piece) = self.board[piece.square as usize] {
+                    if board_piece.player != Player::Player1 || board_piece.square != piece.square {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        for piece in &self.player2_pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                if let Some(board_piece) = self.board[piece.square as usize] {
+                    if board_piece.player != Player::Player2 || board_piece.square != piece.square {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
+    // Get game phase for adaptive evaluation
+    fn get_game_phase(&self) -> GamePhase {
+        let total_finished = self
+            .player1_pieces
+            .iter()
+            .chain(self.player2_pieces.iter())
+            .filter(|p| p.square == 20)
+            .count();
+
+        let total_on_board = self
+            .player1_pieces
+            .iter()
+            .chain(self.player2_pieces.iter())
+            .filter(|p| p.square >= 0 && p.square < BOARD_SIZE as i8)
+            .count();
+
+        if total_on_board <= 4 {
+            GamePhase::Opening
+        } else if total_finished >= 6 {
+            GamePhase::Endgame
+        } else {
+            GamePhase::Middlegame
+        }
+    }
 }
 
-struct AI;
+#[derive(Debug, PartialEq)]
+enum GamePhase {
+    Opening,
+    Middlegame,
+    Endgame,
+}
+
+struct TranspositionEntry {
+    evaluation: i32,
+    depth: u8,
+    best_move: Option<u8>,
+}
+
+struct AI {
+    transposition_table: HashMap<u64, TranspositionEntry>,
+}
 
 impl AI {
-    const MAX_DEPTH: u8 = 6;
+    const MAX_DEPTH: u8 = 8; // Increased depth for stronger play
+    const TRANSPOSITION_TABLE_SIZE: usize = 10000;
 
-    fn get_best_move(state: &GameState) -> u8 {
+    fn new() -> Self {
+        AI {
+            transposition_table: HashMap::with_capacity(Self::TRANSPOSITION_TABLE_SIZE),
+        }
+    }
+
+    fn get_best_move(&mut self, state: &GameState) -> u8 {
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
@@ -281,55 +455,73 @@ impl AI {
             return valid_moves[0];
         }
 
-        let mut best_move = valid_moves[0];
-        let mut best_score = i32::MIN;
-
+        // Check for immediate wins first
         for &move_idx in &valid_moves {
             let mut test_state = state.clone();
-            let won = test_state.make_move(move_idx);
-
-            if won {
+            if test_state.make_move(move_idx) {
                 return move_idx; // Winning move - take it immediately
-            }
-
-            let mut score = 0i32;
-            let mut roll_count = 0u8;
-
-            for dice_roll in 0..5 {
-                test_state.dice_roll = dice_roll;
-                let move_score =
-                    Self::minimax(&test_state, Self::MAX_DEPTH - 1, false, i32::MIN, i32::MAX);
-                score += move_score;
-                roll_count += 1;
-            }
-
-            score /= roll_count as i32;
-
-            if score > best_score {
-                best_score = score;
-                best_move = move_idx;
             }
         }
 
-        best_move
+        // Order moves for better alpha-beta pruning
+        let mut move_scores: Vec<(u8, f32)> = Vec::new();
+
+        for &move_idx in &valid_moves {
+            let mut total_score = 0.0f32;
+
+            // Evaluate across all possible dice outcomes with proper weighting
+            for dice_roll in 0..5 {
+                let mut test_state = state.clone();
+                test_state.make_move(move_idx);
+                test_state.dice_roll = dice_roll;
+
+                let score =
+                    self.minimax(&test_state, Self::MAX_DEPTH - 1, false, i32::MIN, i32::MAX)
+                        as f32;
+
+                total_score += score * DICE_PROBABILITIES[dice_roll as usize];
+            }
+
+            move_scores.push((move_idx, total_score));
+        }
+
+        // Sort moves by score (best first) for better alpha-beta pruning
+        move_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        move_scores[0].0
     }
 
     fn minimax(
+        &mut self,
         state: &GameState,
         depth: u8,
         is_maximizing: bool,
         mut alpha: i32,
         mut beta: i32,
     ) -> i32 {
+        // Check transposition table
+        let state_hash = state.hash();
+        if let Some(entry) = self.transposition_table.get(&state_hash) {
+            if entry.depth >= depth {
+                return entry.evaluation;
+            }
+        }
+
         if depth == 0 {
-            return state.evaluate();
+            let eval = state.evaluate();
+            self.store_transposition(state_hash, eval, depth, None);
+            return eval;
         }
 
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
-            return state.evaluate();
+            let eval = state.evaluate();
+            self.store_transposition(state_hash, eval, depth, None);
+            return eval;
         }
+
+        let mut best_move = None;
 
         if is_maximizing {
             let mut max_eval = i32::MIN;
@@ -339,21 +531,26 @@ impl AI {
                 let game_won = test_state.make_move(move_idx);
 
                 if game_won {
-                    return match test_state.current_player {
-                        Player::Player2 => 10000,
-                        Player::Player1 => -10000,
-                    };
+                    let eval = WIN_SCORE + depth as i32; // Prefer quicker wins
+                    self.store_transposition(state_hash, eval, depth, Some(move_idx));
+                    return eval;
                 }
 
-                let eval_score = Self::minimax(&test_state, depth - 1, false, alpha, beta);
-                max_eval = max_eval.max(eval_score);
+                let eval_score = self.minimax(&test_state, depth - 1, false, alpha, beta);
+
+                if eval_score > max_eval {
+                    max_eval = eval_score;
+                    best_move = Some(move_idx);
+                }
+
                 alpha = alpha.max(eval_score);
 
                 if beta <= alpha {
-                    break;
+                    break; // Alpha-beta pruning
                 }
             }
 
+            self.store_transposition(state_hash, max_eval, depth, best_move);
             max_eval
         } else {
             let mut min_eval = i32::MAX;
@@ -363,23 +560,113 @@ impl AI {
                 let game_won = test_state.make_move(move_idx);
 
                 if game_won {
-                    return match test_state.current_player {
-                        Player::Player1 => -10000,
-                        Player::Player2 => 10000,
-                    };
+                    let eval = -WIN_SCORE - depth as i32; // Prefer delaying losses
+                    self.store_transposition(state_hash, eval, depth, Some(move_idx));
+                    return eval;
                 }
 
-                let eval_score = Self::minimax(&test_state, depth - 1, true, alpha, beta);
-                min_eval = min_eval.min(eval_score);
+                let eval_score = self.minimax(&test_state, depth - 1, true, alpha, beta);
+
+                if eval_score < min_eval {
+                    min_eval = eval_score;
+                    best_move = Some(move_idx);
+                }
+
                 beta = beta.min(eval_score);
 
                 if beta <= alpha {
-                    break;
+                    break; // Alpha-beta pruning
                 }
             }
 
+            self.store_transposition(state_hash, min_eval, depth, best_move);
             min_eval
         }
+    }
+
+    fn store_transposition(
+        &mut self,
+        hash: u64,
+        evaluation: i32,
+        depth: u8,
+        best_move: Option<u8>,
+    ) {
+        if self.transposition_table.len() >= Self::TRANSPOSITION_TABLE_SIZE {
+            // Simple replacement strategy: clear some entries
+            if self.transposition_table.len() % 1000 == 0 {
+                self.transposition_table.clear();
+            }
+        }
+
+        self.transposition_table.insert(
+            hash,
+            TranspositionEntry {
+                evaluation,
+                depth,
+                best_move,
+            },
+        );
+    }
+
+    // Adaptive evaluation based on game phase
+    fn get_phase_multiplier(&self, phase: GamePhase) -> f32 {
+        match phase {
+            GamePhase::Opening => 0.8,    // Less aggressive in opening
+            GamePhase::Middlegame => 1.0, // Standard evaluation
+            GamePhase::Endgame => 1.3,    // More aggressive in endgame
+        }
+    }
+
+    // Enhanced move ordering for better alpha-beta pruning
+    fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
+        let mut scored_moves: Vec<(u8, i32)> = Vec::new();
+
+        for &move_idx in moves {
+            let mut test_state = state.clone();
+            let _won = test_state.make_move(move_idx);
+
+            // Quick evaluation for move ordering
+            let score = test_state.evaluate() + self.evaluate_move_tactical(state, move_idx);
+            scored_moves.push((move_idx, score));
+        }
+
+        // Sort by score (best moves first)
+        scored_moves.sort_by(|a, b| b.1.cmp(&a.1));
+        scored_moves.into_iter().map(|(m, _)| m).collect()
+    }
+
+    // Tactical evaluation for move ordering
+    fn evaluate_move_tactical(&self, state: &GameState, move_idx: u8) -> i32 {
+        let mut score = 0i32;
+
+        let piece = &state.get_pieces(state.current_player)[move_idx as usize];
+        let track = GameState::get_player_track(state.current_player);
+
+        if piece.square == -1 {
+            score += 10; // Prefer entering the board
+        } else if let Some(track_pos) = track.iter().position(|&sq| sq as i8 == piece.square) {
+            let new_track_pos = track_pos + state.dice_roll as usize;
+
+            if new_track_pos >= track.len() {
+                score += 100; // Prefer finishing pieces
+            } else {
+                let new_square = track[new_track_pos];
+
+                // Prefer capturing opponents
+                if let Some(occupant) = state.board[new_square as usize] {
+                    if occupant.player != state.current_player {
+                        score += 50;
+                    }
+                }
+
+                // Prefer landing on rosettes
+                if GameState::is_rosette(new_square) {
+                    score += 30;
+                }
+            }
+        }
+
+        score
     }
 }
 
@@ -518,7 +805,8 @@ pub async fn main(mut req: Request, _env: Env, _ctx: worker::Context) -> Result<
 
             let ai_start = Date::now().as_millis();
             let game_state = convert_json_to_game_state(game_state_request);
-            let ai_move = AI::get_best_move(&game_state);
+            let mut ai = AI::new();
+            let ai_move = ai.get_best_move(&game_state);
             let evaluation = game_state.evaluate();
             let ai_end = Date::now().as_millis();
             let end_time = Date::now().as_millis();
@@ -526,7 +814,12 @@ pub async fn main(mut req: Request, _env: Env, _ctx: worker::Context) -> Result<
             let response = AIResponse {
                 r#move: ai_move,
                 evaluation,
-                thinking: "Pure Rust AI has decided.".to_string(),
+                thinking: format!(
+                    "Advanced minimax AI (depth {}) evaluated position: score {}. Transposition table entries: {}",
+                    AI::MAX_DEPTH,
+                    evaluation,
+                    ai.transposition_table.len()
+                ),
                 timings: Timings {
                     ai_move_calculation: (ai_end - ai_start) as u32,
                     total_handler_time: (end_time - start_time) as u32,

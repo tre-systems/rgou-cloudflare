@@ -1,5 +1,5 @@
 name = "rgou-main"
-main = "./.open-next/worker.js"
+main = "./.open-next/server-functions/default/index.mjs"
 compatibility_date = "2025-06-14"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 account_id = "571f130502618993d848f58d27ae288d"
