@@ -213,6 +213,18 @@ export function processDiceRoll(gameState: GameState): GameState {
     validMoves: diceRoll > 0 ? getValidMoves({ ...gameState, diceRoll }) : [],
   };
 
+  // If rolled 0, automatically switch to next player
+  if (diceRoll === 0) {
+    return {
+      ...newState,
+      currentPlayer:
+        gameState.currentPlayer === "player1" ? "player2" : "player1",
+      diceRoll: null,
+      canMove: false,
+      validMoves: [],
+    };
+  }
+
   // If no valid moves and dice roll > 0, skip turn
   if (diceRoll > 0 && newState.validMoves.length === 0) {
     return {
