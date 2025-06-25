@@ -335,9 +335,9 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
   };
 
   const boardLayout = [
-    [19, 18, 17, 16, -1, -1, 12, 13],
+    [16, 17, 18, 19, -1, -1, 15, 14],
     [4, 5, 6, 7, 8, 9, 10, 11],
-    [3, 2, 1, 0, -1, -1, 15, 14],
+    [0, 1, 2, 3, -1, -1, 13, 12],
   ];
 
   return (
