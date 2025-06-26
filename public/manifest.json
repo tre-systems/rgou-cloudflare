@@ -1,6 +1,6 @@
 {
-  "name": "Royal Game of Ur",
-  "short_name": "Royal Game of Ur",
+  "name": "rgou",
+  "short_name": "rgou",
   "description": "Play the ancient Mesopotamian board game dating back 4,500 years. Race your pieces around the board and challenge an AI opponent in this historic strategy game.",
   "start_url": "/",
   "display": "standalone",

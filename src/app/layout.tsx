@@ -33,14 +33,14 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Royal Game of Ur",
+    title: "rgou",
   },
-  applicationName: "Royal Game of Ur",
+  applicationName: "rgou",
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "Royal Game of Ur",
+    "apple-mobile-web-app-title": "rgou",
     "msapplication-TileColor": "#1e40af",
     "msapplication-config": "/browserconfig.xml",
   },

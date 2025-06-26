@@ -134,7 +134,7 @@ self.addEventListener("push", (event) => {
   console.log("[SW] Push message received");
 
   const options = {
-    body: event.data ? event.data.text() : "Royal Game of Ur notification",
+    body: event.data ? event.data.text() : "rgou notification",
     icon: "/icons/icon-192x192.png",
     badge: "/icons/icon-72x72.png",
     vibrate: [100, 50, 100],
@@ -156,9 +156,7 @@ self.addEventListener("push", (event) => {
     ],
   };
 
-  event.waitUntil(
-    self.registration.showNotification("Royal Game of Ur", options)
-  );
+  event.waitUntil(self.registration.showNotification("rgou", options));
 });
 
 // Notification click event
