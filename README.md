@@ -304,3 +304,129 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 ## 📚 Historical Context
 
 The Royal Game of Ur dates back to 2600-2400 BCE and was discovered in the Royal Cemetery at Ur by Sir Leonard Woolley. Game rules were deciphered from a cuneiform tablet by Irving Finkel at the British Museum.
+
+# Royal Game of Ur - PWA Edition
+
+> An ancient Mesopotamian board game dating back 4,500 years, now available as a Progressive Web App!
+
+## Features
+
+- **Progressive Web App (PWA)**: Install on your device for native-like experience
+- **Offline Play**: Play against AI even without internet connection
+- **Ancient Strategy**: Experience the world's oldest known board game
+- **AI Opponent**: Challenge yourself against a Rust-powered AI
+- **Modern UI**: Beautiful, responsive design with animations
+- **Cross-Platform**: Works on desktop, mobile, and tablet
+
+## PWA Features
+
+### Installation
+
+- **Install Prompt**: Automatic installation prompt after a few seconds
+- **Home Screen**: Add to home screen on mobile devices
+- **Standalone Mode**: Runs like a native app when installed
+- **App Icons**: Custom icons for all device sizes
+
+### Offline Capabilities
+
+- **Service Worker**: Caches game assets for offline play
+- **Network Detection**: Shows online/offline status
+- **Offline Fallback**: Dedicated offline page when no connection
+- **Background Sync**: Syncs data when connection is restored
+
+### Performance
+
+- **Caching Strategy**: Smart caching for optimal performance
+- **Fast Loading**: Pre-cached critical resources
+- **Progressive Enhancement**: Works without JavaScript enabled
+
+## Getting Started
+
+### Development
+
+```bash
+# Install dependencies
+npm install
+
+# Generate PWA icons
+npm run generate:icons
+
+# Start development server
+npm run dev
+
+# Build for production (includes PWA assets)
+npm run pwa:build
+```
+
+### Building for Production
+
+The app includes several build targets:
+
+- `npm run build` - Standard Next.js build
+- `npm run pwa:build` - Build with PWA icons generated
+- `npm run build:cf` - Build for Cloudflare deployment
+
+## PWA Installation
+
+### Desktop (Chrome/Edge)
+
+1. Visit the app in your browser
+2. Look for the install icon in the address bar
+3. Click "Install" when prompted
+4. The app will open in its own window
+
+### Mobile (iOS/Android)
+
+1. Open the app in Safari (iOS) or Chrome (Android)
+2. Tap the install prompt that appears
+3. Or use "Add to Home Screen" from the browser menu
+4. The app icon will appear on your home screen
+
+## Offline Play
+
+The Royal Game of Ur works fully offline! The AI opponent runs entirely in your browser using WebAssembly, so you can play even without an internet connection.
+
+## Technology Stack
+
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
+- **PWA**: Service Worker, Web App Manifest, Workbox
+- **AI Engine**: Rust compiled to WebAssembly
+- **Backend**: Cloudflare Workers (Rust)
+- **Deployment**: Cloudflare Pages + Workers
+
+## PWA Checklist
+
+- ✅ Web App Manifest
+- ✅ Service Worker
+- ✅ HTTPS (required for PWA)
+- ✅ Responsive Design
+- ✅ App Icons (all sizes)
+- ✅ Offline Functionality
+- ✅ Install Prompts
+- ✅ Fast Loading
+- ✅ Network Status Detection
+
+## Browser Support
+
+The PWA features work in all modern browsers:
+
+- Chrome/Chromium (full PWA support)
+- Firefox (basic PWA support)
+- Safari (iOS Web App support)
+- Edge (full PWA support)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add PWA icons with `npm run generate:icons`
+4. Test PWA features in multiple browsers
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
+
+---
+
+Experience the ancient game of Ur like never before - install it as a PWA and play anywhere, anytime! 🏺✨
