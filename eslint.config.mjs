@@ -11,6 +11,19 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    ignores: [
+      // Ignore generated WASM files
+      "src/lib/wasm/**/*",
+      // Ignore build output
+      ".next/**/*",
+      ".open-next/**/*",
+      "out/**/*",
+      "dist/**/*",
+      // Ignore node_modules
+      "node_modules/**/*",
+    ],
+  },
 ];
 
 export default eslintConfig;

@@ -204,8 +204,11 @@ export function makeMove(gameState: GameState, pieceIndex: number): GameState {
 }
 
 // Process dice roll
-export function processDiceRoll(gameState: GameState): GameState {
-  const diceRoll = rollDice();
+export function processDiceRoll(
+  gameState: GameState,
+  providedRoll?: number
+): GameState {
+  const diceRoll = providedRoll !== undefined ? providedRoll : rollDice();
   const newState = {
     ...gameState,
     diceRoll,

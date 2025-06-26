@@ -10,9 +10,7 @@ binding = "ASSETS"
 
 [vars]
 ENVIRONMENT = "production"
-# Add your AI worker URL - update this after deploying
 NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-minmax.tre.systems"
-# Add AI worker secret for direct worker-to-worker communication
 AI_WORKER_SECRET = "production-secret-2024"
 
 [observability]

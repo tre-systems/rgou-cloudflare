@@ -12,7 +12,7 @@ class WasmAIService {
     }
     const wasm = await import("./wasm/rgou_ai_worker");
     await wasm.default({
-      locateFile: (file) => `/wasm/${file}`,
+      locateFile: (file: string) => `/wasm/${file}`,
     });
     this.wasm = wasm;
     return wasm;

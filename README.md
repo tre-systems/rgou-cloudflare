@@ -7,7 +7,7 @@ A modern implementation of the ancient Mesopotamian board game "Royal Game of Ur
 - **Authentic Gameplay**: Faithful recreation of the 4,500-year-old Royal Game of Ur
 - **Advanced AI Opponent**: Intelligent AI powered by Rust using minimax algorithm with alpha-beta pruning and transposition tables
 - **Modern UI**: Beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations
-- **Cloud-Native**: Deployed on Cloudflare Pages with AI running on Cloudflare Workers
+- **Cloud-Native**: Deployed on Cloudflare Workers with static assets and AI running on Cloudflare Workers
 - **Real-time**: Smooth animations and real-time game state updates with sound effects
 - **Single Player Mode**: Challenge the sophisticated AI opponent
 
@@ -71,7 +71,8 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
        │                                      │
        ▼                                      ▼
 ┌─────────────────┐                 ┌──────────────────┐
-│ Cloudflare Pages│                 │ Cloudflare Workers│
+│ Cloudflare      │                 │ Cloudflare Workers│
+│ Workers + Assets│                 │                  │
 └─────────────────┘                 └──────────────────┘
 ```
 
@@ -103,10 +104,6 @@ rgou-cloudflare/
 │   ├── Cargo.toml             # Rust dependencies
 │   ├── Cargo.lock             # Dependency lock
 │   └── wrangler.toml          # Worker configuration
-├── tests/                      # Playwright tests
-│   ├── game-ui.spec.ts        # UI tests
-│   ├── game-functionality.spec.ts # Functionality tests
-│   └── performance.spec.ts    # Performance tests
 └── docs/                       # Documentation
     ├── cloudflare-worker.md   # Worker documentation
     └── minimax-ai-specification.md # AI specification
@@ -118,8 +115,8 @@ rgou-cloudflare/
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
-- `npm run build:cf` - Build for Cloudflare Pages
-- `npm run deploy:cf` - Deploy to Cloudflare Pages
+- `npm run build:cf` - Build for Cloudflare Workers deployment
+- `npm run deploy:cf` - Deploy to Cloudflare Workers
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint errors
 
@@ -129,14 +126,6 @@ rgou-cloudflare/
 - `npm run build:worker` - Build Rust worker
 - `npm run deploy:worker` - Deploy worker to Cloudflare
 - `npm run setup:worker` - Install worker dependencies
-
-#### Testing
-
-- `npm test` - Run Playwright tests
-- `npm run test:ui` - Run tests with UI mode
-- `npm run test:headed` - Run tests in headed mode
-- `npm run test:debug` - Debug tests step by step
-- `npm run test:report` - View test report
 
 ## 🤖 AI Implementation
 
@@ -162,7 +151,7 @@ The AI is implemented in Rust for maximum performance and compiled to WebAssembl
 
 ## 🚀 Deployment
 
-Deployment is handled in two parts: the Next.js frontend and the Cloudflare AI worker. For detailed instructions, see the [Deployment Guide](./DEPLOYMENT.md).
+Deployment uses Cloudflare Workers with static assets for the frontend and a separate Cloudflare Worker for the AI backend. For detailed instructions, see the [Deployment Guide](./DEPLOYMENT.md).
 
 ### Environment Variables
 
@@ -172,7 +161,7 @@ Create `.env.local` for local development:
 NEXT_PUBLIC_AI_WORKER_URL=http://localhost:8787
 ```
 
-For production, set in Cloudflare Pages:
+For production, set in Cloudflare Workers environment variables:
 
 ```bash
 NEXT_PUBLIC_AI_WORKER_URL=https://your-worker.your-subdomain.workers.dev
@@ -245,61 +234,6 @@ The game includes a comprehensive sound system:
 - **Game End**: Victory and defeat sounds
 - **AI Thinking**: Ambient thinking sounds
 
-## 🧪 Testing
-
-The project includes comprehensive end-to-end testing with Playwright:
-
-```bash
-# Run all tests
-npm test
-
-# Run specific test suites
-npx playwright test game-ui.spec.ts
-npx playwright test game-functionality.spec.ts
-npx playwright test performance.spec.ts
-
-# View test results
-npm run test:report
-```
-
-Tests cover:
-
-- UI elements and responsive design
-- Game functionality and mechanics
-- Performance and accessibility
-- Cross-browser compatibility
-- AI interaction and fallback behavior
-
-## 🔧 Configuration
-
-### Next.js Configuration
-
-The project uses `open-next` for Cloudflare Pages compatibility:
-
-```typescript
-// next.config.mjs
-const nextConfig = {
-  experimental: {
-    runtime: "edge",
-  },
-  output: "export",
-  trailingSlash: true,
-  images: { unoptimized: true },
-};
-```
-
-### Worker Configuration
-
-```toml
-# worker/wrangler.toml
-name = "rgou-ai-worker"
-main = "build/worker/shim.mjs"
-compatibility_date = "2024-12-01"
-
-[build]
-command = "cargo install -q worker-build && worker-build --release"
-```
-
 ## 🎨 UI/UX Features
 
 - **Animated Background**: Dynamic particle effects
@@ -319,9 +253,37 @@ The AI provides detailed game analytics:
 - **Board Control Metrics**: Strategic positioning assessment
 - **Performance Timings**: AI calculation and response times
 
+## 🔧 Configuration
+
+### Next.js Configuration
+
+The project uses `open-next` for Cloudflare Workers compatibility:
+
+```typescript
+// next.config.mjs
+const nextConfig = {
+  output: "export",
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+```
+
+### Worker Configuration
+
+```toml
+# wrangler.toml
+name = "rgou-main"
+main = "worker.js"
+compatibility_date = "2025-06-14"
+
+[assets]
+directory = "./out"
+binding = "ASSETS"
+```
+
 ## 🙏 Acknowledgements
 
-- **Cloudflare** for their powerful Workers and Pages platforms
+- **Cloudflare** for their powerful Workers platform
 - **Vercel** for their excellent Next.js tooling and inspiration
 - The **Rust community** for outstanding WebAssembly support
 - **Ancient Mesopotamians** for creating this timeless game
@@ -337,8 +299,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Submit a pull request
 
 ## 📚 Historical Context
 
