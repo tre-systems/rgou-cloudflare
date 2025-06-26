@@ -3,20 +3,36 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { GameState } from "@/lib/types";
 import { initializeGame, processDiceRoll, makeMove } from "@/lib/game-logic";
-import { AIService } from "@/lib/ai-service";
+import { AIService, AIResponse } from "@/lib/ai-service";
 import { wasmAiService } from "@/lib/wasm-ai-service";
 import { soundEffects } from "@/lib/sound-effects";
 import GameBoard from "./GameBoard";
 import GameControls, { AISource } from "./GameControls";
 import AnimatedBackground from "./AnimatedBackground";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Crown, Zap } from "lucide-react";
+import {
+  Sparkles,
+  Crown,
+  Zap,
+  Bug,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 
 export default function RoyalGameOfUr() {
   const [gameState, setGameState] = useState<GameState>(() => initializeGame());
   const [aiThinking, setAiThinking] = useState(false);
   const [aiSource, setAiSource] = useState<AISource>("server");
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Diagnostics state
+  const [lastAIDiagnostics, setLastAIDiagnostics] = useState<AIResponse | null>(
+    null
+  );
+  const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
+  const [lastAIMoveDuration, setLastAIMoveDuration] = useState<number | null>(
+    null
+  );
 
   const [lastMove, setLastMove] = useState<{
     type: "move" | "capture" | "rosette" | "finish";
@@ -31,11 +47,21 @@ export default function RoyalGameOfUr() {
       setAiThinking(true);
       soundEffects.aiThinking();
 
+      // Track timing
+      const startTime = performance.now();
+
       try {
         const aiResponse =
           aiSource === "server"
             ? await AIService.getAIMove(currentState)
             : await wasmAiService.getAIMove(currentState);
+
+        // Calculate duration
+        const duration = performance.now() - startTime;
+        setLastAIMoveDuration(duration);
+
+        // Store AI diagnostics
+        setLastAIDiagnostics(aiResponse);
 
         setTimeout(() => {
           const newState = makeMove(currentState, aiResponse.move);
@@ -73,6 +99,10 @@ export default function RoyalGameOfUr() {
       } catch (error) {
         console.warn("AI service unavailable, using fallback:", error);
         const fallbackMove = AIService.getFallbackAIMove(currentState);
+
+        // Clear diagnostics when using fallback
+        setLastAIDiagnostics(null);
+
         setTimeout(() => {
           setGameState((prevState) => makeMove(prevState, fallbackMove));
           setAiThinking(false);
@@ -91,7 +121,12 @@ export default function RoyalGameOfUr() {
     ) {
       setTimeout(() => setGameState(processDiceRoll), 500);
     }
-  }, [gameState.currentPlayer, gameState.canMove, gameState.gameStatus]);
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.gameStatus,
+    gameState,
+  ]);
 
   useEffect(() => {
     if (gameState.currentPlayer === "player2" && gameState.canMove) {
@@ -162,6 +197,7 @@ export default function RoyalGameOfUr() {
   const handleReset = () => {
     setGameState(initializeGame());
     setLastMove(null);
+    setLastAIDiagnostics(null);
   };
 
   const toggleSound = () => {
@@ -173,6 +209,7 @@ export default function RoyalGameOfUr() {
     <>
       <AnimatedBackground />
       <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
+        {/* Game area - stays centered */}
         <motion.div
           className="w-full max-w-sm mx-auto space-y-3"
           initial={{ opacity: 0, y: 20 }}
@@ -289,6 +326,145 @@ export default function RoyalGameOfUr() {
             </p>
           </motion.div>
         </motion.div>
+
+        {/* AI Diagnostics Panel - positioned absolutely to avoid shifting game */}
+        {lastAIDiagnostics && (
+          <motion.div
+            className="hidden xl:block fixed right-4 top-1/2 transform -translate-y-1/2 w-80 space-y-3 z-20"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            {/* Diagnostics toggle button */}
+            <motion.button
+              onClick={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+              className="w-full glass-dark rounded-lg p-3 flex items-center justify-between hover:bg-white/10 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="flex items-center space-x-2">
+                <Bug className="w-4 h-4 text-amber-400" />
+                <span className="text-white/90 text-sm font-medium">
+                  AI Diagnostics
+                </span>
+                <span className="text-xs text-white/50 bg-white/10 px-2 py-1 rounded-full">
+                  DEV
+                </span>
+              </div>
+              {diagnosticsPanelOpen ? (
+                <ChevronDown className="w-4 h-4 text-white/60" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-white/60" />
+              )}
+            </motion.button>
+
+            {/* Diagnostics content */}
+            <AnimatePresence>
+              {diagnosticsPanelOpen && (
+                <motion.div
+                  className="glass-dark rounded-lg p-4 space-y-4"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="space-y-4">
+                    {/* Move & Evaluation Summary */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="glass rounded-md p-3">
+                        <div className="text-xs text-white/60 mb-1">
+                          Selected Move
+                        </div>
+                        <div className="text-lg font-mono text-white">
+                          Piece #{lastAIDiagnostics.move}
+                        </div>
+                      </div>
+                      <div className="glass rounded-md p-3">
+                        <div className="text-xs text-white/60 mb-1">
+                          Evaluation
+                        </div>
+                        <div
+                          className={`text-lg font-mono ${
+                            lastAIDiagnostics.evaluation > 0
+                              ? "text-pink-400"
+                              : lastAIDiagnostics.evaluation < 0
+                              ? "text-blue-400"
+                              : "text-white/80"
+                          }`}
+                        >
+                          {lastAIDiagnostics.evaluation > 0 ? "+" : ""}
+                          {lastAIDiagnostics.evaluation.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Timing and Performance */}
+                    <div>
+                      <h4 className="text-sm font-medium text-white/80 mb-2">
+                        Performance Metrics
+                      </h4>
+                      <div className="glass rounded-md p-3 space-y-2">
+                        {lastAIMoveDuration && (
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-white/60">
+                              Response Time:
+                            </span>
+                            <span className="text-white/90 font-mono">
+                              {lastAIMoveDuration.toFixed(0)}ms
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-white/60">AI Source:</span>
+                          <span className="text-white/70 font-medium">
+                            {aiSource === "server"
+                              ? "Server (Minimax)"
+                              : "Client (WASM)"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* AI Reasoning */}
+                    {lastAIDiagnostics.thinking && (
+                      <div>
+                        <h4 className="text-sm font-medium text-white/80 mb-2">
+                          AI Analysis
+                        </h4>
+                        <div className="glass rounded-md p-3">
+                          <div className="text-xs text-white/70 leading-relaxed">
+                            {lastAIDiagnostics.thinking}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Position Assessment */}
+                    <div>
+                      <h4 className="text-sm font-medium text-white/80 mb-2">
+                        Position Assessment
+                      </h4>
+                      <div className="glass rounded-md p-3">
+                        <div className="text-xs text-white/70">
+                          {lastAIDiagnostics.evaluation > 1
+                            ? "🔴 Strong AI advantage"
+                            : lastAIDiagnostics.evaluation > 0.5
+                            ? "🟠 Slight AI advantage"
+                            : lastAIDiagnostics.evaluation > -0.5
+                            ? "🟡 Balanced position"
+                            : lastAIDiagnostics.evaluation > -1
+                            ? "🔵 Slight human advantage"
+                            : "🟢 Strong human advantage"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </>
   );

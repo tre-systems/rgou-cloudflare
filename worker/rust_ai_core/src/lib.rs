@@ -4,8 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
-// Removed wee_alloc global allocator configuration to eliminate warning
-
 // Game constants
 const PIECES_PER_PLAYER: usize = 7;
 const BOARD_SIZE: usize = 20;
