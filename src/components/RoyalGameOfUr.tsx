@@ -16,6 +16,7 @@ export default function RoyalGameOfUr() {
   const [gameState, setGameState] = useState<GameState>(() => initializeGame());
   const [aiThinking, setAiThinking] = useState(false);
   const [aiSource, setAiSource] = useState<AISource>("server");
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [lastMove, setLastMove] = useState<{
     type: "move" | "capture" | "rosette" | "finish";
@@ -163,6 +164,11 @@ export default function RoyalGameOfUr() {
     setLastMove(null);
   };
 
+  const toggleSound = () => {
+    const newState = soundEffects.toggle();
+    setSoundEnabled(newState);
+  };
+
   return (
     <>
       <AnimatedBackground />
@@ -221,7 +227,17 @@ export default function RoyalGameOfUr() {
           />
 
           {/* Game Board */}
-          <GameBoard gameState={gameState} onPieceClick={handlePieceClick} />
+          <GameBoard
+            gameState={gameState}
+            onPieceClick={handlePieceClick}
+            aiThinking={aiThinking}
+            onRollDice={handleRollDice}
+            onResetGame={handleReset}
+            aiSource={aiSource}
+            onAiSourceChange={setAiSource}
+            soundEnabled={soundEnabled}
+            onToggleSound={toggleSound}
+          />
 
           {/* Move Notifications */}
           <AnimatePresence>

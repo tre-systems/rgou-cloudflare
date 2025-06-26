@@ -5,11 +5,30 @@ import { GameState, Player, ROSETTE_SQUARES } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { soundEffects } from "@/lib/sound-effects";
-import { Sparkles, Crown, Star, Zap } from "lucide-react";
+import {
+  Sparkles,
+  Crown,
+  Star,
+  Zap,
+  Dice6,
+  Trophy,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  Cloud,
+  Server,
+} from "lucide-react";
 
 interface GameBoardProps {
   gameState: GameState;
   onPieceClick: (pieceIndex: number) => void;
+  aiThinking?: boolean;
+  onRollDice: () => void;
+  onResetGame: () => void;
+  aiSource: "server" | "client";
+  onAiSourceChange: (source: "server" | "client") => void;
+  soundEnabled: boolean;
+  onToggleSound: () => void;
 }
 
 const MemoizedPiece = React.memo(function Piece({
@@ -55,8 +74,8 @@ const MemoizedPiece = React.memo(function Piece({
         scale: isClickable ? 1.1 : 1.02,
         boxShadow:
           player === "player1"
-            ? "0 0 20px rgba(59, 130, 246, 0.8)"
-            : "0 0 20px rgba(236, 72, 153, 0.8)",
+            ? "0 0 15px rgba(59, 130, 246, 0.5)"
+            : "0 0 15px rgba(236, 72, 153, 0.5)",
       }}
       whileTap={{ scale: 0.95 }}
       onHoverStart={() => setIsHovered(true)}
@@ -120,11 +139,127 @@ const MemoizedPiece = React.memo(function Piece({
   );
 });
 
-export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
+export default function GameBoard({
+  gameState,
+  onPieceClick,
+  aiThinking = false,
+  onRollDice,
+  onResetGame,
+  aiSource,
+  onAiSourceChange,
+  soundEnabled,
+  onToggleSound,
+}: GameBoardProps) {
   const getPieceIndex = (square: number, player: Player) => {
     const pieces =
       player === "player1" ? gameState.player1Pieces : gameState.player2Pieces;
     return pieces.findIndex((p) => p.square === square);
+  };
+
+  const getStatusMessage = () => {
+    if (gameState.gameStatus === "finished") {
+      const winner = gameState.winner === "player1" ? "You" : "AI";
+      const isPlayerWin = gameState.winner === "player1";
+      return {
+        text: `${winner} win${isPlayerWin ? "!" : "s!"}`,
+        icon: isPlayerWin ? Trophy : Zap,
+        color: isPlayerWin ? "text-green-400" : "text-pink-400",
+      };
+    }
+    if (aiThinking) {
+      return {
+        text: "AI thinking...",
+        icon: Zap,
+        color: "text-pink-400",
+      };
+    }
+    if (gameState.canMove) {
+      return {
+        text: "Select a piece to move",
+        icon: Crown,
+        color: "text-blue-400",
+      };
+    }
+    if (gameState.diceRoll === 0) {
+      return {
+        text: "Rolled 0 - turn skipped",
+        icon: Dice6,
+        color: "text-gray-400",
+      };
+    }
+
+    const isPlayerTurn = gameState.currentPlayer === "player1";
+    return {
+      text: `${isPlayerTurn ? "Your" : "AI's"} turn`,
+      icon: isPlayerTurn ? Crown : Zap,
+      color: isPlayerTurn ? "text-blue-400" : "text-pink-400",
+    };
+  };
+
+  const renderDice = () => {
+    if (gameState.diceRoll === null) return <div className="h-6"></div>;
+
+    return (
+      <motion.div
+        className="flex items-center justify-center space-x-2"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <span className="text-xs font-semibold text-white/80">Roll:</span>
+        <div className="flex space-x-1">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className={cn(
+                "w-2.5 h-2.5 rounded-full border-2",
+                i < gameState.diceRoll!
+                  ? "bg-amber-400 border-amber-300 shadow-lg"
+                  : "bg-white/20 border-white/40"
+              )}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                delay: i * 0.1,
+                type: "spring",
+                stiffness: 400,
+                damping: 20,
+              }}
+              whileHover={{ scale: 1.2 }}
+            />
+          ))}
+        </div>
+        <motion.span
+          className="text-lg font-bold text-amber-400 neon-text min-w-[20px] text-center"
+          animate={{
+            scale: [1, 1.2, 1],
+            textShadow: [
+              "0 0 10px rgba(251, 191, 36, 0.5)",
+              "0 0 20px rgba(251, 191, 36, 0.8)",
+              "0 0 10px rgba(251, 191, 36, 0.5)",
+            ],
+          }}
+          transition={{ duration: 0.5 }}
+        >
+          {gameState.diceRoll}
+        </motion.span>
+      </motion.div>
+    );
+  };
+
+  const handleRollDice = () => {
+    soundEffects.diceRoll();
+    onRollDice();
+  };
+
+  const handleResetGame = () => {
+    soundEffects.buttonClick();
+    onResetGame();
+  };
+
+  const toggleSound = () => {
+    soundEffects.buttonClick();
+    onToggleSound();
   };
 
   const renderSquare = (squareIndex: number, key: string) => {
@@ -212,12 +347,12 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
       <motion.div
         className={cn(
           "glass rounded-lg p-3 relative overflow-hidden",
-          isCurrentPlayer && "ring-2 ring-white/50"
+          isCurrentPlayer && "ring-2 ring-white/30"
         )}
         animate={{
           boxShadow: isCurrentPlayer
-            ? "0 0 30px rgba(99, 102, 241, 0.3)"
-            : "0 0 10px rgba(0, 0, 0, 0.1)",
+            ? "0 0 20px rgba(99, 102, 241, 0.2)"
+            : "0 0 8px rgba(0, 0, 0, 0.1)",
         }}
         transition={{ duration: 0.5 }}
       >
@@ -302,7 +437,7 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
                     animate={{
                       boxShadow:
                         i < finishedPieces.length
-                          ? "0 0 15px rgba(34, 197, 94, 0.5)"
+                          ? "0 0 10px rgba(34, 197, 94, 0.3)"
                           : "none",
                     }}
                   >
@@ -340,6 +475,9 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
     [0, 1, 2, 3, -1, -1, 13, 12],
   ];
 
+  const status = getStatusMessage();
+  const StatusIcon = status.icon;
+
   return (
     <div className="w-full max-w-sm mx-auto space-y-3">
       {/* AI Player Area */}
@@ -361,6 +499,51 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
           >
             Ancient Board of Ur
           </motion.h3>
+
+          {/* Status Section */}
+          <div className="mt-2 h-8 flex flex-col justify-center">
+            <motion.div
+              className="flex items-center justify-center space-x-2"
+              animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
+              transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
+            >
+              <StatusIcon className={cn("w-4 h-4", status.color)} />
+              <span
+                className={cn("font-bold text-sm", status.color, "neon-text")}
+              >
+                {status.text}
+              </span>
+            </motion.div>
+
+            {/* AI thinking animation */}
+            <AnimatePresence>
+              {aiThinking && (
+                <motion.div
+                  className="flex justify-center space-x-1 mt-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  {[...Array(3)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1.5 h-1.5 bg-pink-400 rounded-full"
+                      animate={{
+                        y: [0, -6, 0],
+                        opacity: [0.3, 1, 0.3],
+                      }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 0.8,
+                        delay: i * 0.2,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* The game board grid */}
@@ -374,6 +557,114 @@ export default function GameBoard({ gameState, onPieceClick }: GameBoardProps) {
                 <div key={`empty-${i}`} className="aspect-square" />
               )
             )}
+        </div>
+
+        {/* Controls Section */}
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between">
+            {/* Dice Display */}
+            <div className="flex-1">{renderDice()}</div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-2">
+              {/* AI Source Toggle */}
+              <motion.button
+                onClick={() =>
+                  onAiSourceChange(aiSource === "server" ? "client" : "server")
+                }
+                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title={`Switch to ${
+                  aiSource === "server" ? "Client" : "Server"
+                } AI`}
+              >
+                {aiSource === "server" ? (
+                  <Cloud className="w-3.5 h-3.5" />
+                ) : (
+                  <Server className="w-3.5 h-3.5" />
+                )}
+              </motion.button>
+
+              {/* Sound Toggle */}
+              <motion.button
+                onClick={toggleSound}
+                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {soundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5" />
+                )}
+              </motion.button>
+
+              {/* Roll Dice Button */}
+              {!gameState.canMove && gameState.gameStatus === "playing" && (
+                <motion.button
+                  onClick={handleRollDice}
+                  disabled={gameState.currentPlayer === "player2"}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg font-semibold transition-all duration-200 text-sm",
+                    "bg-gradient-to-r from-blue-500 to-purple-600 text-white",
+                    "disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50",
+                    "hover:from-blue-600 hover:to-purple-700",
+                    "shadow-lg hover:shadow-xl"
+                  )}
+                  whileHover={{
+                    scale: gameState.currentPlayer === "player1" ? 1.05 : 1,
+                    boxShadow:
+                      gameState.currentPlayer === "player1"
+                        ? "0 0 15px rgba(99, 102, 241, 0.4)"
+                        : "none",
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className="flex items-center space-x-1.5">
+                    <motion.div
+                      animate={{
+                        rotate:
+                          gameState.currentPlayer === "player1" ? [0, 360] : 0,
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                    >
+                      <Dice6 className="w-3.5 h-3.5" />
+                    </motion.div>
+                    <span>Roll</span>
+                  </div>
+                </motion.button>
+              )}
+
+              {/* Reset Button */}
+              <motion.button
+                onClick={handleResetGame}
+                className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0 0 10px rgba(107, 114, 128, 0.3)",
+                }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <motion.div
+                  whileHover={{ rotate: 180 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </motion.div>
+              </motion.button>
+            </div>
+          </div>
         </div>
       </motion.div>
 
