@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "build:cf": "open-next build",
+    "build:cf": "next build",
     "deploy:cf": "npm run build:cf && wrangler deploy",
     "dev:worker": "cd worker && npm run dev",
     "build:worker": "cd worker && npm run build",
