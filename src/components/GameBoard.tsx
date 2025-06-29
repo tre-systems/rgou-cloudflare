@@ -197,7 +197,7 @@ export default function GameBoard({
   };
 
   const renderDice = () => {
-    if (gameState.diceRoll === null) return <div className="h-6"></div>;
+    if (gameState.diceRoll === null) return <div className="h-7"></div>;
 
     return (
       <motion.div
@@ -501,9 +501,9 @@ export default function GameBoard({
           </motion.h3>
 
           {/* Status Section */}
-          <div className="mt-2 h-8 flex flex-col justify-center">
+          <div className="mt-2 h-10 flex flex-col justify-start relative pt-1">
             <motion.div
-              className="flex items-center justify-center space-x-2"
+              className="flex items-center justify-center space-x-2 h-6"
               animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
               transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
             >
@@ -519,7 +519,7 @@ export default function GameBoard({
             <AnimatePresence>
               {aiThinking && (
                 <motion.div
-                  className="flex justify-center space-x-1 mt-1"
+                  className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -601,7 +601,7 @@ export default function GameBoard({
               </motion.button>
 
               {/* Roll Dice Button */}
-              {!gameState.canMove && gameState.gameStatus === "playing" && (
+              {!gameState.canMove && gameState.gameStatus === "playing" ? (
                 <motion.button
                   onClick={handleRollDice}
                   disabled={gameState.currentPlayer === "player2"}
@@ -641,6 +641,8 @@ export default function GameBoard({
                     <span>Roll</span>
                   </div>
                 </motion.button>
+              ) : (
+                <div className="w-[70px] h-[32px]" />
               )}
 
               {/* Reset Button */}
