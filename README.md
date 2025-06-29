@@ -63,30 +63,6 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 
 This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a powerful server-side AI and an instant client-side AI.
 
-```mermaid
-graph TD
-    subgraph Browser
-        A[Next.js App <br/> (React UI)]
-        B{AI Source Toggle}
-        C[Client-Side AI <br/> (Rust/Wasm)]
-    end
-
-    subgraph Cloudflare
-        D[Server-Side AI <br/> (Rust Worker)]
-    end
-
-    A --> B
-    B -- "Client" --> C
-    B -- "Server" --> D
-
-    C -- "Local Move" --> A
-    D -- "API Call" --o A
-
-    style A fill:#cde4ff,stroke:#333
-    style C fill:#d5fada,stroke:#333
-    style D fill:#f9f,stroke:#333
-```
-
 ## 🛠️ Development
 
 ### Project Structure
