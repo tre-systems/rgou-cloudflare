@@ -42,22 +42,17 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
    git clone <repository-url>
    cd rgou-cloudflare
    npm install
-   npm run setup:worker
    ```
 
-2. **Start development servers:**
+2. **Start the development server:**
 
    ```bash
-   # Terminal 1: Start Next.js app
+   # The Next.js app and a local AI worker will be available
    npm run dev
-
-   # Terminal 2: Start AI worker
-   npm run dev:worker
    ```
 
 3. **Open your browser:**
    - Game: http://localhost:3000
-   - AI Worker: http://localhost:8787
 
 ## 🏗️ Architecture
 
@@ -93,21 +88,13 @@ rgou-cloudflare/
 
 ### Available Scripts
 
-#### Main App
-
-- `npm run dev` - Start development server.
-- `npm run build` - Build for production.
-- `npm run postbuild` - Build client-side Wasm and place it in `src/lib` and `public`.
-- `npm run deploy:cf` - Deploy to Cloudflare Workers.
+- `npm run dev` - Start the Next.js development server.
+- `npm run build` - Build the application for production.
+- `npm run start` - Start a production server.
+- `npm run deploy:cf` - Deploy the frontend to Cloudflare Workers.
+- `npm run deploy:worker` - Deploy the AI worker to Cloudflare.
 - `npm run lint` - Run ESLint.
-- `npm run lint:fix` - Fix ESLint errors.
-
-#### AI Worker
-
-- `npm run dev:worker` - Start worker development server.
-- `npm run build:worker` - Build Rust worker.
-- `npm run deploy:worker` - Deploy worker to Cloudflare.
-- `npm run setup:worker` - Install worker dependencies.
+- `npm run check` - Run prettier, linting, and type checking.
 
 ## 🤖 Dual AI Engine
 
@@ -244,14 +231,13 @@ The AI provides detailed game analytics:
 
 ### Next.js Configuration
 
-The project uses `open-next` for Cloudflare Workers compatibility:
+The project is configured for a static export to be compatible with a standard Cloudflare Worker deployment.
 
 ```typescript
 // next.config.mjs
 const nextConfig = {
   output: "export",
-  trailingSlash: true,
-  images: { unoptimized: true },
+  // ... other settings
 };
 ```
 
