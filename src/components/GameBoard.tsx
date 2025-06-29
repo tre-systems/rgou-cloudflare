@@ -77,7 +77,7 @@ const CaptureExplosion = ({
               ? "bg-red-500"
               : i % 3 === 1
                 ? "bg-orange-500"
-                : "bg-yellow-500",
+                : "bg-yellow-500"
           )}
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
@@ -279,7 +279,7 @@ const VictoryCelebration = ({
       <motion.div
         className={cn(
           "absolute -translate-x-1/2 -translate-y-12 font-bold text-xl drop-shadow-lg",
-          textColor,
+          textColor
         )}
         initial={{ scale: 0, y: 0 }}
         animate={{
@@ -317,7 +317,7 @@ const VictoryCelebration = ({
                 ? "w-1.5 h-1.5 bg-green-400"
                 : i % 4 === 2
                   ? `w-2 h-2 bg-${primaryColor}-400`
-                  : "w-1 h-1 bg-white",
+                  : "w-1 h-1 bg-white"
           )}
           initial={{ scale: 0, x: 0, y: 0, opacity: 1, rotate: 0 }}
           animate={{
@@ -344,7 +344,7 @@ const VictoryCelebration = ({
       <motion.div
         className={cn(
           "absolute w-20 h-20 -translate-x-10 -translate-y-10 border-4 rounded-full",
-          `border-${primaryColor}-400`,
+          `border-${primaryColor}-400`
         )}
         initial={{ scale: 0, opacity: 1, rotate: 0 }}
         animate={{
@@ -441,7 +441,7 @@ const MemoizedPiece = React.memo(function Piece({
         isClickable && "ring-4 ring-green-400 ring-opacity-60 animate-pulse",
         !isClickable && "opacity-90",
         isBeingCaptured && "ring-4 ring-red-500 ring-opacity-80",
-        isFinishing && "ring-4 ring-yellow-400 ring-opacity-80",
+        isFinishing && "ring-4 ring-yellow-400 ring-opacity-80"
       )}
       initial={{ scale: 0, rotate: -180 }}
       animate={{
@@ -507,14 +507,14 @@ const MemoizedPiece = React.memo(function Piece({
           <Crown
             className={cn(
               "w-3 h-3 text-white drop-shadow-lg",
-              isFinishing && "animate-bounce",
+              isFinishing && "animate-bounce"
             )}
           />
         ) : (
           <Zap
             className={cn(
               "w-3 h-3 text-white drop-shadow-lg",
-              isFinishing && "animate-bounce",
+              isFinishing && "animate-bounce"
             )}
           />
         )}
@@ -543,7 +543,7 @@ const MemoizedPiece = React.memo(function Piece({
                 key={i}
                 className={cn(
                   "absolute w-1 h-1 rounded-full",
-                  isFinishing ? "bg-yellow-300" : "bg-white",
+                  isFinishing ? "bg-yellow-300" : "bg-white"
                 )}
                 style={{
                   left: `${20 + i * 15}%`,
@@ -696,7 +696,7 @@ export default function GameBoard({
             soundEffects.pieceMove(); // You might want to add a specific rosette sound
           }
         }
-      },
+      }
     );
 
     previousGameState.current = gameState;
@@ -752,6 +752,13 @@ export default function GameBoard({
         color: "text-pink-400",
       };
     }
+    if (gameState.diceRoll && !gameState.canMove) {
+      return {
+        text: "No valid moves, turn skipped",
+        icon: Dice6,
+        color: "text-gray-400",
+      };
+    }
     if (gameState.canMove) {
       return {
         text: "Select a piece to move",
@@ -794,7 +801,7 @@ export default function GameBoard({
                 "w-2.5 h-2.5 rounded-full border-2",
                 i < gameState.diceRoll!
                   ? "bg-amber-400 border-amber-300 shadow-lg"
-                  : "bg-white/20 border-white/40",
+                  : "bg-white/20 border-white/40"
               )}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -864,7 +871,7 @@ export default function GameBoard({
           "aspect-square relative flex items-center justify-center overflow-hidden",
           "board-square rounded-lg",
           isRosette && "rosette-glow",
-          isClickable && "clickable-square",
+          isClickable && "clickable-square"
         )}
         whileHover={{
           scale: 1.02,
@@ -935,7 +942,7 @@ export default function GameBoard({
       <motion.div
         className={cn(
           "glass rounded-lg p-3 relative overflow-hidden",
-          isCurrentPlayer && "ring-2 ring-white/30",
+          isCurrentPlayer && "ring-2 ring-white/30"
         )}
         animate={{
           boxShadow: isCurrentPlayer
@@ -956,7 +963,7 @@ export default function GameBoard({
               className={cn(
                 "font-bold text-base neon-text",
                 isAI ? "text-pink-400" : "text-blue-400",
-                isCurrentPlayer && "animate-pulse",
+                isCurrentPlayer && "animate-pulse"
               )}
             >
               {isAI ? "AI Player" : "You"}
@@ -1002,7 +1009,7 @@ export default function GameBoard({
                       key={i}
                       className="w-5 h-5 opacity-20 rounded-full border border-white/20"
                     />
-                  ),
+                  )
                 )}
               </div>
             </div>
@@ -1181,7 +1188,7 @@ export default function GameBoard({
                   renderSquare(sq, `sq-${i}`)
                 ) : (
                   <div key={`empty-${i}`} className="aspect-square" />
-                ),
+                )
               )}
           </div>
 
@@ -1200,7 +1207,7 @@ export default function GameBoard({
                       "disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50",
                       "hover:from-blue-600 hover:to-purple-700",
                       "shadow-lg hover:shadow-xl",
-                      "flex items-center justify-center",
+                      "flex items-center justify-center"
                     )}
                     whileHover={{
                       scale: gameState.currentPlayer === "player1" ? 1.05 : 1,
@@ -1246,7 +1253,7 @@ export default function GameBoard({
                 <motion.button
                   onClick={() =>
                     onAiSourceChange(
-                      aiSource === "server" ? "client" : "server",
+                      aiSource === "server" ? "client" : "server"
                     )
                   }
                   className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
