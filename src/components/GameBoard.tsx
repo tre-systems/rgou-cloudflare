@@ -17,7 +17,6 @@ import {
   VolumeX,
   Cloud,
   Server,
-  Award,
 } from "lucide-react";
 
 interface GameBoardProps {
@@ -32,7 +31,7 @@ interface GameBoardProps {
   onToggleSound: () => void;
 }
 
-// Particle explosion component for captures
+// Dramatic capture effect component
 const CaptureExplosion = ({
   position,
 }: {
@@ -45,40 +44,84 @@ const CaptureExplosion = ({
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 2 }}
+      transition={{ duration: 2.5 }}
     >
-      {/* Explosion particles */}
-      {[...Array(8)].map((_, i) => (
+      {/* CAPTURED! Text */}
+      <motion.div
+        className="absolute -translate-x-1/2 -translate-y-8 text-red-400 font-bold text-lg drop-shadow-lg"
+        initial={{ scale: 0, y: 0 }}
+        animate={{
+          scale: [0, 1.2, 1, 0],
+          y: [0, -20, -30, -40],
+        }}
+        transition={{ duration: 2, ease: "easeOut" }}
+      >
+        CAPTURED!
+      </motion.div>
+
+      {/* Dramatic explosion ring */}
+      <motion.div
+        className="absolute w-16 h-16 -translate-x-8 -translate-y-8 border-4 border-red-500 rounded-full"
+        initial={{ scale: 0, opacity: 1 }}
+        animate={{ scale: [0, 1, 2], opacity: [1, 0.8, 0] }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+      />
+
+      {/* Fire/explosion particles */}
+      {[...Array(12)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 bg-red-500 rounded-full"
-          initial={{ scale: 0, x: 0, y: 0 }}
+          className={cn(
+            "absolute w-3 h-3 rounded-full",
+            i % 3 === 0
+              ? "bg-red-500"
+              : i % 3 === 1
+                ? "bg-orange-500"
+                : "bg-yellow-500"
+          )}
+          initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
-            scale: [0, 1, 0],
-            x: Math.cos(i * (360 / 8) * (Math.PI / 180)) * 40,
-            y: Math.sin(i * (360 / 8) * (Math.PI / 180)) * 40,
+            scale: [0, 1, 0.5, 0],
+            x:
+              Math.cos(i * (360 / 12) * (Math.PI / 180)) *
+              (30 + Math.random() * 30),
+            y:
+              Math.sin(i * (360 / 12) * (Math.PI / 180)) *
+              (30 + Math.random() * 30),
+            opacity: [1, 1, 0.5, 0],
           }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{
+            duration: 1.5,
+            ease: "easeOut",
+            delay: Math.random() * 0.3,
+          }}
         />
       ))}
-      {/* Center flash */}
+
+      {/* Center impact flash */}
       <motion.div
-        className="absolute w-8 h-8 -translate-x-4 -translate-y-4 bg-orange-400 rounded-full opacity-80"
+        className="absolute w-12 h-12 -translate-x-6 -translate-y-6 bg-white rounded-full opacity-90"
         initial={{ scale: 0 }}
-        animate={{ scale: [0, 2, 0] }}
-        transition={{ duration: 0.6 }}
+        animate={{ scale: [0, 1, 0] }}
+        transition={{ duration: 0.4 }}
+      />
+
+      {/* Lightning/crack effect */}
+      <motion.div
+        className="absolute w-1 h-16 -translate-x-0.5 -translate-y-8 bg-gradient-to-b from-yellow-300 to-red-500"
+        initial={{ scaleY: 0, opacity: 1 }}
+        animate={{ scaleY: [0, 1, 0], opacity: [1, 1, 0] }}
+        transition={{ duration: 0.6, delay: 0.2 }}
       />
     </motion.div>
   );
 };
 
-// Victory celebration for finishing pieces
-const VictoryCelebration = ({
+// Mystical rosette landing effect
+const RosetteLanding = ({
   position,
-  player,
 }: {
   position: { x: number; y: number };
-  player: Player;
 }) => {
   return (
     <motion.div
@@ -89,47 +132,264 @@ const VictoryCelebration = ({
       exit={{ opacity: 0 }}
       transition={{ duration: 3 }}
     >
-      {/* Golden particles */}
-      {[...Array(12)].map((_, i) => (
+      {/* ROSETTE! Text */}
+      <motion.div
+        className="absolute -translate-x-1/2 -translate-y-10 text-amber-400 font-bold text-lg drop-shadow-lg"
+        initial={{ scale: 0, y: 0 }}
+        animate={{
+          scale: [0, 1.2, 1, 0],
+          y: [0, -15, -20, -30],
+        }}
+        transition={{ duration: 2.2, ease: "easeOut" }}
+      >
+        ROSETTE!
+      </motion.div>
+
+      {/* Extra Turn text */}
+      <motion.div
+        className="absolute -translate-x-1/2 -translate-y-4 text-amber-300 font-semibold text-sm drop-shadow-lg"
+        initial={{ scale: 0, y: 0 }}
+        animate={{
+          scale: [0, 1, 0.9, 0],
+          y: [0, -10, -15, -25],
+        }}
+        transition={{ duration: 2.2, ease: "easeOut", delay: 0.3 }}
+      >
+        Extra Turn!
+      </motion.div>
+
+      {/* Central spinning star */}
+      <motion.div
+        className="absolute -translate-x-4 -translate-y-4"
+        initial={{ scale: 0, rotate: 0 }}
+        animate={{
+          scale: [0, 1.5, 1.2, 0],
+          rotate: [0, 720],
+        }}
+        transition={{ duration: 2.5, ease: "easeOut" }}
+      >
+        <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
+      </motion.div>
+
+      {/* Mystical energy rings */}
+      <motion.div
+        className="absolute w-16 h-16 -translate-x-8 -translate-y-8 border-2 border-amber-400 rounded-full"
+        initial={{ scale: 0, opacity: 1 }}
+        animate={{
+          scale: [0, 1, 1.5],
+          opacity: [1, 0.6, 0],
+        }}
+        transition={{ duration: 2, ease: "easeOut" }}
+      />
+
+      <motion.div
+        className="absolute w-12 h-12 -translate-x-6 -translate-y-6 border-2 border-yellow-300 rounded-full"
+        initial={{ scale: 0, opacity: 1 }}
+        animate={{
+          scale: [0, 1.2, 2],
+          opacity: [1, 0.7, 0],
+        }}
+        transition={{ duration: 1.8, ease: "easeOut", delay: 0.2 }}
+      />
+
+      {/* Golden sparkles */}
+      {[...Array(16)].map((_, i) => (
         <motion.div
           key={i}
-          className={cn(
-            "absolute w-1.5 h-1.5 rounded-full",
-            player === "player1" ? "bg-blue-400" : "bg-pink-400"
-          )}
+          className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full"
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
             scale: [0, 1, 0.5, 0],
             x:
-              Math.cos(i * (360 / 12) * (Math.PI / 180)) *
-              (30 + Math.random() * 20),
+              Math.cos(i * (360 / 16) * (Math.PI / 180)) *
+              (25 + Math.random() * 15),
             y:
-              Math.sin(i * (360 / 12) * (Math.PI / 180)) *
-                (30 + Math.random() * 20) -
-              20,
-            opacity: [1, 1, 0.5, 0],
+              Math.sin(i * (360 / 16) * (Math.PI / 180)) *
+              (25 + Math.random() * 15),
+            opacity: [1, 1, 0.6, 0],
           }}
           transition={{
-            duration: 2,
+            duration: 1.8,
             ease: "easeOut",
             delay: Math.random() * 0.5,
           }}
         />
       ))}
-      {/* Center star burst */}
+
+      {/* Mystical glow pulse */}
       <motion.div
-        className="absolute -translate-x-4 -translate-y-4"
-        initial={{ scale: 0, rotate: 0 }}
-        animate={{ scale: [0, 1.5, 1, 0], rotate: 360 }}
-        transition={{ duration: 2 }}
+        className="absolute w-20 h-20 -translate-x-10 -translate-y-10 bg-amber-400 rounded-full opacity-20"
+        initial={{ scale: 0 }}
+        animate={{
+          scale: [0, 1, 1.5, 0],
+        }}
+        transition={{ duration: 2, ease: "easeOut" }}
+      />
+
+      {/* Orbiting mini stars */}
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={`orbit-${i}`}
+          className="absolute"
+          initial={{
+            x: Math.cos(i * (360 / 6) * (Math.PI / 180)) * 20,
+            y: Math.sin(i * (360 / 6) * (Math.PI / 180)) * 20,
+            scale: 0,
+          }}
+          animate={{
+            x: Math.cos((i * (360 / 6) + 360) * (Math.PI / 180)) * 30,
+            y: Math.sin((i * (360 / 6) + 360) * (Math.PI / 180)) * 30,
+            scale: [0, 1, 0],
+          }}
+          transition={{
+            duration: 2,
+            ease: "easeOut",
+            delay: 0.3 + i * 0.1,
+          }}
+        >
+          <Star className="w-3 h-3 text-amber-300 fill-amber-300" />
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+};
+
+// Spectacular victory celebration for finishing pieces
+const VictoryCelebration = ({
+  position,
+  player,
+}: {
+  position: { x: number; y: number };
+  player: Player;
+}) => {
+  const isPlayer = player === "player1";
+  const primaryColor = isPlayer ? "blue" : "pink";
+  const textColor = isPlayer ? "text-blue-400" : "text-pink-400";
+
+  return (
+    <motion.div
+      className="fixed pointer-events-none z-50"
+      style={{ left: position.x, top: position.y }}
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 3.5 }}
+    >
+      {/* SAFE! / HOME! Text */}
+      <motion.div
+        className={cn(
+          "absolute -translate-x-1/2 -translate-y-12 font-bold text-xl drop-shadow-lg",
+          textColor
+        )}
+        initial={{ scale: 0, y: 0 }}
+        animate={{
+          scale: [0, 1.3, 1.1, 0],
+          y: [0, -25, -35, -50],
+        }}
+        transition={{ duration: 2.5, ease: "easeOut" }}
       >
-        <Award
-          className={cn(
-            "w-8 h-8",
-            player === "player1" ? "text-blue-400" : "text-pink-400"
-          )}
-        />
+        {isPlayer ? "SAFE!" : "AI SCORES!"}
       </motion.div>
+
+      {/* Victory crown/trophy */}
+      <motion.div
+        className="absolute -translate-x-6 -translate-y-6"
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{
+          scale: [0, 1.5, 1.2, 0],
+          rotate: [0, 360, 720],
+          y: [0, -10, 0],
+        }}
+        transition={{ duration: 2.5, ease: "easeOut" }}
+      >
+        <Trophy className={cn("w-12 h-12", textColor)} />
+      </motion.div>
+
+      {/* Confetti burst - multiple layers */}
+      {[...Array(20)].map((_, i) => (
+        <motion.div
+          key={i}
+          className={cn(
+            "absolute rounded-full",
+            i % 4 === 0
+              ? "w-2 h-2 bg-yellow-400"
+              : i % 4 === 1
+                ? "w-1.5 h-1.5 bg-green-400"
+                : i % 4 === 2
+                  ? `w-2 h-2 bg-${primaryColor}-400`
+                  : "w-1 h-1 bg-white"
+          )}
+          initial={{ scale: 0, x: 0, y: 0, opacity: 1, rotate: 0 }}
+          animate={{
+            scale: [0, 1, 0.8, 0],
+            x:
+              Math.cos(i * (360 / 20) * (Math.PI / 180)) *
+              (40 + Math.random() * 40),
+            y:
+              Math.sin(i * (360 / 20) * (Math.PI / 180)) *
+                (40 + Math.random() * 40) -
+              30,
+            opacity: [1, 1, 0.7, 0],
+            rotate: [0, 180 + Math.random() * 360],
+          }}
+          transition={{
+            duration: 2 + Math.random() * 1,
+            ease: "easeOut",
+            delay: Math.random() * 0.8,
+          }}
+        />
+      ))}
+
+      {/* Sparkle ring effect */}
+      <motion.div
+        className={cn(
+          "absolute w-20 h-20 -translate-x-10 -translate-y-10 border-4 rounded-full",
+          `border-${primaryColor}-400`
+        )}
+        initial={{ scale: 0, opacity: 1, rotate: 0 }}
+        animate={{
+          scale: [0, 1.2, 2.5],
+          opacity: [1, 0.8, 0],
+          rotate: [0, 180],
+        }}
+        transition={{ duration: 2, ease: "easeOut" }}
+      />
+
+      {/* Secondary sparkle ring */}
+      <motion.div
+        className="absolute w-16 h-16 -translate-x-8 -translate-y-8 border-2 border-yellow-400 rounded-full"
+        initial={{ scale: 0, opacity: 1, rotate: 0 }}
+        animate={{
+          scale: [0, 1, 2],
+          opacity: [1, 0.6, 0],
+          rotate: [0, -270],
+        }}
+        transition={{ duration: 1.8, ease: "easeOut", delay: 0.3 }}
+      />
+
+      {/* Radiating stars */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={`star-${i}`}
+          className="absolute"
+          style={{
+            left: Math.cos(i * (360 / 8) * (Math.PI / 180)) * 25,
+            top: Math.sin(i * (360 / 8) * (Math.PI / 180)) * 25,
+          }}
+          initial={{ scale: 0, opacity: 1 }}
+          animate={{
+            scale: [0, 1, 0],
+            opacity: [1, 1, 0],
+          }}
+          transition={{
+            duration: 1.5,
+            ease: "easeOut",
+            delay: 0.5 + i * 0.1,
+          }}
+        >
+          <Sparkles className={cn("w-4 h-4", textColor)} />
+        </motion.div>
+      ))}
     </motion.div>
   );
 };
@@ -326,6 +586,9 @@ export default function GameBoard({
   const [celebrations, setCelebrations] = useState<
     Array<{ id: string; position: { x: number; y: number }; player: Player }>
   >([]);
+  const [rosetteLandings, setRosetteLandings] = useState<
+    Array<{ id: string; position: { x: number; y: number }; player: Player }>
+  >([]);
   const boardRef = useRef<HTMLDivElement>(null);
   const previousGameState = useRef<GameState | null>(null);
 
@@ -405,6 +668,34 @@ export default function GameBoard({
             soundEffects.pieceMove(); // You might want to add a specific victory sound
           }
         }
+
+        // Detect rosette landing: piece moved to a rosette square
+        if (
+          prevPiece.square >= 0 &&
+          currentPiece.square >= 0 &&
+          ROSETTE_SQUARES.includes(currentPiece.square) &&
+          !ROSETTE_SQUARES.includes(prevPiece.square) &&
+          boardRef.current
+        ) {
+          const rect = boardRef.current.getBoundingClientRect();
+
+          setRosetteLandings((prev) => [
+            ...prev,
+            {
+              id: `rosette-${Date.now()}-${Math.random()}`,
+              position: {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+              },
+              player: isPlayer1 ? "player1" : "player2",
+            },
+          ]);
+
+          // Play rosette sound if enabled
+          if (soundEnabled) {
+            soundEffects.pieceMove(); // You might want to add a specific rosette sound
+          }
+        }
       }
     );
 
@@ -428,6 +719,15 @@ export default function GameBoard({
       }, 3000);
     });
   }, [celebrations]);
+
+  // Clean up rosette landing effects
+  useEffect(() => {
+    rosetteLandings.forEach((rosette) => {
+      setTimeout(() => {
+        setRosetteLandings((prev) => prev.filter((r) => r.id !== rosette.id));
+      }, 3000);
+    });
+  }, [rosetteLandings]);
 
   const getPieceIndex = (square: number, player: Player) => {
     const pieces =
@@ -790,6 +1090,13 @@ export default function GameBoard({
             position={celebration.position}
             player={celebration.player}
           />
+        ))}
+      </AnimatePresence>
+
+      {/* Rosette landing effects */}
+      <AnimatePresence>
+        {rosetteLandings.map((rosette) => (
+          <RosetteLanding key={rosette.id} position={rosette.position} />
         ))}
       </AnimatePresence>
 
