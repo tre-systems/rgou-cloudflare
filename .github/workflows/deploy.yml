@@ -28,6 +28,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Build Wasm Assets
+        run: npm run build:wasm-assets
+
       - name: Build Next.js application
         run: npx @opennextjs/cloudflare build
 
@@ -37,9 +46,6 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy .open-next --project-name=rgou-cloudflare --branch=main
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
 
       - name: Deploy AI Worker to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
