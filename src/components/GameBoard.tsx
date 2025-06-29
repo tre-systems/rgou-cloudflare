@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { GameState, Player, ROSETTE_SQUARES } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,6 +17,7 @@ import {
   VolumeX,
   Cloud,
   Server,
+  Award,
 } from "lucide-react";
 
 interface GameBoardProps {
@@ -31,12 +32,118 @@ interface GameBoardProps {
   onToggleSound: () => void;
 }
 
+// Particle explosion component for captures
+const CaptureExplosion = ({
+  position,
+}: {
+  position: { x: number; y: number };
+}) => {
+  return (
+    <motion.div
+      className="fixed pointer-events-none z-50"
+      style={{ left: position.x, top: position.y }}
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 2 }}
+    >
+      {/* Explosion particles */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-2 h-2 bg-red-500 rounded-full"
+          initial={{ scale: 0, x: 0, y: 0 }}
+          animate={{
+            scale: [0, 1, 0],
+            x: Math.cos(i * (360 / 8) * (Math.PI / 180)) * 40,
+            y: Math.sin(i * (360 / 8) * (Math.PI / 180)) * 40,
+          }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        />
+      ))}
+      {/* Center flash */}
+      <motion.div
+        className="absolute w-8 h-8 -translate-x-4 -translate-y-4 bg-orange-400 rounded-full opacity-80"
+        initial={{ scale: 0 }}
+        animate={{ scale: [0, 2, 0] }}
+        transition={{ duration: 0.6 }}
+      />
+    </motion.div>
+  );
+};
+
+// Victory celebration for finishing pieces
+const VictoryCelebration = ({
+  position,
+  player,
+}: {
+  position: { x: number; y: number };
+  player: Player;
+}) => {
+  return (
+    <motion.div
+      className="fixed pointer-events-none z-50"
+      style={{ left: position.x, top: position.y }}
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 3 }}
+    >
+      {/* Golden particles */}
+      {[...Array(12)].map((_, i) => (
+        <motion.div
+          key={i}
+          className={cn(
+            "absolute w-1.5 h-1.5 rounded-full",
+            player === "player1" ? "bg-blue-400" : "bg-pink-400"
+          )}
+          initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+          animate={{
+            scale: [0, 1, 0.5, 0],
+            x:
+              Math.cos(i * (360 / 12) * (Math.PI / 180)) *
+              (30 + Math.random() * 20),
+            y:
+              Math.sin(i * (360 / 12) * (Math.PI / 180)) *
+                (30 + Math.random() * 20) -
+              20,
+            opacity: [1, 1, 0.5, 0],
+          }}
+          transition={{
+            duration: 2,
+            ease: "easeOut",
+            delay: Math.random() * 0.5,
+          }}
+        />
+      ))}
+      {/* Center star burst */}
+      <motion.div
+        className="absolute -translate-x-4 -translate-y-4"
+        initial={{ scale: 0, rotate: 0 }}
+        animate={{ scale: [0, 1.5, 1, 0], rotate: 360 }}
+        transition={{ duration: 2 }}
+      >
+        <Award
+          className={cn(
+            "w-8 h-8",
+            player === "player1" ? "text-blue-400" : "text-pink-400"
+          )}
+        />
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const MemoizedPiece = React.memo(function Piece({
   player,
   isClickable,
+  isBeingCaptured,
+  isFinishing,
 }: {
   player: Player;
   isClickable: boolean;
+  isBeingCaptured?: boolean;
+  isFinishing?: boolean;
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -45,6 +152,23 @@ const MemoizedPiece = React.memo(function Piece({
       soundEffects.pieceMove();
     }
   };
+
+  // Special animations for capture and finish
+  const captureAnimation = isBeingCaptured
+    ? {
+        scale: [1, 1.3, 0],
+        rotate: [0, 180, 360],
+        opacity: [1, 0.8, 0],
+      }
+    : {};
+
+  const finishAnimation = isFinishing
+    ? {
+        scale: [1, 1.5, 1.2],
+        rotate: [0, 360],
+        y: [0, -10, 0],
+      }
+    : {};
 
   return (
     <motion.div
@@ -55,23 +179,37 @@ const MemoizedPiece = React.memo(function Piece({
           ? "from-blue-400 via-blue-500 to-blue-600 border-blue-300 piece-glow-player"
           : "from-pink-400 via-pink-500 to-pink-600 border-pink-300 piece-glow-ai",
         isClickable && "ring-4 ring-green-400 ring-opacity-60 animate-pulse",
-        !isClickable && "opacity-90"
+        !isClickable && "opacity-90",
+        isBeingCaptured && "ring-4 ring-red-500 ring-opacity-80",
+        isFinishing && "ring-4 ring-yellow-400 ring-opacity-80"
       )}
       initial={{ scale: 0, rotate: -180 }}
       animate={{
-        scale: 1,
-        rotate: 0,
-        y: isClickable ? [0, -2, 0] : 0,
+        scale: isFinishing ? [1, 1.2, 1] : isBeingCaptured ? [1, 1.3, 0] : 1,
+        rotate: isFinishing ? [0, 360] : isBeingCaptured ? [0, 720] : 0,
+        y: isClickable ? [0, -2, 0] : isFinishing ? [0, -5, 0] : 0,
+        ...captureAnimation,
+        ...finishAnimation,
       }}
-      exit={{ scale: 0, rotate: 180 }}
+      exit={{
+        scale: isBeingCaptured ? 0 : isFinishing ? 1.5 : 0,
+        rotate: isBeingCaptured ? 720 : isFinishing ? 360 : 180,
+        opacity: isBeingCaptured ? 0 : 1,
+      }}
       transition={{
         type: "spring",
         stiffness: 400,
         damping: 25,
-        y: { repeat: isClickable ? Infinity : 0, duration: 2 },
+        y: {
+          repeat:
+            isClickable && !isBeingCaptured && !isFinishing ? Infinity : 0,
+          duration: 2,
+        },
+        scale: { duration: isBeingCaptured ? 1.2 : isFinishing ? 1.5 : 0.3 },
+        rotate: { duration: isBeingCaptured ? 1.2 : isFinishing ? 1.5 : 0.3 },
       }}
       whileHover={{
-        scale: isClickable ? 1.1 : 1.02,
+        scale: isClickable && !isBeingCaptured && !isFinishing ? 1.1 : 1.02,
         boxShadow:
           player === "player1"
             ? "0 0 15px rgba(59, 130, 246, 0.5)"
@@ -85,17 +223,45 @@ const MemoizedPiece = React.memo(function Piece({
       {/* Inner glow */}
       <div className="absolute inset-1 rounded-full bg-gradient-to-br from-white/30 to-transparent" />
 
+      {/* Capture effect overlay */}
+      {isBeingCaptured && (
+        <motion.div
+          className="absolute inset-0 rounded-full bg-red-500/40"
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 0.5, repeat: 2 }}
+        />
+      )}
+
+      {/* Finish effect overlay */}
+      {isFinishing && (
+        <motion.div
+          className="absolute inset-0 rounded-full bg-yellow-400/40"
+          animate={{ opacity: [0, 1, 0] }}
+          transition={{ duration: 0.3, repeat: 3 }}
+        />
+      )}
+
       {/* Player icon */}
       <div className="absolute inset-0 flex items-center justify-center">
         {player === "player1" ? (
-          <Crown className="w-3 h-3 text-white drop-shadow-lg" />
+          <Crown
+            className={cn(
+              "w-3 h-3 text-white drop-shadow-lg",
+              isFinishing && "animate-bounce"
+            )}
+          />
         ) : (
-          <Zap className="w-3 h-3 text-white drop-shadow-lg" />
+          <Zap
+            className={cn(
+              "w-3 h-3 text-white drop-shadow-lg",
+              isFinishing && "animate-bounce"
+            )}
+          />
         )}
       </div>
 
       {/* Clickable effect */}
-      {isClickable && (
+      {isClickable && !isBeingCaptured && !isFinishing && (
         <motion.div
           className="absolute inset-0 rounded-full bg-green-400/20"
           animate={{ opacity: [0.3, 0.7, 0.3] }}
@@ -103,22 +269,25 @@ const MemoizedPiece = React.memo(function Piece({
         />
       )}
 
-      {/* Hover sparkles */}
+      {/* Enhanced hover sparkles */}
       <AnimatePresence>
-        {isHovered && (
+        {(isHovered || isFinishing) && (
           <motion.div
             className="absolute inset-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {[...Array(3)].map((_, i) => (
+            {[...Array(isFinishing ? 6 : 3)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-1 h-1 bg-white rounded-full"
+                className={cn(
+                  "absolute w-1 h-1 rounded-full",
+                  isFinishing ? "bg-yellow-300" : "bg-white"
+                )}
                 style={{
-                  left: `${20 + i * 20}%`,
-                  top: `${20 + i * 15}%`,
+                  left: `${20 + i * 15}%`,
+                  top: `${20 + i * 10}%`,
                 }}
                 animate={{
                   scale: [0, 1, 0],
@@ -126,9 +295,9 @@ const MemoizedPiece = React.memo(function Piece({
                   rotate: [0, 180, 360],
                 }}
                 transition={{
-                  duration: 1,
+                  duration: isFinishing ? 0.5 : 1,
                   repeat: Infinity,
-                  delay: i * 0.2,
+                  delay: i * 0.1,
                 }}
               />
             ))}
@@ -150,6 +319,116 @@ export default function GameBoard({
   soundEnabled,
   onToggleSound,
 }: GameBoardProps) {
+  const [screenShake, setScreenShake] = useState(false);
+  const [explosions, setExplosions] = useState<
+    Array<{ id: string; position: { x: number; y: number } }>
+  >([]);
+  const [celebrations, setCelebrations] = useState<
+    Array<{ id: string; position: { x: number; y: number }; player: Player }>
+  >([]);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const previousGameState = useRef<GameState | null>(null);
+
+  // Track game state changes for capture and finish effects
+  useEffect(() => {
+    if (!previousGameState.current) {
+      previousGameState.current = gameState;
+      return;
+    }
+
+    const prev = previousGameState.current;
+    const current = gameState;
+
+    // Check for captures (pieces moved back to start)
+    [...prev.player1Pieces, ...prev.player2Pieces].forEach(
+      (prevPiece, globalIndex) => {
+        const isPlayer1 = globalIndex < 7;
+        const currentPieces = isPlayer1
+          ? current.player1Pieces
+          : current.player2Pieces;
+        const pieceIndex = isPlayer1 ? globalIndex : globalIndex - 7;
+        const currentPiece = currentPieces[pieceIndex];
+
+        // Detect capture: piece was on board, now at start
+        if (
+          prevPiece.square > 0 &&
+          currentPiece.square === -1 &&
+          boardRef.current
+        ) {
+          const rect = boardRef.current.getBoundingClientRect();
+          const randomOffset = () => (Math.random() - 0.5) * 100;
+
+          setExplosions((prev) => [
+            ...prev,
+            {
+              id: `explosion-${Date.now()}-${Math.random()}`,
+              position: {
+                x: rect.left + rect.width / 2 + randomOffset(),
+                y: rect.top + rect.height / 2 + randomOffset(),
+              },
+            },
+          ]);
+
+          // Screen shake effect
+          setScreenShake(true);
+          setTimeout(() => setScreenShake(false), 500);
+
+          // Play capture sound if enabled
+          if (soundEnabled) {
+            soundEffects.pieceMove(); // You might want to add a specific capture sound
+          }
+        }
+
+        // Detect finish: piece moved to square 20
+        if (
+          prevPiece.square >= 0 &&
+          prevPiece.square < 20 &&
+          currentPiece.square === 20 &&
+          boardRef.current
+        ) {
+          const rect = boardRef.current.getBoundingClientRect();
+
+          setCelebrations((prev) => [
+            ...prev,
+            {
+              id: `celebration-${Date.now()}-${Math.random()}`,
+              position: {
+                x: rect.right - 50,
+                y: rect.top + (isPlayer1 ? rect.height - 100 : 100),
+              },
+              player: isPlayer1 ? "player1" : "player2",
+            },
+          ]);
+
+          // Play celebration sound if enabled
+          if (soundEnabled) {
+            soundEffects.pieceMove(); // You might want to add a specific victory sound
+          }
+        }
+      }
+    );
+
+    previousGameState.current = gameState;
+  }, [gameState, soundEnabled]);
+
+  // Clean up explosion effects
+  useEffect(() => {
+    explosions.forEach((explosion) => {
+      setTimeout(() => {
+        setExplosions((prev) => prev.filter((e) => e.id !== explosion.id));
+      }, 2000);
+    });
+  }, [explosions]);
+
+  // Clean up celebration effects
+  useEffect(() => {
+    celebrations.forEach((celebration) => {
+      setTimeout(() => {
+        setCelebrations((prev) => prev.filter((c) => c.id !== celebration.id));
+      }, 3000);
+    });
+  }, [celebrations]);
+
   const getPieceIndex = (square: number, player: Player) => {
     const pieces =
       player === "player1" ? gameState.player1Pieces : gameState.player2Pieces;
@@ -274,6 +553,10 @@ export default function GameBoard({
       gameState.currentPlayer === piece.player
     );
 
+    // Check if this piece is being captured or finishing (based on recent state changes)
+    const isBeingCaptured = false; // Will be enhanced with more sophisticated detection if needed
+    const isFinishing = piece?.player && squareIndex === 20;
+
     return (
       <motion.div
         key={key}
@@ -314,7 +597,12 @@ export default function GameBoard({
               className="w-3/5 h-3/5 p-0.5"
               layoutId={`piece-${piece.player}-${pieceIndex}`}
             >
-              <MemoizedPiece player={piece.player} isClickable={isClickable} />
+              <MemoizedPiece
+                player={piece.player}
+                isClickable={isClickable}
+                isBeingCaptured={isBeingCaptured}
+                isFinishing={isFinishing}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -405,6 +693,8 @@ export default function GameBoard({
                       <MemoizedPiece
                         player={player}
                         isClickable={gameState.validMoves.includes(i)}
+                        isBeingCaptured={false}
+                        isFinishing={false}
                       />
                     </motion.div>
                   ) : (
@@ -447,7 +737,12 @@ export default function GameBoard({
                           animate={{ scale: 1 }}
                           transition={{ delay: i * 0.1 }}
                         >
-                          <MemoizedPiece player={player} isClickable={false} />
+                          <MemoizedPiece
+                            player={player}
+                            isClickable={false}
+                            isBeingCaptured={false}
+                            isFinishing={true}
+                          />
                         </motion.div>
                       )}
                     </motion.div>
@@ -479,199 +774,230 @@ export default function GameBoard({
   const StatusIcon = status.icon;
 
   return (
-    <div className="w-full max-w-sm mx-auto space-y-3">
-      {/* AI Player Area */}
-      {renderPlayerArea("player2")}
+    <>
+      {/* Explosion effects */}
+      <AnimatePresence>
+        {explosions.map((explosion) => (
+          <CaptureExplosion key={explosion.id} position={explosion.position} />
+        ))}
+      </AnimatePresence>
 
-      {/* Game Board */}
+      {/* Victory celebration effects */}
+      <AnimatePresence>
+        {celebrations.map((celebration) => (
+          <VictoryCelebration
+            key={celebration.id}
+            position={celebration.position}
+            player={celebration.player}
+          />
+        ))}
+      </AnimatePresence>
+
       <motion.div
-        className="glass mystical-glow rounded-xl p-4 relative"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm mx-auto space-y-3"
+        animate={screenShake ? { x: [0, -2, 2, -2, 2, 0] } : { x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Board title */}
-        <div className="text-center mb-3">
-          <motion.h3
-            className="text-base font-bold text-white/90 neon-text"
-            animate={{ opacity: [0.7, 1, 0.7] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          >
-            Ancient Board of Ur
-          </motion.h3>
+        {/* AI Player Area */}
+        {renderPlayerArea("player2")}
 
-          {/* Status Section */}
-          <div className="mt-2 h-10 flex flex-col justify-start relative pt-1">
-            <motion.div
-              className="flex items-center justify-center space-x-2 h-6"
-              animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
-              transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
+        {/* Game Board */}
+        <motion.div
+          ref={boardRef}
+          className="glass mystical-glow rounded-xl p-4 relative"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Board title */}
+          <div className="text-center mb-3">
+            <motion.h3
+              className="text-base font-bold text-white/90 neon-text"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ repeat: Infinity, duration: 3 }}
             >
-              <StatusIcon className={cn("w-4 h-4", status.color)} />
-              <span
-                className={cn("font-bold text-sm", status.color, "neon-text")}
-              >
-                {status.text}
-              </span>
-            </motion.div>
+              Ancient Board of Ur
+            </motion.h3>
 
-            {/* AI thinking animation */}
-            <AnimatePresence>
-              {aiThinking && (
-                <motion.div
-                  className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+            {/* Status Section */}
+            <div className="mt-2 h-10 flex flex-col justify-start relative pt-1">
+              <motion.div
+                className="flex items-center justify-center space-x-2 h-6"
+                animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
+                transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
+              >
+                <StatusIcon className={cn("w-4 h-4", status.color)} />
+                <span
+                  className={cn("font-bold text-sm", status.color, "neon-text")}
                 >
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1.5 h-1.5 bg-pink-400 rounded-full"
-                      animate={{
-                        y: [0, -6, 0],
-                        opacity: [0.3, 1, 0.3],
-                      }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 0.8,
-                        delay: i * 0.2,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {status.text}
+                </span>
+              </motion.div>
+
+              {/* AI thinking animation */}
+              <AnimatePresence>
+                {aiThinking && (
+                  <motion.div
+                    className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1.5 h-1.5 bg-pink-400 rounded-full"
+                        animate={{
+                          y: [0, -6, 0],
+                          opacity: [0.3, 1, 0.3],
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 0.8,
+                          delay: i * 0.2,
+                          ease: "easeInOut",
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
 
-        {/* The game board grid */}
-        <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
-          {boardLayout
-            .flat()
-            .map((sq, i) =>
-              sq !== -1 ? (
-                renderSquare(sq, `sq-${i}`)
-              ) : (
-                <div key={`empty-${i}`} className="aspect-square" />
-              )
-            )}
-        </div>
-
-        {/* Controls Section */}
-        <div className="mt-3 pt-3 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            {/* Dice Display */}
-            <div className="flex-1">{renderDice()}</div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-2">
-              {/* AI Source Toggle */}
-              <motion.button
-                onClick={() =>
-                  onAiSourceChange(aiSource === "server" ? "client" : "server")
-                }
-                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title={`Switch to ${
-                  aiSource === "server" ? "Client" : "Server"
-                } AI`}
-              >
-                {aiSource === "server" ? (
-                  <Cloud className="w-3.5 h-3.5" />
+          {/* The game board grid */}
+          <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
+            {boardLayout
+              .flat()
+              .map((sq, i) =>
+                sq !== -1 ? (
+                  renderSquare(sq, `sq-${i}`)
                 ) : (
-                  <Server className="w-3.5 h-3.5" />
-                )}
-              </motion.button>
+                  <div key={`empty-${i}`} className="aspect-square" />
+                )
+              )}
+          </div>
 
-              {/* Sound Toggle */}
-              <motion.button
-                onClick={toggleSound}
-                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {soundEnabled ? (
-                  <Volume2 className="w-3.5 h-3.5" />
+          {/* Controls Section */}
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              {/* Roll Button / Dice Display Area */}
+              <div className="flex items-center h-8">
+                {!gameState.canMove && gameState.gameStatus === "playing" ? (
+                  <motion.button
+                    onClick={handleRollDice}
+                    disabled={gameState.currentPlayer === "player2"}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg font-semibold transition-all duration-200 text-sm h-8 min-w-[70px]",
+                      "bg-gradient-to-r from-blue-500 to-purple-600 text-white",
+                      "disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50",
+                      "hover:from-blue-600 hover:to-purple-700",
+                      "shadow-lg hover:shadow-xl",
+                      "flex items-center justify-center"
+                    )}
+                    whileHover={{
+                      scale: gameState.currentPlayer === "player1" ? 1.05 : 1,
+                      boxShadow:
+                        gameState.currentPlayer === "player1"
+                          ? "0 0 15px rgba(99, 102, 241, 0.4)"
+                          : "none",
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="flex items-center space-x-1.5">
+                      <motion.div
+                        animate={{
+                          rotate:
+                            gameState.currentPlayer === "player1"
+                              ? [0, 360]
+                              : 0,
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      >
+                        <Dice6 className="w-3.5 h-3.5" />
+                      </motion.div>
+                      <span>Roll</span>
+                    </div>
+                  </motion.button>
                 ) : (
-                  <VolumeX className="w-3.5 h-3.5" />
+                  <div className="min-w-[70px] h-8 flex items-center">
+                    {renderDice()}
+                  </div>
                 )}
-              </motion.button>
+              </div>
 
-              {/* Roll Dice Button */}
-              {!gameState.canMove && gameState.gameStatus === "playing" ? (
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2">
+                {/* AI Source Toggle */}
                 <motion.button
-                  onClick={handleRollDice}
-                  disabled={gameState.currentPlayer === "player2"}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg font-semibold transition-all duration-200 text-sm",
-                    "bg-gradient-to-r from-blue-500 to-purple-600 text-white",
-                    "disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50",
-                    "hover:from-blue-600 hover:to-purple-700",
-                    "shadow-lg hover:shadow-xl"
+                  onClick={() =>
+                    onAiSourceChange(
+                      aiSource === "server" ? "client" : "server"
+                    )
+                  }
+                  className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title={`Switch to ${
+                    aiSource === "server" ? "Client" : "Server"
+                  } AI`}
+                >
+                  {aiSource === "server" ? (
+                    <Cloud className="w-3.5 h-3.5" />
+                  ) : (
+                    <Server className="w-3.5 h-3.5" />
                   )}
+                </motion.button>
+
+                {/* Sound Toggle */}
+                <motion.button
+                  onClick={toggleSound}
+                  className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  )}
+                </motion.button>
+
+                {/* Reset Button */}
+                <motion.button
+                  onClick={handleResetGame}
+                  className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
                   whileHover={{
-                    scale: gameState.currentPlayer === "player1" ? 1.05 : 1,
-                    boxShadow:
-                      gameState.currentPlayer === "player1"
-                        ? "0 0 15px rgba(99, 102, 241, 0.4)"
-                        : "none",
+                    scale: 1.05,
+                    boxShadow: "0 0 10px rgba(107, 114, 128, 0.3)",
                   }}
                   whileTap={{ scale: 0.95 }}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <div className="flex items-center space-x-1.5">
-                    <motion.div
-                      animate={{
-                        rotate:
-                          gameState.currentPlayer === "player1" ? [0, 360] : 0,
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    >
-                      <Dice6 className="w-3.5 h-3.5" />
-                    </motion.div>
-                    <span>Roll</span>
-                  </div>
+                  <motion.div
+                    whileHover={{ rotate: 180 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </motion.div>
                 </motion.button>
-              ) : (
-                <div className="w-[70px] h-[32px]" />
-              )}
-
-              {/* Reset Button */}
-              <motion.button
-                onClick={handleResetGame}
-                className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 0 10px rgba(107, 114, 128, 0.3)",
-                }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <motion.div
-                  whileHover={{ rotate: 180 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </motion.div>
-              </motion.button>
+              </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Player Area */}
-      {renderPlayerArea("player1")}
-    </div>
+        {/* Player Area */}
+        {renderPlayerArea("player1")}
+      </motion.div>
+    </>
   );
 }
