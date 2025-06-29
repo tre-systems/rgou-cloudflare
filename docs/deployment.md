@@ -1,6 +1,6 @@
 # 🚀 Deployment Guide - Royal Game of Ur
 
-This guide walks you through deploying the Royal Game of Ur using Cloudflare Workers with static assets for the frontend and Cloudflare Workers for the AI backend.
+This guide walks you through deploying the Royal Game of Ur to Cloudflare. The frontend is a Next.js application adapted for Cloudflare using **OpenNext**, and the AI backend is a distinct Rust-based Cloudflare Worker.
 
 ## Prerequisites
 
@@ -51,94 +51,145 @@ Set in `wrangler.toml` or via Wrangler CLI:
 NEXT_PUBLIC_AI_WORKER_URL=https://your-worker.your-subdomain.workers.dev
 ```
 
-## 🤖 Deploy AI Worker First
+## 🤖 Step 1: Deploy the AI Worker
 
-### 1. Configure Worker
+First, deploy the Rust-based AI worker that will serve as the "Server AI" opponent.
 
-Edit `worker/wrangler.toml`:
+### 1. Configure AI Worker
+
+Navigate to the worker directory and edit `worker/wrangler.toml`:
 
 ```toml
-name = "rgou-ai-worker"
-main = "src/index.ts"
-compatibility_date = "2024-01-01"
-account_id = "your-account-id-here"
+# worker/wrangler.toml
+name = "rgou-ai-worker" # Choose a unique name
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-04-05"
+account_id = "<YOUR_ACCOUNT_ID>"
 
-# Uncomment for production
-workers_dev = true
+[build]
+command = "npm run build"
 ```
 
-### 2. Build and Deploy Worker
+### 2. Deploy the Worker
+
+From the `worker/` directory, run the deployment command:
 
 ```bash
-cd worker
-
-# Install dependencies and build
-npm install
-
-# Build Rust worker
-cargo build --release
-
-# Deploy to Cloudflare Workers
+# In ./worker/ directory
 wrangler deploy
 ```
 
-### 3. Note Worker URL
+After deployment, Cloudflare will provide a URL for your worker (e.g., `https://rgou-ai-worker.your-subdomain.workers.dev`). **Copy this URL.**
 
-After deployment, note the worker URL (e.g., `https://rgou-ai-worker.your-subdomain.workers.dev`)
+## 🌐 Step 2: Deploy the Next.js Frontend
 
-## 🌐 Deploy Frontend to Cloudflare Workers
+The frontend is a Next.js application built and deployed as a separate Cloudflare Worker using OpenNext.
 
-### Main Deployment Method
+### 1. Configure Frontend Worker
 
-The project now uses Cloudflare Workers with static assets instead of Cloudflare Pages.
+Update the main `wrangler.toml` file in the project root with your details and the AI worker URL from the previous step.
 
-1. **Configure wrangler.toml:**
+```toml
+# ./wrangler.toml
+name = "rgou-main"
+main = ".open-next/worker.js"
+compatibility_date = "2024-01-01"
+account_id = "<YOUR_ACCOUNT_ID>"
 
-   Update the main `wrangler.toml` file:
+[vars]
+NEXT_PUBLIC_AI_WORKER_URL = "https://<YOUR_AI_WORKER_URL>" # Paste the URL here
 
-   ```toml
-   name = "rgou-main"
-   main = "worker.js"
-   compatibility_date = "2025-06-14"
-   account_id = "your-account-id-here"
-   workers_dev = true
+# Bind the R2 bucket for static assets
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "open-next-assets"
+preview_bucket_name = "open-next-assets-preview"
 
-   [assets]
-   directory = "./out"
-   binding = "ASSETS"
+# Bind a service for the AI worker (optional, for service bindings)
+[[services]]
+binding = "AI_WORKER"
+service = "rgou-ai-worker"
+```
 
-   [vars]
-   ENVIRONMENT = "production"
-   NEXT_PUBLIC_AI_WORKER_URL = "https://your-ai-worker-url.workers.dev"
+### 2. Build and Deploy Frontend
 
-   # Custom domain configuration (optional)
-   [[routes]]
-   pattern = "yourdomain.com/*"
-   zone_name = "yourdomain.com"
-   ```
+From the project root directory, build the application and deploy it:
 
-2. **Build and Deploy:**
+```bash
+# Build the application using OpenNext
+npm run build
 
-   ```bash
-   # Build the application
-   npm run build:cf
+# Deploy the worker to Cloudflare
+wrangler deploy
+```
 
-   # Deploy to Cloudflare Workers
-   npm run deploy:cf
-   ```
+OpenNext automatically handles building the Next.js app into a Cloudflare-compatible format. The `wrangler deploy` command uploads the worker and static assets to your Cloudflare account.
 
-### Alternative: Manual Deployment
+## 🧪 Verification
 
-1. **Build locally:**
+### 1. Test AI Worker
 
-   ```bash
-   NEXT_PUBLIC_AI_WORKER_URL=https://your-worker-url.workers.dev npm run build:cf
-   ```
+Send a request to your AI worker's health check endpoint:
 
-2. **Deploy with Wrangler:**
-   ```bash
-   wrangler deploy
-   ```
+```bash
+curl https://<YOUR_AI_WORKER_URL>/health
+```
+
+You should receive a "healthy" status response.
+
+### 2. Test Frontend
+
+- Visit the URL for your main deployed application.
+- Start a game and switch the AI source to "Server".
+- Verify that the AI makes moves and that there are no errors in the browser console.
+
+## 🔄 CI/CD Automation (GitHub Actions)
+
+You can automate this process using GitHub Actions.
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-ai-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+      - name: Deploy AI Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "3"
+          workingDirectory: "worker"
+          command: deploy
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: deploy-ai-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Deploy Frontend
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "3"
+          command: deploy
+```
 
 ## 🔧 Configuration Details
 
@@ -209,44 +260,6 @@ Expected response:
 - Try both game modes (human vs human, human vs AI)
 - Verify AI moves are working
 - Check browser dev tools for any errors
-
-## 🔄 CI/CD Setup
-
-### GitHub Actions Example
-
-```yaml
-name: Deploy to Cloudflare Workers
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build:cf
-        env:
-          NEXT_PUBLIC_AI_WORKER_URL: ${{ secrets.AI_WORKER_URL }}
-
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-```
 
 ## 📝 Environment Variables
 

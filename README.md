@@ -1,15 +1,18 @@
 # 🏺 Royal Game of Ur - Cloudflare Edition
 
-A modern implementation of the ancient Mesopotamian board game "Royal Game of Ur" built with Next.js, TypeScript, and powered by an intelligent AI written in Rust running on Cloudflare Workers.
+A modern implementation of the ancient Mesopotamian board game "Royal Game of Ur" built with Next.js, TypeScript, and powered by a unique dual AI engine written in Rust.
 
 ## 🌟 Features
 
-- **Authentic Gameplay**: Faithful recreation of the 4,500-year-old Royal Game of Ur
-- **Advanced AI Opponent**: Intelligent AI powered by Rust using minimax algorithm with alpha-beta pruning and transposition tables
-- **Modern UI**: Beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations
-- **Cloud-Native**: Deployed on Cloudflare Workers with static assets and AI running on Cloudflare Workers
-- **Real-time**: Smooth animations and real-time game state updates with sound effects
-- **Single Player Mode**: Challenge the sophisticated AI opponent
+- **Authentic Gameplay**: Faithful recreation of the 4,500-year-old Royal Game of Ur.
+- **Dual AI Engine**:
+  - **Cloud AI**: High-performance Rust AI on Cloudflare Workers for deep strategic analysis.
+  - **Client AI**: In-browser Rust/Wasm AI for offline play and instant responses.
+- **Modern UI**: Beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations.
+- **Cloud-Native**: Deployed on Cloudflare for global low-latency access.
+- **PWA & Offline Ready**: Installable Progressive Web App with client-side AI for offline gameplay.
+- **Real-time**: Smooth animations and real-time game state updates with sound effects.
+- **Single Player Mode**: Challenge the sophisticated AI opponent.
 
 ## 🎯 Game Rules
 
@@ -17,11 +20,11 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 
 ### Key Rules:
 
-- **Dice**: Roll 4 binary dice (tetrahedra). Count the marked corners (0-4 moves)
-- **Movement**: Move pieces along your track from start to finish
-- **Combat**: Land on opponent pieces to send them back to start (except on rosettes)
-- **Rosettes**: Special starred squares are safe zones and grant extra turns
-- **Winning**: First player to move all 7 pieces off the board wins
+- **Dice**: Roll 4 binary dice (tetrahedra). Count the marked corners (0-4 moves).
+- **Movement**: Move pieces along your track from start to finish.
+- **Combat**: Land on opponent pieces to send them back to start (except on rosettes).
+- **Rosettes**: Special starred squares are safe zones and grant extra turns.
+- **Winning**: First player to move all 7 pieces off the board wins.
 
 ## 🚀 Quick Start
 
@@ -58,22 +61,30 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐    HTTP API    ┌──────────────────┐
-│   Next.js App   │ ──────────────► │ Cloudflare Worker│
-│   (Frontend)    │                 │   (AI Engine)    │
-│                 │                 │                  │
-│ • Game UI       │                 │ • Rust AI Logic  │
-│ • Game Logic    │                 │ • Move Evaluation│
-│ • State Mgmt    │                 │ • HTTP Endpoints │
-│ • Sound Effects │                 │ • Transposition  │
-└─────────────────┘                 └──────────────────┘
-       │                                      │
-       ▼                                      ▼
-┌─────────────────┐                 ┌──────────────────┐
-│ Cloudflare      │                 │ Cloudflare Workers│
-│ Workers + Assets│                 │                  │
-└─────────────────┘                 └──────────────────┘
+This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a powerful server-side AI and an instant client-side AI.
+
+```mermaid
+graph TD
+    subgraph Browser
+        A[Next.js App <br/> (React UI)]
+        B{AI Source Toggle}
+        C[Client-Side AI <br/> (Rust/Wasm)]
+    end
+
+    subgraph Cloudflare
+        D[Server-Side AI <br/> (Rust Worker)]
+    end
+
+    A --> B
+    B -- "Client" --> C
+    B -- "Server" --> D
+
+    C -- "Local Move" --> A
+    D -- "API Call" --o A
+
+    style A fill:#cde4ff,stroke:#333
+    style C fill:#d5fada,stroke:#333
+    style D fill:#f9f,stroke:#333
 ```
 
 ## 🛠️ Development
@@ -83,62 +94,62 @@ The Royal Game of Ur is a race game where each player tries to move all 7 pieces
 ```
 rgou-cloudflare/
 ├── src/
-│   ├── app/                     # Next.js app router
-│   │   ├── layout.tsx          # App layout
-│   │   ├── page.tsx            # Main page
-│   │   └── globals.css         # Global styles
-│   ├── components/             # React components
-│   │   ├── RoyalGameOfUr.tsx   # Main game component
-│   │   ├── GameBoard.tsx       # Board component
-│   │   ├── GameControls.tsx    # Game controls UI
-│   │   └── AnimatedBackground.tsx # Background effects
-│   └── lib/                    # Utilities and logic
-│       ├── types.ts            # TypeScript types
-│       ├── game-logic.ts       # Core game logic
-│       ├── ai-service.ts       # AI API client
-│       ├── sound-effects.ts    # Audio system
-│       └── utils.ts            # Utility functions
-├── worker/                     # Cloudflare Worker (Rust)
-│   ├── src/
-│   │   └── lib.rs             # Rust AI implementation
-│   ├── Cargo.toml             # Rust dependencies
-│   ├── Cargo.lock             # Dependency lock
-│   └── wrangler.toml          # Worker configuration
-└── docs/                       # Documentation
-    ├── cloudflare-worker.md   # Worker documentation
-    └── minimax-ai-specification.md # AI specification
+│   ├── app/                    # Next.js app router pages
+│   ├── components/             # React components (GameBoard, etc.)
+│   └── lib/                    # Core application logic
+│       ├── wasm/               # Client-side Wasm AI (built from rust_ai_core)
+│       ├── ai-service.ts       # Server-side AI API client
+│       ├── wasm-ai-service.ts  # Client-side Wasm AI service
+│       └── game-logic.ts       # Core game rules
+├── public/
+│   └── wasm/                   # Wasm assets served to the browser
+├── worker/                     # Server-side AI worker
+│   ├── rust_ai_core/           # Core Rust AI logic (shared with client)
+│   │   └── src/lib.rs
+│   ├── src/                    # Worker-specific Rust code
+│   │   └── lib.rs
+│   └── wrangler.toml           # Worker configuration
+└── docs/                       # Project documentation
+    ├── deployment.md           # Step-by-step deployment guide
+    ├── cloudflare-worker.md    # Server-side AI documentation
+    └── minimax-ai-specification.md # AI algorithm specification
 ```
 
 ### Available Scripts
 
 #### Main App
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run build:cf` - Build for Cloudflare Workers deployment
-- `npm run deploy:cf` - Deploy to Cloudflare Workers
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint errors
+- `npm run dev` - Start development server.
+- `npm run build` - Build for production.
+- `npm run postbuild` - Build client-side Wasm and place it in `src/lib` and `public`.
+- `npm run deploy:cf` - Deploy to Cloudflare Workers.
+- `npm run lint` - Run ESLint.
+- `npm run lint:fix` - Fix ESLint errors.
 
 #### AI Worker
 
-- `npm run dev:worker` - Start worker development server
-- `npm run build:worker` - Build Rust worker
-- `npm run deploy:worker` - Deploy worker to Cloudflare
-- `npm run setup:worker` - Install worker dependencies
+- `npm run dev:worker` - Start worker development server.
+- `npm run build:worker` - Build Rust worker.
+- `npm run deploy:worker` - Deploy worker to Cloudflare.
+- `npm run setup:worker` - Install worker dependencies.
 
-## 🤖 AI Implementation
+## 🤖 Dual AI Engine
 
-The AI is implemented in Rust for maximum performance and compiled to WebAssembly for Cloudflare Workers. For detailed information about the worker implementation, see the [Cloudflare Worker Documentation](./docs/cloudflare-worker.md).
+The game features a unique dual AI system, allowing the user to switch between a server-powered AI and a client-side Wasm AI.
+
+- **Server AI**: A high-performance Rust AI deployed on **Cloudflare Workers**. It uses a deep minimax search with aggressive optimizations for the strongest level of play. This is the "heavy-lifting" AI.
+- **Client AI**: The same core Rust AI logic is compiled to **WebAssembly (Wasm)** and runs directly in the browser. This enables **offline play** and provides a faster, more responsive opponent for casual games, while still being very challenging.
+
+The core logic is shared in the `worker/rust_ai_core` crate, ensuring consistent AI behavior across both platforms.
 
 ### AI Features:
 
-- **Advanced Minimax Algorithm**: With alpha-beta pruning and transposition tables
-- **Strategic Position Evaluation**: Multi-factor scoring based on piece positions, safety, and tactics
-- **Mathematically Correct Dice Probabilities**: Proper Royal Game of Ur dice distribution
-- **Adaptive Difficulty**: Sophisticated evaluation with depth-8 search
-- **Performance Optimized**: 50-70% performance improvement with transposition tables
-- **Fallback Logic**: TypeScript fallback when Rust AI is unavailable
+- **Advanced Minimax Algorithm**: With alpha-beta pruning and transposition tables.
+- **Strategic Position Evaluation**: Multi-factor scoring based on piece positions, safety, and tactics.
+- **Mathematically Correct Dice Probabilities**: Proper Royal Game of Ur dice distribution.
+- **Adaptive Difficulty**: Sophisticated evaluation with depth-8 search on the server AI.
+- **Performance Optimized**: 50-70% performance improvement with transposition tables.
+- **Fallback Logic**: TypeScript fallback when Rust AI is unavailable.
 
 ### AI Evaluation Factors:
 
@@ -151,7 +162,7 @@ The AI is implemented in Rust for maximum performance and compiled to WebAssembl
 
 ## 🚀 Deployment
 
-Deployment uses Cloudflare Workers with static assets for the frontend and a separate Cloudflare Worker for the AI backend. For detailed instructions, see the [Deployment Guide](./DEPLOYMENT.md).
+The application is deployed entirely on the Cloudflare ecosystem. For detailed, step-by-step instructions, see the **[Deployment Guide](./docs/deployment.md)**.
 
 ### Environment Variables
 
@@ -280,6 +291,14 @@ compatibility_date = "2025-06-14"
 directory = "./out"
 binding = "ASSETS"
 ```
+
+## 📚 Documentation
+
+This project is documented to provide a clear overview of its architecture, AI, and deployment process.
+
+- **[Deployment Guide](./docs/deployment.md)**: Step-by-step instructions for deploying the application to Cloudflare.
+- **[Cloudflare Worker AI Documentation](./docs/cloudflare-worker.md)**: A detailed look at the server-side Rust AI implementation.
+- **[Minimax AI Specification](./docs/minimax-ai-specification.md)**: A deep dive into the AI's algorithm, evaluation function, and strategic design.
 
 ## 🙏 Acknowledgements
 

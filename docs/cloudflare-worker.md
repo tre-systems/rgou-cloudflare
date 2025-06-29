@@ -61,21 +61,23 @@ graph TD
 
 ## Project Structure
 
-The worker is located in the `worker/` directory:
+The server-side AI consists of two main parts: a shared core AI engine and a worker-specific wrapper.
 
 ```
 worker/
-├── src/
-│   └── lib.rs              # Complete Rust implementation
-├── Cargo.toml              # Rust dependencies and metadata
-├── Cargo.lock              # Dependency lock file
-├── wrangler.toml           # Cloudflare Worker configuration
-└── build/                  # Build artifacts (generated)
+├── rust_ai_core/           # SHARED: Core Rust AI logic (minimax, evaluation)
+│   └── src/lib.rs
+├── src/                    # Worker-specific Rust code
+│   └── lib.rs              # Handles HTTP requests, JSON, and calls core AI
+├── Cargo.toml              # Rust dependencies for the worker
+└── wrangler.toml           # Cloudflare Worker configuration
 ```
 
 ## Worker Logic (`src/lib.rs`)
 
-The main worker implementation is a single Rust file containing all the AI logic and HTTP handling.
+The entry point for the worker is `worker/src/lib.rs`. Its primary responsibility is to handle HTTP requests, deserialize the game state from JSON, call the core AI logic from the `rust_ai_core` crate, and serialize the resulting move back into a JSON response. It acts as the bridge between the web and the AI engine.
+
+The core AI implementation, including the minimax algorithm and evaluation function, resides in `worker/rust_ai_core/src/lib.rs`. This crate is compiled to WebAssembly for both the server-side worker and the client-side PWA.
 
 ### Endpoints
 
