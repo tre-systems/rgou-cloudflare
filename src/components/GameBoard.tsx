@@ -384,75 +384,75 @@ export default function GameBoard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {/* Starting area */}
-          <div className="glass-dark rounded-lg p-2">
-            <p className="text-xs text-white/70 text-center mb-1 font-semibold">
-              START
-            </p>
-            <div className="grid grid-cols-4 gap-1">
-              {pieces.map((p, i) =>
-                p.square === -1 ? (
-                  <motion.div
-                    key={i}
-                    className="w-6 h-6"
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() =>
-                      gameState.validMoves.includes(i) && onPieceClick(i)
-                    }
-                  >
-                    <MemoizedPiece
-                      player={player}
-                      isClickable={gameState.validMoves.includes(i)}
+        {/* Compact single line layout */}
+        <div className="glass-dark rounded-lg p-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-white/70 font-semibold mb-1 text-center">
+                START
+              </p>
+              <div className="flex gap-0.5 flex-wrap justify-center">
+                {pieces.map((p, i) =>
+                  p.square === -1 ? (
+                    <motion.div
+                      key={i}
+                      className="w-5 h-5"
+                      whileHover={{ scale: 1.05 }}
+                      onClick={() =>
+                        gameState.validMoves.includes(i) && onPieceClick(i)
+                      }
+                    >
+                      <MemoizedPiece
+                        player={player}
+                        isClickable={gameState.validMoves.includes(i)}
+                      />
+                    </motion.div>
+                  ) : (
+                    <div
+                      key={i}
+                      className="w-5 h-5 opacity-20 rounded-full border border-white/20"
                     />
-                  </motion.div>
-                ) : (
-                  <div
-                    key={i}
-                    className="w-6 h-6 opacity-20 rounded-full border border-white/20"
-                  />
-                )
-              )}
+                  )
+                )}
+              </div>
             </div>
-          </div>
-
-          {/* Finish area */}
-          <div className="glass-dark rounded-lg p-2">
-            <p className="text-xs text-white/70 text-center mb-1 font-semibold">
-              FINISH
-            </p>
-            <div className="grid grid-cols-4 gap-1">
-              {Array(7)
-                .fill(0)
-                .map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="w-6 h-6 rounded-full flex items-center justify-center relative"
-                    style={{
-                      background:
-                        i < finishedPieces.length
-                          ? "linear-gradient(45deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))"
-                          : "rgba(255, 255, 255, 0.05)",
-                    }}
-                    animate={{
-                      boxShadow:
-                        i < finishedPieces.length
-                          ? "0 0 10px rgba(34, 197, 94, 0.3)"
-                          : "none",
-                    }}
-                  >
-                    {i < finishedPieces.length && (
-                      <motion.div
-                        className="w-full h-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: i * 0.1 }}
-                      >
-                        <MemoizedPiece player={player} isClickable={false} />
-                      </motion.div>
-                    )}
-                  </motion.div>
-                ))}
+            <div>
+              <p className="text-xs text-white/70 font-semibold mb-1 text-center">
+                FINISH
+              </p>
+              <div className="flex gap-0.5 flex-wrap justify-center">
+                {Array(7)
+                  .fill(0)
+                  .map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-5 h-5 rounded-full flex items-center justify-center relative"
+                      style={{
+                        background:
+                          i < finishedPieces.length
+                            ? "linear-gradient(45deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))"
+                            : "rgba(255, 255, 255, 0.05)",
+                      }}
+                      animate={{
+                        boxShadow:
+                          i < finishedPieces.length
+                            ? "0 0 10px rgba(34, 197, 94, 0.3)"
+                            : "none",
+                      }}
+                    >
+                      {i < finishedPieces.length && (
+                        <motion.div
+                          className="w-full h-full"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: i * 0.1 }}
+                        >
+                          <MemoizedPiece player={player} isClickable={false} />
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+              </div>
             </div>
           </div>
         </div>
