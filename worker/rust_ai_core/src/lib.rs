@@ -330,6 +330,8 @@ impl AI {
     pub fn get_best_move(&mut self, state: &GameState, depth: u8) -> (u8, Vec<MoveEvaluation>) {
         let valid_moves = state.get_valid_moves();
         if valid_moves.is_empty() {
+            // This should not happen in a properly functioning game
+            // Return the first piece index as fallback, but frontend should handle this
             return (0, Vec::new());
         }
         if valid_moves.len() == 1 {
@@ -366,6 +368,14 @@ impl AI {
         }
 
         move_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        // Ensure the best move is in the valid moves list
+        let best_move = move_scores[0].0;
+        if !valid_moves.contains(&best_move) {
+            // This should never happen, but as a safety fallback, return the first valid move
+            return (valid_moves[0], Vec::new());
+        }
+
         let move_evaluations = move_scores
             .iter()
             .map(|(move_idx, score)| {
@@ -400,7 +410,7 @@ impl AI {
             })
             .collect();
 
-        (move_scores[0].0, move_evaluations)
+        (best_move, move_evaluations)
     }
 
     fn minimax(

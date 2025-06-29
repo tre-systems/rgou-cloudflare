@@ -64,7 +64,48 @@ export default function RoyalGameOfUr() {
         setLastAIDiagnostics(aiResponse);
 
         setTimeout(() => {
+          // Validate AI move before applying it
+          if (!currentState.validMoves.includes(aiResponse.move)) {
+            console.warn(
+              `AI returned invalid move ${aiResponse.move}. Valid moves:`,
+              currentState.validMoves
+            );
+            console.warn("Current game state:", {
+              currentPlayer: currentState.currentPlayer,
+              diceRoll: currentState.diceRoll,
+              canMove: currentState.canMove,
+              validMoves: currentState.validMoves,
+              aiResponse: aiResponse,
+            });
+
+            // Fallback to first valid move if AI returned invalid move
+            if (currentState.validMoves.length === 0) {
+              console.error(
+                "No valid moves available! This should not happen."
+              );
+              setAiThinking(false);
+              return;
+            }
+
+            const fallbackMove = currentState.validMoves[0];
+            console.log(`Using fallback move: ${fallbackMove}`);
+            const newState = makeMove(currentState, fallbackMove);
+            setGameState(newState);
+            setAiThinking(false);
+            soundEffects.pieceMove();
+            return;
+          }
+
           const newState = makeMove(currentState, aiResponse.move);
+
+          // Verify the move was actually applied (state changed)
+          if (newState === currentState) {
+            console.error("AI move failed to apply! State unchanged.");
+            console.error("Move attempted:", aiResponse.move);
+            console.error("Current state:", currentState);
+            setAiThinking(false);
+            return;
+          }
 
           // Determine move type for sound effects
           const newPiece = newState.player2Pieces[aiResponse.move];
@@ -389,8 +430,8 @@ export default function RoyalGameOfUr() {
                             lastAIDiagnostics.evaluation > 0
                               ? "text-pink-400"
                               : lastAIDiagnostics.evaluation < 0
-                              ? "text-blue-400"
-                              : "text-white/80"
+                                ? "text-blue-400"
+                                : "text-white/80"
                           }`}
                         >
                           {lastAIDiagnostics.evaluation > 0 ? "+" : ""}
@@ -450,12 +491,12 @@ export default function RoyalGameOfUr() {
                           {lastAIDiagnostics.evaluation > 1
                             ? "🔴 Strong AI advantage"
                             : lastAIDiagnostics.evaluation > 0.5
-                            ? "🟠 Slight AI advantage"
-                            : lastAIDiagnostics.evaluation > -0.5
-                            ? "🟡 Balanced position"
-                            : lastAIDiagnostics.evaluation > -1
-                            ? "🔵 Slight human advantage"
-                            : "🟢 Strong human advantage"}
+                              ? "🟠 Slight AI advantage"
+                              : lastAIDiagnostics.evaluation > -0.5
+                                ? "🟡 Balanced position"
+                                : lastAIDiagnostics.evaluation > -1
+                                  ? "🔵 Slight human advantage"
+                                  : "🟢 Strong human advantage"}
                         </div>
                       </div>
                     </div>
