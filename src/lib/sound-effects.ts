@@ -27,7 +27,7 @@ class SoundEffects {
     frequency: number,
     duration: number,
     type: OscillatorType = "sine",
-    volume = 0.1
+    volume = 0.1,
   ) {
     if (!this.enabled) return;
 
@@ -47,7 +47,7 @@ class SoundEffects {
     gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.01);
     gainNode.gain.exponentialRampToValueAtTime(
       0.001,
-      ctx.currentTime + duration
+      ctx.currentTime + duration,
     );
 
     oscillator.start(ctx.currentTime);
@@ -58,7 +58,7 @@ class SoundEffects {
     frequencies: number[],
     duration: number,
     type: OscillatorType = "sine",
-    volume = 0.05
+    volume = 0.05,
   ) {
     frequencies.forEach((freq) => this.playTone(freq, duration, type, volume));
   }

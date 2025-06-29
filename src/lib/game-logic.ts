@@ -92,7 +92,7 @@ export function getValidMoves(gameState: GameState): number[] {
     } else {
       const newActualPos = getActualPosition(
         gameState.currentPlayer,
-        newTrackPos
+        newTrackPos,
       );
       const occupant = gameState.board[newActualPos];
 
@@ -141,7 +141,7 @@ export function makeMove(gameState: GameState, pieceIndex: number): GameState {
   } else {
     const newActualPos = getActualPosition(
       gameState.currentPlayer,
-      newTrackPos
+      newTrackPos,
     );
     const occupant = gameState.board[newActualPos];
 
@@ -151,7 +151,7 @@ export function makeMove(gameState: GameState, pieceIndex: number): GameState {
         ? [...gameState.player2Pieces]
         : [...gameState.player1Pieces];
       const opponentPieceIndex = opponentPieces.findIndex(
-        (p) => p.square === newActualPos
+        (p) => p.square === newActualPos,
       );
       if (opponentPieceIndex >= 0) {
         opponentPieces[opponentPieceIndex] = {
@@ -206,7 +206,7 @@ export function makeMove(gameState: GameState, pieceIndex: number): GameState {
 // Process dice roll
 export function processDiceRoll(
   gameState: GameState,
-  providedRoll?: number
+  providedRoll?: number,
 ): GameState {
   const diceRoll = providedRoll !== undefined ? providedRoll : rollDice();
   const newState = {

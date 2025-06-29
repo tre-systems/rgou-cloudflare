@@ -23,7 +23,7 @@ self.addEventListener("install", (event) => {
       })
       .catch((error) => {
         console.error("[SW] Failed to cache static assets:", error);
-      })
+      }),
   );
 
   // Take control immediately
@@ -44,13 +44,13 @@ self.addEventListener("activate", (event) => {
               console.log("[SW] Deleting old cache:", cacheName);
               return caches.delete(cacheName);
             }
-          })
+          }),
         );
       })
       .then(() => {
         // Take control of all pages
         return self.clients.claim();
-      })
+      }),
   );
 });
 
@@ -111,7 +111,7 @@ self.addEventListener("fetch", (event) => {
           // For other requests, let them fail
           throw error;
         });
-    })
+    }),
   );
 });
 

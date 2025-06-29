@@ -90,7 +90,7 @@ export default function AnimatedBackground() {
           0,
           particle.x,
           particle.y,
-          particle.size * 2
+          particle.size * 2,
         );
 
         gradient.addColorStop(0, particle.color);

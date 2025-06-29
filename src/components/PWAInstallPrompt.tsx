@@ -18,7 +18,7 @@ export default function PWAInstallPrompt() {
     // Check if app is already installed
     const checkInstalled = () => {
       const isStandalone = window.matchMedia(
-        "(display-mode: standalone)"
+        "(display-mode: standalone)",
       ).matches;
       const isIOSStandalone =
         (window.navigator as { standalone?: boolean }).standalone === true;
@@ -49,14 +49,14 @@ export default function PWAInstallPrompt() {
 
     window.addEventListener(
       "beforeinstallprompt",
-      handleBeforeInstallPrompt as EventListener
+      handleBeforeInstallPrompt as EventListener,
     );
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
-        handleBeforeInstallPrompt as EventListener
+        handleBeforeInstallPrompt as EventListener,
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
     };

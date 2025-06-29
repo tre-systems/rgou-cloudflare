@@ -27,11 +27,11 @@ export default function RoyalGameOfUr() {
 
   // Diagnostics state
   const [lastAIDiagnostics, setLastAIDiagnostics] = useState<AIResponse | null>(
-    null
+    null,
   );
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [lastAIMoveDuration, setLastAIMoveDuration] = useState<number | null>(
-    null
+    null,
   );
 
   const [lastMove, setLastMove] = useState<{
@@ -47,7 +47,6 @@ export default function RoyalGameOfUr() {
       setAiThinking(true);
       soundEffects.aiThinking();
 
-      // Track timing
       const startTime = performance.now();
 
       try {
@@ -56,19 +55,16 @@ export default function RoyalGameOfUr() {
             ? await AIService.getAIMove(currentState)
             : await wasmAiService.getAIMove(currentState);
 
-        // Calculate duration
         const duration = performance.now() - startTime;
         setLastAIMoveDuration(duration);
 
-        // Store AI diagnostics
         setLastAIDiagnostics(aiResponse);
 
         setTimeout(() => {
-          // Validate AI move before applying it
           if (!currentState.validMoves.includes(aiResponse.move)) {
             console.warn(
               `AI returned invalid move ${aiResponse.move}. Valid moves:`,
-              currentState.validMoves
+              currentState.validMoves,
             );
             console.warn("Current game state:", {
               currentPlayer: currentState.currentPlayer,
@@ -78,10 +74,9 @@ export default function RoyalGameOfUr() {
               aiResponse: aiResponse,
             });
 
-            // Fallback to first valid move if AI returned invalid move
             if (currentState.validMoves.length === 0) {
               console.error(
-                "No valid moves available! This should not happen."
+                "No valid moves available! This should not happen.",
               );
               setAiThinking(false);
               return;
@@ -98,7 +93,6 @@ export default function RoyalGameOfUr() {
 
           const newState = makeMove(currentState, aiResponse.move);
 
-          // Verify the move was actually applied (state changed)
           if (newState === currentState) {
             console.error("AI move failed to apply! State unchanged.");
             console.error("Move attempted:", aiResponse.move);
@@ -107,14 +101,12 @@ export default function RoyalGameOfUr() {
             return;
           }
 
-          // Determine move type for sound effects
           const newPiece = newState.player2Pieces[aiResponse.move];
 
           if (newPiece.square === 20) {
             soundEffects.pieceMove();
             setLastMove({ type: "finish", player: "player2" });
           } else if (newPiece.square >= 0) {
-            // Check if a capture occurred
             const captureOccurred =
               currentState.board[newPiece.square] &&
               currentState.board[newPiece.square]?.player === "player1";
@@ -127,7 +119,6 @@ export default function RoyalGameOfUr() {
               setLastMove({ type: "move", player: "player2" });
             }
 
-            // Check for rosette landing
             if ([0, 7, 13, 15, 16].includes(newPiece.square)) {
               setTimeout(() => soundEffects.rosetteLanding(), 200);
               setLastMove({ type: "rosette", player: "player2" });
@@ -141,7 +132,6 @@ export default function RoyalGameOfUr() {
         console.warn("AI service unavailable, using fallback:", error);
         const fallbackMove = AIService.getFallbackAIMove(currentState);
 
-        // Clear diagnostics when using fallback
         setLastAIDiagnostics(null);
 
         setTimeout(() => {
@@ -151,7 +141,7 @@ export default function RoyalGameOfUr() {
         }, 500);
       }
     },
-    [aiSource]
+    [aiSource],
   );
 
   useEffect(() => {
@@ -202,14 +192,12 @@ export default function RoyalGameOfUr() {
       if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
         const newState = makeMove(gameState, pieceIndex);
 
-        // Determine move type for sound effects
         const newPiece = newState.player1Pieces[pieceIndex];
 
         if (newPiece.square === 20) {
           soundEffects.pieceMove();
           setLastMove({ type: "finish", player: "player1" });
         } else if (newPiece.square >= 0) {
-          // Check if a capture occurred
           const captureOccurred =
             gameState.board[newPiece.square] &&
             gameState.board[newPiece.square]?.player === "player2";
@@ -222,7 +210,6 @@ export default function RoyalGameOfUr() {
             setLastMove({ type: "move", player: "player1" });
           }
 
-          // Check for rosette landing
           if ([0, 7, 13, 15, 16].includes(newPiece.square)) {
             setTimeout(() => soundEffects.rosetteLanding(), 200);
             setLastMove({ type: "rosette", player: "player1" });
@@ -232,7 +219,7 @@ export default function RoyalGameOfUr() {
         setGameState(newState);
       }
     },
-    [gameState]
+    [gameState],
   );
 
   const handleReset = () => {

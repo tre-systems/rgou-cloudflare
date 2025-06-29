@@ -18,7 +18,7 @@ export interface EvaluationResponse {
 export class AIService {
   private static async makeRequest<T>(
     endpoint: string,
-    data?: GameState | Record<string, unknown>
+    data?: GameState | Record<string, unknown>,
   ): Promise<T> {
     const url = `${AI_WORKER_URL}${endpoint}`;
     try {
@@ -47,7 +47,7 @@ export class AIService {
   }
 
   static async evaluatePosition(
-    gameState: GameState
+    gameState: GameState,
   ): Promise<EvaluationResponse> {
     return this.makeRequest<EvaluationResponse>("/evaluate", gameState);
   }

@@ -62,7 +62,7 @@ export default function GameControls({ gameState }: GameControlsProps) {
                 "text-2xl font-bold neon-text",
                 gameState.winner === "player1"
                   ? "text-green-400"
-                  : "text-pink-400"
+                  : "text-pink-400",
               )}
             >
               {gameState.winner === "player1" ? "Victory!" : "AI Wins!"}
