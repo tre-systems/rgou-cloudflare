@@ -44,8 +44,8 @@ jobs:
 
       - name: Install Rust tools
         run: |
-          cargo install wasm-pack
-          cargo install worker-build
+          cargo install wasm-pack --force
+          cargo install worker-build --force
 
       - name: Build Wasm Assets
         run: npm run build:wasm-assets
