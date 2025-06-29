@@ -45,7 +45,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy .open-next --project-name=rgou-cloudflare --branch=main
+          command: pages deploy .open-next --project-name=rgou-main --branch=main
 
       - name: Deploy AI Worker to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
@@ -53,4 +53,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: "worker"
-          command: deploy
+          command: deploy --config worker/wrangler.toml
