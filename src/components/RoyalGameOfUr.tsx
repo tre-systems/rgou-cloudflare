@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { GameState } from "@/lib/types";
-import { initializeGame, processDiceRoll, makeMove } from "@/lib/game-logic";
-import { AIService, AIResponse } from "@/lib/ai-service";
-import { wasmAiService } from "@/lib/wasm-ai-service";
+import { useGameStore, useGameState, useGameActions } from "@/lib/game-store";
 import { soundEffects } from "@/lib/sound-effects";
 import GameBoard from "./GameBoard";
 import GameControls, { AISource } from "./GameControls";
@@ -20,129 +17,24 @@ import {
 } from "lucide-react";
 
 export default function RoyalGameOfUr() {
-  const [gameState, setGameState] = useState<GameState>(() => initializeGame());
-  const [aiThinking, setAiThinking] = useState(false);
+  const gameState = useGameState();
+  const { processDiceRoll, makeMove, makeAIMove, reset } = useGameActions();
+  const aiThinking = useGameStore((state) => state.aiThinking);
+  const lastAIDiagnostics = useGameStore((state) => state.lastAIDiagnostics);
+  const lastAIMoveDuration = useGameStore((state) => state.lastAIMoveDuration);
+  const lastMoveType = useGameStore((state) => state.lastMoveType);
+  const lastMovePlayer = useGameStore((state) => state.lastMovePlayer);
+
   const [aiSource, setAiSource] = useState<AISource>("server");
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Diagnostics state
-  const [lastAIDiagnostics, setLastAIDiagnostics] = useState<AIResponse | null>(
-    null,
-  );
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
-  const [lastAIMoveDuration, setLastAIMoveDuration] = useState<number | null>(
-    null,
-  );
 
   const [lastMove, setLastMove] = useState<{
     type: "move" | "capture" | "rosette" | "finish";
     player: string;
   } | null>(null);
-
-  const makeAIMove = useCallback(
-    async (currentState: GameState) => {
-      if (currentState.currentPlayer !== "player2" || !currentState.canMove)
-        return;
-
-      setAiThinking(true);
-      soundEffects.aiThinking();
-
-      const startTime = performance.now();
-
-      try {
-        const aiResponse =
-          aiSource === "server"
-            ? await AIService.getAIMove(currentState)
-            : await wasmAiService.getAIMove(currentState);
-
-        const duration = performance.now() - startTime;
-        setLastAIMoveDuration(duration);
-
-        setLastAIDiagnostics(aiResponse);
-
-        setTimeout(() => {
-          if (!currentState.validMoves.includes(aiResponse.move)) {
-            console.warn(
-              `AI returned invalid move ${aiResponse.move}. Valid moves:`,
-              currentState.validMoves,
-            );
-            console.warn("Current game state:", {
-              currentPlayer: currentState.currentPlayer,
-              diceRoll: currentState.diceRoll,
-              canMove: currentState.canMove,
-              validMoves: currentState.validMoves,
-              aiResponse: aiResponse,
-            });
-
-            if (currentState.validMoves.length === 0) {
-              console.error(
-                "No valid moves available! This should not happen.",
-              );
-              setAiThinking(false);
-              return;
-            }
-
-            const fallbackMove = currentState.validMoves[0];
-            console.log(`Using fallback move: ${fallbackMove}`);
-            const newState = makeMove(currentState, fallbackMove);
-            setGameState(newState);
-            setAiThinking(false);
-            soundEffects.pieceMove();
-            return;
-          }
-
-          const newState = makeMove(currentState, aiResponse.move);
-
-          if (newState === currentState) {
-            console.error("AI move failed to apply! State unchanged.");
-            console.error("Move attempted:", aiResponse.move);
-            console.error("Current state:", currentState);
-            setAiThinking(false);
-            return;
-          }
-
-          const newPiece = newState.player2Pieces[aiResponse.move];
-
-          if (newPiece.square === 20) {
-            soundEffects.pieceMove();
-            setLastMove({ type: "finish", player: "player2" });
-          } else if (newPiece.square >= 0) {
-            const captureOccurred =
-              currentState.board[newPiece.square] &&
-              currentState.board[newPiece.square]?.player === "player1";
-
-            if (captureOccurred) {
-              soundEffects.pieceCapture();
-              setLastMove({ type: "capture", player: "player2" });
-            } else {
-              soundEffects.pieceMove();
-              setLastMove({ type: "move", player: "player2" });
-            }
-
-            if ([0, 7, 13, 15, 16].includes(newPiece.square)) {
-              setTimeout(() => soundEffects.rosetteLanding(), 200);
-              setLastMove({ type: "rosette", player: "player2" });
-            }
-          }
-
-          setGameState(newState);
-          setAiThinking(false);
-        }, 1000);
-      } catch (error) {
-        console.warn("AI service unavailable, using fallback:", error);
-        const fallbackMove = AIService.getFallbackAIMove(currentState);
-
-        setLastAIDiagnostics(null);
-
-        setTimeout(() => {
-          setGameState((prevState) => makeMove(prevState, fallbackMove));
-          setAiThinking(false);
-          soundEffects.pieceMove();
-        }, 500);
-      }
-    },
-    [aiSource],
-  );
 
   useEffect(() => {
     if (
@@ -150,20 +42,21 @@ export default function RoyalGameOfUr() {
       !gameState.canMove &&
       gameState.gameStatus === "playing"
     ) {
-      setTimeout(() => setGameState(processDiceRoll), 500);
+      setTimeout(() => processDiceRoll(), 500);
     }
   }, [
     gameState.currentPlayer,
     gameState.canMove,
     gameState.gameStatus,
-    gameState,
+    processDiceRoll,
   ]);
 
   useEffect(() => {
     if (gameState.currentPlayer === "player2" && gameState.canMove) {
-      makeAIMove(gameState);
+      soundEffects.aiThinking();
+      makeAIMove(aiSource);
     }
-  }, [gameState, makeAIMove]);
+  }, [gameState, makeAIMove, aiSource]);
 
   // Handle game end sound effects
   useEffect(() => {
@@ -178,54 +71,44 @@ export default function RoyalGameOfUr() {
     }
   }, [gameState.gameStatus, gameState.winner]);
 
-  const handleRollDice = useCallback(async () => {
-    if (aiSource === "client") {
-      const roll = await wasmAiService.rollDice();
-      setGameState((prevState) => processDiceRoll(prevState, roll));
-    } else {
-      setGameState(processDiceRoll);
+  useEffect(() => {
+    if (lastMoveType && lastMovePlayer) {
+      setLastMove({
+        type: lastMoveType,
+        player: lastMovePlayer,
+      });
+
+      switch (lastMoveType) {
+        case "capture":
+          soundEffects.pieceCapture();
+          break;
+        case "rosette":
+          soundEffects.rosetteLanding();
+          break;
+        case "finish":
+        case "move":
+          soundEffects.pieceMove();
+          break;
+      }
     }
-  }, [aiSource]);
+  }, [lastMoveType, lastMovePlayer]);
+
+  const handleRollDice = useCallback(async () => {
+    processDiceRoll();
+  }, [processDiceRoll]);
 
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
       if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
-        const newState = makeMove(gameState, pieceIndex);
-
-        const newPiece = newState.player1Pieces[pieceIndex];
-
-        if (newPiece.square === 20) {
-          soundEffects.pieceMove();
-          setLastMove({ type: "finish", player: "player1" });
-        } else if (newPiece.square >= 0) {
-          const captureOccurred =
-            gameState.board[newPiece.square] &&
-            gameState.board[newPiece.square]?.player === "player2";
-
-          if (captureOccurred) {
-            soundEffects.pieceCapture();
-            setLastMove({ type: "capture", player: "player1" });
-          } else {
-            soundEffects.pieceMove();
-            setLastMove({ type: "move", player: "player1" });
-          }
-
-          if ([0, 7, 13, 15, 16].includes(newPiece.square)) {
-            setTimeout(() => soundEffects.rosetteLanding(), 200);
-            setLastMove({ type: "rosette", player: "player1" });
-          }
-        }
-
-        setGameState(newState);
+        makeMove(pieceIndex);
       }
     },
-    [gameState],
+    [gameState.canMove, gameState.validMoves, makeMove],
   );
 
   const handleReset = () => {
-    setGameState(initializeGame());
+    reset();
     setLastMove(null);
-    setLastAIDiagnostics(null);
   };
 
   const toggleSound = () => {

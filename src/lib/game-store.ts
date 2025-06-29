@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { GameState } from "./types";
+import { GameState, MoveType, Player } from "./types";
 import {
   initializeGame,
   processDiceRoll as processDiceRollLogic,
@@ -14,6 +14,8 @@ type GameStore = {
   aiThinking: boolean;
   lastAIDiagnostics: AIResponse | null;
   lastAIMoveDuration: number | null;
+  lastMoveType: MoveType | null;
+  lastMovePlayer: Player | null;
   actions: {
     initialize: () => void;
     processDiceRoll: (roll?: number) => void;
@@ -29,6 +31,8 @@ export const useGameStore = create<GameStore>()(
     aiThinking: false,
     lastAIDiagnostics: null,
     lastAIMoveDuration: null,
+    lastMoveType: null,
+    lastMovePlayer: null,
     actions: {
       initialize: () => {
         set((state) => {
@@ -36,6 +40,8 @@ export const useGameStore = create<GameStore>()(
           state.aiThinking = false;
           state.lastAIDiagnostics = null;
           state.lastAIMoveDuration = null;
+          state.lastMoveType = null;
+          state.lastMovePlayer = null;
         });
       },
       processDiceRoll: (roll?: number) => {
@@ -49,7 +55,13 @@ export const useGameStore = create<GameStore>()(
             state.gameState.canMove &&
             state.gameState.validMoves.includes(pieceIndex)
           ) {
-            state.gameState = makeMoveLogic(state.gameState, pieceIndex);
+            const [newState, moveType, movePlayer] = makeMoveLogic(
+              state.gameState,
+              pieceIndex,
+            );
+            state.gameState = newState;
+            state.lastMoveType = moveType;
+            state.lastMovePlayer = movePlayer;
           }
         });
       },
@@ -84,19 +96,37 @@ export const useGameStore = create<GameStore>()(
             if (gameState.validMoves.length > 0) {
               const fallbackMove = gameState.validMoves[0];
               set((state) => {
-                state.gameState = makeMoveLogic(state.gameState, fallbackMove);
+                const [newState, moveType, movePlayer] = makeMoveLogic(
+                  state.gameState,
+                  fallbackMove,
+                );
+                state.gameState = newState;
+                state.lastMoveType = moveType;
+                state.lastMovePlayer = movePlayer;
               });
             }
           } else {
             set((state) => {
-              state.gameState = makeMoveLogic(state.gameState, aiResponse.move);
+              const [newState, moveType, movePlayer] = makeMoveLogic(
+                state.gameState,
+                aiResponse.move,
+              );
+              state.gameState = newState;
+              state.lastMoveType = moveType;
+              state.lastMovePlayer = movePlayer;
             });
           }
         } catch (error) {
           console.warn("AI service unavailable, using fallback:", error);
           const fallbackMove = AIService.getFallbackAIMove(gameState);
           set((state) => {
-            state.gameState = makeMoveLogic(state.gameState, fallbackMove);
+            const [newState, moveType, movePlayer] = makeMoveLogic(
+              state.gameState,
+              fallbackMove,
+            );
+            state.gameState = newState;
+            state.lastMoveType = moveType;
+            state.lastMovePlayer = movePlayer;
             state.lastAIDiagnostics = null;
           });
         } finally {
@@ -111,6 +141,8 @@ export const useGameStore = create<GameStore>()(
           state.aiThinking = false;
           state.lastAIDiagnostics = null;
           state.lastAIMoveDuration = null;
+          state.lastMoveType = null;
+          state.lastMovePlayer = null;
         });
       },
     },
