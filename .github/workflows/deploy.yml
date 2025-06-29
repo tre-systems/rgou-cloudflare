@@ -31,8 +31,21 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install wasm-pack
-        run: cargo install wasm-pack
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            worker/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Rust tools
+        run: |
+          cargo install wasm-pack
+          cargo install worker-build
 
       - name: Build Wasm Assets
         run: npm run build:wasm-assets
