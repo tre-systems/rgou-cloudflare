@@ -1,129 +1,158 @@
-# 🚀 Deployment Guide - Royal Game of Ur
+# 🚀 Deployment Guide
 
-This guide walks you through deploying the Royal Game of Ur to Cloudflare. The frontend is a Next.js application adapted for Cloudflare using **OpenNext**, and the AI backend is a distinct Rust-based Cloudflare Worker.
+This guide walks you through deploying the Royal Game of Ur application to Cloudflare. The project consists of a Next.js frontend and a Rust-based AI backend, both deployed as Cloudflare Workers.
 
 ## Prerequisites
 
-- [Cloudflare account](https://cloudflare.com)
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
-- Node.js 18+ and npm
-- Rust and Cargo (for AI worker development)
-- Git repository (GitHub, GitLab, etc.)
+Before you begin, ensure you have the following:
 
-## 📋 Setup Checklist
-
-### 1. Cloudflare Account Setup
-
-- [ ] Create/login to Cloudflare account
-- [ ] Note your Account ID (found in right sidebar of dashboard)
-- [ ] Create API token with appropriate permissions
-
-### 2. Install Required Tools
+- A [Cloudflare account](https://dash.cloudflare.com/sign-up).
+- The [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed and authenticated.
+- [Node.js](https://nodejs.org/) (version 20 or later) and npm.
+- The [Rust toolchain](https://www.rust-lang.org/tools/install) (for AI worker development).
+- `wasm-pack` for building WebAssembly modules from Rust.
 
 ```bash
-# Install Wrangler CLI
-npm install -g wrangler
-wrangler auth login
-
-# Install Rust (if not already installed)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-
-# Install worker-build tool
-cargo install worker-build
+# Install wasm-pack if you haven't already
+cargo install wasm-pack
 ```
 
-### 3. Configure Environment Variables
+## 📦 Deployment Process
 
-Create environment variables for your deployment:
+The entire application, both frontend and backend, can be deployed from the root of the project using npm scripts.
 
-**Local Development:**
-Create `.env.local` in project root:
+### Manual Deployment
 
-```bash
-NEXT_PUBLIC_AI_WORKER_URL=http://localhost:8787
+To deploy the application manually, run the following commands from the project root:
+
+1.  **Deploy the Frontend Worker:**
+
+    ```bash
+    npm run deploy:cf
+    ```
+
+    This command first builds the Next.js application into a static `out` directory and then deploys it as a Cloudflare Worker using the configuration in the root `wrangler.toml`.
+
+2.  **Deploy the AI Worker:**
+
+    ```bash
+    npm run deploy:worker
+    ```
+
+    This command navigates into the `worker` directory and deploys the Rust-based AI worker using the configuration in `worker/wrangler.toml`.
+
+### Automated Deployment with GitHub Actions
+
+The deployment process is automated via a GitHub Action defined in `.github/workflows/deploy.yml`. A push to the `main` branch will automatically trigger the following steps:
+
+1.  **Checkout Code:** The repository is checked out.
+2.  **Set up Node.js and Rust:** The necessary toolchains are installed.
+3.  **Install `wasm-pack`:** The WebAssembly packager is installed.
+4.  **Build Wasm Assets:** The `build:wasm-assets` script is run to compile the Rust code to Wasm and place it where the Next.js app can find it.
+5.  **Deploy Frontend and Backend:** The `deploy:cf` and `deploy:worker` scripts are run to deploy both parts of the application.
+
+Here is the complete workflow:
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Build Wasm Assets
+        run: npm run build:wasm-assets
+
+      - name: Deploy Frontend
+        run: npm run deploy:cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy AI Worker
+        run: npm run deploy:worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 ```
 
-**Production:**
-Set in `wrangler.toml` or via Wrangler CLI:
+## ⚙️ Configuration Files
 
-```bash
-NEXT_PUBLIC_AI_WORKER_URL=https://your-worker.your-subdomain.workers.dev
-```
+### Frontend (`wrangler.toml`)
 
-## 🤖 Step 1: Deploy the AI Worker
-
-First, deploy the Rust-based AI worker that will serve as the "Server AI" opponent.
-
-### 1. Configure AI Worker
-
-Navigate to the worker directory and edit `worker/wrangler.toml`:
+The root `wrangler.toml` file configures the Next.js frontend worker. It serves the static assets from the `./out` directory.
 
 ```toml
-# worker/wrangler.toml
-name = "rgou-ai-worker" # Choose a unique name
-main = "build/worker/shim.mjs"
-compatibility_date = "2024-04-05"
-account_id = "<YOUR_ACCOUNT_ID>"
-
-[build]
-command = "npm run build"
-```
-
-### 2. Deploy the Worker
-
-From the `worker/` directory, run the deployment command:
-
-```bash
-# In ./worker/ directory
-wrangler deploy
-```
-
-After deployment, Cloudflare will provide a URL for your worker (e.g., `https://rgou-ai-worker.your-subdomain.workers.dev`). **Copy this URL.**
-
-## 🌐 Step 2: Deploy the Next.js Frontend
-
-The frontend is a Next.js application built and deployed as a separate Cloudflare Worker using OpenNext.
-
-### 1. Configure Frontend Worker
-
-Update the main `wrangler.toml` file in the project root with your details and the AI worker URL from the previous step.
-
-```toml
-# ./wrangler.toml
 name = "rgou-main"
-main = ".open-next/worker.js"
-compatibility_date = "2024-01-01"
-account_id = "<YOUR_ACCOUNT_ID>"
+main = "worker.js"
+compatibility_date = "2025-06-14"
+
+[assets]
+directory = "./out"
 
 [vars]
-NEXT_PUBLIC_AI_WORKER_URL = "https://<YOUR_AI_WORKER_URL>" # Paste the URL here
-
-# Bind the R2 bucket for static assets
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "open-next-assets"
-preview_bucket_name = "open-next-assets-preview"
-
-# Bind a service for the AI worker (optional, for service bindings)
-[[services]]
-binding = "AI_WORKER"
-service = "rgou-ai-worker"
+ENVIRONMENT = "production"
+NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-minmax.tre.systems"
 ```
 
-### 2. Build and Deploy Frontend
+### AI Worker (`worker/wrangler.toml`)
 
-From the project root directory, build the application and deploy it:
+The `worker/wrangler.toml` file configures the Rust-based AI worker. It specifies the build command required to compile the Rust code.
 
-```bash
-# Build the application using OpenNext
-npm run build
+```toml
+name = "rgou-ai-worker"
+main = "build/worker/shim.mjs"
+compatibility_date = "2024-12-01"
 
-# Deploy the worker to Cloudflare
-wrangler deploy
+[build]
+command = "cargo install -q worker-build && worker-build --release"
 ```
 
-OpenNext automatically handles building the Next.js app into a Cloudflare-compatible format. The `wrangler deploy` command uploads the worker and static assets to your Cloudflare account.
+### Next.js (`next.config.mjs`)
+
+The `next.config.mjs` is configured to export a static site, which is required for this type of Cloudflare Worker deployment.
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: "export",
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
+};
+```
 
 ## 🧪 Verification
 

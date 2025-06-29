@@ -248,53 +248,14 @@ command = "cargo install -q worker-build && worker-build --release"
 
 **Build Steps:**
 
-1. **Dependency Resolution**: Cargo resolves and downloads dependencies
-2. **Rust Compilation**: Code compiled to WebAssembly
-3. **Worker Shim Generation**: Creates JavaScript wrapper for Wasm module
-4. **Optimization**: Release build with size and speed optimizations
-
-### Dependencies
-
-Key Rust dependencies:
-
-- **`worker`**: Cloudflare Workers runtime bindings
-- **`serde`**: JSON serialization/deserialization
-- **`std::collections::HashMap`**: For transposition tables
+1. **Rust Compilation**: `cargo build --release`
+2. **Wasm Generation**: `wasm-bindgen` creates JS bindings
+3. **Optimization**: `wasm-opt` shrinks Wasm binary size
+4. **Shimming**: `worker-build` generates worker entrypoint
 
 ## Deployment
 
-### Configuration
-
-The worker is configured via `wrangler.toml`:
-
-```toml
-name = "rgou-ai-worker"
-main = "build/worker/shim.mjs"
-compatibility_date = "2024-12-01"
-account_id = "571f130502618993d848f58d27ae288d"
-
-[build]
-command = "cargo install -q worker-build && worker-build --release"
-
-[env.production.vars]
-ENVIRONMENT = "production"
-```
-
-### Deployment Commands
-
-```bash
-# Development
-cd worker
-wrangler dev
-
-# Production deployment
-wrangler deploy
-```
-
-### Environment Variables
-
-- **`ENVIRONMENT`**: Set to "production" for production builds
-- **`API_SECRET`**: Optional authentication token (if implemented)
+The AI worker is deployed as part of the unified deployment process. For detailed instructions, please see the main [Deployment Guide](./deployment.md).
 
 ## Performance Characteristics
 
