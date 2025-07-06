@@ -93,6 +93,23 @@ export default function RoyalGameOfUr() {
     }
   }, [lastMoveType, lastMovePlayer]);
 
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === "player1" &&
+      !gameState.canMove &&
+      gameState.diceRoll === null &&
+      gameState.gameStatus === "playing"
+    ) {
+      setTimeout(() => processDiceRoll(), 500);
+    }
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.diceRoll,
+    gameState.gameStatus,
+    processDiceRoll,
+  ]);
+
   const handleRollDice = useCallback(async () => {
     processDiceRoll();
   }, [processDiceRoll]);

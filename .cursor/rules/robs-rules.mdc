@@ -19,7 +19,7 @@ Use blank lines to make code easier to read.
 Please ALWAYS! keep the README file up to date.
 In addition in the 'docs' folder create additional detailed technical documentation in the form of markdown documents and keep it up to date as you go.
 When reviewing a file, should it be broken up? can it be improved? is this functionality in the right location within the project
-When I just type 'cp' that means "review all changes in each file, remove comments, run 'npm run check' fix any issues then 'git add -A' and commit and push all changed files."
+When I just type 'rcp' that means "review all changes in each file, remove comments, run 'npm run check' fix any issues then 'git add -A' and commit and push all changed files."
 When I just type 'p' that means "proceed"
 Dont give me a list of options to choose, devise the best plan you can and proceed with it.
 
