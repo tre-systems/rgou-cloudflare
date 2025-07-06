@@ -59,6 +59,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
         .map(|eval| MoveEvaluationWasm {
             piece_index: eval.piece_index,
             score: eval.score,
+            move_type: eval.move_type.clone(),
             from_square: eval.from_square,
             to_square: eval.to_square,
         })

@@ -24,6 +24,7 @@ pub struct JsonPiece {
 
 #[wasm_bindgen]
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AIResponse {
     pub r#move: Option<u8>,
     pub evaluation: i32,
@@ -36,6 +37,7 @@ pub struct AIResponse {
 
 #[wasm_bindgen]
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Diagnostics {
     pub search_depth: u8,
     #[wasm_bindgen(getter_with_clone)]
@@ -51,16 +53,20 @@ pub struct Diagnostics {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MoveEvaluationWasm {
     pub piece_index: u8,
     pub score: f32,
+    #[wasm_bindgen(getter_with_clone)]
+    pub move_type: String,
     pub from_square: i8,
     pub to_square: Option<u8>,
 }
 
 #[wasm_bindgen]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PiecePositions {
     pub player1_on_board: u8,
     pub player1_finished: u8,
@@ -70,6 +76,7 @@ pub struct PiecePositions {
 
 #[wasm_bindgen]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Timings {
     pub ai_move_calculation: u32,
     pub total_handler_time: u32,
@@ -136,6 +143,7 @@ pub fn get_ai_move_wasm(game_state_json: &str) -> Result<String, JsValue> {
         .map(|eval| MoveEvaluationWasm {
             piece_index: eval.piece_index,
             score: eval.score,
+            move_type: eval.move_type.clone(),
             from_square: eval.from_square,
             to_square: eval.to_square,
         })

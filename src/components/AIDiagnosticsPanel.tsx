@@ -18,6 +18,9 @@ export default function AIDiagnosticsPanel({
   isOpen,
   onToggle,
 }: AIDiagnosticsPanelProps) {
+  if (!lastAIDiagnostics?.diagnostics) {
+    return null;
+  }
   return (
     <motion.div
       className="glass-dark rounded-lg p-3"
@@ -109,7 +112,7 @@ export default function AIDiagnosticsPanel({
                   {lastAIDiagnostics.diagnostics.searchDepth})
                 </p>
                 <div className="max-h-48 overflow-y-auto pr-1">
-                  {lastAIDiagnostics.diagnostics.moveEvaluations.map(
+                  {lastAIDiagnostics.diagnostics.moveEvaluations?.map(
                     (move, index) => (
                       <div
                         key={index}
