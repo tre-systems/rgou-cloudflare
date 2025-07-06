@@ -328,87 +328,65 @@ impl AI {
     }
 
     pub fn get_best_move(&mut self, state: &GameState, depth: u8) -> (u8, Vec<MoveEvaluation>) {
+        self.nodes_evaluated = 0;
+        self.transposition_hits = 0;
+
         let valid_moves = state.get_valid_moves();
+
         if valid_moves.is_empty() {
-            // This should not happen in a properly functioning game
-            // Return the first piece index as fallback, but frontend should handle this
-            return (0, Vec::new());
+            return (0, vec![]); // No-op, no move possible.
         }
+
         if valid_moves.len() == 1 {
-            return (
-                valid_moves[0],
-                vec![MoveEvaluation {
-                    piece_index: valid_moves[0],
-                    score: 0.0,
-                    move_type: "only_move".to_string(),
-                    from_square: state.get_pieces(state.current_player)[valid_moves[0] as usize]
-                        .square,
-                    to_square: None,
-                }],
-            );
+            return (valid_moves[0], vec![]); // Only one move, must be it.
         }
 
-        let mut move_scores = Vec::new();
-        for &move_idx in &valid_moves {
-            let mut total_score = 0.0f32;
-            for dice_roll in 0..5 {
-                let mut test_state = state.clone();
-                test_state.make_move(move_idx);
-                test_state.dice_roll = dice_roll;
-                let score = self.minimax(
-                    &test_state,
-                    depth.saturating_sub(1),
-                    false,
-                    i32::MIN,
-                    i32::MAX,
-                ) as f32;
-                total_score += score * DICE_PROBABILITIES[dice_roll as usize];
-            }
-            move_scores.push((move_idx, total_score));
-        }
+        let is_maximizing = state.current_player == Player::Player2;
+        let mut best_move = valid_moves[0];
+        let mut best_value = if is_maximizing { i32::MIN } else { i32::MAX };
+        let mut move_evaluations = Vec::new();
 
-        move_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+        for &m in &valid_moves {
+            let mut next_state = state.clone();
+            next_state.make_move(m);
 
-        // Ensure the best move is in the valid moves list
-        let best_move = move_scores[0].0;
-        if !valid_moves.contains(&best_move) {
-            // This should never happen, but as a safety fallback, return the first valid move
-            return (valid_moves[0], Vec::new());
-        }
+            let value = self.minimax(&next_state, depth - 1, !is_maximizing, i32::MIN, i32::MAX);
 
-        let move_evaluations = move_scores
-            .iter()
-            .map(|(move_idx, score)| {
-                let piece = &state.get_pieces(state.current_player)[*move_idx as usize];
-                let track = GameState::get_player_track(state.current_player);
-                let (move_type, to_square) = if piece.square == -1 {
-                    ("enter".to_string(), Some(track[0]))
-                } else if let Some(track_pos) =
-                    track.iter().position(|&sq| sq as i8 == piece.square)
-                {
-                    let new_track_pos = track_pos + state.dice_roll as usize;
-                    if new_track_pos >= track.len() {
-                        ("finish".to_string(), None)
-                    } else {
-                        let new_square = track[new_track_pos];
-                        if state.board[new_square as usize].is_some() {
-                            ("capture".to_string(), Some(new_square))
-                        } else {
-                            ("move".to_string(), Some(new_square))
-                        }
-                    }
-                } else {
-                    ("invalid".to_string(), None)
-                };
-                MoveEvaluation {
-                    piece_index: *move_idx,
-                    score: *score,
-                    move_type,
-                    from_square: piece.square,
-                    to_square,
+            move_evaluations.push(MoveEvaluation {
+                piece_index: m,
+                score: value as f32,
+                move_type: "".to_string(), // You may want to add more logic here
+                from_square: state.get_pieces(state.current_player)[m as usize].square,
+                to_square: Some(
+                    next_state.get_pieces(state.current_player)[m as usize].square as u8,
+                ),
+            });
+
+            if is_maximizing {
+                if value > best_value {
+                    best_value = value;
+                    best_move = m;
                 }
-            })
-            .collect();
+            } else {
+                if value < best_value {
+                    best_value = value;
+                    best_move = m;
+                }
+            }
+        }
+
+        // Sort evaluations for diagnostics
+        move_evaluations.sort_by(|a, b| {
+            if is_maximizing {
+                b.score
+                    .partial_cmp(&a.score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            } else {
+                a.score
+                    .partial_cmp(&b.score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            }
+        });
 
         (best_move, move_evaluations)
     }
@@ -438,9 +416,7 @@ impl AI {
             let mut max_eval = i32::MIN;
             for &move_idx in &state.get_valid_moves() {
                 let mut test_state = state.clone();
-                if test_state.make_move(move_idx) {
-                    return WIN_SCORE + depth as i32;
-                }
+                test_state.make_move(move_idx);
                 let eval = self.minimax(&test_state, depth - 1, false, alpha, beta);
                 max_eval = max_eval.max(eval);
                 alpha = alpha.max(eval);
@@ -460,9 +436,7 @@ impl AI {
             let mut min_eval = i32::MAX;
             for &move_idx in &state.get_valid_moves() {
                 let mut test_state = state.clone();
-                if test_state.make_move(move_idx) {
-                    return -WIN_SCORE - depth as i32;
-                }
+                test_state.make_move(move_idx);
                 let eval = self.minimax(&test_state, depth - 1, true, alpha, beta);
                 min_eval = min_eval.min(eval);
                 beta = beta.min(eval);
