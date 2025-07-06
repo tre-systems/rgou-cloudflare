@@ -4,14 +4,12 @@ use std::collections::HashMap;
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
 
-// Game constants
 pub const PIECES_PER_PLAYER: usize = 7;
 pub const BOARD_SIZE: usize = 21;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
 
-// AI Evaluation constants
 const WIN_SCORE: i32 = 10000;
 const FINISHED_PIECE_VALUE: i32 = 1000;
 const POSITION_WEIGHT: i32 = 15;
@@ -180,12 +178,16 @@ impl GameState {
 
         score += (p2_finished - p1_finished) * FINISHED_PIECE_VALUE;
 
+        let p1_on_board = self.player1_pieces.iter().filter(|p| p.square > -1).count() as i32;
+        let p2_on_board = self.player2_pieces.iter().filter(|p| p.square > -1).count() as i32;
+        score += (p2_on_board - p1_on_board) * CAPTURE_BONUS;
+
         let (p1_pos_score, p1_strategic_score) = self.evaluate_player_position(Player::Player1);
         let (p2_pos_score, p2_strategic_score) = self.evaluate_player_position(Player::Player2);
 
         score += (p2_pos_score - p1_pos_score) * POSITION_WEIGHT / 10;
         score += p2_strategic_score - p1_strategic_score;
-        score += self.evaluate_piece_safety() + self.evaluate_board_control();
+        score += self.evaluate_board_control();
         score
     }
 
@@ -228,22 +230,6 @@ impl GameState {
             }
         }
         control_score
-    }
-
-    fn evaluate_piece_safety(&self) -> i32 {
-        let mut player1_control = 0;
-        let mut player2_control = 0;
-
-        for &square in &ROSETTE_SQUARES {
-            if let Some(occupant) = self.board[square as usize] {
-                match occupant.player {
-                    Player::Player1 => player1_control += 1,
-                    Player::Player2 => player2_control += 1,
-                }
-            }
-        }
-
-        (player1_control - player2_control) * ROSETTE_CONTROL_BONUS
     }
 
     pub fn make_move(&mut self, piece_index: u8) -> bool {
@@ -379,23 +365,24 @@ impl AI {
                 track[new_track_pos as usize]
             };
 
-            let mut capture_bonus = 0;
-            if to_square != 20 && !GameState::is_rosette(to_square) {
-                if let Some(occupant) = state.board[to_square as usize] {
-                    if occupant.player != state.current_player {
-                        capture_bonus = CAPTURE_BONUS;
-                    }
-                }
-            }
-
             let mut next_state = state.clone();
             next_state.make_move(m);
+
+            let is_capture = if to_square != 20 && !GameState::is_rosette(to_square) {
+                if let Some(occupant) = state.board[to_square as usize] {
+                    occupant.player != state.current_player
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
 
             let move_type = if to_square == 20 {
                 "finish".to_string()
             } else if GameState::is_rosette(to_square) {
                 "rosette".to_string()
-            } else if capture_bonus > 0 {
+            } else if is_capture {
                 "capture".to_string()
             } else {
                 "move".to_string()
@@ -403,28 +390,22 @@ impl AI {
 
             let value = self.minimax(&next_state, depth - 1, !is_maximizing, i32::MIN, i32::MAX);
 
-            let adjusted_value = if is_maximizing {
-                value + capture_bonus
-            } else {
-                value - capture_bonus
-            };
-
             move_evaluations.push(MoveEvaluation {
                 piece_index: m,
-                score: adjusted_value as f32,
+                score: value as f32,
                 move_type,
                 from_square,
                 to_square: Some(to_square),
             });
 
             if is_maximizing {
-                if adjusted_value > best_value {
-                    best_value = adjusted_value;
+                if value > best_value {
+                    best_value = value;
                     best_move = m;
                 }
             } else {
-                if adjusted_value < best_value {
-                    best_value = adjusted_value;
+                if value < best_value {
+                    best_value = value;
                     best_move = m;
                 }
             }
