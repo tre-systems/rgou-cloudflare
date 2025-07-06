@@ -1,19 +1,17 @@
 use rgou_ai_core::{
-    AI,
     wasm_api::{
-        AIResponse, Diagnostics, GameStateRequest, MoveEvaluationWasm, PiecePositions, Timings,
-        convert_json_to_game_state,
+        convert_json_to_game_state, AIResponse, Diagnostics, GameStateRequest, MoveEvaluationWasm,
+        PiecePositions, Timings,
     },
+    AI,
 };
 use serde::Serialize;
 use worker::*;
 
-// Constants
 const AI_SEARCH_DEPTH: u8 = 12;
 const VERSION: &str = "2.0.0-pure-rust";
 const CORS_MAX_AGE: &str = "86400";
 
-// Response types
 #[derive(Serialize)]
 struct HealthResponse {
     status: String,
@@ -23,7 +21,7 @@ struct HealthResponse {
 
 /// Creates CORS headers for all responses
 fn cors_headers() -> Headers {
-    let mut headers = Headers::new();
+    let headers = Headers::new();
     headers.set("Access-Control-Allow-Origin", "*").unwrap();
     headers
         .set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")

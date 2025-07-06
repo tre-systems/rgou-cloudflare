@@ -16,12 +16,19 @@ const WIN_SCORE: i32 = 10000;
 const FINISHED_PIECE_VALUE: i32 = 1000;
 const POSITION_WEIGHT: i32 = 15;
 const SAFETY_BONUS: i32 = 25;
-const BLOCKING_BONUS: i32 = 20;
 const ROSETTE_CONTROL_BONUS: i32 = 40;
 const ADVANCEMENT_BONUS: i32 = 5;
-const CAPTURE_BONUS: i32 = 150;
+const CAPTURE_BONUS: i32 = 10;
 
-const SAFE_PATH_LENGTH: i32 = 5;
+const MAX_SCORE: i32 = 1000;
+const MIN_SCORE: i32 = -1000;
+const ROSETTE_BONUS: i32 = 5;
+const FINISH_BONUS: i32 = 15;
+const SAFE_SQUARE_BONUS: i32 = 3;
+const CENTER_LANE_BONUS: i32 = 2;
+
+const MIDDLE_LANE_START: i32 = 5;
+const MIDDLE_LANE_END: i32 = 12;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Player {
@@ -187,7 +194,7 @@ impl GameState {
 
         score += (p2_pos_score - p1_pos_score) * POSITION_WEIGHT / 10;
         score += p2_strategic_score - p1_strategic_score;
-        score += self.evaluate_board_control();
+        score += self.evaluate_piece_safety() + self.evaluate_board_control();
         score
     }
 
@@ -232,8 +239,20 @@ impl GameState {
         control_score
     }
 
-    fn evaluate_blocking_potential(&self) -> i32 {
-        0
+    fn evaluate_piece_safety(&self) -> i32 {
+        let mut player1_control = 0;
+        let mut player2_control = 0;
+
+        for &square in &ROSETTE_SQUARES {
+            if let Some(occupant) = self.board[square as usize] {
+                match occupant.player {
+                    Player::Player1 => player1_control += 1,
+                    Player::Player2 => player2_control += 1,
+                }
+            }
+        }
+
+        (player1_control - player2_control) * CENTER_LANE_BONUS
     }
 
     pub fn make_move(&mut self, piece_index: u8) -> bool {
