@@ -72,6 +72,9 @@ export function getValidMoves(gameState: GameState): number[] {
   const validMoves: number[] = [];
 
   currentPieces.forEach((piece, index) => {
+    if (piece.square === 20) {
+      return;
+    }
     const currentTrackPos =
       piece.square === -1
         ? -1
