@@ -1,10 +1,9 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
-const AI1_SEARCH_DEPTH: u8 = 5;
-const AI2_SEARCH_DEPTH: u8 = 4;
-const NUM_GAMES: usize = 20;
+const AI1_SEARCH_DEPTH: u8 = 4;
+const AI2_SEARCH_DEPTH: u8 = 5;
+const NUM_GAMES: usize = 100;
 
 fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
     let mut game_state = GameState::new();
@@ -53,25 +52,21 @@ fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
     }
 }
 
-fn bench_ai_vs_ai(c: &mut Criterion) {
-    c.bench_function("ai_vs_ai_simulation", |b| {
-        b.iter(|| {
-            let mut ai1_wins = 0;
-            let mut ai2_wins = 0;
-            for _ in 0..NUM_GAMES {
-                let mut ai1 = AI::new();
-                let mut ai2 = AI::new();
-                let winner = play_game(black_box(&mut ai1), black_box(&mut ai2));
-                if winner == Player::Player1 {
-                    ai1_wins += 1;
-                } else {
-                    ai2_wins += 1;
-                }
-            }
-            // The results are not printed here anymore, but the benchmark runs.
-        })
-    });
+#[test]
+fn test_ai_vs_ai_simulation() {
+    let mut ai1_wins = 0;
+    let mut ai2_wins = 0;
+    for i in 0..NUM_GAMES {
+        println!("Starting game {}", i + 1);
+        let mut ai1 = AI::new();
+        let mut ai2 = AI::new();
+        let winner = play_game(&mut ai1, &mut ai2);
+        if winner == Player::Player1 {
+            ai1_wins += 1;
+        } else {
+            ai2_wins += 1;
+        }
+    }
+    println!("AI1 wins: {}, AI2 wins: {}", ai1_wins, ai2_wins);
+    assert!(ai1_wins > 0);
 }
-
-criterion_group!(benches, bench_ai_vs_ai);
-criterion_main!(benches);

@@ -19,7 +19,6 @@ const SAFETY_BONUS: i32 = 25;
 const ROSETTE_CONTROL_BONUS: i32 = 40;
 const ADVANCEMENT_BONUS: i32 = 5;
 const CAPTURE_BONUS: i32 = 10;
-
 const CENTER_LANE_BONUS: i32 = 2;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -206,7 +205,7 @@ impl GameState {
                         strategic_score += SAFETY_BONUS;
                     }
                     if track_pos >= 4 && track_pos <= 11 {
-                        strategic_score += ADVANCEMENT_BONUS;
+                        strategic_score += ADVANCEMENT_BONUS + CENTER_LANE_BONUS;
                     }
                     if track_pos >= 12 {
                         strategic_score += ADVANCEMENT_BONUS * 2;
@@ -303,11 +302,11 @@ impl GameState {
 
     fn hash(&self) -> u64 {
         let mut hash = 0u64;
-        for (i, piece) in self.player1_pieces.iter().enumerate() {
-            hash ^= (piece.square as u64 + 1) << (i * 5);
+        for (i, piece) in self.player1_pieces.iter().enumerate().take(6) {
+            hash ^= ((piece.square + 1) as u64) << (i * 5);
         }
-        for (i, piece) in self.player2_pieces.iter().enumerate() {
-            hash ^= (piece.square as u64 + 1) << ((i + 7) * 5);
+        for (i, piece) in self.player2_pieces.iter().enumerate().take(6) {
+            hash ^= ((piece.square + 1) as u64) << ((i + 7) * 5);
         }
         if self.current_player == Player::Player2 {
             hash ^= 1 << 63;
