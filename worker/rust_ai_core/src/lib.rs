@@ -296,12 +296,19 @@ impl GameState {
 
     fn hash(&self) -> u64 {
         let mut hash = 0u64;
-        for (i, piece) in self.player1_pieces.iter().enumerate() {
-            hash ^= (piece.square as u64) << (i * 5);
+
+        let mut p1_squares: Vec<i8> = self.player1_pieces.iter().map(|p| p.square).collect();
+        p1_squares.sort_unstable();
+        for (i, &square) in p1_squares.iter().enumerate() {
+            hash ^= (square as u64) << (i * 5);
         }
-        for (i, piece) in self.player2_pieces.iter().enumerate() {
-            hash ^= (piece.square as u64) << (i * 5 + 35);
+
+        let mut p2_squares: Vec<i8> = self.player2_pieces.iter().map(|p| p.square).collect();
+        p2_squares.sort_unstable();
+        for (i, &square) in p2_squares.iter().enumerate() {
+            hash ^= (square as u64) << (i * 5 + 35);
         }
+
         if self.current_player == Player::Player2 {
             hash ^= 1u64 << 63;
         }
