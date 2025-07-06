@@ -31,9 +31,13 @@ export type GameAction =
   | { type: "RESET_GAME" }
   | { type: "AI_MOVE"; move: Move };
 
-export const ROSETTE_SQUARES = [0, 7, 13, 15, 16];
+export const ROSETTE_SQUARES = [0, 6, 13, 16, 18];
 export const TRACK_LENGTH = 20;
 export const PIECES_PER_PLAYER = 7;
 
-export const PLAYER1_TRACK = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-export const PLAYER2_TRACK = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
+export const PLAYER1_TRACK = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+];
+export const PLAYER2_TRACK = [
+  16, 17, 18, 19, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+];

@@ -3,10 +3,43 @@ import { GameState } from "./types";
 // Direct endpoint to the production AI service
 const AI_WORKER_URL = "https://rgou-minmax.tre.systems";
 
+export interface MoveEvaluation {
+  pieceIndex: number;
+  score: number;
+  moveType: string;
+  fromSquare: number;
+  toSquare: number | null;
+}
+
+export interface PiecePositions {
+  player1OnBoard: number;
+  player1Finished: number;
+  player2OnBoard: number;
+  player2Finished: number;
+}
+
+export interface Diagnostics {
+  searchDepth: number;
+  validMoves: number[];
+  moveEvaluations: MoveEvaluation[];
+  transpositionHits: number;
+  nodesEvaluated: number;
+  gamePhase: string;
+  boardControl: number;
+  piecePositions: PiecePositions;
+}
+
+export interface Timings {
+  aiMoveCalculation: number;
+  totalHandlerTime: number;
+}
+
 export interface AIResponse {
   move: number;
   evaluation: number;
   thinking: string;
+  timings: Timings;
+  diagnostics: Diagnostics;
 }
 
 export interface EvaluationResponse {

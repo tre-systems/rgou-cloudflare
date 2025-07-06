@@ -111,6 +111,8 @@ export const useGameStore = create<GameStore>()(
               `AI returned invalid move ${aiResponse.move}. Valid moves:`,
               gameState.validMoves,
             );
+            console.error("AI diagnostics:", aiResponse.diagnostics);
+            console.error("Client gameState:", gameState);
             if (gameState.validMoves.length > 0) {
               const fallbackMove = gameState.validMoves[0];
               set((state) => {
