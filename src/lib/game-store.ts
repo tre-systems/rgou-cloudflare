@@ -66,7 +66,7 @@ export const useGameStore = create<GameStore>()(
           ) {
             const [newState, moveType, movePlayer] = makeMoveLogic(
               state.gameState,
-              pieceIndex
+              pieceIndex,
             );
             state.gameState = newState;
             state.lastMoveType = moveType;
@@ -109,14 +109,14 @@ export const useGameStore = create<GameStore>()(
           if (!gameState.validMoves.includes(aiResponse.move)) {
             console.warn(
               `AI returned invalid move ${aiResponse.move}. Valid moves:`,
-              gameState.validMoves
+              gameState.validMoves,
             );
             if (gameState.validMoves.length > 0) {
               const fallbackMove = gameState.validMoves[0];
               set((state) => {
                 const [newState, moveType, movePlayer] = makeMoveLogic(
                   state.gameState,
-                  fallbackMove
+                  fallbackMove,
                 );
                 state.gameState = newState;
                 state.lastMoveType = moveType;
@@ -127,7 +127,7 @@ export const useGameStore = create<GameStore>()(
             set((state) => {
               const [newState, moveType, movePlayer] = makeMoveLogic(
                 state.gameState,
-                aiResponse.move
+                aiResponse.move,
               );
               state.gameState = newState;
               state.lastMoveType = moveType;
@@ -140,7 +140,7 @@ export const useGameStore = create<GameStore>()(
           set((state) => {
             const [newState, moveType, movePlayer] = makeMoveLogic(
               state.gameState,
-              fallbackMove
+              fallbackMove,
             );
             state.gameState = newState;
             state.lastMoveType = moveType;
@@ -167,7 +167,7 @@ export const useGameStore = create<GameStore>()(
         console.log("Game Reset.");
       },
     },
-  }))
+  })),
 );
 
 export const useGameActions = () => useGameStore((state) => state.actions);

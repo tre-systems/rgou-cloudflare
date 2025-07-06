@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 // Game constants
 const PIECES_PER_PLAYER: usize = 7;
 const BOARD_SIZE: usize = 20;
-const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
+const ROSETTE_SQUARES: [u8; 5] = [0, 6, 13, 16, 18];
 const PLAYER1_TRACK: [u8; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 const PLAYER2_TRACK: [u8; 16] = [16, 17, 18, 19, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
@@ -112,6 +112,9 @@ impl GameState {
         let track = Self::get_player_track(self.current_player);
 
         for (i, piece) in current_pieces.iter().enumerate() {
+            if piece.square == 20 {
+                continue;
+            }
             let current_track_pos = if piece.square == -1 {
                 -1
             } else {
@@ -334,11 +337,11 @@ impl AI {
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
-            return (0, vec![]); // No-op, no move possible.
+            return (0, vec![]);
         }
 
         if valid_moves.len() == 1 {
-            return (valid_moves[0], vec![]); // Only one move, must be it.
+            return (valid_moves[0], vec![]);
         }
 
         let is_maximizing = state.current_player == Player::Player2;
@@ -355,7 +358,7 @@ impl AI {
             move_evaluations.push(MoveEvaluation {
                 piece_index: m,
                 score: value as f32,
-                move_type: "".to_string(), // You may want to add more logic here
+                move_type: "".to_string(),
                 from_square: state.get_pieces(state.current_player)[m as usize].square,
                 to_square: Some(
                     next_state.get_pieces(state.current_player)[m as usize].square as u8,
@@ -375,7 +378,6 @@ impl AI {
             }
         }
 
-        // Sort evaluations for diagnostics
         move_evaluations.sort_by(|a, b| {
             if is_maximizing {
                 b.score
@@ -456,7 +458,7 @@ impl AI {
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct GameStateRequest {
     #[serde(rename = "player1Pieces")]
     pub player1_pieces: Vec<JsonPiece>,
@@ -468,12 +470,12 @@ pub struct GameStateRequest {
     pub dice_roll: Option<u8>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct JsonPiece {
     pub square: i8,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct AIResponse {
     #[serde(rename = "move")]
     pub r#move: u8,
@@ -483,7 +485,7 @@ pub struct AIResponse {
     pub diagnostics: Diagnostics,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Diagnostics {
     #[serde(rename = "searchDepth")]
     pub search_depth: u8,
@@ -503,7 +505,7 @@ pub struct Diagnostics {
     pub piece_positions: PiecePositions,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct MoveEvaluation {
     #[serde(rename = "pieceIndex")]
     pub piece_index: u8,
@@ -516,7 +518,7 @@ pub struct MoveEvaluation {
     pub to_square: Option<u8>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct PiecePositions {
     #[serde(rename = "player1OnBoard")]
     pub player1_on_board: u8,
@@ -528,7 +530,7 @@ pub struct PiecePositions {
     pub player2_finished: u8,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Timings {
     #[serde(rename = "aiMoveCalculation")]
     pub ai_move_calculation: u32,

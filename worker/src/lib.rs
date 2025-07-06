@@ -39,6 +39,10 @@ fn cors_headers() -> Headers {
 /// Handles AI move calculation requests
 async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     let game_state_request: GameStateRequest = req.json().await?;
+    console_log!(
+        "[Rust Worker] Received AI move request: {:?}",
+        game_state_request
+    );
 
     let ai_start = js_sys::Date::now();
     let game_state = convert_json_to_game_state(&game_state_request);
@@ -82,6 +86,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
         },
     };
 
+    console_log!("[Rust Worker] Sending AI response: {:?}", response);
     Ok(Response::from_json(&response)?.with_headers(cors_headers()))
 }
 
