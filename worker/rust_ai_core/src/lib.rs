@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 pub mod wasm_api;
 
 // Game constants
 pub const PIECES_PER_PLAYER: usize = 7;
-const BOARD_SIZE: usize = 20;
+pub const BOARD_SIZE: usize = 21;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
 
-// Evaluation constants
+// AI Evaluation constants
 const WIN_SCORE: i32 = 10000;
 const FINISHED_PIECE_VALUE: i32 = 1000;
 const POSITION_WEIGHT: i32 = 15;
@@ -20,15 +20,7 @@ const ROSETTE_CONTROL_BONUS: i32 = 40;
 const ADVANCEMENT_BONUS: i32 = 5;
 const CAPTURE_BONUS: i32 = 10;
 
-const MAX_SCORE: i32 = 1000;
-const MIN_SCORE: i32 = -1000;
-const ROSETTE_BONUS: i32 = 5;
-const FINISH_BONUS: i32 = 15;
-const SAFE_SQUARE_BONUS: i32 = 3;
 const CENTER_LANE_BONUS: i32 = 2;
-
-const MIDDLE_LANE_START: i32 = 5;
-const MIDDLE_LANE_END: i32 = 12;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Player {
@@ -252,7 +244,7 @@ impl GameState {
             }
         }
 
-        (player1_control - player2_control) * CENTER_LANE_BONUS
+        (player1_control - player2_control) * ROSETTE_CONTROL_BONUS
     }
 
     pub fn make_move(&mut self, piece_index: u8) -> bool {

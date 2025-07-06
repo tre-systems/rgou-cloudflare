@@ -32,11 +32,3 @@ js-sys = { version = "0.3", optional = true }
 opt-level = "s"
 lto = true
 codegen-units = 1
-
-[dev-dependencies]
-criterion = "0.5"
-rand = "0.8"
-
-[[bench]]
-name = "ai_simulation"
-harness = false
