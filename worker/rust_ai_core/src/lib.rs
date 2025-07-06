@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 // Game constants
 const PIECES_PER_PLAYER: usize = 7;
 const BOARD_SIZE: usize = 20;
-const ROSETTE_SQUARES: [u8; 5] = [0, 7, 12, 15, 16];
+const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
 
