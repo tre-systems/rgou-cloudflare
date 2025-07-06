@@ -120,7 +120,7 @@ export default function RoyalGameOfUr() {
         makeMove(pieceIndex);
       }
     },
-    [gameState.canMove, gameState.validMoves, makeMove],
+    [gameState.canMove, gameState.validMoves, makeMove]
   );
 
   const handleReset = () => {
@@ -204,6 +204,148 @@ export default function RoyalGameOfUr() {
             onToggleSound={toggleSound}
           />
 
+          {/* AI Diagnostics Panel */}
+          {lastAIDiagnostics && (
+            <motion.div
+              className="glass-dark rounded-lg p-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <button
+                className="w-full text-left flex justify-between items-center"
+                onClick={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+              >
+                <div className="flex items-center space-x-2">
+                  <Bug className="w-4 h-4 text-green-400" />
+                  <span className="font-semibold text-sm text-white/90">
+                    AI Diagnostics
+                  </span>
+                </div>
+                {diagnosticsPanelOpen ? (
+                  <ChevronDown className="w-5 h-5 text-white/70" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-white/70" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {diagnosticsPanelOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 space-y-3 text-xs">
+                      {/* Top-level info */}
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="glass-light p-2 rounded-md">
+                          <p className="text-white/70">Chosen Move</p>
+                          <p className="font-bold text-lg text-green-400">
+                            Piece #{lastAIDiagnostics.move}
+                          </p>
+                        </div>
+                        <div className="glass-light p-2 rounded-md">
+                          <p className="text-white/70">Evaluation</p>
+                          <p
+                            className={`font-bold text-lg ${
+                              lastAIDiagnostics.evaluation > 0
+                                ? "text-green-400"
+                                : lastAIDiagnostics.evaluation < 0
+                                  ? "text-red-400"
+                                  : "text-white"
+                            }`}
+                          >
+                            {lastAIDiagnostics.evaluation > 0 ? "+" : ""}
+                            {lastAIDiagnostics.evaluation.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Timings and performance */}
+                      <div className="grid grid-cols-2 gap-3 text-center">
+                        <div className="glass-light p-2 rounded-md">
+                          <p className="text-white/70">AI Time (ms)</p>
+                          <p className="font-mono text-white/90">
+                            {lastAIMoveDuration?.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="glass-light p-2 rounded-md">
+                          <p className="text-white/70">Nodes/Hits</p>
+                          <p className="font-mono text-white/90">
+                            {lastAIDiagnostics.diagnostics.nodesEvaluated} /{" "}
+                            {lastAIDiagnostics.diagnostics.transpositionHits}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Thinking process */}
+                      {lastAIDiagnostics.thinking && (
+                        <div className="text-center bg-gray-800/50 p-2 rounded-md">
+                          <p className="text-white/70 italic">
+                            {lastAIDiagnostics.thinking}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Move evaluations table */}
+                      <div className="space-y-1">
+                        <p className="font-semibold text-white/80">
+                          Move Evaluations (Depth:{" "}
+                          {lastAIDiagnostics.diagnostics.searchDepth})
+                        </p>
+                        <div className="max-h-48 overflow-y-auto pr-1">
+                          {lastAIDiagnostics.diagnostics.moveEvaluations.map(
+                            (move, index) => (
+                              <div
+                                key={index}
+                                className="grid grid-cols-4 gap-2 items-center text-center p-1.5 rounded-md bg-gray-800/50"
+                              >
+                                <p className="font-mono text-white/90">
+                                  #{move.pieceIndex}
+                                </p>
+                                <p className="font-mono text-white/90">
+                                  {move.fromSquare} → {move.toSquare}
+                                </p>
+                                <p
+                                  className={`font-mono text-xs font-semibold px-1.5 py-0.5 rounded-full capitalize w-fit mx-auto
+                                    ${
+                                      move.moveType === "capture"
+                                        ? "bg-red-500/30 text-red-300"
+                                        : move.moveType === "rosette"
+                                          ? "bg-amber-500/30 text-amber-300"
+                                          : move.moveType === "finish"
+                                            ? "bg-green-500/30 text-green-300"
+                                            : "bg-blue-500/30 text-blue-300"
+                                    }
+                                  `}
+                                >
+                                  {move.moveType}
+                                </p>
+                                <p
+                                  className={`font-mono font-bold ${
+                                    move.score > 0
+                                      ? "text-green-400"
+                                      : move.score < 0
+                                        ? "text-red-400"
+                                        : "text-white/80"
+                                  }`}
+                                >
+                                  {move.score.toFixed(1)}
+                                </p>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
           {/* Move Notifications */}
           <AnimatePresence>
             {lastMove && (
@@ -254,145 +396,6 @@ export default function RoyalGameOfUr() {
             </p>
           </motion.div>
         </motion.div>
-
-        {/* AI Diagnostics Panel - positioned absolutely to avoid shifting game */}
-        {lastAIDiagnostics && (
-          <motion.div
-            className="hidden xl:block fixed right-4 top-1/2 transform -translate-y-1/2 w-80 space-y-3 z-20"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            {/* Diagnostics toggle button */}
-            <motion.button
-              onClick={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
-              className="w-full glass-dark rounded-lg p-3 flex items-center justify-between hover:bg-white/10 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="flex items-center space-x-2">
-                <Bug className="w-4 h-4 text-amber-400" />
-                <span className="text-white/90 text-sm font-medium">
-                  AI Diagnostics
-                </span>
-                <span className="text-xs text-white/50 bg-white/10 px-2 py-1 rounded-full">
-                  DEV
-                </span>
-              </div>
-              {diagnosticsPanelOpen ? (
-                <ChevronDown className="w-4 h-4 text-white/60" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-white/60" />
-              )}
-            </motion.button>
-
-            {/* Diagnostics content */}
-            <AnimatePresence>
-              {diagnosticsPanelOpen && (
-                <motion.div
-                  className="glass-dark rounded-lg p-4 space-y-4"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="space-y-4">
-                    {/* Move & Evaluation Summary */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="glass rounded-md p-3">
-                        <div className="text-xs text-white/60 mb-1">
-                          Selected Move
-                        </div>
-                        <div className="text-lg font-mono text-white">
-                          Piece #{lastAIDiagnostics.move}
-                        </div>
-                      </div>
-                      <div className="glass rounded-md p-3">
-                        <div className="text-xs text-white/60 mb-1">
-                          Evaluation
-                        </div>
-                        <div
-                          className={`text-lg font-mono ${
-                            lastAIDiagnostics.evaluation > 0
-                              ? "text-pink-400"
-                              : lastAIDiagnostics.evaluation < 0
-                                ? "text-blue-400"
-                                : "text-white/80"
-                          }`}
-                        >
-                          {lastAIDiagnostics.evaluation > 0 ? "+" : ""}
-                          {lastAIDiagnostics.evaluation.toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Timing and Performance */}
-                    <div>
-                      <h4 className="text-sm font-medium text-white/80 mb-2">
-                        Performance Metrics
-                      </h4>
-                      <div className="glass rounded-md p-3 space-y-2">
-                        {lastAIMoveDuration && (
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-white/60">
-                              Response Time:
-                            </span>
-                            <span className="text-white/90 font-mono">
-                              {lastAIMoveDuration.toFixed(0)}ms
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-white/60">AI Source:</span>
-                          <span className="text-white/70 font-medium">
-                            {aiSource === "server"
-                              ? "Server (Minimax)"
-                              : "Client (WASM)"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* AI Reasoning */}
-                    {lastAIDiagnostics.thinking && (
-                      <div>
-                        <h4 className="text-sm font-medium text-white/80 mb-2">
-                          AI Analysis
-                        </h4>
-                        <div className="glass rounded-md p-3">
-                          <div className="text-xs text-white/70 leading-relaxed">
-                            {lastAIDiagnostics.thinking}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Position Assessment */}
-                    <div>
-                      <h4 className="text-sm font-medium text-white/80 mb-2">
-                        Position Assessment
-                      </h4>
-                      <div className="glass rounded-md p-3">
-                        <div className="text-xs text-white/70">
-                          {lastAIDiagnostics.evaluation > 1
-                            ? "🔴 Strong AI advantage"
-                            : lastAIDiagnostics.evaluation > 0.5
-                              ? "🟠 Slight AI advantage"
-                              : lastAIDiagnostics.evaluation > -0.5
-                                ? "🟡 Balanced position"
-                                : lastAIDiagnostics.evaluation > -1
-                                  ? "🔵 Slight human advantage"
-                                  : "🟢 Strong human advantage"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
       </div>
     </>
   );
