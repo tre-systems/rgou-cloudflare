@@ -47,6 +47,8 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     let ai_start = js_sys::Date::now();
     let game_state = convert_json_to_game_state(&game_state_request);
 
+    console_log!("[Rust Worker] Server-side GameState: {:?}", &game_state);
+
     let mut ai = AI::new();
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, AI_SEARCH_DEPTH);
     let evaluation = game_state.evaluate();
