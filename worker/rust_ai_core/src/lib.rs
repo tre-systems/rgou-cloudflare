@@ -351,18 +351,28 @@ impl AI {
 
         for &m in &valid_moves {
             let mut next_state = state.clone();
+            let from_square = state.get_pieces(state.current_player)[m as usize].square;
             next_state.make_move(m);
+            let to_square = next_state.get_pieces(state.current_player)[m as usize].square as u8;
+
+            let move_type = if to_square == 20 {
+                "finish".to_string()
+            } else if GameState::is_rosette(to_square) {
+                "rosette".to_string()
+            } else if state.board[to_square as usize].is_some() {
+                "capture".to_string()
+            } else {
+                "move".to_string()
+            };
 
             let value = self.minimax(&next_state, depth - 1, !is_maximizing, i32::MIN, i32::MAX);
 
             move_evaluations.push(MoveEvaluation {
                 piece_index: m,
                 score: value as f32,
-                move_type: "".to_string(),
-                from_square: state.get_pieces(state.current_player)[m as usize].square,
-                to_square: Some(
-                    next_state.get_pieces(state.current_player)[m as usize].square as u8,
-                ),
+                move_type,
+                from_square,
+                to_square: Some(to_square),
             });
 
             if is_maximizing {
