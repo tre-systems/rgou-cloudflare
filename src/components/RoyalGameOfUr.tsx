@@ -114,7 +114,7 @@ export default function RoyalGameOfUr() {
         makeMove(pieceIndex);
       }
     },
-    [gameState.canMove, gameState.validMoves, makeMove]
+    [gameState.canMove, gameState.validMoves, makeMove],
   );
 
   const handleReset = () => {

@@ -148,7 +148,7 @@ export default function AIDiagnosticsPanel({
                           {move.score.toFixed(1)}
                         </p>
                       </div>
-                    )
+                    ),
                   )}
                 </div>
               </div>

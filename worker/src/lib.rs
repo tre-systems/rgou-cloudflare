@@ -1,6 +1,9 @@
 use rgou_ai_core::{
-    AI, AIResponse, Diagnostics, GameStateRequest, PiecePositions, Timings,
-    convert_json_to_game_state,
+    AI,
+    wasm_api::{
+        AIResponse, Diagnostics, GameStateRequest, MoveEvaluationWasm, PiecePositions, Timings,
+        convert_json_to_game_state,
+    },
 };
 use serde::Serialize;
 use worker::*;
@@ -53,6 +56,16 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, AI_SEARCH_DEPTH);
     let evaluation = game_state.evaluate();
 
+    let move_evaluations_wasm: Vec<MoveEvaluationWasm> = move_evaluations
+        .iter()
+        .map(|eval| MoveEvaluationWasm {
+            piece_index: eval.piece_index,
+            score: eval.score,
+            from_square: eval.from_square,
+            to_square: eval.to_square,
+        })
+        .collect();
+
     let ai_end = js_sys::Date::now();
     let end_time = js_sys::Date::now();
 
@@ -90,7 +103,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
         r#move: ai_move,
         evaluation,
         thinking: format!(
-            "AI (depth {}) chose move {} with score {:.1}. Evaluated {} nodes, {} cache hits.",
+            "AI (depth {}) chose move {:?} with score {:.1}. Evaluated {} nodes, {} cache hits.",
             AI_SEARCH_DEPTH,
             ai_move,
             move_evaluations.first().map(|m| m.score).unwrap_or(0.0),
@@ -104,7 +117,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
         diagnostics: Diagnostics {
             search_depth: AI_SEARCH_DEPTH,
             valid_moves: game_state.get_valid_moves(),
-            move_evaluations,
+            move_evaluations: move_evaluations_wasm,
             transposition_hits: ai.transposition_hits as usize,
             nodes_evaluated: ai.nodes_evaluated,
             game_phase,
