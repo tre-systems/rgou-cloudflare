@@ -7,14 +7,7 @@ import GameBoard from "./GameBoard";
 import GameControls, { AISource } from "./GameControls";
 import AnimatedBackground from "./AnimatedBackground";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Sparkles,
-  Crown,
-  Zap,
-  Bug,
-  ChevronRight,
-  ChevronDown,
-} from "lucide-react";
+import { Sparkles, Crown, Zap } from "lucide-react";
 import AIDiagnosticsPanel from "./AIDiagnosticsPanel";
 
 export default function RoyalGameOfUr() {
