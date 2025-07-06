@@ -16,7 +16,7 @@
     "build:cf": "next build",
     "deploy:cf": "npm run build:cf && wrangler deploy",
     "deploy:worker": "cd worker && wrangler deploy",
-    "build:wasm": "cd worker/rust_ai_core && wasm-pack build --target web --out-name rgou_ai_worker",
+    "build:wasm": "cd worker/rust_ai_core && wasm-pack build --target web --out-name rgou_ai_worker -- --features wasm",
     "build:wasm-assets": "npm run build:wasm && rm -rf src/lib/wasm && mv worker/rust_ai_core/pkg src/lib/wasm && mkdir -p public/wasm && cp src/lib/wasm/rgou_ai_worker_bg.wasm public/wasm/",
     "prebuild": "npm run build:wasm-assets",
     "nuke": "rm -rf .next .open-next .wrangler node_modules package-lock.json && npm install && npm run dev",
