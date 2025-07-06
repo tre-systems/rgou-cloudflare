@@ -6,7 +6,7 @@ use serde::Serialize;
 use worker::*;
 
 // Constants
-const AI_SEARCH_DEPTH: u8 = 8;
+const AI_SEARCH_DEPTH: u8 = 10;
 const VERSION: &str = "2.0.0-pure-rust";
 const CORS_MAX_AGE: &str = "86400";
 
