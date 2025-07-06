@@ -16,9 +16,12 @@ const WIN_SCORE: i32 = 10000;
 const FINISHED_PIECE_VALUE: i32 = 1000;
 const POSITION_WEIGHT: i32 = 15;
 const SAFETY_BONUS: i32 = 25;
-const BLOCKING_BONUS: i32 = 30;
+const BLOCKING_BONUS: i32 = 20;
 const ROSETTE_CONTROL_BONUS: i32 = 40;
 const ADVANCEMENT_BONUS: i32 = 5;
+const CAPTURE_BONUS: i32 = 150;
+
+const SAFE_PATH_LENGTH: i32 = 5;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Player {
@@ -226,24 +229,11 @@ impl GameState {
                 };
             }
         }
-        control_score + self.evaluate_blocking_potential()
+        control_score
     }
 
     fn evaluate_blocking_potential(&self) -> i32 {
-        let mut blocking_score = 0i32;
-        for p1_piece in &self.player1_pieces {
-            if p1_piece.square >= 4 && p1_piece.square <= 14 {
-                for p2_piece in &self.player2_pieces {
-                    if p2_piece.square >= 4
-                        && p2_piece.square <= 14
-                        && (p2_piece.square - p1_piece.square).abs() <= 4
-                    {
-                        blocking_score += BLOCKING_BONUS / 4;
-                    }
-                }
-            }
-        }
-        blocking_score
+        0
     }
 
     pub fn make_move(&mut self, piece_index: u8) -> bool {
@@ -360,17 +350,42 @@ impl AI {
         let mut move_evaluations = Vec::new();
 
         for &m in &valid_moves {
-            let mut next_state = state.clone();
             let from_square = state.get_pieces(state.current_player)[m as usize].square;
-            next_state.make_move(m);
 
-            let to_square = next_state.get_pieces(state.current_player)[m as usize].square as u8;
+            let track = GameState::get_player_track(state.current_player);
+            let current_track_pos = if from_square == -1 {
+                -1
+            } else {
+                track
+                    .iter()
+                    .position(|&s| s as i8 == from_square)
+                    .map(|p| p as i8)
+                    .unwrap_or(-1)
+            };
+            let new_track_pos = current_track_pos + state.dice_roll as i8;
+            let to_square = if new_track_pos >= track.len() as i8 {
+                20
+            } else {
+                track[new_track_pos as usize]
+            };
+
+            let mut capture_bonus = 0;
+            if to_square != 20 && !GameState::is_rosette(to_square) {
+                if let Some(occupant) = state.board[to_square as usize] {
+                    if occupant.player != state.current_player {
+                        capture_bonus = CAPTURE_BONUS;
+                    }
+                }
+            }
+
+            let mut next_state = state.clone();
+            next_state.make_move(m);
 
             let move_type = if to_square == 20 {
                 "finish".to_string()
             } else if GameState::is_rosette(to_square) {
                 "rosette".to_string()
-            } else if state.board[to_square as usize].is_some() {
+            } else if capture_bonus > 0 {
                 "capture".to_string()
             } else {
                 "move".to_string()
@@ -378,22 +393,28 @@ impl AI {
 
             let value = self.minimax(&next_state, depth - 1, !is_maximizing, i32::MIN, i32::MAX);
 
+            let adjusted_value = if is_maximizing {
+                value + capture_bonus
+            } else {
+                value - capture_bonus
+            };
+
             move_evaluations.push(MoveEvaluation {
                 piece_index: m,
-                score: value as f32,
+                score: adjusted_value as f32,
                 move_type,
                 from_square,
                 to_square: Some(to_square),
             });
 
             if is_maximizing {
-                if value > best_value {
-                    best_value = value;
+                if adjusted_value > best_value {
+                    best_value = adjusted_value;
                     best_move = m;
                 }
             } else {
-                if value < best_value {
-                    best_value = value;
+                if adjusted_value < best_value {
+                    best_value = adjusted_value;
                     best_move = m;
                 }
             }

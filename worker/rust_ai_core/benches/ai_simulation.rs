@@ -1,10 +1,10 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
-use rgou_ai_core::{AI, GameState, PIECES_PER_PLAYER, Player};
+use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
 const AI1_SEARCH_DEPTH: u8 = 5;
 const AI2_SEARCH_DEPTH: u8 = 4;
-const NUM_GAMES: usize = 10;
+const NUM_GAMES: usize = 20;
 
 fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
     let mut game_state = GameState::new();
@@ -29,6 +29,7 @@ fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
         } else {
             AI2_SEARCH_DEPTH
         };
+
         let (best_move, _) = current_ai.get_best_move(&game_state, depth);
 
         if let Some(piece_index) = best_move {
@@ -52,39 +53,25 @@ fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
     }
 }
 
-pub fn simulation_benchmark(c: &mut Criterion) {
+fn bench_ai_vs_ai(c: &mut Criterion) {
     c.bench_function("ai_vs_ai_simulation", |b| {
         b.iter(|| {
             let mut ai1_wins = 0;
             let mut ai2_wins = 0;
-
-            for i in 0..NUM_GAMES {
-                println!("--- Starting Game {} ---", i + 1);
+            for _ in 0..NUM_GAMES {
                 let mut ai1 = AI::new();
                 let mut ai2 = AI::new();
-
                 let winner = play_game(black_box(&mut ai1), black_box(&mut ai2));
                 if winner == Player::Player1 {
                     ai1_wins += 1;
-                    println!("Player 1 (AI, depth {}) wins!", AI1_SEARCH_DEPTH);
                 } else {
                     ai2_wins += 1;
-                    println!("Player 2 (AI, depth {}) wins!", AI2_SEARCH_DEPTH);
                 }
             }
-
-            println!("\n--- Simulation Complete ---");
-            println!(
-                "AI1 (depth {}) wins: {}/{}",
-                AI1_SEARCH_DEPTH, ai1_wins, NUM_GAMES
-            );
-            println!(
-                "AI2 (depth {}) wins: {}/{}",
-                AI2_SEARCH_DEPTH, ai2_wins, NUM_GAMES
-            );
+            // The results are not printed here anymore, but the benchmark runs.
         })
     });
 }
 
-criterion_group!(benches, simulation_benchmark);
+criterion_group!(benches, bench_ai_vs_ai);
 criterion_main!(benches);

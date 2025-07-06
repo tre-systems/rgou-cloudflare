@@ -13,11 +13,13 @@ categories = ["wasm", "games", "web-programming"]
 crate-type = ["cdylib"]
 
 [dependencies]
-worker = "0.3"
+worker = "0.0.15"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-console_error_panic_hook = "0.1"
-rgou-ai-core = { path = "./rust_ai_core", features = ["wasm"] }
+console_error_panic_hook = { version = "0.1.7", optional = true }
+rgou-ai-core = { path = "rust_ai_core", features = ["wasm"] }
+wasm-bindgen = "0.2"
+js-sys = "0.3"
 
 [profile.release]
 # Optimize for size and performance
