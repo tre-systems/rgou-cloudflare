@@ -387,7 +387,7 @@ impl AI {
                 "move".to_string()
             };
 
-            let value = self.expectiminimax(&next_state, depth - 1);
+            let value = self.expectiminimax(&next_state, depth - 1, f32::MIN, f32::MAX);
 
             move_evaluations.push(MoveEvaluation {
                 piece_index: m,
@@ -425,7 +425,7 @@ impl AI {
         (Some(best_move), move_evaluations)
     }
 
-    fn expectiminimax(&mut self, state: &GameState, depth: u8) -> f32 {
+    fn expectiminimax(&mut self, state: &GameState, depth: u8, alpha: f32, beta: f32) -> f32 {
         let state_hash = state.hash();
         if let Some(entry) = self.transposition_table.get(&state_hash) {
             if entry.depth >= depth {
@@ -435,7 +435,7 @@ impl AI {
         }
 
         if depth == 0 {
-            return self.quiescence_search(state, 4);
+            return self.quiescence_search(state, 4, alpha, beta);
         }
 
         if state.is_game_over() {
@@ -463,9 +463,9 @@ impl AI {
             let score_for_this_roll = if roll == 0 {
                 let mut s = state_after_roll;
                 s.current_player = s.current_player.opponent();
-                self.expectiminimax(&s, depth - 1)
+                self.expectiminimax(&s, depth - 1, alpha, beta)
             } else {
-                self.evaluate_moves(&state_after_roll, depth)
+                self.evaluate_moves(&state_after_roll, depth, alpha, beta)
             };
             expected_score += PROBABILITIES[roll as usize] * score_for_this_roll;
         }
@@ -481,14 +481,20 @@ impl AI {
         expected_score
     }
 
-    fn evaluate_moves(&mut self, state: &GameState, depth: u8) -> f32 {
+    fn evaluate_moves(
+        &mut self,
+        state: &GameState,
+        depth: u8,
+        mut alpha: f32,
+        mut beta: f32,
+    ) -> f32 {
         let is_maximizing = state.current_player == Player::Player2;
         let valid_moves = state.get_valid_moves();
 
         if valid_moves.is_empty() {
             let mut next_state = state.clone();
             next_state.current_player = next_state.current_player.opponent();
-            return self.expectiminimax(&next_state, depth - 1);
+            return self.expectiminimax(&next_state, depth - 1, alpha, beta);
         }
 
         let mut best_score = if is_maximizing { f32::MIN } else { f32::MAX };
@@ -496,18 +502,32 @@ impl AI {
         for &m in &valid_moves {
             let mut next_state = state.clone();
             next_state.make_move(m);
-            let score = self.expectiminimax(&next_state, depth - 1);
+            let score = self.expectiminimax(&next_state, depth - 1, alpha, beta);
 
             if is_maximizing {
                 best_score = best_score.max(score);
+                alpha = alpha.max(best_score);
+                if beta <= alpha {
+                    break;
+                }
             } else {
                 best_score = best_score.min(score);
+                beta = beta.min(best_score);
+                if beta <= alpha {
+                    break;
+                }
             }
         }
         best_score
     }
 
-    fn quiescence_search(&mut self, state: &GameState, depth: u8) -> f32 {
+    fn quiescence_search(
+        &mut self,
+        state: &GameState,
+        depth: u8,
+        mut alpha: f32,
+        mut beta: f32,
+    ) -> f32 {
         let stand_pat = state.evaluate() as f32;
 
         if depth == 0 {
@@ -516,6 +536,12 @@ impl AI {
 
         let is_maximizing = state.current_player == Player::Player2;
         let mut best_score = stand_pat;
+        if is_maximizing {
+            alpha = alpha.max(best_score);
+        } else {
+            beta = beta.min(best_score);
+        }
+
         let valid_moves = state.get_valid_moves();
 
         for &m in &valid_moves {
@@ -550,11 +576,19 @@ impl AI {
             if is_capture {
                 let mut next_state = state.clone();
                 next_state.make_move(m);
-                let score = self.quiescence_search(&next_state, depth - 1);
+                let score = self.quiescence_search(&next_state, depth - 1, alpha, beta);
                 if is_maximizing {
                     best_score = best_score.max(score);
+                    alpha = alpha.max(best_score);
+                    if beta <= alpha {
+                        break;
+                    }
                 } else {
                     best_score = best_score.min(score);
+                    beta = beta.min(best_score);
+                    if beta <= alpha {
+                        break;
+                    }
                 }
             }
         }
