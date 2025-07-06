@@ -56,6 +56,36 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     let ai_end = js_sys::Date::now();
     let end_time = js_sys::Date::now();
 
+    let player1_on_board = game_state
+        .player1_pieces
+        .iter()
+        .filter(|p| p.square >= 0 && p.square < 20)
+        .count() as u8;
+    let player1_finished = game_state
+        .player1_pieces
+        .iter()
+        .filter(|p| p.square == 20)
+        .count() as u8;
+    let player2_on_board = game_state
+        .player2_pieces
+        .iter()
+        .filter(|p| p.square >= 0 && p.square < 20)
+        .count() as u8;
+    let player2_finished = game_state
+        .player2_pieces
+        .iter()
+        .filter(|p| p.square == 20)
+        .count() as u8;
+
+    let total_finished = player1_finished + player2_finished;
+    let game_phase = if total_finished >= 5 {
+        "End Game".to_string()
+    } else if player1_on_board + player2_on_board >= 4 {
+        "Mid Game".to_string()
+    } else {
+        "Opening".to_string()
+    };
+
     let response = AIResponse {
         r#move: ai_move,
         evaluation,
@@ -77,13 +107,13 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
             move_evaluations,
             transposition_hits: ai.transposition_hits as usize,
             nodes_evaluated: ai.nodes_evaluated,
-            game_phase: "N/A".to_string(),
+            game_phase,
             board_control: game_state.evaluate_board_control(),
             piece_positions: PiecePositions {
-                player1_on_board: 0,
-                player1_finished: 0,
-                player2_on_board: 0,
-                player2_finished: 0,
+                player1_on_board,
+                player1_finished,
+                player2_on_board,
+                player2_finished,
             },
         },
     };
