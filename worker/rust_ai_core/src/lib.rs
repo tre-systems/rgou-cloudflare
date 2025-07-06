@@ -16,7 +16,7 @@ const POSITION_WEIGHT: i32 = 15;
 const SAFETY_BONUS: i32 = 25;
 const ROSETTE_CONTROL_BONUS: i32 = 40;
 const ADVANCEMENT_BONUS: i32 = 5;
-const CAPTURE_BONUS: i32 = 10;
+const CAPTURE_BONUS: i32 = 35;
 const CENTER_LANE_BONUS: i32 = 2;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -302,7 +302,7 @@ impl GameState {
 }
 
 struct TranspositionEntry {
-    evaluation: i32,
+    evaluation: f32,
     depth: u8,
 }
 
@@ -342,12 +342,11 @@ impl AI {
         let is_maximizing = state.current_player == Player::Player2;
 
         let mut best_move = valid_moves[0];
-        let mut best_value = if is_maximizing { i32::MIN } else { i32::MAX };
+        let mut best_value = if is_maximizing { f32::MIN } else { f32::MAX };
         let mut move_evaluations = Vec::new();
 
         for &m in &valid_moves {
             let from_square = state.get_pieces(state.current_player)[m as usize].square;
-
             let track = GameState::get_player_track(state.current_player);
             let current_track_pos = if from_square == -1 {
                 -1
@@ -388,11 +387,11 @@ impl AI {
                 "move".to_string()
             };
 
-            let value = self.minimax(&next_state, depth - 1, !is_maximizing, i32::MIN, i32::MAX);
+            let value = self.expectiminimax(&next_state, depth - 1);
 
             move_evaluations.push(MoveEvaluation {
                 piece_index: m,
-                score: value as f32,
+                score: value,
                 move_type,
                 from_square,
                 to_square: Some(to_square),
@@ -426,14 +425,7 @@ impl AI {
         (Some(best_move), move_evaluations)
     }
 
-    fn minimax(
-        &mut self,
-        state: &GameState,
-        depth: u8,
-        is_maximizing: bool,
-        mut alpha: i32,
-        mut beta: i32,
-    ) -> i32 {
+    fn expectiminimax(&mut self, state: &GameState, depth: u8) -> f32 {
         let state_hash = state.hash();
         if let Some(entry) = self.transposition_table.get(&state_hash) {
             if entry.depth >= depth {
@@ -442,57 +434,73 @@ impl AI {
             }
         }
 
-        self.nodes_evaluated += 1;
         if depth == 0 || state.is_game_over() {
-            return state.evaluate();
+            let eval = state.evaluate() as f32;
+            self.transposition_table.insert(
+                state_hash,
+                TranspositionEntry {
+                    evaluation: eval,
+                    depth,
+                },
+            );
+            return eval;
         }
 
+        self.nodes_evaluated += 1;
+
+        let mut expected_score = 0.0;
+        const PROBABILITIES: [f32; 5] =
+            [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
+
+        for roll in 0..=4 {
+            let mut state_after_roll = state.clone();
+            state_after_roll.dice_roll = roll as u8;
+
+            let score_for_this_roll = if roll == 0 {
+                let mut s = state_after_roll;
+                s.current_player = s.current_player.opponent();
+                self.expectiminimax(&s, depth - 1)
+            } else {
+                self.evaluate_moves(&state_after_roll, depth)
+            };
+            expected_score += PROBABILITIES[roll as usize] * score_for_this_roll;
+        }
+
+        self.transposition_table.insert(
+            state_hash,
+            TranspositionEntry {
+                evaluation: expected_score,
+                depth,
+            },
+        );
+
+        expected_score
+    }
+
+    fn evaluate_moves(&mut self, state: &GameState, depth: u8) -> f32 {
+        let is_maximizing = state.current_player == Player::Player2;
         let valid_moves = state.get_valid_moves();
+
         if valid_moves.is_empty() {
-            return state.evaluate();
+            let mut next_state = state.clone();
+            next_state.current_player = next_state.current_player.opponent();
+            return self.expectiminimax(&next_state, depth - 1);
         }
 
-        if is_maximizing {
-            let mut max_eval = i32::MIN;
-            for &piece_index in &valid_moves {
-                let mut temp_state = state.clone();
-                temp_state.make_move(piece_index);
-                let eval = self.minimax(&temp_state, depth - 1, false, alpha, beta);
-                max_eval = max_eval.max(eval);
-                alpha = alpha.max(eval);
-                if beta <= alpha {
-                    break;
-                }
+        let mut best_score = if is_maximizing { f32::MIN } else { f32::MAX };
+
+        for &m in &valid_moves {
+            let mut next_state = state.clone();
+            next_state.make_move(m);
+            let score = self.expectiminimax(&next_state, depth - 1);
+
+            if is_maximizing {
+                best_score = best_score.max(score);
+            } else {
+                best_score = best_score.min(score);
             }
-            self.transposition_table.insert(
-                state_hash,
-                TranspositionEntry {
-                    evaluation: max_eval,
-                    depth,
-                },
-            );
-            max_eval
-        } else {
-            let mut min_eval = i32::MAX;
-            for &piece_index in &valid_moves {
-                let mut temp_state = state.clone();
-                temp_state.make_move(piece_index);
-                let eval = self.minimax(&temp_state, depth - 1, true, alpha, beta);
-                min_eval = min_eval.min(eval);
-                beta = beta.min(eval);
-                if beta <= alpha {
-                    break;
-                }
-            }
-            self.transposition_table.insert(
-                state_hash,
-                TranspositionEntry {
-                    evaluation: min_eval,
-                    depth,
-                },
-            );
-            min_eval
         }
+        best_score
     }
 }
 
