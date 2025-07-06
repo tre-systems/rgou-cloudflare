@@ -8,7 +8,7 @@ use rgou_ai_core::{
 use serde::Serialize;
 use worker::*;
 
-const AI_SEARCH_DEPTH: u8 = 12;
+const AI_SEARCH_DEPTH: u8 = 4;
 const VERSION: &str = "2.0.0-pure-rust";
 const CORS_MAX_AGE: &str = "86400";
 
