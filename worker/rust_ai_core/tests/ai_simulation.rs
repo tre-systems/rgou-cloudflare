@@ -1,9 +1,9 @@
 use rand::Rng;
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
-const AI1_SEARCH_DEPTH: u8 = 4;
-const AI2_SEARCH_DEPTH: u8 = 5;
-const NUM_GAMES: usize = 100;
+const AI1_SEARCH_DEPTH: u8 = 3;
+const AI2_SEARCH_DEPTH: u8 = 4;
+const NUM_GAMES: usize = 20;
 
 fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
     let mut game_state = GameState::new();

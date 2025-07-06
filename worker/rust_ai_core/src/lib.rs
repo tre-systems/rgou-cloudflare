@@ -434,7 +434,11 @@ impl AI {
             }
         }
 
-        if depth == 0 || state.is_game_over() {
+        if depth == 0 {
+            return self.quiescence_search(state, 4);
+        }
+
+        if state.is_game_over() {
             let eval = state.evaluate() as f32;
             self.transposition_table.insert(
                 state_hash,
@@ -500,6 +504,61 @@ impl AI {
                 best_score = best_score.min(score);
             }
         }
+        best_score
+    }
+
+    fn quiescence_search(&mut self, state: &GameState, depth: u8) -> f32 {
+        let stand_pat = state.evaluate() as f32;
+
+        if depth == 0 {
+            return stand_pat;
+        }
+
+        let is_maximizing = state.current_player == Player::Player2;
+        let mut best_score = stand_pat;
+        let valid_moves = state.get_valid_moves();
+
+        for &m in &valid_moves {
+            let track = GameState::get_player_track(state.current_player);
+            let from_square = state.get_pieces(state.current_player)[m as usize].square;
+            let current_track_pos = if from_square == -1 {
+                -1
+            } else {
+                track
+                    .iter()
+                    .position(|&s| s as i8 == from_square)
+                    .map(|p| p as i8)
+                    .unwrap_or(-1)
+            };
+            let new_track_pos = current_track_pos + state.dice_roll as i8;
+            let to_square = if new_track_pos >= track.len() as i8 {
+                20
+            } else {
+                track[new_track_pos as usize]
+            };
+
+            let is_capture = if to_square != 20 && !GameState::is_rosette(to_square) {
+                if let Some(occupant) = state.board[to_square as usize] {
+                    occupant.player != state.current_player
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+            if is_capture {
+                let mut next_state = state.clone();
+                next_state.make_move(m);
+                let score = self.quiescence_search(&next_state, depth - 1);
+                if is_maximizing {
+                    best_score = best_score.max(score);
+                } else {
+                    best_score = best_score.min(score);
+                }
+            }
+        }
+
         best_score
     }
 }
