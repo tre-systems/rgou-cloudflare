@@ -75,14 +75,35 @@ export class AIService {
   }
 
   static async getAIMove(gameState: GameState): Promise<AIResponse> {
-    // Call the production AI service directly (uses fixed depth 8)
-    return this.makeRequest<AIResponse>("/ai-move", gameState);
+    const requestBody = {
+      player1_pieces: gameState.player1Pieces.map((p) => ({
+        square: p.square,
+      })),
+      player2_pieces: gameState.player2Pieces.map((p) => ({
+        square: p.square,
+      })),
+      current_player:
+        gameState.currentPlayer === "player1" ? "Player1" : "Player2",
+      dice_roll: gameState.diceRoll,
+    };
+    return this.makeRequest<AIResponse>("/ai-move", requestBody);
   }
 
   static async evaluatePosition(
     gameState: GameState,
   ): Promise<EvaluationResponse> {
-    return this.makeRequest<EvaluationResponse>("/evaluate", gameState);
+    const requestBody = {
+      player1_pieces: gameState.player1Pieces.map((p) => ({
+        square: p.square,
+      })),
+      player2_pieces: gameState.player2Pieces.map((p) => ({
+        square: p.square,
+      })),
+      current_player:
+        gameState.currentPlayer === "player1" ? "Player1" : "Player2",
+      dice_roll: gameState.diceRoll,
+    };
+    return this.makeRequest<EvaluationResponse>("/evaluate", requestBody);
   }
 
   static async healthCheck(): Promise<{
