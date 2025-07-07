@@ -1,22 +1,10 @@
 import { GameState } from "./types";
-import {
-  AIResponse,
-  MoveEvaluation,
-  PiecePositions,
-  Diagnostics,
-  Timings,
-} from "./ai-types";
+import { AIResponse, MoveEvaluation, Diagnostics, Timings } from "./ai-types";
 
 // Direct endpoint to the production AI service
 const AI_WORKER_URL = "https://rgou-minmax.tre.systems";
 
-export type {
-  AIResponse,
-  MoveEvaluation,
-  PiecePositions,
-  Diagnostics,
-  Timings,
-};
+export type { AIResponse, MoveEvaluation, Diagnostics, Timings };
 
 export interface EvaluationResponse {
   evaluation: number;

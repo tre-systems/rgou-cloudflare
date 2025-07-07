@@ -52,12 +52,6 @@ pub struct Diagnostics {
     pub transposition_hits: usize,
     #[wasm_bindgen(js_name = nodesEvaluated)]
     pub nodes_evaluated: u32,
-    #[wasm_bindgen(getter_with_clone, js_name = gamePhase)]
-    pub game_phase: String,
-    #[wasm_bindgen(js_name = boardControl)]
-    pub board_control: i32,
-    #[wasm_bindgen(js_name = piecePositions)]
-    pub piece_positions: PiecePositions,
 }
 
 #[wasm_bindgen]
@@ -73,20 +67,6 @@ pub struct MoveEvaluationWasm {
     pub from_square: i8,
     #[wasm_bindgen(js_name = toSquare)]
     pub to_square: Option<u8>,
-}
-
-#[wasm_bindgen]
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PiecePositions {
-    #[wasm_bindgen(js_name = player1OnBoard)]
-    pub player1_on_board: u8,
-    #[wasm_bindgen(js_name = player1Finished)]
-    pub player1_finished: u8,
-    #[wasm_bindgen(js_name = player2OnBoard)]
-    pub player2_on_board: u8,
-    #[wasm_bindgen(js_name = player2Finished)]
-    pub player2_finished: u8,
 }
 
 #[wasm_bindgen]
@@ -167,35 +147,6 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
         })
         .collect();
 
-    let player1_on_board = game_state
-        .player1_pieces
-        .iter()
-        .filter(|p| p.square >= 0 && p.square < 20)
-        .count() as u8;
-    let player1_finished = game_state
-        .player1_pieces
-        .iter()
-        .filter(|p| p.square == 20)
-        .count() as u8;
-    let player2_on_board = game_state
-        .player2_pieces
-        .iter()
-        .filter(|p| p.square >= 0 && p.square < 20)
-        .count() as u8;
-    let player2_finished = game_state
-        .player2_pieces
-        .iter()
-        .filter(|p| p.square == 20)
-        .count() as u8;
-
-    let total_finished = player1_finished + player2_finished;
-    let game_phase = if total_finished >= 5 {
-        "End Game".to_string()
-    } else if player1_on_board + player2_on_board >= 4 {
-        "Mid Game".to_string()
-    } else {
-        "Opening".to_string()
-    };
     let response = AIResponse {
         r#move: ai_move,
         evaluation,
@@ -220,14 +171,6 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
             move_evaluations: move_evaluations_wasm,
             transposition_hits: ai.transposition_hits as usize,
             nodes_evaluated: ai.nodes_evaluated,
-            game_phase,
-            board_control: game_state.evaluate_board_control(),
-            piece_positions: PiecePositions {
-                player1_on_board,
-                player1_finished,
-                player2_on_board,
-                player2_finished,
-            },
         },
     };
 

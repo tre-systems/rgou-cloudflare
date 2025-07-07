@@ -133,6 +133,7 @@ export default function RoyalGameOfUr() {
       lastAIMoveDuration={lastAIMoveDuration}
       isOpen={diagnosticsPanelOpen}
       onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+      gameState={gameState}
     />
   ) : null;
 

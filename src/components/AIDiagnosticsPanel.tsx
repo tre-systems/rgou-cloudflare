@@ -4,12 +4,19 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bug, ChevronDown, ChevronRight } from "lucide-react";
 import { AIResponse } from "@/lib/ai-service";
+import { GameState } from "@/lib/types";
+import {
+  calculateBoardControl,
+  calculateGamePhase,
+  calculatePiecePositions,
+} from "@/lib/diagnostics";
 
 interface AIDiagnosticsPanelProps {
   lastAIDiagnostics: AIResponse;
   lastAIMoveDuration: number | null;
   isOpen: boolean;
   onToggle: () => void;
+  gameState: GameState;
 }
 
 export default function AIDiagnosticsPanel({
@@ -17,10 +24,16 @@ export default function AIDiagnosticsPanel({
   lastAIMoveDuration,
   isOpen,
   onToggle,
+  gameState,
 }: AIDiagnosticsPanelProps) {
   if (!lastAIDiagnostics?.diagnostics) {
     return null;
   }
+
+  const piecePositions = calculatePiecePositions(gameState);
+  const gamePhase = calculateGamePhase(piecePositions);
+  const boardControl = calculateBoardControl(gameState);
+
   return (
     <motion.div
       className="glass-dark rounded-lg p-3"
@@ -92,6 +105,29 @@ export default function AIDiagnosticsPanel({
                   <p className="font-mono text-white/90">
                     {lastAIDiagnostics.diagnostics.nodesEvaluated} /{" "}
                     {lastAIDiagnostics.diagnostics.transpositionHits}
+                  </p>
+                </div>
+              </div>
+
+              {/* Game State Analysis */}
+              <div className="grid grid-cols-2 gap-3 text-center">
+                <div className="glass-light p-2 rounded-md">
+                  <p className="text-white/70">Game Phase</p>
+                  <p className="font-mono text-white/90">{gamePhase}</p>
+                </div>
+                <div className="glass-light p-2 rounded-md">
+                  <p className="text-white/70">Board Control</p>
+                  <p
+                    className={`font-mono font-bold ${
+                      boardControl > 0
+                        ? "text-green-400"
+                        : boardControl < 0
+                          ? "text-red-400"
+                          : "text-white"
+                    }`}
+                  >
+                    {boardControl > 0 ? "+" : ""}
+                    {boardControl}
                   </p>
                 </div>
               </div>
