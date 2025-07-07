@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { GameState, Player, ROSETTE_SQUARES } from "@/lib/types";
+import { GameState, Player, ROSETTE_SQUARES, PiecePosition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { soundEffects } from "@/lib/sound-effects";
@@ -587,7 +587,7 @@ export default function GameBoard({
     Array<{ id: string; position: { x: number; y: number }; player: Player }>
   >([]);
   const [rosetteLandings, setRosetteLandings] = useState<
-    Array<{ id: string; position: { x: number; y: number }; player: Player }>
+    Array<{ id: string; position: { x: number; y: number } }>
   >([]);
   const boardRef = useRef<HTMLDivElement>(null);
   const previousGameState = useRef<GameState | null>(null);
@@ -602,105 +602,92 @@ export default function GameBoard({
     const prev = previousGameState.current;
     const current = gameState;
 
-    // Check for captures (pieces moved back to start)
-    [...prev.player1Pieces, ...prev.player2Pieces].forEach(
-      (prevPiece, globalIndex) => {
-        const isPlayer1 = globalIndex < 7;
-        const currentPieces = isPlayer1
-          ? current.player1Pieces
-          : current.player2Pieces;
-        const pieceIndex = isPlayer1 ? globalIndex : globalIndex - 7;
-        const currentPiece = currentPieces[pieceIndex];
+    // Check for captures and rosette landings by comparing board states
+    current.board.forEach((newPiece, square) => {
+      const oldPiece = prev.board[square];
 
-        // Detect capture: piece was on board, now at start
-        if (
-          prevPiece.square > 0 &&
-          currentPiece.square === -1 &&
-          boardRef.current
-        ) {
-          const rect = boardRef.current.getBoundingClientRect();
-          const randomOffset = () => (Math.random() - 0.5) * 100;
+      if (newPiece?.player === oldPiece?.player) return;
 
-          setExplosions((prev) => [
-            ...prev,
+      // Capture
+      if (newPiece && oldPiece && newPiece.player !== oldPiece.player) {
+        const squareElement = boardRef.current?.querySelector(
+          `[data-square-id='${square}']`,
+        );
+        if (squareElement) {
+          const rect = squareElement.getBoundingClientRect();
+          setExplosions((prevExplosions) => [
+            ...prevExplosions,
             {
-              id: `explosion-${Date.now()}-${Math.random()}`,
-              position: {
-                x: rect.left + rect.width / 2 + randomOffset(),
-                y: rect.top + rect.height / 2 + randomOffset(),
-              },
-            },
-          ]);
-
-          // Screen shake effect
-          setScreenShake(true);
-          setTimeout(() => setScreenShake(false), 500);
-
-          // Play capture sound if enabled
-          if (soundEnabled) {
-            soundEffects.pieceMove(); // You might want to add a specific capture sound
-          }
-        }
-
-        // Detect finish: piece moved to square 20
-        if (
-          prevPiece.square >= 0 &&
-          prevPiece.square < 20 &&
-          currentPiece.square === 20 &&
-          boardRef.current
-        ) {
-          const rect = boardRef.current.getBoundingClientRect();
-
-          setCelebrations((prev) => [
-            ...prev,
-            {
-              id: `celebration-${Date.now()}-${Math.random()}`,
-              position: {
-                x: rect.right - 50,
-                y: rect.top + (isPlayer1 ? rect.height - 100 : 100),
-              },
-              player: isPlayer1 ? "player1" : "player2",
-            },
-          ]);
-
-          // Play celebration sound if enabled
-          if (soundEnabled) {
-            soundEffects.pieceMove(); // You might want to add a specific victory sound
-          }
-        }
-
-        // Detect rosette landing: piece moved to a rosette square
-        if (
-          prevPiece.square >= 0 &&
-          currentPiece.square >= 0 &&
-          ROSETTE_SQUARES.includes(currentPiece.square) &&
-          !ROSETTE_SQUARES.includes(prevPiece.square) &&
-          boardRef.current
-        ) {
-          const rect = boardRef.current.getBoundingClientRect();
-
-          setRosetteLandings((prev) => [
-            ...prev,
-            {
-              id: `rosette-${Date.now()}-${Math.random()}`,
+              id: `explosion-${Date.now()}-${square}`,
               position: {
                 x: rect.left + rect.width / 2,
                 y: rect.top + rect.height / 2,
               },
-              player: isPlayer1 ? "player1" : "player2",
             },
           ]);
-
-          // Play rosette sound if enabled
-          if (soundEnabled) {
-            soundEffects.pieceMove(); // You might want to add a specific rosette sound
-          }
+          setScreenShake(true);
+          setTimeout(() => setScreenShake(false), 500);
+          soundEffects.pieceCapture();
         }
-      },
-    );
+      }
+      // Rosette Landing
+      else if (newPiece && !oldPiece && ROSETTE_SQUARES.includes(square)) {
+        const squareElement = boardRef.current?.querySelector(
+          `[data-square-id='${newPiece.square}']`,
+        );
+        if (squareElement) {
+          const rect = squareElement.getBoundingClientRect();
+          setRosetteLandings((prevLandings) => [
+            ...prevLandings,
+            {
+              id: `rosette-${Date.now()}-${newPiece.square}`,
+              position: {
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+              },
+            },
+          ]);
+          soundEffects.rosetteLanding();
+        }
+      }
+    });
+
+    // Check for finished pieces
+    const checkFinishedPieces = (
+      currentPieces: PiecePosition[],
+      prevPieces: PiecePosition[],
+      player: Player,
+    ) => {
+      const newFinished = currentPieces.filter((p) => p.square === 20).length;
+      const oldFinished = prevPieces.filter((p) => p.square === 20).length;
+
+      if (newFinished > oldFinished && boardRef.current) {
+        const finishAreaId =
+          player === "player1" ? "player1-finish-area" : "player2-finish-area";
+        const finishArea = document.getElementById(finishAreaId);
+        if (finishArea) {
+          const rect = finishArea.getBoundingClientRect();
+          setCelebrations((prev) => [
+            ...prev,
+            {
+              id: `celebration-${Date.now()}-${player}`,
+              position: {
+                x: rect.left + (newFinished - 0.5) * (rect.width / 7),
+                y: rect.top + rect.height / 2,
+              },
+              player,
+            },
+          ]);
+          soundEffects.gameWin();
+        }
+      }
+    };
+
+    checkFinishedPieces(current.player1Pieces, prev.player1Pieces, "player1");
+    checkFinishedPieces(current.player2Pieces, prev.player2Pieces, "player2");
 
     previousGameState.current = gameState;
-  }, [gameState, soundEnabled]);
+  }, [gameState]);
 
   // Clean up explosion effects
   useEffect(() => {
@@ -879,6 +866,7 @@ export default function GameBoard({
         }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
         onClick={() => isClickable && onPieceClick(pieceIndex)}
+        data-square-id={squareIndex}
       >
         {/* Rosette decoration */}
         {isRosette && (
