@@ -20,21 +20,17 @@ struct HealthResponse {
 }
 
 /// Creates CORS headers for all responses
-fn cors_headers() -> Headers {
+fn cors_headers() -> Result<Headers> {
     let headers = Headers::new();
-    headers.set("Access-Control-Allow-Origin", "*").unwrap();
-    headers
-        .set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        .unwrap();
-    headers
-        .set(
-            "Access-Control-Allow-Headers",
-            "Content-Type, Authorization",
-        )
-        .unwrap();
-    headers.set("Access-Control-Max-Age", CORS_MAX_AGE).unwrap();
-    headers.set("Content-Type", "application/json").unwrap();
-    headers
+    headers.set("Access-Control-Allow-Origin", "*")?;
+    headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")?;
+    headers.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization",
+    )?;
+    headers.set("Access-Control-Max-Age", CORS_MAX_AGE)?;
+    headers.set("Content-Type", "application/json")?;
+    Ok(headers)
 }
 
 /// Handles AI move calculation requests
@@ -54,16 +50,8 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, AI_SEARCH_DEPTH);
     let evaluation = game_state.evaluate();
 
-    let move_evaluations_wasm: Vec<MoveEvaluationWasm> = move_evaluations
-        .iter()
-        .map(|eval| MoveEvaluationWasm {
-            piece_index: eval.piece_index,
-            score: eval.score,
-            move_type: eval.move_type.clone(),
-            from_square: eval.from_square,
-            to_square: eval.to_square,
-        })
-        .collect();
+    let move_evaluations_wasm: Vec<MoveEvaluationWasm> =
+        move_evaluations.iter().map(|eval| eval.into()).collect();
 
     let ai_end = js_sys::Date::now();
     let end_time = js_sys::Date::now();
@@ -93,7 +81,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     };
 
     console_log!("[Rust Worker] Sending AI response: {:?}", response);
-    Ok(Response::from_json(&response)?.with_headers(cors_headers()))
+    Response::from_json(&response)
 }
 
 /// Handles health check requests
@@ -104,7 +92,7 @@ fn handle_health() -> Result<Response> {
         version: VERSION.to_string(),
     };
 
-    Ok(Response::from_json(&response)?.with_headers(cors_headers()))
+    Response::from_json(&response)
 }
 
 #[event(fetch)]
@@ -116,15 +104,17 @@ pub async fn main(req: Request, _env: Env, _ctx: Context) -> Result<Response> {
 
     // Handle preflight CORS requests
     if req.method() == Method::Options {
-        return Ok(Response::empty()?.with_headers(cors_headers()));
+        return Ok(Response::empty()?.with_headers(cors_headers()?));
     }
 
     let start_time = js_sys::Date::now();
 
     // Route requests
-    match (req.method(), url.path()) {
+    let result = match (req.method(), url.path()) {
         (Method::Post, "/ai-move") => handle_ai_move(req, start_time).await,
         (Method::Get, "/health") => handle_health(),
-        _ => Ok(Response::error("Not Found", 404)?.with_headers(cors_headers())),
-    }
+        _ => Ok(Response::error("Not Found", 404)?),
+    };
+
+    result.and_then(|response| Ok(response.with_headers(cors_headers()?)))
 }

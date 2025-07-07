@@ -23,7 +23,7 @@
     "generate:icons": "node scripts/generate-icons.cjs",
     "pwa:build": "npm run generate:icons && npm run build",
     "verify": "prettier --write . && next lint --fix --no-cache && npx tsc --noEmit",
-    "check": "npm run verify",
+    "check": "npm run verify && (cd worker/rust_ai_core && cargo test)",
     "deps": "npx npm-check-updates",
     "deps:update": "npx npm-check-updates -u && npm run nuke"
   },

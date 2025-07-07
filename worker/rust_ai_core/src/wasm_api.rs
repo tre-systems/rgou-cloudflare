@@ -1,4 +1,5 @@
 use super::{GameState, PiecePosition, Player, AI};
+use crate::MoveEvaluation;
 use js_sys;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -69,6 +70,18 @@ pub struct MoveEvaluationWasm {
     pub to_square: Option<u8>,
 }
 
+impl From<&MoveEvaluation> for MoveEvaluationWasm {
+    fn from(eval: &MoveEvaluation) -> Self {
+        MoveEvaluationWasm {
+            piece_index: eval.piece_index,
+            score: eval.score,
+            move_type: eval.move_type.clone(),
+            from_square: eval.from_square,
+            to_square: eval.to_square,
+        }
+    }
+}
+
 #[wasm_bindgen]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -136,16 +149,8 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
     let evaluation = game_state.evaluate();
     let end_time = js_sys::Date::now();
 
-    let move_evaluations_wasm: Vec<MoveEvaluationWasm> = move_evaluations
-        .iter()
-        .map(|eval| MoveEvaluationWasm {
-            piece_index: eval.piece_index,
-            score: eval.score,
-            move_type: eval.move_type.clone(),
-            from_square: eval.from_square,
-            to_square: eval.to_square,
-        })
-        .collect();
+    let move_evaluations_wasm: Vec<MoveEvaluationWasm> =
+        move_evaluations.iter().map(|eval| eval.into()).collect();
 
     let response = AIResponse {
         r#move: ai_move,

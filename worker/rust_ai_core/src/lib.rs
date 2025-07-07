@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::hash::{DefaultHasher, Hash, Hasher};
 
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
@@ -232,9 +233,9 @@ impl GameState {
         control_score
     }
 
-    pub fn make_move(&mut self, piece_index: u8) -> bool {
+    pub fn make_move(&mut self, piece_index: u8) -> Result<(), &'static str> {
         if piece_index >= PIECES_PER_PLAYER as u8 {
-            return false;
+            return Err("Invalid piece index.");
         }
 
         let track = Self::get_player_track(self.current_player);
@@ -280,24 +281,26 @@ impl GameState {
 
         self.get_pieces_mut(self.current_player)[piece_index as usize].square = new_square;
 
-        if new_square == 20 || !Self::is_rosette(new_square as u8) {
+        let extra_turn = Self::is_rosette(new_square as u8);
+        if !extra_turn {
             self.current_player = self.current_player.opponent();
         }
-        true
+
+        Ok(())
     }
 
     fn hash(&self) -> u64 {
-        let mut hash = 0u64;
-        for (i, piece) in self.player1_pieces.iter().enumerate().take(6) {
-            hash ^= ((piece.square + 1) as u64) << (i * 5);
+        let mut hasher = DefaultHasher::new();
+        for (_i, piece) in self.player1_pieces.iter().enumerate().take(6) {
+            hasher.write_i8(piece.square + 1);
         }
-        for (i, piece) in self.player2_pieces.iter().enumerate().take(6) {
-            hash ^= ((piece.square + 1) as u64) << ((i + 7) * 5);
+        for (_i, piece) in self.player2_pieces.iter().enumerate().take(6) {
+            hasher.write_i8(piece.square + 1);
         }
         if self.current_player == Player::Player2 {
-            hash ^= 1 << 63;
+            hasher.write_u64(1 << 63);
         }
-        hash
+        hasher.finish()
     }
 }
 
@@ -365,7 +368,9 @@ impl AI {
             };
 
             let mut next_state = state.clone();
-            next_state.make_move(m);
+            next_state
+                .make_move(m)
+                .expect("Evaluate moves should only use valid moves");
 
             let is_capture = if to_square != 20 && !GameState::is_rosette(to_square) {
                 if let Some(occupant) = state.board[to_square as usize] {
@@ -456,18 +461,21 @@ impl AI {
         const PROBABILITIES: [f32; 5] =
             [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
 
-        for roll in 0..=4 {
-            let mut state_after_roll = state.clone();
-            state_after_roll.dice_roll = roll as u8;
+        for (roll, &prob) in PROBABILITIES.iter().enumerate() {
+            if prob == 0.0 {
+                continue;
+            }
 
-            let score_for_this_roll = if roll == 0 {
-                let mut s = state_after_roll;
-                s.current_player = s.current_player.opponent();
-                self.expectiminimax(&s, depth - 1, alpha, beta)
+            let mut next_state = state.clone();
+            next_state.dice_roll = roll as u8;
+
+            let score = if roll == 0 {
+                next_state.current_player = state.current_player.opponent();
+                self.expectiminimax(&next_state, depth - 1, alpha, beta)
             } else {
-                self.evaluate_moves(&state_after_roll, depth, alpha, beta)
+                self.evaluate_moves(&next_state, depth, alpha, beta)
             };
-            expected_score += PROBABILITIES[roll as usize] * score_for_this_roll;
+            expected_score += score * prob;
         }
 
         self.transposition_table.insert(
@@ -501,7 +509,9 @@ impl AI {
 
         for &m in &valid_moves {
             let mut next_state = state.clone();
-            next_state.make_move(m);
+            next_state
+                .make_move(m)
+                .expect("Evaluate moves should only use valid moves");
             let score = self.expectiminimax(&next_state, depth - 1, alpha, beta);
 
             if is_maximizing {
@@ -575,7 +585,9 @@ impl AI {
 
             if is_capture {
                 let mut next_state = state.clone();
-                next_state.make_move(m);
+                next_state
+                    .make_move(m)
+                    .expect("Quiescence search should only use valid moves");
                 let score = self.quiescence_search(&next_state, depth - 1, alpha, beta);
                 if is_maximizing {
                     best_score = best_score.max(score);
@@ -757,7 +769,7 @@ mod tests {
     fn test_make_move_simple() {
         let mut game_state = setup_game_for_moves_test();
         game_state.dice_roll = 4;
-        assert!(game_state.make_move(0));
+        assert!(game_state.make_move(0).is_ok());
 
         assert_eq!(game_state.player1_pieces[0].square, 0);
         assert_eq!(game_state.board[0].unwrap().player, Player::Player1);
@@ -772,7 +784,7 @@ mod tests {
         game_state.board[7] = Some(game_state.player1_pieces[0]);
         game_state.dice_roll = 2;
 
-        assert!(game_state.make_move(0));
+        assert!(game_state.make_move(0).is_ok());
 
         assert_eq!(game_state.player1_pieces[0].square, 9);
         assert!(game_state.board[7].is_none());
@@ -802,7 +814,7 @@ mod tests {
         game_state.board[6] = Some(game_state.player2_pieces[0]);
         game_state.dice_roll = 2;
 
-        assert!(game_state.make_move(0));
+        assert!(game_state.make_move(0).is_ok());
 
         assert_eq!(game_state.player1_pieces[0].square, 6);
         assert_eq!(game_state.board[6].unwrap().player, Player::Player1);
@@ -818,7 +830,7 @@ mod tests {
         game_state.board[19] = Some(game_state.player2_pieces[0]);
         game_state.dice_roll = 2;
 
-        assert!(game_state.make_move(0));
+        assert!(game_state.make_move(0).is_ok());
 
         assert_eq!(game_state.player2_pieces[0].square, 17);
         assert_eq!(game_state.board[17].unwrap().player, Player::Player2);
@@ -832,7 +844,7 @@ mod tests {
         game_state.board[11] = Some(game_state.player1_pieces[0]);
         game_state.dice_roll = 3;
 
-        assert!(game_state.make_move(0));
+        assert!(game_state.make_move(0).is_ok());
 
         assert_eq!(game_state.player1_pieces[0].square, 20);
         assert!(game_state.board[11].is_none());
@@ -846,7 +858,7 @@ mod tests {
         game_state.board[0] = Some(game_state.player1_pieces[0]);
         game_state.dice_roll = 1;
 
-        assert!(game_state.make_move(0));
+        assert!(game_state.make_move(0).is_ok());
 
         assert_eq!(game_state.player1_pieces[0].square, 4);
         assert_eq!(game_state.board[4].unwrap().player, Player::Player1);
@@ -905,7 +917,7 @@ mod tests {
         game_state.dice_roll = 1;
         let moves = game_state.get_valid_moves();
         assert!(moves.contains(&(PIECES_PER_PLAYER as u8 - 1)));
-        assert!(game_state.make_move((PIECES_PER_PLAYER - 1) as u8));
+        assert!(game_state.make_move((PIECES_PER_PLAYER - 1) as u8).is_ok());
 
         assert!(game_state.is_game_over());
         assert_eq!(game_state.evaluate(), WIN_SCORE);
@@ -956,7 +968,7 @@ mod tests {
 
         assert_eq!(game_state1.hash(), game_state2.hash());
 
-        assert!(game_state2.make_move(0));
+        assert!(game_state2.make_move(0).is_ok());
         assert_ne!(game_state1.hash(), game_state2.hash());
 
         let mut game_state3 = game_state1.clone();
