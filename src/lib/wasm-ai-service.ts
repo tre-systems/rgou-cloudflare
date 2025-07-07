@@ -20,7 +20,20 @@ class WasmAIService {
 
   async getAIMove(gameState: GameState): Promise<AIResponse> {
     const { get_ai_move_wasm } = await this.loadWasm();
-    const responseJson = get_ai_move_wasm(JSON.stringify(gameState));
+
+    const requestBody = {
+      player1_pieces: gameState.player1Pieces.map((p) => ({
+        square: p.square,
+      })),
+      player2_pieces: gameState.player2Pieces.map((p) => ({
+        square: p.square,
+      })),
+      current_player:
+        gameState.currentPlayer === "player1" ? "Player1" : "Player2",
+      dice_roll: gameState.diceRoll,
+    };
+
+    const responseJson = get_ai_move_wasm(JSON.stringify(requestBody));
     return JSON.parse(responseJson) as AIResponse;
   }
 
