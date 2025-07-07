@@ -263,7 +263,7 @@ impl GameState {
 
         if new_square != 20 {
             if let Some(occupant) = self.board[new_square as usize] {
-                if occupant.player != self.current_player {
+                if occupant.player != self.current_player && !Self::is_rosette(new_square as u8) {
                     let opponent_pieces = self.get_pieces_mut(occupant.player);
                     if let Some(captured_piece) =
                         opponent_pieces.iter_mut().find(|p| p.square == new_square)
@@ -608,4 +608,263 @@ pub struct MoveEvaluation {
     pub from_square: i8,
     #[serde(rename = "toSquare")]
     pub to_square: Option<u8>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_player_opponent() {
+        assert_eq!(Player::Player1.opponent(), Player::Player2);
+        assert_eq!(Player::Player2.opponent(), Player::Player1);
+    }
+
+    #[test]
+    fn test_game_state_new() {
+        let game_state = GameState::new();
+        assert_eq!(game_state.board.len(), BOARD_SIZE);
+        assert!(game_state.board.iter().all(|&x| x.is_none()));
+        assert_eq!(game_state.player1_pieces.len(), PIECES_PER_PLAYER);
+        assert_eq!(game_state.player2_pieces.len(), PIECES_PER_PLAYER);
+        assert!(game_state
+            .player1_pieces
+            .iter()
+            .all(|&p| p.square == -1 && p.player == Player::Player1));
+        assert!(game_state
+            .player2_pieces
+            .iter()
+            .all(|&p| p.square == -1 && p.player == Player::Player2));
+        assert_eq!(game_state.current_player, Player::Player1);
+        assert_eq!(game_state.dice_roll, 0);
+    }
+
+    #[test]
+    fn test_is_rosette() {
+        assert!(GameState::is_rosette(0));
+        assert!(GameState::is_rosette(7));
+        assert!(GameState::is_rosette(13));
+        assert!(!GameState::is_rosette(1));
+        assert!(!GameState::is_rosette(8));
+    }
+
+    fn setup_game_for_moves_test() -> GameState {
+        let mut game_state = GameState::new();
+        game_state.current_player = Player::Player1;
+        game_state
+    }
+
+    #[test]
+    fn test_get_valid_moves_no_dice_roll() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.dice_roll = 0;
+        assert!(game_state.get_valid_moves().is_empty());
+    }
+
+    #[test]
+    fn test_get_valid_moves_from_start() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.dice_roll = 4;
+        let moves = game_state.get_valid_moves();
+        assert_eq!(moves.len(), PIECES_PER_PLAYER);
+        assert!(moves.contains(&0));
+    }
+
+    #[test]
+    fn test_get_valid_moves_simple_move() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 0;
+        game_state.board[0] = Some(game_state.player1_pieces[0]);
+        game_state.dice_roll = 2;
+        let moves = game_state.get_valid_moves();
+        assert!(moves.contains(&0));
+    }
+
+    #[test]
+    fn test_get_valid_moves_capture() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 4;
+        game_state.board[4] = Some(game_state.player1_pieces[0]);
+        game_state.player2_pieces[0].square = 6;
+        game_state.board[6] = Some(game_state.player2_pieces[0]);
+        game_state.dice_roll = 2;
+        let moves = game_state.get_valid_moves();
+        assert!(moves.contains(&0));
+    }
+
+    #[test]
+    fn test_get_valid_moves_blocked_by_own_piece() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 0;
+        game_state.board[0] = Some(game_state.player1_pieces[0]);
+        game_state.player1_pieces[1].square = 5;
+        game_state.board[5] = Some(game_state.player1_pieces[1]);
+        game_state.dice_roll = 2;
+        let moves = game_state.get_valid_moves();
+        assert!(!moves.contains(&0));
+    }
+
+    #[test]
+    fn test_get_valid_moves_blocked_by_opponent_on_rosette() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 5;
+        game_state.board[5] = Some(game_state.player1_pieces[0]);
+        game_state.player2_pieces[0].square = 7;
+        game_state.board[7] = Some(game_state.player2_pieces[0]);
+        assert!(GameState::is_rosette(7));
+        game_state.dice_roll = 2;
+        let moves = game_state.get_valid_moves();
+        assert!(!moves.contains(&0));
+    }
+
+    #[test]
+    fn test_get_valid_moves_to_finish() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 11;
+        game_state.board[11] = Some(game_state.player1_pieces[0]);
+        game_state.dice_roll = 3;
+        let moves = game_state.get_valid_moves();
+        assert!(moves.contains(&0));
+    }
+
+    #[test]
+    fn test_make_move_simple() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.dice_roll = 4;
+        game_state.make_move(0);
+
+        assert_eq!(game_state.player1_pieces[0].square, 0);
+        assert_eq!(game_state.board[0].unwrap().player, Player::Player1);
+        assert_eq!(game_state.board[0].unwrap().square, 0);
+        assert_eq!(game_state.current_player, Player::Player1);
+    }
+
+    #[test]
+    fn test_make_move_on_rosette_no_capture() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 5;
+        game_state.board[5] = Some(game_state.player1_pieces[0]);
+        game_state.player2_pieces[0].square = 7;
+        game_state.board[7] = Some(game_state.player2_pieces[0]);
+        game_state.dice_roll = 2;
+
+        let moves = game_state.get_valid_moves();
+        assert!(!moves.contains(&0));
+    }
+
+    #[test]
+    fn test_make_move_capture() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 4;
+        game_state.board[4] = Some(game_state.player1_pieces[0]);
+        game_state.player2_pieces[0].square = 6;
+        game_state.board[6] = Some(game_state.player2_pieces[0]);
+        game_state.dice_roll = 2;
+
+        game_state.make_move(0);
+
+        assert_eq!(game_state.player1_pieces[0].square, 6);
+        assert_eq!(game_state.board[6].unwrap().player, Player::Player1);
+        assert_eq!(game_state.player2_pieces[0].square, -1);
+        assert_eq!(game_state.current_player, Player::Player2);
+    }
+
+    #[test]
+    fn test_make_move_to_finish() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 11;
+        game_state.board[11] = Some(game_state.player1_pieces[0]);
+        game_state.dice_roll = 3;
+
+        game_state.make_move(0);
+
+        assert_eq!(game_state.player1_pieces[0].square, 20);
+        assert!(game_state.board[11].is_none());
+        assert_eq!(game_state.current_player, Player::Player2);
+    }
+
+    #[test]
+    fn test_make_move_and_change_player() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 0;
+        game_state.board[0] = Some(game_state.player1_pieces[0]);
+        game_state.dice_roll = 1;
+
+        game_state.make_move(0);
+
+        assert_eq!(game_state.player1_pieces[0].square, 4);
+        assert_eq!(game_state.board[4].unwrap().player, Player::Player1);
+        assert_eq!(game_state.current_player, Player::Player2);
+    }
+
+    #[test]
+    fn test_evaluate_initial_state() {
+        let game_state = GameState::new();
+        assert!(game_state.evaluate().abs() < 50);
+    }
+
+    #[test]
+    fn test_evaluate_player2_advantage() {
+        let mut game_state = GameState::new();
+        game_state.player2_pieces[0].square = 7;
+        game_state.board[7] = Some(game_state.player2_pieces[0]);
+        game_state.player2_pieces[1].square = 8;
+        game_state.board[8] = Some(game_state.player2_pieces[1]);
+
+        assert!(game_state.evaluate() > 0);
+    }
+
+    #[test]
+    fn test_evaluate_player1_advantage() {
+        let mut game_state = GameState::new();
+        game_state.player1_pieces[0].square = 7;
+        game_state.board[7] = Some(game_state.player1_pieces[0]);
+        game_state.player1_pieces[1].square = 8;
+        game_state.board[8] = Some(game_state.player1_pieces[1]);
+
+        assert!(game_state.evaluate() < 0);
+    }
+
+    #[test]
+    fn test_evaluate_winning_move() {
+        let mut game_state = GameState::new();
+        for i in 0..PIECES_PER_PLAYER - 1 {
+            game_state.player2_pieces[i].square = 20;
+        }
+        game_state.player2_pieces[PIECES_PER_PLAYER - 1].square = 15;
+        game_state.board[15] = Some(game_state.player2_pieces[PIECES_PER_PLAYER - 1]);
+
+        let _initial_eval = game_state.evaluate();
+
+        game_state.current_player = Player::Player2;
+        game_state.dice_roll = 1;
+        let moves = game_state.get_valid_moves();
+        assert!(moves.contains(&(PIECES_PER_PLAYER as u8 - 1)));
+        game_state.make_move((PIECES_PER_PLAYER - 1) as u8);
+
+        assert!(game_state.is_game_over());
+        assert_eq!(game_state.evaluate(), WIN_SCORE);
+    }
+
+    #[test]
+    fn test_ai_gets_winning_move() {
+        let mut ai = AI::new();
+        let mut game_state = GameState::new();
+
+        game_state.current_player = Player::Player2;
+        for i in 0..PIECES_PER_PLAYER - 1 {
+            game_state.player2_pieces[i].square = 20;
+        }
+        game_state.player2_pieces[PIECES_PER_PLAYER - 1].square = 15;
+        game_state.board[15] = Some(game_state.player2_pieces[PIECES_PER_PLAYER - 1]);
+        game_state.dice_roll = 1;
+
+        game_state.player1_pieces[0].square = 1;
+        game_state.board[1] = Some(game_state.player1_pieces[0]);
+
+        let (best_move, _) = ai.get_best_move(&game_state, 3);
+
+        assert!(best_move.is_some());
+        assert_eq!(best_move.unwrap(), (PIECES_PER_PLAYER - 1) as u8);
+    }
 }
