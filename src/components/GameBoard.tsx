@@ -938,6 +938,12 @@ export default function GameBoard({
     const isCurrentPlayer = gameState.currentPlayer === player;
     const isAI = player === "player2";
 
+    const isStartMoveValid =
+      isCurrentPlayer &&
+      gameState.validMoves.some(
+        (moveIndex) => pieces[moveIndex] && pieces[moveIndex].square === -1,
+      );
+
     return (
       <motion.div
         className={cn(
@@ -982,8 +988,17 @@ export default function GameBoard({
         {/* Compact single line layout */}
         <div className="glass-dark rounded-lg p-2">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-xs text-white/70 font-semibold mb-1 text-center">
+            <div
+              className={cn(
+                "rounded-md p-1 transition-all duration-300",
+                isStartMoveValid && "ring-2 ring-green-400 animate-pulse",
+              )}
+            >
+              <p
+                className={cn(
+                  "text-xs text-white/70 font-semibold mb-1 text-center",
+                )}
+              >
                 START
               </p>
               <div className="flex gap-0.5 flex-wrap justify-center">
@@ -1013,7 +1028,7 @@ export default function GameBoard({
                 )}
               </div>
             </div>
-            <div>
+            <div className="rounded-md p-1">
               <p className="text-xs text-white/70 font-semibold mb-1 text-center">
                 FINISH
               </p>
