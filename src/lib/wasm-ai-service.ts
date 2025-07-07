@@ -2,6 +2,9 @@ import { GameState } from "./types";
 import { AIResponse } from "./ai-types";
 
 type Wasm = typeof import("./wasm/rgou_ai_worker");
+type WasmInit = (
+  input?: RequestInfo | URL | Response | BufferSource | WebAssembly.Module,
+) => Promise<Wasm>;
 
 class WasmAIService {
   private wasm: Wasm | null = null;
@@ -10,7 +13,10 @@ class WasmAIService {
     if (this.wasm) {
       return this.wasm;
     }
-    const wasm = await import("./wasm/rgou_ai_worker");
+    const wasmModule = await import("./wasm/rgou_ai_worker.js");
+    const init = wasmModule.default as unknown as WasmInit;
+
+    const wasm = await init("/wasm/rgou_ai_worker_bg.wasm");
     this.wasm = wasm;
     return wasm;
   }
