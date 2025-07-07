@@ -1,46 +1,22 @@
 import { GameState } from "./types";
+import {
+  AIResponse,
+  MoveEvaluation,
+  PiecePositions,
+  Diagnostics,
+  Timings,
+} from "./ai-types";
 
 // Direct endpoint to the production AI service
 const AI_WORKER_URL = "https://rgou-minmax.tre.systems";
 
-export interface MoveEvaluation {
-  pieceIndex: number;
-  score: number;
-  moveType: string;
-  fromSquare: number;
-  toSquare: number | null;
-}
-
-export interface PiecePositions {
-  player1OnBoard: number;
-  player1Finished: number;
-  player2OnBoard: number;
-  player2Finished: number;
-}
-
-export interface Diagnostics {
-  searchDepth: number;
-  validMoves: number[];
-  moveEvaluations: MoveEvaluation[];
-  transpositionHits: number;
-  nodesEvaluated: number;
-  gamePhase: string;
-  boardControl: number;
-  piecePositions: PiecePositions;
-}
-
-export interface Timings {
-  aiMoveCalculation: number;
-  totalHandlerTime: number;
-}
-
-export interface AIResponse {
-  move: number;
-  evaluation: number;
-  thinking: string;
-  timings: Timings;
-  diagnostics: Diagnostics;
-}
+export type {
+  AIResponse,
+  MoveEvaluation,
+  PiecePositions,
+  Diagnostics,
+  Timings,
+};
 
 export interface EvaluationResponse {
   evaluation: number;
@@ -76,15 +52,15 @@ export class AIService {
 
   static async getAIMove(gameState: GameState): Promise<AIResponse> {
     const requestBody = {
-      player1_pieces: gameState.player1Pieces.map((p) => ({
+      player1Pieces: gameState.player1Pieces.map((p) => ({
         square: p.square,
       })),
-      player2_pieces: gameState.player2Pieces.map((p) => ({
+      player2Pieces: gameState.player2Pieces.map((p) => ({
         square: p.square,
       })),
-      current_player:
+      currentPlayer:
         gameState.currentPlayer === "player1" ? "Player1" : "Player2",
-      dice_roll: gameState.diceRoll,
+      diceRoll: gameState.diceRoll,
     };
     return this.makeRequest<AIResponse>("/ai-move", requestBody);
   }
@@ -93,15 +69,15 @@ export class AIService {
     gameState: GameState,
   ): Promise<EvaluationResponse> {
     const requestBody = {
-      player1_pieces: gameState.player1Pieces.map((p) => ({
+      player1Pieces: gameState.player1Pieces.map((p) => ({
         square: p.square,
       })),
-      player2_pieces: gameState.player2Pieces.map((p) => ({
+      player2Pieces: gameState.player2Pieces.map((p) => ({
         square: p.square,
       })),
-      current_player:
+      currentPlayer:
         gameState.currentPlayer === "player1" ? "Player1" : "Player2",
-      dice_roll: gameState.diceRoll,
+      diceRoll: gameState.diceRoll,
     };
     return this.makeRequest<EvaluationResponse>("/evaluate", requestBody);
   }

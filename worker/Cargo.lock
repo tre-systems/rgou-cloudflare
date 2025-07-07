@@ -542,6 +542,7 @@ dependencies = [
  "js-sys",
  "rand",
  "serde",
+ "serde-wasm-bindgen",
  "serde_json",
  "wasm-bindgen",
 ]

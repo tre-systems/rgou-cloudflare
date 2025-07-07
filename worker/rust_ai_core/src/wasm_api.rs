@@ -6,13 +6,15 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct GameStateRequest {
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = player1Pieces)]
     pub player1_pieces: Vec<JsonPiece>,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = player2Pieces)]
     pub player2_pieces: Vec<JsonPiece>,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = currentPlayer)]
     pub current_player: String,
+    #[wasm_bindgen(js_name = diceRoll)]
     pub dice_roll: Option<u8>,
 }
 
@@ -26,9 +28,10 @@ pub struct JsonPiece {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AIResponse {
+    #[wasm_bindgen(js_name = move)]
     pub r#move: Option<u8>,
     pub evaluation: i32,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = thinking)]
     pub thinking: String,
     pub timings: Timings,
     #[wasm_bindgen(getter_with_clone)]
@@ -39,16 +42,21 @@ pub struct AIResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Diagnostics {
+    #[wasm_bindgen(js_name = searchDepth)]
     pub search_depth: u8,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = validMoves)]
     pub valid_moves: Vec<u8>,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = moveEvaluations)]
     pub move_evaluations: Vec<MoveEvaluationWasm>,
+    #[wasm_bindgen(js_name = transpositionHits)]
     pub transposition_hits: usize,
+    #[wasm_bindgen(js_name = nodesEvaluated)]
     pub nodes_evaluated: u32,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = gamePhase)]
     pub game_phase: String,
+    #[wasm_bindgen(js_name = boardControl)]
     pub board_control: i32,
+    #[wasm_bindgen(js_name = piecePositions)]
     pub piece_positions: PiecePositions,
 }
 
@@ -56,11 +64,14 @@ pub struct Diagnostics {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MoveEvaluationWasm {
+    #[wasm_bindgen(js_name = pieceIndex)]
     pub piece_index: u8,
     pub score: f32,
-    #[wasm_bindgen(getter_with_clone)]
+    #[wasm_bindgen(getter_with_clone, js_name = moveType)]
     pub move_type: String,
+    #[wasm_bindgen(js_name = fromSquare)]
     pub from_square: i8,
+    #[wasm_bindgen(js_name = toSquare)]
     pub to_square: Option<u8>,
 }
 
@@ -68,9 +79,13 @@ pub struct MoveEvaluationWasm {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PiecePositions {
+    #[wasm_bindgen(js_name = player1OnBoard)]
     pub player1_on_board: u8,
+    #[wasm_bindgen(js_name = player1Finished)]
     pub player1_finished: u8,
+    #[wasm_bindgen(js_name = player2OnBoard)]
     pub player2_on_board: u8,
+    #[wasm_bindgen(js_name = player2Finished)]
     pub player2_finished: u8,
 }
 
@@ -78,20 +93,22 @@ pub struct PiecePositions {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Timings {
+    #[wasm_bindgen(js_name = aiMoveCalculation)]
     pub ai_move_calculation: u32,
+    #[wasm_bindgen(js_name = totalHandlerTime)]
     pub total_handler_time: u32,
 }
 
-pub fn convert_json_to_game_state(json_state: &GameStateRequest) -> GameState {
+pub fn convert_request_to_game_state(request: &GameStateRequest) -> GameState {
     let mut game_state = GameState::new();
 
-    game_state.current_player = if json_state.current_player == "Player1" {
+    game_state.current_player = if request.current_player == "Player1" {
         Player::Player1
     } else {
         Player::Player2
     };
 
-    game_state.player1_pieces = json_state
+    game_state.player1_pieces = request
         .player1_pieces
         .iter()
         .map(|p| PiecePosition {
@@ -100,7 +117,7 @@ pub fn convert_json_to_game_state(json_state: &GameStateRequest) -> GameState {
         })
         .collect();
 
-    game_state.player2_pieces = json_state
+    game_state.player2_pieces = request
         .player2_pieces
         .iter()
         .map(|p| PiecePosition {
@@ -120,18 +137,19 @@ pub fn convert_json_to_game_state(json_state: &GameStateRequest) -> GameState {
         }
     }
 
-    game_state.dice_roll = json_state.dice_roll.unwrap_or(0);
+    game_state.dice_roll = request.dice_roll.unwrap_or(0);
 
     game_state
 }
 
 #[wasm_bindgen]
-pub fn get_ai_move_wasm(game_state_json: &str) -> Result<String, JsValue> {
+pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsValue> {
     let game_state_request: GameStateRequest =
-        serde_json::from_str(game_state_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        serde_wasm_bindgen::from_value(game_state_request_js)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
     let start_time = js_sys::Date::now();
-    let game_state = convert_json_to_game_state(&game_state_request);
+    let game_state = convert_request_to_game_state(&game_state_request);
     let ai_depth = 6;
     let mut ai = AI::new();
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
@@ -213,7 +231,7 @@ pub fn get_ai_move_wasm(game_state_json: &str) -> Result<String, JsValue> {
         },
     };
 
-    serde_json::to_string(&response).map_err(|e| JsValue::from_str(&e.to_string()))
+    serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 #[wasm_bindgen]

@@ -106,9 +106,11 @@ export const useGameStore = create<GameStore>()(
             state.lastAIDiagnostics = aiResponse;
           });
 
-          if (!gameState.validMoves.includes(aiResponse.move)) {
+          const { move: aiMove } = aiResponse;
+
+          if (aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
             console.warn(
-              `AI returned invalid move ${aiResponse.move}. Valid moves:`,
+              `AI returned invalid move ${aiMove}. Valid moves:`,
               gameState.validMoves,
             );
             console.error("AI diagnostics:", aiResponse.diagnostics);
@@ -129,7 +131,7 @@ export const useGameStore = create<GameStore>()(
             set((state) => {
               const [newState, moveType, movePlayer] = makeMoveLogic(
                 state.gameState,
-                aiResponse.move,
+                aiMove,
               );
               state.gameState = newState;
               state.lastMoveType = moveType;

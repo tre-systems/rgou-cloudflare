@@ -1,5 +1,5 @@
 import { GameState } from "./types";
-import { AIResponse } from "./ai-service";
+import { AIResponse } from "./ai-types";
 
 type Wasm = typeof import("./wasm/rgou_ai_worker");
 
@@ -11,9 +11,6 @@ class WasmAIService {
       return this.wasm;
     }
     const wasm = await import("./wasm/rgou_ai_worker");
-    await wasm.default({
-      locateFile: (file: string) => `/wasm/${file}`,
-    });
     this.wasm = wasm;
     return wasm;
   }
@@ -22,19 +19,18 @@ class WasmAIService {
     const { get_ai_move_wasm } = await this.loadWasm();
 
     const requestBody = {
-      player1_pieces: gameState.player1Pieces.map((p) => ({
+      player1Pieces: gameState.player1Pieces.map((p) => ({
         square: p.square,
       })),
-      player2_pieces: gameState.player2Pieces.map((p) => ({
+      player2Pieces: gameState.player2Pieces.map((p) => ({
         square: p.square,
       })),
-      current_player:
+      currentPlayer:
         gameState.currentPlayer === "player1" ? "Player1" : "Player2",
-      dice_roll: gameState.diceRoll,
+      diceRoll: gameState.diceRoll,
     };
 
-    const responseJson = get_ai_move_wasm(JSON.stringify(requestBody));
-    return JSON.parse(responseJson) as AIResponse;
+    return get_ai_move_wasm(requestBody) as AIResponse;
   }
 
   async rollDice(): Promise<number> {

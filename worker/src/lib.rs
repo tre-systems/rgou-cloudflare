@@ -1,7 +1,7 @@
 use rgou_ai_core::{
     wasm_api::{
-        convert_json_to_game_state, AIResponse, Diagnostics, GameStateRequest, MoveEvaluationWasm,
-        PiecePositions, Timings,
+        convert_request_to_game_state, AIResponse, Diagnostics, GameStateRequest,
+        MoveEvaluationWasm, PiecePositions, Timings,
     },
     AI,
 };
@@ -46,7 +46,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
     );
 
     let ai_start = js_sys::Date::now();
-    let game_state = convert_json_to_game_state(&game_state_request);
+    let game_state = convert_request_to_game_state(&game_state_request);
 
     console_log!("[Rust Worker] Server-side GameState: {:?}", &game_state);
 
