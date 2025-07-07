@@ -5,68 +5,47 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GameStateRequest {
-    #[wasm_bindgen(getter_with_clone, js_name = player1Pieces)]
     pub player1_pieces: Vec<JsonPiece>,
-    #[wasm_bindgen(getter_with_clone, js_name = player2Pieces)]
     pub player2_pieces: Vec<JsonPiece>,
-    #[wasm_bindgen(getter_with_clone, js_name = currentPlayer)]
     pub current_player: String,
-    #[wasm_bindgen(js_name = diceRoll)]
     pub dice_roll: Option<u8>,
 }
 
-#[wasm_bindgen]
 #[derive(Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct JsonPiece {
     pub square: i8,
 }
 
-#[wasm_bindgen]
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AIResponse {
-    #[wasm_bindgen(js_name = move)]
     pub r#move: Option<u8>,
     pub evaluation: i32,
-    #[wasm_bindgen(getter_with_clone, js_name = thinking)]
     pub thinking: String,
     pub timings: Timings,
-    #[wasm_bindgen(getter_with_clone)]
     pub diagnostics: Diagnostics,
 }
 
-#[wasm_bindgen]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Diagnostics {
-    #[wasm_bindgen(js_name = searchDepth)]
     pub search_depth: u8,
-    #[wasm_bindgen(getter_with_clone, js_name = validMoves)]
     pub valid_moves: Vec<u8>,
-    #[wasm_bindgen(getter_with_clone, js_name = moveEvaluations)]
     pub move_evaluations: Vec<MoveEvaluationWasm>,
-    #[wasm_bindgen(js_name = transpositionHits)]
     pub transposition_hits: usize,
-    #[wasm_bindgen(js_name = nodesEvaluated)]
-    pub nodes_evaluated: u32,
+    pub nodes_evaluated: u64,
 }
 
-#[wasm_bindgen]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MoveEvaluationWasm {
-    #[wasm_bindgen(js_name = pieceIndex)]
     pub piece_index: u8,
     pub score: f32,
-    #[wasm_bindgen(getter_with_clone, js_name = moveType)]
     pub move_type: String,
-    #[wasm_bindgen(js_name = fromSquare)]
     pub from_square: i8,
-    #[wasm_bindgen(js_name = toSquare)]
     pub to_square: Option<u8>,
 }
 
@@ -82,13 +61,10 @@ impl From<&MoveEvaluation> for MoveEvaluationWasm {
     }
 }
 
-#[wasm_bindgen]
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Timings {
-    #[wasm_bindgen(js_name = aiMoveCalculation)]
     pub ai_move_calculation: u32,
-    #[wasm_bindgen(js_name = totalHandlerTime)]
     pub total_handler_time: u32,
 }
 
@@ -175,11 +151,14 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
             valid_moves: game_state.get_valid_moves(),
             move_evaluations: move_evaluations_wasm,
             transposition_hits: ai.transposition_hits as usize,
-            nodes_evaluated: ai.nodes_evaluated,
+            nodes_evaluated: ai.nodes_evaluated as u64,
         },
     };
 
-    serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
+    let response_json = serde_json::to_string(&response)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+
+    Ok(JsValue::from_str(&response_json))
 }
 
 #[wasm_bindgen]

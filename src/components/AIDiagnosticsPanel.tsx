@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bug, ChevronDown, ChevronRight } from "lucide-react";
-import { AIResponse } from "@/lib/ai-service";
+import { AIResponse, MoveEvaluation } from "@/lib/ai-types";
 import { GameState } from "@/lib/types";
 import {
   calculateBoardControl,
@@ -149,7 +149,7 @@ export default function AIDiagnosticsPanel({
                 </p>
                 <div className="max-h-48 overflow-y-auto pr-1">
                   {lastAIDiagnostics.diagnostics.moveEvaluations?.map(
-                    (move, index) => (
+                    (move: MoveEvaluation, index: number) => (
                       <div
                         key={index}
                         className="grid grid-cols-4 gap-2 items-center text-center p-1.5 rounded-md bg-gray-800/50"

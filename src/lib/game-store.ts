@@ -108,7 +108,11 @@ export const useGameStore = create<GameStore>()(
 
           const { move: aiMove } = aiResponse;
 
-          if (aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
+          if (
+            aiMove === null ||
+            aiMove === undefined ||
+            !gameState.validMoves.includes(aiMove)
+          ) {
             console.warn(
               `AI returned invalid move ${aiMove}. Valid moves:`,
               gameState.validMoves,

@@ -36,7 +36,8 @@ class WasmAIService {
       diceRoll: gameState.diceRoll,
     };
 
-    return get_ai_move_wasm(requestBody) as AIResponse;
+    const responseJson = get_ai_move_wasm(requestBody) as string;
+    return JSON.parse(responseJson) as AIResponse;
   }
 
   async rollDice(): Promise<number> {
