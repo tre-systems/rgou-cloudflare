@@ -640,6 +640,21 @@ mod tests {
     }
 
     #[test]
+    fn test_is_game_over_not_finished() {
+        let game_state = GameState::new();
+        assert!(!game_state.is_game_over());
+    }
+
+    #[test]
+    fn test_is_game_over_player1_wins() {
+        let mut game_state = GameState::new();
+        for piece in game_state.player1_pieces.iter_mut() {
+            piece.square = 20;
+        }
+        assert!(game_state.is_game_over());
+    }
+
+    #[test]
     fn test_is_rosette() {
         assert!(GameState::is_rosette(0));
         assert!(GameState::is_rosette(7));
@@ -728,10 +743,21 @@ mod tests {
     }
 
     #[test]
+    fn test_get_valid_moves_player2() {
+        let mut game_state = GameState::new();
+        game_state.current_player = Player::Player2;
+        game_state.player2_pieces[0].square = 19;
+        game_state.board[19] = Some(game_state.player2_pieces[0]);
+        game_state.dice_roll = 2;
+        let moves = game_state.get_valid_moves();
+        assert!(moves.contains(&0));
+    }
+
+    #[test]
     fn test_make_move_simple() {
         let mut game_state = setup_game_for_moves_test();
         game_state.dice_roll = 4;
-        game_state.make_move(0);
+        assert!(game_state.make_move(0));
 
         assert_eq!(game_state.player1_pieces[0].square, 0);
         assert_eq!(game_state.board[0].unwrap().player, Player::Player1);
@@ -740,14 +766,29 @@ mod tests {
     }
 
     #[test]
-    fn test_make_move_on_rosette_no_capture() {
+    fn test_make_move_from_rosette() {
+        let mut game_state = setup_game_for_moves_test();
+        game_state.player1_pieces[0].square = 7;
+        game_state.board[7] = Some(game_state.player1_pieces[0]);
+        game_state.dice_roll = 2;
+
+        assert!(game_state.make_move(0));
+
+        assert_eq!(game_state.player1_pieces[0].square, 9);
+        assert!(game_state.board[7].is_none());
+        assert_eq!(game_state.board[9].unwrap().player, Player::Player1);
+        assert_eq!(game_state.current_player, Player::Player2);
+    }
+
+    #[test]
+    fn test_get_valid_moves_blocked_on_rosette_is_correct() {
         let mut game_state = setup_game_for_moves_test();
         game_state.player1_pieces[0].square = 5;
         game_state.board[5] = Some(game_state.player1_pieces[0]);
         game_state.player2_pieces[0].square = 7;
         game_state.board[7] = Some(game_state.player2_pieces[0]);
+        assert!(GameState::is_rosette(7));
         game_state.dice_roll = 2;
-
         let moves = game_state.get_valid_moves();
         assert!(!moves.contains(&0));
     }
@@ -761,12 +802,27 @@ mod tests {
         game_state.board[6] = Some(game_state.player2_pieces[0]);
         game_state.dice_roll = 2;
 
-        game_state.make_move(0);
+        assert!(game_state.make_move(0));
 
         assert_eq!(game_state.player1_pieces[0].square, 6);
         assert_eq!(game_state.board[6].unwrap().player, Player::Player1);
         assert_eq!(game_state.player2_pieces[0].square, -1);
         assert_eq!(game_state.current_player, Player::Player2);
+    }
+
+    #[test]
+    fn test_make_move_player2_simple() {
+        let mut game_state = GameState::new();
+        game_state.current_player = Player::Player2;
+        game_state.player2_pieces[0].square = 19;
+        game_state.board[19] = Some(game_state.player2_pieces[0]);
+        game_state.dice_roll = 2;
+
+        assert!(game_state.make_move(0));
+
+        assert_eq!(game_state.player2_pieces[0].square, 17);
+        assert_eq!(game_state.board[17].unwrap().player, Player::Player2);
+        assert_eq!(game_state.current_player, Player::Player1);
     }
 
     #[test]
@@ -776,7 +832,7 @@ mod tests {
         game_state.board[11] = Some(game_state.player1_pieces[0]);
         game_state.dice_roll = 3;
 
-        game_state.make_move(0);
+        assert!(game_state.make_move(0));
 
         assert_eq!(game_state.player1_pieces[0].square, 20);
         assert!(game_state.board[11].is_none());
@@ -790,7 +846,7 @@ mod tests {
         game_state.board[0] = Some(game_state.player1_pieces[0]);
         game_state.dice_roll = 1;
 
-        game_state.make_move(0);
+        assert!(game_state.make_move(0));
 
         assert_eq!(game_state.player1_pieces[0].square, 4);
         assert_eq!(game_state.board[4].unwrap().player, Player::Player1);
@@ -826,6 +882,15 @@ mod tests {
     }
 
     #[test]
+    fn test_evaluate_player1_wins() {
+        let mut game_state = GameState::new();
+        for i in 0..PIECES_PER_PLAYER {
+            game_state.player1_pieces[i].square = 20;
+        }
+        assert_eq!(game_state.evaluate(), -WIN_SCORE);
+    }
+
+    #[test]
     fn test_evaluate_winning_move() {
         let mut game_state = GameState::new();
         for i in 0..PIECES_PER_PLAYER - 1 {
@@ -840,7 +905,7 @@ mod tests {
         game_state.dice_roll = 1;
         let moves = game_state.get_valid_moves();
         assert!(moves.contains(&(PIECES_PER_PLAYER as u8 - 1)));
-        game_state.make_move((PIECES_PER_PLAYER - 1) as u8);
+        assert!(game_state.make_move((PIECES_PER_PLAYER - 1) as u8));
 
         assert!(game_state.is_game_over());
         assert_eq!(game_state.evaluate(), WIN_SCORE);
@@ -866,5 +931,36 @@ mod tests {
 
         assert!(best_move.is_some());
         assert_eq!(best_move.unwrap(), (PIECES_PER_PLAYER - 1) as u8);
+    }
+
+    #[test]
+    fn test_ai_no_valid_moves() {
+        let mut ai = AI::new();
+        let mut game_state = GameState::new();
+        game_state.dice_roll = 0;
+
+        let (best_move, evals) = ai.get_best_move(&game_state, 3);
+
+        assert!(best_move.is_none());
+        assert!(evals.is_empty());
+    }
+
+    #[test]
+    fn test_hash_consistency_and_uniqueness() {
+        let mut game_state1 = GameState::new();
+        game_state1.player1_pieces[0].square = 5;
+        game_state1.board[5] = Some(game_state1.player1_pieces[0]);
+        game_state1.dice_roll = 2;
+
+        let mut game_state2 = game_state1.clone();
+
+        assert_eq!(game_state1.hash(), game_state2.hash());
+
+        assert!(game_state2.make_move(0));
+        assert_ne!(game_state1.hash(), game_state2.hash());
+
+        let mut game_state3 = game_state1.clone();
+        game_state3.current_player = Player::Player2;
+        assert_ne!(game_state1.hash(), game_state3.hash());
     }
 }
