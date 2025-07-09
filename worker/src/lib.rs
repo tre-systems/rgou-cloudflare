@@ -76,7 +76,7 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
             valid_moves: game_state.get_valid_moves(),
             move_evaluations: move_evaluations_wasm,
             transposition_hits: ai.transposition_hits as usize,
-            nodes_evaluated: ai.nodes_evaluated,
+            nodes_evaluated: ai.nodes_evaluated as u64,
         },
     };
 
