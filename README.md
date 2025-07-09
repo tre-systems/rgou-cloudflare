@@ -72,10 +72,10 @@ This project uses a unique dual-AI architecture, allowing the user to switch sea
 - `npm run dev`: Start the Next.js development server.
 - `npm run build`: Build the application for production.
 - `npm run start`: Start a production server.
-- `npm run deploy:cf`: Deploy the frontend to Cloudflare Workers.
 - `npm run deploy:worker`: Deploy the AI worker to Cloudflare.
 - `npm run lint`: Run ESLint.
 - `npm run check`: Run Prettier, ESLint, and TypeScript type checking.
+- `npm run migrate:d1`: Apply database migrations to the production D1 database.
 
 ## 📂 Project Structure
 
@@ -100,17 +100,45 @@ rgou-cloudflare/
 
 ## 🚀 Deployment
 
-The application is deployed entirely on the Cloudflare ecosystem.
+This project is designed for a seamless deployment experience to the Cloudflare ecosystem, leveraging OpenNext to adapt the Next.js application for Cloudflare Pages.
 
-### Environment Variables
+### Building for Production
 
-Create a `.env.local` file for local development:
+To create a production-ready build, run the following command:
 
 ```bash
-NEXT_PUBLIC_AI_WORKER_URL=http://localhost:8787
+npm run build
 ```
 
-For production, set the `NEXT_PUBLIC_AI_WORKER_URL` environment variable in your Cloudflare Worker settings.
+This command uses the `@opennextjs/cloudflare` adapter to compile the Next.js application and package it into the `.open-next` directory, which is optimized for deployment on Cloudflare. This single command handles both the frontend application and the WebAssembly assets.
+
+### Local Deployment from Your Machine
+
+You can deploy the application directly from your local machine using the Cloudflare Wrangler CLI.
+
+1.  **Ensure you are logged in to Wrangler:**
+    ```bash
+    npx wrangler login
+    ```
+2.  **Build the application:**
+    ```bash
+    npm run build
+    ```
+3.  **Deploy the application:**
+    ```bash
+    npx wrangler deploy
+    ```
+    This command will upload the contents of the `.open-next` directory to Cloudflare Pages.
+
+### Automated Deployment with GitHub Actions
+
+Deployment is automated via a GitHub Actions workflow defined in `.github/workflows/deploy.yml`. The workflow is triggered on every push to the `main` branch and performs the following steps:
+
+1.  Checks out the code.
+2.  Sets up Node.js and Rust environments.
+3.  Installs dependencies.
+4.  Builds the application using `npm run build`.
+5.  Deploys to Cloudflare using the `wrangler-action`.
 
 ## 📚 Historical Context
 
