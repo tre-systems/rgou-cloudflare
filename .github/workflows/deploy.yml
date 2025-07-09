@@ -50,15 +50,14 @@ jobs:
       - name: Build Wasm Assets
         run: npm run build:wasm-assets
 
-      - name: Build and Adapt for Cloudflare
-        run: npx @opennextjs/cloudflare build
-
-      - name: Deploy Frontend
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config wrangler.toml --env=""
+      - name: Build and Deploy
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          DB_ID: ${{ secrets.DB_ID }}
+          COUNTER_ID: ${{ secrets.COUNTER_ID }}
 
       - name: Deploy AI Worker
         run: npm run deploy:worker

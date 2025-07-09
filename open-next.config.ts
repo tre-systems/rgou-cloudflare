@@ -15,6 +15,9 @@ const config = {
       queue: 'dummy',
     },
   },
+  assets: {
+    patterns: ['public/wasm/*'],
+  },
   edgeExternals: ['node:crypto'],
   middleware: {
     external: true,
