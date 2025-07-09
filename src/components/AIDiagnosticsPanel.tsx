@@ -45,6 +45,9 @@ export default function AIDiagnosticsPanel({
         <div className="flex items-center space-x-2">
           <Bug className="w-4 h-4 text-green-400" />
           <span className="font-semibold text-sm text-white/90">AI Diagnostics</span>
+          {lastAIDiagnostics.aiType && (
+            <span className="text-xs text-white/60 capitalize">({lastAIDiagnostics.aiType})</span>
+          )}
         </div>
         {isOpen ? (
           <ChevronDown className="w-5 h-5 text-white/70" />

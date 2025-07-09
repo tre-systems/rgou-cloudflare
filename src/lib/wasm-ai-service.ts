@@ -1,5 +1,5 @@
 import { GameState } from './types';
-import { AIResponse } from './ai-types';
+import { ServerAIResponse } from './ai-types';
 
 type WasmModule = {
   get_ai_move_wasm: (gameStateJson: string) => string;
@@ -76,7 +76,7 @@ class WasmAiService {
     };
   }
 
-  private transformWasmResponse(wasmResponse: string): AIResponse {
+  private transformWasmResponse(wasmResponse: string): ServerAIResponse {
     const parsed = JSON.parse(wasmResponse);
 
     return {
@@ -111,7 +111,7 @@ class WasmAiService {
     };
   }
 
-  async getAIMove(gameState: GameState): Promise<AIResponse> {
+  async getAIMove(gameState: GameState): Promise<ServerAIResponse> {
     await this.ensureWasmLoaded();
 
     if (!this.wasmModule) {

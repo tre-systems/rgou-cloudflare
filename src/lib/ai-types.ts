@@ -25,4 +25,7 @@ export interface AIResponse {
   thinking: string;
   timings: Timings;
   diagnostics: Diagnostics;
+  aiType: 'client' | 'server' | 'fallback';
 }
+
+export type ServerAIResponse = Omit<AIResponse, 'aiType'>;

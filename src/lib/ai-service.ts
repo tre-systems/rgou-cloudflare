@@ -1,5 +1,5 @@
 import { GameState } from './types';
-import { AIResponse, MoveEvaluation, Diagnostics, Timings } from './ai-types';
+import { AIResponse, MoveEvaluation, Diagnostics, Timings, ServerAIResponse } from './ai-types';
 
 // Direct endpoint to the production AI service
 const AI_WORKER_URL = 'https://rgou-minmax.tre.systems';
@@ -38,7 +38,7 @@ export class AIService {
     }
   }
 
-  static async getAIMove(gameState: GameState): Promise<AIResponse> {
+  static async getAIMove(gameState: GameState): Promise<ServerAIResponse> {
     const requestBody = {
       player1Pieces: gameState.player1Pieces.map(p => ({
         square: p.square,
@@ -49,7 +49,7 @@ export class AIService {
       currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
       diceRoll: gameState.diceRoll,
     };
-    return this.makeRequest<AIResponse>('/ai-move', requestBody);
+    return this.makeRequest<ServerAIResponse>('/ai-move', requestBody);
   }
 
   static async evaluatePosition(gameState: GameState): Promise<EvaluationResponse> {

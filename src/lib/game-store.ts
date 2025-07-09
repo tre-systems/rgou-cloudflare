@@ -86,10 +86,15 @@ export const useGameStore = create<GameStore>()(
         const startTime = performance.now();
 
         try {
-          const aiResponse =
+          const aiResponseFromServer =
             aiSource === 'server'
               ? await AIService.getAIMove(gameState)
               : await wasmAiService.getAIMove(gameState);
+
+          const aiResponse = {
+            ...aiResponseFromServer,
+            aiType: aiSource,
+          };
 
           const duration = performance.now() - startTime;
           console.log('AI Response:', aiResponse);
@@ -134,7 +139,20 @@ export const useGameStore = create<GameStore>()(
             state.gameState = newState;
             state.lastMoveType = moveType;
             state.lastMovePlayer = movePlayer;
-            state.lastAIDiagnostics = null;
+            state.lastAIDiagnostics = {
+              move: fallbackMove,
+              evaluation: 0,
+              thinking: 'Fallback move',
+              timings: { aiMoveCalculation: 0, totalHandlerTime: 0 },
+              diagnostics: {
+                searchDepth: 0,
+                validMoves: [],
+                moveEvaluations: [],
+                transpositionHits: 0,
+                nodesEvaluated: 0,
+              },
+              aiType: 'fallback',
+            };
           });
         } finally {
           set(state => {
