@@ -4,6 +4,14 @@ A modern implementation of the ancient Mesopotamian board game, "The Royal Game 
 
 This project is a Progressive Web App (PWA), allowing for installation on your device for a native-like experience with offline capabilities.
 
+[![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
+
+![Royal Game of Ur Screenshot](public/screenshot.png)
+
+<div align="center">
+  <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+</div>
+
 ## 🌟 Features
 
 - **Authentic Gameplay**: A faithful recreation of the 4,500-year-old Royal Game of Ur.
@@ -29,9 +37,10 @@ The Royal Game of Ur is a race game where each player tries to move all 7 of the
 
 This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a powerful server-side AI and an instant client-side AI. The core AI logic is shared in the `worker/rust_ai_core` crate, ensuring consistent AI behavior across both platforms.
 
-- **Server AI**: A high-performance Rust AI on **Cloudflare Workers** using a deep minimax search with alpha-beta pruning and transposition tables for the strongest level of play.
-- **Client AI**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. This enables **offline play** and provides a faster, more responsive opponent for casual games.
-- **Optimized Logging**: Environment-based logging system that minimizes Cloudflare Workers costs while providing essential debugging information in production and detailed insights in development.
+- **Server AI**: A Rust AI on **Cloudflare Workers**. Due to the short compute time limits of serverless functions, this AI has a lower search depth, making it a faster but weaker opponent.
+- **Client AI**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. It uses a deeper search, making it the **stronger** opponent. This also enables **offline play**.
+
+For a more detailed explanation of the architecture, please see the [Architecture Overview](./docs/architecture-overview.md) document.
 
 ## 🛠️ Tech Stack
 
