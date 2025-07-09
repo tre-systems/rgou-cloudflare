@@ -1,154 +1,87 @@
-import { GameState } from './types';
-import { ServerAIResponse } from './ai-types';
-
-type WasmModule = {
-  get_ai_move_wasm: (gameStateJson: string) => string;
-  roll_dice_wasm: () => number;
-};
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { GameState } from './types';
+import type { AIResponse as ServerAIResponse } from './ai-types';
 
 class WasmAiService {
-  private wasmModule: WasmModule | null = null;
+  private worker: Worker | null = null;
   private initPromise: Promise<void> | null = null;
+  private messageCounter = 0;
+  private readonly pendingRequests = new Map<
+    number,
+    { resolve: (value: any) => void; reject: (reason?: any) => void }
+  >();
 
-  private async loadWasm(): Promise<void> {
-    if (this.wasmModule) return;
-
-    try {
-      const wasmResponse = await fetch('/wasm/rgou_ai_core_bg.wasm');
-      const wasmBytes = await wasmResponse.arrayBuffer();
-
-      const jsResponse = await fetch('/wasm/rgou_ai_core.js');
-      let jsCode = await jsResponse.text();
-
-      jsCode = jsCode
-        .replace(/import\.meta\.url/g, 'location.href')
-        .replace(/export\s+function\s+(\w+)/g, 'function $1')
-        .replace(/export\s+\{[^}]+\};?/g, '')
-        .replace(/export\s+default\s+__wbg_init;/g, '');
-
-      const createWasmModule = new Function(
-        jsCode +
-          `
-        return {
-          get_ai_move_wasm,
-          roll_dice_wasm,
-          initSync
-        };
-        `
-      );
-
-      const wasmModule = createWasmModule();
-
-      wasmModule.initSync({ module: wasmBytes });
-
-      this.wasmModule = {
-        get_ai_move_wasm: wasmModule.get_ai_move_wasm,
-        roll_dice_wasm: wasmModule.roll_dice_wasm,
-      };
-    } catch (error) {
-      console.error('Failed to load WebAssembly module:', error);
-      throw new Error('WebAssembly module failed to load');
-    }
+  constructor() {
+    this.init();
   }
 
-  private async ensureWasmLoaded(): Promise<void> {
+  private init(): Promise<void> {
     if (!this.initPromise) {
-      this.initPromise = this.loadWasm();
+      this.initPromise = new Promise((resolve, reject) => {
+        if (typeof window === 'undefined') {
+          console.log('Not in a browser environment, skipping worker initialization.');
+          return resolve();
+        }
+
+        this.worker = new Worker(new URL('./ai.worker.ts', import.meta.url), {
+          type: 'module',
+        });
+
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data.type === 'ready') {
+            console.log('AI Worker is ready.');
+            resolve();
+          } else if (event.data.type === 'success' || event.data.type === 'error') {
+            const promise = this.pendingRequests.get(event.data.id);
+            if (promise) {
+              if (event.data.type === 'success') {
+                promise.resolve(event.data.response);
+              } else {
+                promise.reject(new Error(event.data.error));
+              }
+              this.pendingRequests.delete(event.data.id);
+            }
+          }
+        };
+
+        const handleError = (error: ErrorEvent) => {
+          console.error('AI Worker error:', error);
+          reject(new Error('AI Worker failed to initialize.'));
+        };
+
+        this.worker.onmessage = handleMessage;
+        this.worker.onerror = handleError;
+      });
     }
     return this.initPromise;
   }
 
-  private transformGameStateToRequest(gameState: GameState): {
-    player1Pieces: { square: number }[];
-    player2Pieces: { square: number }[];
-    currentPlayer: string;
-    diceRoll: number | null;
-  } {
-    return {
-      player1Pieces: gameState.player1Pieces.map(p => ({
-        square: p.square,
-      })),
-      player2Pieces: gameState.player2Pieces.map(p => ({
-        square: p.square,
-      })),
-      currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
-      diceRoll: gameState.diceRoll,
-    };
-  }
-
-  private transformWasmResponse(wasmResponse: string): ServerAIResponse {
-    const parsed = JSON.parse(wasmResponse);
-
-    return {
-      move: parsed.move,
-      evaluation: parsed.evaluation,
-      thinking: parsed.thinking,
-      timings: {
-        aiMoveCalculation: parsed.timings.aiMoveCalculation,
-        totalHandlerTime: parsed.timings.totalHandlerTime,
-      },
-      diagnostics: {
-        searchDepth: parsed.diagnostics.searchDepth,
-        validMoves: parsed.diagnostics.validMoves,
-        moveEvaluations: parsed.diagnostics.moveEvaluations.map(
-          (evaluation: {
-            pieceIndex: number;
-            score: number;
-            moveType: string;
-            fromSquare: number;
-            toSquare: number | null;
-          }) => ({
-            pieceIndex: evaluation.pieceIndex,
-            score: evaluation.score,
-            moveType: evaluation.moveType,
-            fromSquare: evaluation.fromSquare,
-            toSquare: evaluation.toSquare,
-          })
-        ),
-        transpositionHits: parsed.diagnostics.transpositionHits,
-        nodesEvaluated: parsed.diagnostics.nodesEvaluated,
-      },
-    };
+  private async ensureWorkerReady(): Promise<void> {
+    if (!this.initPromise) {
+      this.init();
+    }
+    await this.initPromise;
+    if (!this.worker) {
+      throw new Error('AI Worker not initialized.');
+    }
   }
 
   async getAIMove(gameState: GameState): Promise<ServerAIResponse> {
-    await this.ensureWasmLoaded();
+    await this.ensureWorkerReady();
 
-    if (!this.wasmModule) {
-      throw new Error('WebAssembly module not loaded');
-    }
+    const messageId = this.messageCounter++;
+    const promise = new Promise<ServerAIResponse>((resolve, reject) => {
+      this.pendingRequests.set(messageId, { resolve, reject });
+    });
 
-    const request = this.transformGameStateToRequest(gameState);
+    this.worker!.postMessage({ id: messageId, gameState });
 
-    try {
-      // The `any` cast is required here because the WASM function
-      // expects an object, but the generated type definition is incorrect.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const responseJson = this.wasmModule.get_ai_move_wasm(request as any);
-      return this.transformWasmResponse(responseJson);
-    } catch (error) {
-      console.error('WASM AI error:', error);
-      throw new Error(`WASM AI failed: ${error}`);
-    }
+    return promise;
   }
 
   async rollDice(): Promise<number> {
-    await this.ensureWasmLoaded();
-
-    if (!this.wasmModule) {
-      throw new Error('WebAssembly module not loaded');
-    }
-
-    return this.wasmModule.roll_dice_wasm();
-  }
-
-  async isAvailable(): Promise<boolean> {
-    try {
-      await this.ensureWasmLoaded();
-      return this.wasmModule !== null;
-    } catch {
-      return false;
-    }
+    console.warn('rollDice in wasm-ai-service is not implemented with worker.');
+    return Math.floor(Math.random() * 5);
   }
 }
 

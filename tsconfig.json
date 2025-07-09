@@ -27,7 +27,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"],
+      "/wasm/*": ["public/wasm/*"]
     }
   },
   "include": [
