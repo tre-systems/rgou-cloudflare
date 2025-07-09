@@ -10,7 +10,6 @@ export type AISource = 'server' | 'client';
 
 interface GameControlsProps {
   gameState: GameState;
-  onRollDice: () => void;
   onResetGame: () => void;
   aiThinking?: boolean;
   aiSource: AISource;

@@ -22,7 +22,6 @@ export default function RoyalGameOfUr() {
   const [aiSource, setAiSource] = useState<AISource>('server');
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Diagnostics state
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
 
   const [lastMove, setLastMove] = useState<{
@@ -47,7 +46,6 @@ export default function RoyalGameOfUr() {
     }
   }, [gameState, makeAIMove, aiSource]);
 
-  // Handle game end sound effects
   useEffect(() => {
     if (gameState.gameStatus === 'finished') {
       setTimeout(() => {
@@ -99,10 +97,6 @@ export default function RoyalGameOfUr() {
     processDiceRoll,
   ]);
 
-  const handleRollDice = useCallback(async () => {
-    processDiceRoll();
-  }, [processDiceRoll]);
-
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
       if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
@@ -140,14 +134,12 @@ export default function RoyalGameOfUr() {
           {diagnosticsPanel}
         </div>
 
-        {/* Game area - stays centered */}
         <motion.div
           className="w-full max-w-sm mx-auto space-y-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Header */}
           <motion.div
             className="text-center space-y-1"
             initial={{ opacity: 0, y: -20 }}
@@ -184,22 +176,18 @@ export default function RoyalGameOfUr() {
             </motion.div>
           </motion.div>
 
-          {/* Game Controls */}
           <GameControls
             gameState={gameState}
-            onRollDice={handleRollDice}
             onResetGame={handleReset}
             aiThinking={aiThinking}
             aiSource={aiSource}
             onAiSourceChange={setAiSource}
           />
 
-          {/* Game Board */}
           <GameBoard
             gameState={gameState}
             onPieceClick={handlePieceClick}
             aiThinking={aiThinking}
-            onRollDice={handleRollDice}
             onResetGame={handleReset}
             aiSource={aiSource}
             onAiSourceChange={setAiSource}
@@ -209,7 +197,6 @@ export default function RoyalGameOfUr() {
 
           <div className="xl:hidden">{diagnosticsPanel}</div>
 
-          {/* Move Notifications */}
           <AnimatePresence>
             {lastMove && (
               <motion.div
@@ -247,7 +234,6 @@ export default function RoyalGameOfUr() {
             )}
           </AnimatePresence>
 
-          {/* Footer */}
           <motion.div
             className="text-center"
             initial={{ opacity: 0 }}
