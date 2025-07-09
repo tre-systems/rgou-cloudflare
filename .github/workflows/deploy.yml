@@ -47,11 +47,8 @@ jobs:
           cargo install wasm-pack --force
           cargo install worker-build --force
 
-      - name: Build Wasm Assets
-        run: npm run build:wasm-assets
-
       - name: Build
-        run: npm run build
+        run: npm run build:cf
 
       - name: Deploy Frontend
         uses: cloudflare/wrangler-action@v3
