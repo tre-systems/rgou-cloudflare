@@ -17,6 +17,7 @@ wasm = [
     "console_error_panic_hook",
     "getrandom/js",
     "dep:js-sys",
+    "dep:web-sys",
 ]
 
 [dependencies]
@@ -28,6 +29,7 @@ wasm-bindgen = { version = "0.2.100", optional = true }
 serde-wasm-bindgen = "0.6.5"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", optional = true, features = ["console"] }
 
 [profile.release]
 opt-level = "s"
