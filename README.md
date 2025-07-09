@@ -112,22 +112,6 @@ NEXT_PUBLIC_AI_WORKER_URL=http://localhost:8787
 
 For production, set the `NEXT_PUBLIC_AI_WORKER_URL` environment variable in your Cloudflare Worker settings.
 
-## 📚 Documentation
-
-This project is documented to provide a clear overview of its architecture, AI, and deployment process.
-
-- **[API Reference](./docs/api-reference.md)**: Details on the AI worker API endpoints.
-- **[Logging System](./docs/logging-system.md)**: Comprehensive guide to the optimized logging system designed for cost-effective debugging on Cloudflare Workers.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
-
-1.  Fork the repository.
-2.  Create a feature branch.
-3.  Make your changes.
-4.  Submit a pull request.
-
 ## 📚 Historical Context
 
 The Royal Game of Ur dates back to 2600-2400 BCE and was discovered in the Royal Cemetery at Ur by Sir Leonard Woolley. The game's rules were deciphered from a cuneiform tablet by Irving Finkel at the British Museum.
