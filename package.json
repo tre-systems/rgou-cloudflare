@@ -55,6 +55,7 @@
     "eslint-config-next": "15.3.4",
     "npm-check-updates": "^18.0.1",
     "prettier": "^3.6.2",
+    "raw-loader": "^4.0.2",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "typescript": "^5",

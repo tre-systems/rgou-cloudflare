@@ -16,6 +16,21 @@ const nextConfig = {
       type: 'webassembly/async',
     });
 
+    config.module.rules.push({
+      test: /ai\.worker\.ts$/,
+      use: {
+        loader: 'raw-loader',
+      },
+      parser: {
+        amd: false,
+        commonjs: false,
+        system: false,
+        requireJs: false,
+        // Disable parsing of this module
+        parse: () => ({}),
+      },
+    });
+
     if (!isServer) {
       config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
     }
