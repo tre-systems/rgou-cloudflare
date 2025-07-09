@@ -18,7 +18,7 @@ The project is primarily composed of three main parts:
 
 1.  **Next.js Frontend**: A modern React-based application for the user interface and game state management.
 2.  **Server-Side AI (Cloudflare Worker)**: A Rust-based AI that runs on Cloudflare's edge network.
-3.  **Client-Side AI (WebAssembly)**: The same Rust AI logic compiled to WebAssembly (Wasm) to run directly in the user's browser.
+3.  **Client-Side AI (WebAssembly)**: The same Rust AI logic compiled to WebAssembly (Wasm) to run directly in the user's browser. This is the default opponent.
 
 A key aspect of this architecture is the **shared Rust AI core**, located in `worker/rust_ai_core`. This single crate contains all the game rules, board evaluation heuristics, and the AI's expectiminimax search algorithm. By sharing this code, we ensure that both the server and client AIs exhibit identical strategic behavior, with the only difference being their computational resources (search depth).
 
@@ -41,12 +41,12 @@ The power of this project lies in its dual-AI engine, which provides flexibility
 
 - **Technology**: A Cloudflare Worker written in Rust using the `workers-rs` crate.
 - **Role**: It exposes a single API endpoint (`/ai-move`) that receives the current game state, computes the best move, and returns it.
-- **Performance**: To keep response times low and adhere to serverless function execution limits, the server-side AI uses a **lower search depth** (e.g., depth 4). This makes it a slightly faster but weaker opponent.
+- **Performance**: To keep response times low and adhere to serverless function execution limits, the server-side AI uses a **lower search depth** (e.g., depth 4). This makes it a slightly faster but weaker opponent, available as a fallback option.
 
 #### Client-Side AI (`worker/rust_ai_core/src/wasm_api.rs`)
 
 - **Technology**: The core Rust AI logic from `rgou-ai-core` is compiled to WebAssembly using `wasm-pack`.
-- **Role**: It runs entirely in the user's browser, enabling instant AI responses and full offline gameplay. The Wasm module is loaded and managed by `src/lib/wasm-ai-service.ts`.
+- **Role**: It runs entirely in the user's browser, enabling instant AI responses and full offline gameplay. The Wasm module is loaded and managed by `src/lib/wasm-ai-service.ts`. It is the default AI for the application.
 - **Performance**: Since it runs on the user's machine, it can afford a **deeper search depth** (e.g., depth 6), making it the stronger of the two AI opponents.
 
 ### 3. Data Flow: An AI's Turn
@@ -54,10 +54,10 @@ The power of this project lies in its dual-AI engine, which provides flexibility
 When it's the AI's turn, the following sequence occurs:
 
 1.  The `RoyalGameOfUr.tsx` component detects it's the AI's turn based on the `gameState` from the Zustand store.
-2.  It calls the `makeAIMove` action in `game-store.ts`, passing the currently selected AI source (`'server'` or `'client'`).
+2.  It calls the `makeAIMove` action in `game-store.ts`, passing the currently selected AI source (`'client'` by default).
 3.  The `makeAIMove` action then calls the appropriate AI service:
-    - **Server**: `AIService.getAIMove` sends a POST request with the game state to the Cloudflare Worker. The worker deserializes the state, runs the Rust AI, and returns the chosen move.
     - **Client**: `wasmAiService.getAIMove` calls the Wasm function `get_ai_move_wasm`, passing it the game state. The Wasm module runs the AI calculation synchronously within the browser's main thread (or a worker thread, if implemented) and returns the result.
+    - **Server**: `AIService.getAIMove` sends a POST request with the game state to the Cloudflare Worker. The worker deserializes the state, runs the Rust AI, and returns the chosen move.
 4.  The chosen move is then processed by the `makeMoveLogic` function from `game-logic.ts` to update the board state in the Zustand store.
 5.  The UI re-renders to reflect the AI's move.
 
