@@ -8,6 +8,7 @@ import GameControls, { AISource } from './GameControls';
 import AnimatedBackground from './AnimatedBackground';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Crown, Zap } from 'lucide-react';
+import Image from 'next/image';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 
 export default function RoyalGameOfUr() {
@@ -240,15 +241,15 @@ export default function RoyalGameOfUr() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.6 }}
           >
-            <p className="text-xs text-white/50">
-              © {new Date().getFullYear()}{' '}
-              <a
-                href="https://robgilks.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white/80 transition-colors"
-              >
-                robgilks.com
+            <p className="mt-4 text-center">
+              <a href="https://ko-fi.com/N4N31DPNUS" target="_blank" rel="noopener noreferrer">
+                <Image
+                  width={145}
+                  height={36}
+                  className="block mx-auto"
+                  src="https://storage.ko-fi.com/cdn/kofi2.png?v=6"
+                  alt="Buy Me a Coffee at ko-fi.com"
+                />
               </a>
             </p>
           </motion.div>
