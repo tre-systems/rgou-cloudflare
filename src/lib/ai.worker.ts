@@ -16,9 +16,8 @@ const loadWasm = (): Promise<void> => {
 
   wasmReady = (async () => {
     try {
-      wasmModule = await import('/wasm/rgou_ai_core.js');
-      const wasmUrl = new URL('/wasm/rgou_ai_core_bg.wasm', self.location.origin);
-      await wasmModule.default(wasmUrl.href);
+      wasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
+      await wasmModule.default('/wasm/rgou_ai_core_bg.wasm');
     } catch (error) {
       console.error('Failed to load WebAssembly module in worker:', error);
       throw new Error('WebAssembly module failed to load in worker');
