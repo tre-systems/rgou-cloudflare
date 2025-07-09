@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
@@ -50,11 +50,15 @@ jobs:
       - name: Build Wasm Assets
         run: npm run build:wasm-assets
 
+      - name: Build and Adapt for Cloudflare
+        run: npx @opennextjs/cloudflare build
+
       - name: Deploy Frontend
-        run: npm run deploy:cf
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.jsonc
 
       - name: Deploy AI Worker
         run: npm run deploy:worker

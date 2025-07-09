@@ -1,9 +1,9 @@
-import { GameState } from "./types";
-import { AIResponse } from "./ai-types";
+import { GameState } from './types';
+import { AIResponse } from './ai-types';
 
-type Wasm = typeof import("./wasm/rgou_ai_worker");
+type Wasm = typeof import('./wasm/rgou_ai_worker');
 type WasmInit = (
-  input?: RequestInfo | URL | Response | BufferSource | WebAssembly.Module,
+  input?: RequestInfo | URL | Response | BufferSource | WebAssembly.Module
 ) => Promise<Wasm>;
 
 class WasmAIService {
@@ -13,10 +13,10 @@ class WasmAIService {
     if (this.wasm) {
       return this.wasm;
     }
-    const wasmModule = await import("./wasm/rgou_ai_worker.js");
+    const wasmModule = await import('./wasm/rgou_ai_worker.js');
     const init = wasmModule.default as unknown as WasmInit;
 
-    const wasm = await init("/wasm/rgou_ai_worker_bg.wasm");
+    const wasm = await init('/wasm/rgou_ai_worker_bg.wasm');
     this.wasm = wasm;
     return wasm;
   }
@@ -25,18 +25,17 @@ class WasmAIService {
     const { get_ai_move_wasm } = await this.loadWasm();
 
     const requestBody = {
-      player1Pieces: gameState.player1Pieces.map((p) => ({
+      player1Pieces: gameState.player1Pieces.map(p => ({
         square: p.square,
       })),
-      player2Pieces: gameState.player2Pieces.map((p) => ({
+      player2Pieces: gameState.player2Pieces.map(p => ({
         square: p.square,
       })),
-      currentPlayer:
-        gameState.currentPlayer === "player1" ? "Player1" : "Player2",
+      currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
       diceRoll: gameState.diceRoll,
     };
 
-    const responseJson = get_ai_move_wasm(requestBody) as string;
+    const responseJson = get_ai_move_wasm(JSON.stringify(requestBody)) as string;
     return JSON.parse(responseJson) as AIResponse;
   }
 

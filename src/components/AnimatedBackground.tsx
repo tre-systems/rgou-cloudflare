@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 export default function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -9,7 +9,7 @@ export default function AnimatedBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Responsive canvas sizing
@@ -19,7 +19,7 @@ export default function AnimatedBackground() {
     };
 
     resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener('resize', resizeCanvas);
 
     // Particle system
     const particles: Array<{
@@ -34,11 +34,11 @@ export default function AnimatedBackground() {
     }> = [];
 
     const colors = [
-      "rgba(99, 102, 241, 0.6)", // Indigo
-      "rgba(236, 72, 153, 0.6)", // Pink
-      "rgba(251, 191, 36, 0.6)", // Amber
-      "rgba(34, 197, 94, 0.6)", // Green
-      "rgba(147, 51, 234, 0.6)", // Purple
+      'rgba(99, 102, 241, 0.6)', // Indigo
+      'rgba(236, 72, 153, 0.6)', // Pink
+      'rgba(251, 191, 36, 0.6)', // Amber
+      'rgba(34, 197, 94, 0.6)', // Green
+      'rgba(147, 51, 234, 0.6)', // Purple
     ];
 
     // Create initial particles
@@ -60,7 +60,7 @@ export default function AnimatedBackground() {
 
     const animate = () => {
       // Clear canvas with subtle fade effect
-      ctx.fillStyle = "rgba(15, 15, 35, 0.05)";
+      ctx.fillStyle = 'rgba(15, 15, 35, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Update and draw particles
@@ -90,11 +90,11 @@ export default function AnimatedBackground() {
           0,
           particle.x,
           particle.y,
-          particle.size * 2,
+          particle.size * 2
         );
 
         gradient.addColorStop(0, particle.color);
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         ctx.save();
         ctx.globalAlpha = particle.opacity * particle.life;
@@ -111,7 +111,7 @@ export default function AnimatedBackground() {
     animate();
 
     return () => {
-      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener('resize', resizeCanvas);
     };
   }, []);
 
@@ -119,7 +119,7 @@ export default function AnimatedBackground() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ background: "transparent" }}
+      style={{ background: 'transparent' }}
     />
   );
 }

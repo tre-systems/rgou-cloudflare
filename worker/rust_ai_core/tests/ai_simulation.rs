@@ -3,7 +3,7 @@ use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
 const AI1_SEARCH_DEPTH: u8 = 2;
 const AI2_SEARCH_DEPTH: u8 = 3;
-const NUM_GAMES: usize = 2;
+const NUM_GAMES: usize = 10;
 
 fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
     let mut game_state = GameState::new();

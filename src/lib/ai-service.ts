@@ -1,8 +1,8 @@
-import { GameState } from "./types";
-import { AIResponse, MoveEvaluation, Diagnostics, Timings } from "./ai-types";
+import { GameState } from './types';
+import { AIResponse, MoveEvaluation, Diagnostics, Timings } from './ai-types';
 
 // Direct endpoint to the production AI service
-const AI_WORKER_URL = "https://rgou-minmax.tre.systems";
+const AI_WORKER_URL = 'https://rgou-minmax.tre.systems';
 
 export type { AIResponse, MoveEvaluation, Diagnostics, Timings };
 
@@ -15,14 +15,14 @@ export interface EvaluationResponse {
 export class AIService {
   private static async makeRequest<T>(
     endpoint: string,
-    data?: GameState | Record<string, unknown>,
+    data?: GameState | Record<string, unknown>
   ): Promise<T> {
     const url = `${AI_WORKER_URL}${endpoint}`;
     try {
       const response = await fetch(url, {
-        method: data ? "POST" : "GET",
+        method: data ? 'POST' : 'GET',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: data ? JSON.stringify(data) : undefined,
       });
@@ -40,34 +40,30 @@ export class AIService {
 
   static async getAIMove(gameState: GameState): Promise<AIResponse> {
     const requestBody = {
-      player1Pieces: gameState.player1Pieces.map((p) => ({
+      player1Pieces: gameState.player1Pieces.map(p => ({
         square: p.square,
       })),
-      player2Pieces: gameState.player2Pieces.map((p) => ({
+      player2Pieces: gameState.player2Pieces.map(p => ({
         square: p.square,
       })),
-      currentPlayer:
-        gameState.currentPlayer === "player1" ? "Player1" : "Player2",
+      currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
       diceRoll: gameState.diceRoll,
     };
-    return this.makeRequest<AIResponse>("/ai-move", requestBody);
+    return this.makeRequest<AIResponse>('/ai-move', requestBody);
   }
 
-  static async evaluatePosition(
-    gameState: GameState,
-  ): Promise<EvaluationResponse> {
+  static async evaluatePosition(gameState: GameState): Promise<EvaluationResponse> {
     const requestBody = {
-      player1Pieces: gameState.player1Pieces.map((p) => ({
+      player1Pieces: gameState.player1Pieces.map(p => ({
         square: p.square,
       })),
-      player2Pieces: gameState.player2Pieces.map((p) => ({
+      player2Pieces: gameState.player2Pieces.map(p => ({
         square: p.square,
       })),
-      currentPlayer:
-        gameState.currentPlayer === "player1" ? "Player1" : "Player2",
+      currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
       diceRoll: gameState.diceRoll,
     };
-    return this.makeRequest<EvaluationResponse>("/evaluate", requestBody);
+    return this.makeRequest<EvaluationResponse>('/evaluate', requestBody);
   }
 
   static async healthCheck(): Promise<{
@@ -75,7 +71,7 @@ export class AIService {
     timestamp: string;
     version: string;
   }> {
-    return this.makeRequest("/health");
+    return this.makeRequest('/health');
   }
 
   // Fallback AI implementation for when the worker is not available

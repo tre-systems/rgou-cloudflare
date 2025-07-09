@@ -78,3 +78,9 @@ Cargo.lock
 # Cloudflare
 .wrangler/
 /worker/build/
+
+# Local
+local.db
+
+# OpenNext
+.open-next

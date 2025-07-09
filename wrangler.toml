@@ -1,11 +1,10 @@
 name = "rgou-main"
-main = "worker.js"
+main = ".open-next/worker.js"
 compatibility_date = "2025-06-14"
 account_id = "571f130502618993d848f58d27ae288d"
-workers_dev = true
 
 [assets]
-directory = "./out"
+directory = ".open-next/assets"
 binding = "ASSETS"
 
 [vars]
@@ -26,10 +25,9 @@ zone_name = "tre.systems"
 NEXT_PUBLIC_AI_WORKER_URL = "http://localhost:8787"
 AI_WORKER_SECRET = "dev-secret-key"
 
-[env.staging]
-name = "rgou-main-staging"
-workers_dev = true
-
-[env.staging.vars]
-NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-ai-worker-staging.rob-gilks.workers.dev"
-AI_WORKER_SECRET = "staging-secret-key"
+[[d1_databases]]
+binding = "DB"
+database_name = "rgou-db"
+database_id = "f3b432c2-1e6e-48ce-8bc2-d81b4c3f5b12"
+preview_database_id = "rgou-db-preview"
+migrations_dir = "migrations"

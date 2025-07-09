@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Zap } from "lucide-react";
-import { GameState } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Zap } from 'lucide-react';
+import { GameState } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
-export type AISource = "server" | "client";
+export type AISource = 'server' | 'client';
 
 interface GameControlsProps {
   gameState: GameState;
@@ -20,8 +20,7 @@ interface GameControlsProps {
 export default function GameControls({ gameState }: GameControlsProps) {
   return (
     <AnimatePresence>
-      {/* Game finished celebration */}
-      {gameState.gameStatus === "finished" && (
+      {gameState.gameStatus === 'finished' && (
         <motion.div
           className="glass rounded-lg p-6 relative overflow-hidden"
           initial={{ opacity: 0, scale: 0.8 }}
@@ -34,7 +33,7 @@ export default function GameControls({ gameState }: GameControlsProps) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{
-              type: "spring",
+              type: 'spring',
               stiffness: 200,
               damping: 15,
               delay: 0.2,
@@ -48,10 +47,10 @@ export default function GameControls({ gameState }: GameControlsProps) {
               transition={{
                 repeat: Infinity,
                 duration: 2,
-                ease: "easeInOut",
+                ease: 'easeInOut',
               }}
             >
-              {gameState.winner === "player1" ? (
+              {gameState.winner === 'player1' ? (
                 <Trophy className="w-16 h-16 text-green-400 mx-auto mb-2" />
               ) : (
                 <Zap className="w-16 h-16 text-pink-400 mx-auto mb-2" />
@@ -59,13 +58,11 @@ export default function GameControls({ gameState }: GameControlsProps) {
             </motion.div>
             <h2
               className={cn(
-                "text-2xl font-bold neon-text",
-                gameState.winner === "player1"
-                  ? "text-green-400"
-                  : "text-pink-400",
+                'text-2xl font-bold neon-text',
+                gameState.winner === 'player1' ? 'text-green-400' : 'text-pink-400'
               )}
             >
-              {gameState.winner === "player1" ? "Victory!" : "AI Wins!"}
+              {gameState.winner === 'player1' ? 'Victory!' : 'AI Wins!'}
             </h2>
           </motion.div>
         </motion.div>

@@ -1,4 +1,4 @@
-import RoyalGameOfUr from "@/components/RoyalGameOfUr";
+import RoyalGameOfUr from '@/components/RoyalGameOfUr';
 
 export default function Home() {
   return <RoyalGameOfUr />;

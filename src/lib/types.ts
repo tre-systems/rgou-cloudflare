@@ -1,4 +1,4 @@
-export type Player = "player1" | "player2";
+export type Player = 'player1' | 'player2';
 
 export type PiecePosition = {
   square: number;
@@ -10,14 +10,14 @@ export type GameState = {
   player1Pieces: PiecePosition[];
   player2Pieces: PiecePosition[];
   currentPlayer: Player;
-  gameStatus: "waiting" | "playing" | "finished";
+  gameStatus: 'waiting' | 'playing' | 'finished';
   winner: Player | null;
   diceRoll: number | null;
   canMove: boolean;
   validMoves: number[];
 };
 
-export type MoveType = "move" | "capture" | "rosette" | "finish" | null;
+export type MoveType = 'move' | 'capture' | 'rosette' | 'finish' | null;
 
 export type Move = {
   pieceIndex: number;
@@ -26,10 +26,10 @@ export type Move = {
 };
 
 export type GameAction =
-  | { type: "ROLL_DICE" }
-  | { type: "MAKE_MOVE"; move: Move }
-  | { type: "RESET_GAME" }
-  | { type: "AI_MOVE"; move: Move };
+  | { type: 'ROLL_DICE' }
+  | { type: 'MAKE_MOVE'; move: Move }
+  | { type: 'RESET_GAME' }
+  | { type: 'AI_MOVE'; move: Move };
 
 export const ROSETTE_SQUARES = [0, 7, 13, 15, 16];
 export const TRACK_LENGTH = 20;

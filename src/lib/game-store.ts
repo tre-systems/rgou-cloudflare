@@ -1,13 +1,13 @@
-import { create } from "zustand";
-import { immer } from "zustand/middleware/immer";
-import { GameState, MoveType, Player } from "./types";
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+import { GameState, MoveType, Player } from './types';
 import {
   initializeGame,
   processDiceRoll as processDiceRollLogic,
   makeMove as makeMoveLogic,
-} from "./game-logic";
-import { AIService, AIResponse } from "./ai-service";
-import { wasmAiService } from "./wasm-ai-service";
+} from './game-logic';
+import { AIService, AIResponse } from './ai-service';
+import { wasmAiService } from './wasm-ai-service';
 
 type GameStore = {
   gameState: GameState;
@@ -20,7 +20,7 @@ type GameStore = {
     initialize: () => void;
     processDiceRoll: (roll?: number) => void;
     makeMove: (pieceIndex: number) => void;
-    makeAIMove: (aiSource: "server" | "client") => Promise<void>;
+    makeAIMove: (aiSource: 'server' | 'client') => Promise<void>;
     reset: () => void;
   };
 };
@@ -35,7 +35,7 @@ export const useGameStore = create<GameStore>()(
     lastMovePlayer: null,
     actions: {
       initialize: () => {
-        set((state) => {
+        set(state => {
           state.gameState = initializeGame();
           state.aiThinking = false;
           state.lastAIDiagnostics = null;
@@ -43,48 +43,42 @@ export const useGameStore = create<GameStore>()(
           state.lastMoveType = null;
           state.lastMovePlayer = null;
         });
-        console.group("Game Initialized");
-        console.log("Initial State:", get().gameState);
+        console.group('Game Initialized');
+        console.log('Initial State:', get().gameState);
         console.groupEnd();
       },
       processDiceRoll: (roll?: number) => {
         const oldState = get().gameState;
-        set((state) => {
+        set(state => {
           state.gameState = processDiceRollLogic(state.gameState, roll);
         });
         const newState = get().gameState;
         console.group(`Dice Roll by ${oldState.currentPlayer}`);
-        console.log("Roll:", newState.diceRoll);
-        console.log("New state:", newState);
+        console.log('Roll:', newState.diceRoll);
+        console.log('New state:', newState);
         console.groupEnd();
       },
       makeMove: (pieceIndex: number) => {
-        set((state) => {
-          if (
-            state.gameState.canMove &&
-            state.gameState.validMoves.includes(pieceIndex)
-          ) {
-            const [newState, moveType, movePlayer] = makeMoveLogic(
-              state.gameState,
-              pieceIndex,
-            );
+        set(state => {
+          if (state.gameState.canMove && state.gameState.validMoves.includes(pieceIndex)) {
+            const [newState, moveType, movePlayer] = makeMoveLogic(state.gameState, pieceIndex);
             state.gameState = newState;
             state.lastMoveType = moveType;
             state.lastMovePlayer = movePlayer;
 
             console.group(`Player ${movePlayer} Move`);
-            console.log("Moved piece at index:", pieceIndex);
-            console.log("Move type:", moveType);
-            console.log("Resulting state:", newState);
+            console.log('Moved piece at index:', pieceIndex);
+            console.log('Move type:', moveType);
+            console.log('Resulting state:', newState);
             console.groupEnd();
           }
         });
       },
-      makeAIMove: async (aiSource: "server" | "client") => {
+      makeAIMove: async (aiSource: 'server' | 'client') => {
         const { gameState } = get();
-        if (gameState.currentPlayer !== "player2" || !gameState.canMove) return;
+        if (gameState.currentPlayer !== 'player2' || !gameState.canMove) return;
 
-        set((state) => {
+        set(state => {
           state.aiThinking = true;
         });
 
@@ -93,38 +87,31 @@ export const useGameStore = create<GameStore>()(
 
         try {
           const aiResponse =
-            aiSource === "server"
+            aiSource === 'server'
               ? await AIService.getAIMove(gameState)
               : await wasmAiService.getAIMove(gameState);
 
           const duration = performance.now() - startTime;
-          console.log("AI Response:", aiResponse);
+          console.log('AI Response:', aiResponse);
           console.log(`AI took ${duration.toFixed(2)}ms`);
 
-          set((state) => {
+          set(state => {
             state.lastAIMoveDuration = duration;
             state.lastAIDiagnostics = aiResponse;
           });
 
           const { move: aiMove } = aiResponse;
 
-          if (
-            aiMove === null ||
-            aiMove === undefined ||
-            !gameState.validMoves.includes(aiMove)
-          ) {
-            console.warn(
-              `AI returned invalid move ${aiMove}. Valid moves:`,
-              gameState.validMoves,
-            );
-            console.error("AI diagnostics:", aiResponse.diagnostics);
-            console.error("Client gameState:", gameState);
+          if (aiMove === null || aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
+            console.warn(`AI returned invalid move ${aiMove}. Valid moves:`, gameState.validMoves);
+            console.error('AI diagnostics:', aiResponse.diagnostics);
+            console.error('Client gameState:', gameState);
             if (gameState.validMoves.length > 0) {
               const fallbackMove = gameState.validMoves[0];
-              set((state) => {
+              set(state => {
                 const [newState, moveType, movePlayer] = makeMoveLogic(
                   state.gameState,
-                  fallbackMove,
+                  fallbackMove
                 );
                 state.gameState = newState;
                 state.lastMoveType = moveType;
@@ -132,39 +119,33 @@ export const useGameStore = create<GameStore>()(
               });
             }
           } else {
-            set((state) => {
-              const [newState, moveType, movePlayer] = makeMoveLogic(
-                state.gameState,
-                aiMove,
-              );
+            set(state => {
+              const [newState, moveType, movePlayer] = makeMoveLogic(state.gameState, aiMove);
               state.gameState = newState;
               state.lastMoveType = moveType;
               state.lastMovePlayer = movePlayer;
             });
           }
         } catch (error) {
-          console.warn("AI service unavailable, using fallback:", error);
+          console.warn('AI service unavailable, using fallback:', error);
           const fallbackMove = AIService.getFallbackAIMove(gameState);
-          set((state) => {
-            const [newState, moveType, movePlayer] = makeMoveLogic(
-              state.gameState,
-              fallbackMove,
-            );
+          set(state => {
+            const [newState, moveType, movePlayer] = makeMoveLogic(state.gameState, fallbackMove);
             state.gameState = newState;
             state.lastMoveType = moveType;
             state.lastMovePlayer = movePlayer;
             state.lastAIDiagnostics = null;
           });
         } finally {
-          set((state) => {
+          set(state => {
             state.aiThinking = false;
           });
-          console.log("New state after AI move:", get().gameState);
+          console.log('New state after AI move:', get().gameState);
           console.groupEnd();
         }
       },
       reset: () => {
-        set((state) => {
+        set(state => {
           state.gameState = initializeGame();
           state.aiThinking = false;
           state.lastAIDiagnostics = null;
@@ -172,12 +153,12 @@ export const useGameStore = create<GameStore>()(
           state.lastMoveType = null;
           state.lastMovePlayer = null;
         });
-        console.log("Game Reset.");
+        console.log('Game Reset.');
       },
     },
-  })),
+  }))
 );
 
-export const useGameActions = () => useGameStore((state) => state.actions);
+export const useGameActions = () => useGameStore(state => state.actions);
 
-export const useGameState = () => useGameStore((state) => state.gameState);
+export const useGameState = () => useGameStore(state => state.gameState);
