@@ -19,7 +19,6 @@ struct HealthResponse {
     version: String,
 }
 
-/// Creates CORS headers for all responses
 fn cors_headers() -> Result<Headers> {
     let headers = Headers::new();
     headers.set("Access-Control-Allow-Origin", "*")?;
@@ -33,18 +32,45 @@ fn cors_headers() -> Result<Headers> {
     Ok(headers)
 }
 
-/// Handles AI move calculation requests
-async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
+fn is_development(env: &Env) -> bool {
+    env.var("ENVIRONMENT")
+        .map(|var| var.to_string())
+        .unwrap_or_else(|_| "production".to_string())
+        != "production"
+}
+
+async fn handle_ai_move(mut req: Request, start_time: f64, env: &Env) -> Result<Response> {
     let game_state_request: GameStateRequest = req.json().await?;
+    let is_dev = is_development(env);
+
+    let p1_on_board = game_state_request
+        .player1_pieces
+        .iter()
+        .filter(|p| p.square >= 0)
+        .count();
+    let p2_on_board = game_state_request
+        .player2_pieces
+        .iter()
+        .filter(|p| p.square >= 0)
+        .count();
+
     console_log!(
-        "[Rust Worker] Received AI move request: {:?}",
-        game_state_request
+        "[AI] Player: {}, Dice: {}, P1 pieces: {}, P2 pieces: {}",
+        game_state_request.current_player,
+        game_state_request.dice_roll.unwrap_or(0),
+        p1_on_board,
+        p2_on_board
     );
 
     let ai_start = js_sys::Date::now();
     let game_state = convert_request_to_game_state(&game_state_request);
 
-    console_log!("[Rust Worker] Server-side GameState: {:?}", &game_state);
+    if is_dev {
+        console_log!(
+            "[AI] Dev mode: Game state converted, current player: {:?}",
+            game_state.current_player
+        );
+    }
 
     let mut ai = AI::new();
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, AI_SEARCH_DEPTH);
@@ -80,11 +106,31 @@ async fn handle_ai_move(mut req: Request, start_time: f64) -> Result<Response> {
         },
     };
 
-    console_log!("[Rust Worker] Sending AI response: {:?}", response);
+    console_log!(
+        "[AI] Response: move={:?}, eval={}, time={}ms, nodes={}, cache_hits={}",
+        ai_move,
+        evaluation,
+        response.timings.ai_move_calculation,
+        ai.nodes_evaluated,
+        ai.transposition_hits
+    );
+
+    if is_dev && !move_evaluations.is_empty() {
+        console_log!("[AI] Dev mode: Top 3 move evaluations:");
+        for (i, eval) in move_evaluations.iter().take(3).enumerate() {
+            console_log!(
+                "  {}: piece={}, score={:.1}, type={}",
+                i + 1,
+                eval.piece_index,
+                eval.score,
+                eval.move_type
+            );
+        }
+    }
+
     Response::from_json(&response)
 }
 
-/// Handles health check requests
 fn handle_health() -> Result<Response> {
     let response = HealthResponse {
         status: "healthy".to_string(),
@@ -96,22 +142,20 @@ fn handle_health() -> Result<Response> {
 }
 
 #[event(fetch)]
-pub async fn main(req: Request, _env: Env, _ctx: Context) -> Result<Response> {
+pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
 
     let url = req.url()?;
-    console_log!("[Rust Worker] {} {}", req.method(), url.path());
+    console_log!("[Worker] {} {}", req.method(), url.path());
 
-    // Handle preflight CORS requests
     if req.method() == Method::Options {
         return Ok(Response::empty()?.with_headers(cors_headers()?));
     }
 
     let start_time = js_sys::Date::now();
 
-    // Route requests
     let result = match (req.method(), url.path()) {
-        (Method::Post, "/ai-move") => handle_ai_move(req, start_time).await,
+        (Method::Post, "/ai-move") => handle_ai_move(req, start_time, &env).await,
         (Method::Get, "/health") => handle_health(),
         _ => Ok(Response::error("Not Found", 404)?),
     };

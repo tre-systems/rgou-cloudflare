@@ -31,6 +31,7 @@ This project uses a unique dual-AI architecture, allowing the user to switch sea
 
 - **Server AI**: A high-performance Rust AI on **Cloudflare Workers** using a deep minimax search with alpha-beta pruning and transposition tables for the strongest level of play.
 - **Client AI**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. This enables **offline play** and provides a faster, more responsive opponent for casual games.
+- **Optimized Logging**: Environment-based logging system that minimizes Cloudflare Workers costs while providing essential debugging information in production and detailed insights in development.
 
 ## 🛠️ Tech Stack
 
@@ -116,6 +117,7 @@ For production, set the `NEXT_PUBLIC_AI_WORKER_URL` environment variable in your
 This project is documented to provide a clear overview of its architecture, AI, and deployment process.
 
 - **[API Reference](./docs/api-reference.md)**: Details on the AI worker API endpoints.
+- **[Logging System](./docs/logging-system.md)**: Comprehensive guide to the optimized logging system designed for cost-effective debugging on Cloudflare Workers.
 
 ## 🤝 Contributing
 
