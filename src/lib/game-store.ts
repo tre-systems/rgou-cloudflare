@@ -132,8 +132,9 @@ export const useGameStore = create<GameStore>()(
             });
           }
         } catch (error) {
-          console.warn('AI service unavailable, using fallback:', error);
+          console.error('Error during AI move, using fallback:', error);
           const fallbackMove = AIService.getFallbackAIMove(gameState);
+          console.log('Fallback move:', fallbackMove);
           set(state => {
             const [newState, moveType, movePlayer] = makeMoveLogic(state.gameState, fallbackMove);
             state.gameState = newState;

@@ -47,9 +47,6 @@ jobs:
           cargo install wasm-pack --force
           cargo install worker-build --force
 
-      - name: Build Wasm
-        run: npm run build:wasm
-
       - name: Build
         run: npm run build:cf
 
