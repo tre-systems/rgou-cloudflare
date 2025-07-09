@@ -908,7 +908,7 @@ export default function GameBoard({
               )}
             >
               <p className={cn('text-xs text-white/70 font-semibold mb-1 text-center')}>START</p>
-              <div className="flex gap-0.5 flex-wrap justify-center">
+              <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
                 {pieces.map((p, i) =>
                   p.square === -1 ? (
                     <motion.div
@@ -935,7 +935,7 @@ export default function GameBoard({
             </div>
             <div className="rounded-md p-1">
               <p className="text-xs text-white/70 font-semibold mb-1 text-center">FINISH</p>
-              <div className="flex gap-0.5 flex-wrap justify-center">
+              <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
                 {Array(7)
                   .fill(0)
                   .map((_, i) => (
