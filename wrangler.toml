@@ -1,6 +1,7 @@
 name = "rgou-main"
 main = ".open-next/worker.js"
 compatibility_date = "2025-06-14"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 account_id = "571f130502618993d848f58d27ae288d"
 
 [assets]
@@ -16,7 +17,6 @@ AI_WORKER_SECRET = "production-secret-2024"
 enabled = true
 head_sampling_rate = 1
 
-# Custom domain configuration
 [[routes]]
 pattern = "rgou.tre.systems/*"
 zone_name = "tre.systems"
