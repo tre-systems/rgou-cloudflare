@@ -1,116 +1,70 @@
-# Royal Game of Ur - Architecture Overview
+# Architecture Overview
 
-This document provides a high-level overview of the technical architecture for the Royal Game of Ur application. It's designed to be presented in approximately 15 minutes.
+This document provides a detailed look into the architecture of the Royal Game of Ur project, focusing on its dual-AI engine, frontend application, and deployment strategy.
 
-## 1. Core Philosophy
+## Guiding Principles
 
-The application is built with a modern, robust, and performant tech stack. Key architectural goals include:
+The architecture was designed with the following goals in mind:
 
-- **Type Safety:** Using TypeScript and Rust to catch errors at compile time.
-- **Component-Based UI:** A reactive and maintainable frontend using React.
-- **Centralized State Management:** A single source of truth for the application state.
-- **Performant AI:** Providing a challenging AI opponent without compromising user experience.
-- **Code Reusability:** Sharing code between the frontend and backend wherever possible.
+- **High Performance**: Utilize Rust and WebAssembly for CPU-intensive AI calculations.
+- **Offline Capability**: The game must be fully playable without an internet connection.
+- **Seamless User Experience**: The user should be able to switch between AI opponents without a noticeable difference in behavior.
+- **Modern Tooling**: Leverage modern web development practices with Next.js, TypeScript, and a serverless backend on Cloudflare.
+- **Maintainability**: Keep a clean separation of concerns between the UI, game logic, and AI services.
 
-## 2. High-Level Architecture Diagram
+## Core Components
 
-```mermaid
-graph TD
-    subgraph Browser
-        A[Next.js/React Frontend] --> B{Zustand State Management};
-        A --> C[Client-side AI (WebAssembly)];
-        C --> D[Web Worker];
-    end
+The project is primarily composed of three main parts:
 
-    subgraph Cloudflare
-        E[Cloudflare Worker (Rust)] --> F[Core AI Logic (Rust)];
-    end
+1.  **Next.js Frontend**: A modern React-based application for the user interface and game state management.
+2.  **Server-Side AI (Cloudflare Worker)**: A Rust-based AI that runs on Cloudflare's edge network.
+3.  **Client-Side AI (WebAssembly)**: The same Rust AI logic compiled to WebAssembly (Wasm) to run directly in the user's browser.
 
-    A --"HTTP API Call"--> E;
-    B --"Updates"--> A;
+A key aspect of this architecture is the **shared Rust AI core**, located in `worker/rust_ai_core`. This single crate contains all the game rules, board evaluation heuristics, and the AI's expectiminimax search algorithm. By sharing this code, we ensure that both the server and client AIs exhibit identical strategic behavior, with the only difference being their computational resources (search depth).
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px;
-    style E fill:#f9f,stroke:#333,stroke-width:2px;
-```
+### 1. Frontend Application (`src/`)
 
-## 3. Technology Stack
+The frontend is a Next.js 15 application using the App Router.
 
-- **Frontend:**
-  - **Framework:** [Next.js](https://nextjs.org/) (with React)
-  - **Language:** [TypeScript](https://www.typescriptlang.org/)
-  - **State Management:** [Zustand](https://zustand-demo.pmnd.rs/) (with Immer)
-  - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-  - **Animation:** [Framer Motion](https://www.framer.com/motion/)
+- **UI Components (`src/components/`)**: React components responsible for rendering the game board, controls, and other UI elements. They are built with Tailwind CSS for styling and Framer Motion for animations.
+- **State Management (`src/lib/game-store.ts`)**: Global game state is managed by a Zustand store. This store holds the entire `GameState` and provides actions to manipulate it (e.g., `makeMove`, `processDiceRoll`). Using Immer middleware allows for safe and simple immutable state updates.
+- **Game Logic (`src/lib/game-logic.ts`)**: This TypeScript module contains the rules of the game. It consists of pure functions that take the current game state and an action, and return the new game state. This logic is used for validating and applying player moves on the client side.
+- **AI Services (`src/lib/ai-service.ts` & `src/lib/wasm-ai-service.ts`)**:
+  - `ai-service.ts`: A simple client to communicate with the server-side Cloudflare Worker via a `fetch` request.
+  - `wasm-ai-service.ts`: A service that interacts with the client-side WebAssembly AI. It loads the Wasm module and calls the exported `get_ai_move_wasm` function.
 
-- **Backend:**
-  - **Platform:** [Cloudflare Workers](https://workers.cloudflare.com/)
-  - **Language:** [Rust](https://www.rust-lang.org/)
+### 2. Dual-AI Engine (`worker/`)
 
-- **AI Engine:**
-  - **Language:** [Rust](https://www.rust-lang.org/)
-  - **Deployment:** Compiled to both native code for the Cloudflare Worker and to [WebAssembly (WASM)](https://webassembly.org/) for the client.
+The power of this project lies in its dual-AI engine, which provides flexibility and offline capabilities.
 
-- **Database:**
-  - **ORM:** [Drizzle ORM](https://orm.drizzle.team/)
-  - **Database:** [SQLite](https://www.sqlite.org/index.html) (schema defined, but not fully integrated yet)
+#### Server-Side AI (`worker/src/lib.rs`)
 
-## 4. Frontend Architecture
+- **Technology**: A Cloudflare Worker written in Rust using the `workers-rs` crate.
+- **Role**: It exposes a single API endpoint (`/ai-move`) that receives the current game state, computes the best move, and returns it.
+- **Performance**: To keep response times low and adhere to serverless function execution limits, the server-side AI uses a **lower search depth** (e.g., depth 4). This makes it a slightly faster but weaker opponent.
 
-The frontend is a Next.js application built with React and TypeScript.
+#### Client-Side AI (`worker/rust_ai_core/src/wasm_api.rs`)
 
-- **`src/app`**: Contains the main page and layout, following Next.js App Router conventions.
-- **`src/components`**: A collection of reusable React components. The main component is `RoyalGameOfUr.tsx`, which orchestrates the entire game. Other key components include `GameBoard.tsx` and `GameControls.tsx`.
-- **`src/lib/game-store.ts`**: The heart of the frontend's state management. It uses Zustand to create a centralized store for the entire game state. This makes the state predictable and easy to debug. All game actions (like rolling dice or moving a piece) are dispatched from here.
-- **`src/lib/game-logic.ts`**: This file contains the pure logic for the Royal Game of Ur. It has no dependencies on the UI or state management, making it highly portable and easy to test.
+- **Technology**: The core Rust AI logic from `rgou-ai-core` is compiled to WebAssembly using `wasm-pack`.
+- **Role**: It runs entirely in the user's browser, enabling instant AI responses and full offline gameplay. The Wasm module is loaded and managed by `src/lib/wasm-ai-service.ts`.
+- **Performance**: Since it runs on the user's machine, it can afford a **deeper search depth** (e.g., depth 6), making it the stronger of the two AI opponents.
 
-## 5. Backend & AI Architecture
+### 3. Data Flow: An AI's Turn
 
-A key feature of this application is its flexible and powerful AI. The AI logic is written once in Rust and deployed in two different ways, allowing the user to switch between them seamlessly.
+When it's the AI's turn, the following sequence occurs:
 
-### The Core AI Engine: `rust_ai_core`
+1.  The `RoyalGameOfUr.tsx` component detects it's the AI's turn based on the `gameState` from the Zustand store.
+2.  It calls the `makeAIMove` action in `game-store.ts`, passing the currently selected AI source (`'server'` or `'client'`).
+3.  The `makeAIMove` action then calls the appropriate AI service:
+    - **Server**: `AIService.getAIMove` sends a POST request with the game state to the Cloudflare Worker. The worker deserializes the state, runs the Rust AI, and returns the chosen move.
+    - **Client**: `wasmAiService.getAIMove` calls the Wasm function `get_ai_move_wasm`, passing it the game state. The Wasm module runs the AI calculation synchronously within the browser's main thread (or a worker thread, if implemented) and returns the result.
+4.  The chosen move is then processed by the `makeMoveLogic` function from `game-logic.ts` to update the board state in the Zustand store.
+5.  The UI re-renders to reflect the AI's move.
 
-- A Rust library containing the complete AI logic.
-- It implements a **minimax algorithm** with alpha-beta pruning to determine the best move.
-- It includes a transposition table to cache previously evaluated game states, significantly speeding up the search.
-- This single codebase is the source of truth for all AI operations.
+## Deployment
 
-### Deployment Strategy 1: Server-Side AI (Cloudflare Worker)
+The project is deployed entirely within the Cloudflare ecosystem.
 
-- The `rust_ai_core` library is compiled to native Rust code and deployed as a **Cloudflare Worker**.
-- It uses a fixed search depth of **4** to ensure it responds quickly and doesn't exceed the worker's CPU time limits.
-- **Pros:** Consistent performance, doesn't tax the user's device. The AI's thinking process can't be easily inspected by the user.
-- **Cons:** Requires an internet connection and introduces network latency. It is the **weaker** of the two AIs due to the lower search depth.
-- The frontend communicates with this worker via a simple REST API, as defined in `src/lib/ai-service.ts`.
-
-### Deployment Strategy 2: Client-Side AI (WebAssembly)
-
-- The same `rust_ai_core` library is also compiled to **WebAssembly (WASM)**.
-- It uses a higher search depth of **6**, making it the **stronger** and more challenging opponent.
-- The WASM module is run in a **Web Worker** in the user's browser to avoid blocking the UI thread.
-- **Pros:** No network latency, works offline. A great demonstration of modern web capabilities and the power of running complex computations on the client.
-- **Cons:** Performance can vary depending on the user's device.
-- The `src/lib/wasm-ai-service.ts` and `src/lib/ai.worker.ts` files manage the loading and execution of the WASM module.
-
-This dual-deployment strategy is a sophisticated architectural choice that provides flexibility and showcases the power of Rust and WebAssembly.
-
-## 6. Data Persistence
-
-- The application uses **Drizzle ORM** to define a database schema in `src/lib/db/schema.ts`.
-- The schema is designed to store game history, with tables for `games` and `game_participants`.
-- **Current Status:** While the schema is defined, the application does not currently seem to be saving or loading game data. This functionality could be added in the future.
-
-## 7. Key Features for Presentation
-
-- **Dual AI System:** The ability to switch between server-side and client-side AI is the most significant technical feature. Be sure to demonstrate this.
-- **AI Diagnostics Panel:** This UI component shows the AI's thought process (evaluation score, search depth, etc.), providing a fascinating look into how the AI works. This is a great feature to highlight during a presentation.
-- **Polished UI/UX:** The application has a clean design, smooth animations (thanks to Framer Motion), and sound effects that create an engaging user experience.
-- **Offline Capability:** Thanks to the client-side WASM AI, the game is fully playable offline (this would require a service worker to cache application assets, which seems to be in place with `public/sw.js`).
-
-## 8. Potential Future Improvements
-
-- **Full Database Integration:** Implement saving and loading of game histories.
-- **Multiplayer:** The current architecture would support adding a multiplayer mode (e.g., using WebSockets).
-- **AI Difficulty Levels:** The AI search depth is currently fixed. This could be exposed as a setting to allow for different difficulty levels.
-- **User Accounts:** To associate game histories with specific users.
-
-This overview should provide a solid foundation for your presentation. Good luck!
+- **Frontend**: The Next.js application is adapted for Cloudflare Pages using the `@opennextjs/cloudflare` build adapter.
+- **AI Worker**: The server-side AI is deployed as a separate Cloudflare Worker. The frontend knows the worker's URL via an environment variable (`NEXT_PUBLIC_AI_WORKER_URL`).
+- **Automation**: Deployment is automated through a GitHub Actions workflow defined in `.github/workflows/deploy.yml`, which builds the Next.js app and deploys it to Cloudflare Pages.

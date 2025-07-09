@@ -18,7 +18,6 @@
     "build:wasm": "cd worker/rust_ai_core && wasm-pack build --target web --out-name rgou_ai_core -- --features wasm",
     "build:wasm-assets": "npm run build:wasm && rm -rf public/wasm && mkdir -p public/wasm && cp worker/rust_ai_core/pkg/rgou_ai_core_bg.wasm public/wasm/ && cp worker/rust_ai_core/pkg/rgou_ai_core.js public/wasm/",
     "nuke": "rm -rf .next .open-next .wrangler node_modules package-lock.json && npm install && npm run dev",
-    "generate:icons": "node scripts/generate-icons.cjs",
     "pwa:build": "npm run generate:icons && npm run build",
     "verify": "prettier --write . && next lint --fix --no-cache && npx tsc --noEmit",
     "check": "npm run verify && (cd worker/rust_ai_core && cargo test)",
@@ -27,7 +26,6 @@
     "migrate:generate": "drizzle-kit generate",
     "migrate:d1": "wrangler d1 migrations apply rgou-db --remote",
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
-    "db:seed": "tsx scripts/seed.ts",
     "db:exec": "npx wrangler d1 execute rgou-db --remote --file"
   },
   "dependencies": {

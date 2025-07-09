@@ -56,6 +56,8 @@ For a more detailed explanation of the architecture, please see the [Architectur
 - Node.js 18+ and npm
 - Rust and Cargo
 - A Cloudflare account for deployment
+- The `wasm-pack` CLI for building WebAssembly packages: `cargo install wasm-pack`
+- The `worker-build` tool for bundling Rust-based Cloudflare Workers: `cargo install worker-build`
 
 ### Development Setup
 
@@ -81,7 +83,7 @@ For a more detailed explanation of the architecture, please see the [Architectur
 - `npm run dev`: Start the Next.js development server.
 - `npm run build`: Build the application for production.
 - `npm run start`: Start a production server.
-- `npm run deploy:worker`: Deploy the AI worker to Cloudflare.
+- `npm run deploy:worker`: Deploy the AI worker to Cloudflare. This script is primarily for development purposes to quickly update the server-side AI without triggering a full application deployment. The automated GitHub Actions workflow handles the production deployment.
 - `npm run lint`: Run ESLint.
 - `npm run check`: Run Prettier, ESLint, and TypeScript type checking.
 - `npm run migrate:d1`: Apply database migrations to the production D1 database.
