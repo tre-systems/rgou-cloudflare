@@ -6,8 +6,8 @@ import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
 import GameControls, { AISource } from './GameControls';
 import AnimatedBackground from './AnimatedBackground';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Crown, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 
@@ -24,11 +24,6 @@ export default function RoyalGameOfUr() {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
-
-  const [lastMove, setLastMove] = useState<{
-    type: 'move' | 'capture' | 'rosette' | 'finish';
-    player: string;
-  } | null>(null);
 
   useEffect(() => {
     if (
@@ -61,11 +56,6 @@ export default function RoyalGameOfUr() {
 
   useEffect(() => {
     if (lastMoveType && lastMovePlayer) {
-      setLastMove({
-        type: lastMoveType,
-        player: lastMovePlayer,
-      });
-
       switch (lastMoveType) {
         case 'capture':
           soundEffects.pieceCapture();
@@ -109,7 +99,6 @@ export default function RoyalGameOfUr() {
 
   const handleReset = () => {
     reset();
-    setLastMove(null);
   };
 
   const toggleSound = () => {
@@ -197,43 +186,6 @@ export default function RoyalGameOfUr() {
           />
 
           <div className="xl:hidden">{diagnosticsPanel}</div>
-
-          <AnimatePresence>
-            {lastMove && (
-              <motion.div
-                className="fixed top-4 right-4 z-50"
-                initial={{ opacity: 0, x: 100, scale: 0.8 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 100, scale: 0.8 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              >
-                <div
-                  className={`
-                  glass-dark rounded-lg p-3 max-w-xs
-                  ${
-                    lastMove.player === 'player1'
-                      ? 'border-l-4 border-blue-400'
-                      : 'border-l-4 border-pink-400'
-                  }
-                `}
-                >
-                  <div className="flex items-center space-x-2">
-                    {lastMove.player === 'player1' ? (
-                      <Crown className="w-4 h-4 text-blue-400" />
-                    ) : (
-                      <Zap className="w-4 h-4 text-pink-400" />
-                    )}
-                    <span className="text-white/90 text-sm font-medium">
-                      {lastMove.type === 'capture' && 'Piece captured!'}
-                      {lastMove.type === 'rosette' && 'Landed on rosette!'}
-                      {lastMove.type === 'finish' && 'Piece finished!'}
-                      {lastMove.type === 'move' && 'Piece moved'}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           <motion.div
             className="text-center"
