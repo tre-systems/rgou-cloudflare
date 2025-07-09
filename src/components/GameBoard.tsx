@@ -814,8 +814,10 @@ export default function GameBoard({
           </motion.div>
         )}
 
+        {/* Square number for debugging (remove in production) */}
         <div className="absolute top-0 left-0 text-xs text-white/30 p-1">{squareIndex}</div>
 
+        {/* Piece */}
         <AnimatePresence mode="wait">
           {piece && (
             <motion.div
@@ -833,6 +835,7 @@ export default function GameBoard({
           )}
         </AnimatePresence>
 
+        {/* Clickable indicator */}
         {isClickable && (
           <motion.div
             className="absolute inset-0 rounded-lg border-2 border-green-400 pointer-events-none"
@@ -869,6 +872,7 @@ export default function GameBoard({
         }}
         transition={{ duration: 0.5 }}
       >
+        {/* Player header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             {isAI ? (
@@ -887,12 +891,14 @@ export default function GameBoard({
             </h3>
           </div>
 
+          {/* Score display */}
           <div className="flex items-center space-x-1">
             <Sparkles className="w-3 h-3 text-amber-400" />
             <span className="text-amber-400 font-bold text-sm">{finishedPieces.length}/7</span>
           </div>
         </div>
 
+        {/* Compact single line layout */}
         <div className="glass-dark rounded-lg p-2">
           <div className="grid grid-cols-2 gap-3">
             <div
@@ -969,6 +975,7 @@ export default function GameBoard({
           </div>
         </div>
 
+        {/* Current player indicator */}
         {isCurrentPlayer && (
           <motion.div
             className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full"
@@ -991,12 +998,14 @@ export default function GameBoard({
 
   return (
     <>
+      {/* Explosion effects */}
       <AnimatePresence>
         {explosions.map(explosion => (
           <CaptureExplosion key={explosion.id} position={explosion.position} />
         ))}
       </AnimatePresence>
 
+      {/* Victory celebration effects */}
       <AnimatePresence>
         {celebrations.map(celebration => (
           <VictoryCelebration
@@ -1007,6 +1016,7 @@ export default function GameBoard({
         ))}
       </AnimatePresence>
 
+      {/* Rosette landing effects */}
       <AnimatePresence>
         {rosetteLandings.map(rosette => (
           <RosetteLanding key={rosette.id} position={rosette.position} />
@@ -1018,122 +1028,144 @@ export default function GameBoard({
         animate={screenShake ? { x: [0, -2, 2, -2, 2, 0] } : { x: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="text-center mb-3">
-          <motion.h3
-            className="text-base font-bold text-white/90 neon-text"
-            animate={{ opacity: [0.7, 1, 0.7] }}
-            transition={{ repeat: Infinity, duration: 3 }}
-          >
-            Ancient Board of Ur
-          </motion.h3>
+        {/* AI Player Area */}
+        {renderPlayerArea('player2')}
 
-          <div className="mt-2 h-10 flex flex-col justify-start relative pt-1">
-            <motion.div
-              className="flex items-center justify-center space-x-2 h-6"
-              animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
-              transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
+        {/* Game Board */}
+        <motion.div
+          ref={boardRef}
+          className="glass mystical-glow rounded-xl p-4 relative"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Board title */}
+          <div className="text-center mb-3">
+            <motion.h3
+              className="text-base font-bold text-white/90 neon-text"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ repeat: Infinity, duration: 3 }}
             >
-              <StatusIcon className={cn('w-4 h-4', status.color)} />
-              <span className={cn('font-bold text-sm', status.color, 'neon-text')}>
-                {status.text}
-              </span>
-            </motion.div>
+              Ancient Board of Ur
+            </motion.h3>
 
-            <AnimatePresence>
-              {aiThinking && (
-                <motion.div
-                  className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1.5 h-1.5 bg-pink-400 rounded-full"
-                      animate={{
-                        y: [0, -6, 0],
-                        opacity: [0.3, 1, 0.3],
-                      }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 0.8,
-                        delay: i * 0.2,
-                        ease: 'easeInOut',
-                      }}
-                    />
-                  ))}
-                </motion.div>
+            {/* Status Section */}
+            <div className="mt-2 h-10 flex flex-col justify-start relative pt-1">
+              <motion.div
+                className="flex items-center justify-center space-x-2 h-6"
+                animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
+                transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
+              >
+                <StatusIcon className={cn('w-4 h-4', status.color)} />
+                <span className={cn('font-bold text-sm', status.color, 'neon-text')}>
+                  {status.text}
+                </span>
+              </motion.div>
+
+              {/* AI thinking animation */}
+              <AnimatePresence>
+                {aiThinking && (
+                  <motion.div
+                    className="absolute bottom-1 left-0 right-0 flex justify-center space-x-1"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1.5 h-1.5 bg-pink-400 rounded-full"
+                        animate={{
+                          y: [0, -6, 0],
+                          opacity: [0.3, 1, 0.3],
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 0.8,
+                          delay: i * 0.2,
+                          ease: 'easeInOut',
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* The game board grid */}
+          <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
+            {boardLayout
+              .flat()
+              .map((sq, i) =>
+                sq !== -1 ? (
+                  renderSquare(sq, `sq-${i}`)
+                ) : (
+                  <div key={`empty-${i}`} className="aspect-square" />
+                )
               )}
-            </AnimatePresence>
           </div>
-        </div>
 
-        <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
-          {boardLayout
-            .flat()
-            .map((sq, i) =>
-              sq !== -1 ? (
-                renderSquare(sq, `sq-${i}`)
-              ) : (
-                <div key={`empty-${i}`} className="aspect-square" />
-              )
-            )}
-        </div>
+          {/* Controls Section */}
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              {/* Roll Button / Dice Display Area */}
+              <div className="flex items-center h-8">
+                <div className="min-w-[70px] h-8 flex items-center">{renderDice()}</div>
+              </div>
 
-        <div className="mt-3 pt-3 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center h-8">
-              <div className="min-w-[70px] h-8 flex items-center">{renderDice()}</div>
-            </div>
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2">
+                {/* AI Source Toggle */}
+                <motion.button
+                  onClick={() => onAiSourceChange(aiSource === 'server' ? 'client' : 'server')}
+                  className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title={`Switch to ${aiSource === 'server' ? 'Client' : 'Server'} AI`}
+                >
+                  {aiSource === 'server' ? (
+                    <Cloud className="w-3.5 h-3.5" />
+                  ) : (
+                    <Server className="w-3.5 h-3.5" />
+                  )}
+                </motion.button>
 
-            <div className="flex items-center space-x-2">
-              <motion.button
-                onClick={() => onAiSourceChange(aiSource === 'server' ? 'client' : 'server')}
-                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title={`Switch to ${aiSource === 'server' ? 'Client' : 'Server'} AI`}
-              >
-                {aiSource === 'server' ? (
-                  <Cloud className="w-3.5 h-3.5" />
-                ) : (
-                  <Server className="w-3.5 h-3.5" />
-                )}
-              </motion.button>
+                {/* Sound Toggle */}
+                <motion.button
+                  onClick={toggleSound}
+                  className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  ) : (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  )}
+                </motion.button>
 
-              <motion.button
-                onClick={toggleSound}
-                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {soundEnabled ? (
-                  <Volume2 className="w-3.5 h-3.5" />
-                ) : (
-                  <VolumeX className="w-3.5 h-3.5" />
-                )}
-              </motion.button>
-
-              <motion.button
-                onClick={handleResetGame}
-                className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: '0 0 10px rgba(107, 114, 128, 0.3)',
-                }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </motion.div>
-              </motion.button>
+                {/* Reset Button */}
+                <motion.button
+                  onClick={handleResetGame}
+                  className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: '0 0 10px rgba(107, 114, 128, 0.3)',
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </motion.div>
+                </motion.button>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Player Area */}
         {renderPlayerArea('player1')}
