@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Royal Game of Ur - Ancient Board Game',
+  title: 'Royal Game of Ur',
   description:
     'Play the ancient Mesopotamian board game dating back 4,500 years. Race your pieces around the board and challenge an AI opponent in this historic strategy game.',
   keywords: [
