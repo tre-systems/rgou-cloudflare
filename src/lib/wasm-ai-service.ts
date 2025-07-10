@@ -48,8 +48,13 @@ class WasmAiService {
         };
 
         const handleError = (error: ErrorEvent) => {
-          console.error('AI Worker error:', error);
-          reject(new Error('AI Worker failed to initialize.'));
+          console.error('AI Worker error event:', error);
+          console.error('AI Worker error message:', error.message);
+          console.error('AI Worker error filename:', error.filename);
+          console.error('AI Worker error lineno:', error.lineno);
+          console.error('AI Worker error colno:', error.colno);
+          console.error('AI Worker error object:', error.error);
+          reject(new Error(`AI Worker failed to initialize: ${error.message}`));
         };
 
         this.worker.onmessage = handleMessage;

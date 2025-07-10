@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+console.log('AI Worker: Script execution started.');
+
 import type { GameState } from './types';
 import type { AIResponse as ServerAIResponse } from './ai-types';
 
