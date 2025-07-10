@@ -17,17 +17,20 @@ class WasmAiService {
 
   private init(): Promise<void> {
     if (!this.initPromise) {
+      console.log('WasmAiService: init() called.');
       this.initPromise = new Promise((resolve, reject) => {
         if (typeof window === 'undefined') {
           console.log('Not in a browser environment, skipping worker initialization.');
           return resolve();
         }
 
+        console.log('WasmAiService: Creating AI Worker.');
         this.worker = new Worker(new URL('./ai.worker.ts', import.meta.url), {
           type: 'module',
         });
 
         const handleMessage = (event: MessageEvent) => {
+          console.log('WasmAiService: Received message from worker:', event.data);
           if (event.data.type === 'ready') {
             console.log('AI Worker is ready.');
             resolve();
@@ -57,6 +60,7 @@ class WasmAiService {
   }
 
   private async ensureWorkerReady(): Promise<void> {
+    console.log('WasmAiService: ensureWorkerReady() called.');
     if (!this.initPromise) {
       this.init();
     }
@@ -67,6 +71,7 @@ class WasmAiService {
   }
 
   async getAIMove(gameState: GameState): Promise<ServerAIResponse> {
+    console.log('WasmAiService: getAIMove() called.');
     await this.ensureWorkerReady();
 
     const messageId = this.messageCounter++;
@@ -74,6 +79,10 @@ class WasmAiService {
       this.pendingRequests.set(messageId, { resolve, reject });
     });
 
+    console.log(`WasmAiService: Posting message to worker (id: ${messageId}):`, {
+      id: messageId,
+      gameState,
+    });
     this.worker!.postMessage({ id: messageId, gameState });
 
     return promise;
