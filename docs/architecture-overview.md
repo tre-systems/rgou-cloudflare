@@ -68,3 +68,16 @@ The project is deployed entirely within the Cloudflare ecosystem.
 - **Frontend**: The Next.js application is adapted for Cloudflare Pages using the `@opennextjs/cloudflare` build adapter.
 - **AI Worker**: The server-side AI is deployed as a separate Cloudflare Worker. The frontend knows the worker's URL via an environment variable (`NEXT_PUBLIC_AI_WORKER_URL`).
 - **Automation**: Deployment is automated through a GitHub Actions workflow defined in `.github/workflows/deploy.yml`, which builds the Next.js app and deploys it to Cloudflare Pages.
+
+### WASM Security Headers
+
+For the client-side WASM AI to work properly in the deployed environment, specific security headers are required. These are configured in the `public/_headers` file:
+
+```
+/wasm/*
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+```
+
+These headers ensure that the WASM files can be loaded by web workers while maintaining security isolation. The `Cross-Origin-Embedder-Policy: require-corp` requires all resources to have the `Cross-Origin-Resource-Policy` header set, which is why all three headers are needed together.

@@ -19,16 +19,38 @@ const loadWasm = (): Promise<void> => {
   wasmReady = (async () => {
     try {
       console.log('AI Worker: Starting to load WebAssembly module...');
-      wasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
-      console.log('AI Worker: rgou_ai_core.js loaded.');
 
-      const wasmUrl = `${self.location.origin}/wasm/rgou_ai_core_bg.wasm`;
-      console.log(`AI Worker: Initializing wasm with URL: ${wasmUrl}`);
-      await wasmModule.default(wasmUrl);
-      console.log('AI Worker: WebAssembly module initialized successfully.');
+      // Try to load the WASM module with better error handling
+      try {
+        wasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
+        console.log('AI Worker: rgou_ai_core.js loaded successfully.');
+      } catch (error) {
+        console.error('AI Worker: Failed to load rgou_ai_core.js:', error);
+        throw new Error(`Failed to load WASM JS module: ${error}`);
+      }
+
+      // Try to initialize the WASM module
+      try {
+        const wasmUrl = `${self.location.origin}/wasm/rgou_ai_core_bg.wasm`;
+        console.log(`AI Worker: Initializing WASM with URL: ${wasmUrl}`);
+
+        // Add more specific error handling for the WASM initialization
+        await wasmModule.default(wasmUrl);
+        console.log('AI Worker: WebAssembly module initialized successfully.');
+      } catch (error) {
+        console.error('AI Worker: Failed to initialize WASM:', error);
+        throw new Error(`Failed to initialize WASM module: ${error}`);
+      }
+
+      // Verify the WASM module has the expected functions
+      if (typeof wasmModule.get_ai_move_wasm !== 'function') {
+        throw new Error('WASM module does not have get_ai_move_wasm function');
+      }
+
+      console.log('AI Worker: WASM module loaded and verified successfully.');
     } catch (error) {
-      console.error('Failed to load WebAssembly module in worker:', error);
-      throw new Error('WebAssembly module failed to load in worker');
+      console.error('AI Worker: Failed to load WebAssembly module:', error);
+      throw new Error(`WebAssembly module failed to load: ${error}`);
     }
   })();
 
@@ -77,6 +99,13 @@ self.addEventListener(
   }
 );
 
-loadWasm().then(() => {
-  self.postMessage({ type: 'ready' });
-});
+// Initialize WASM on worker startup
+loadWasm()
+  .then(() => {
+    console.log('AI Worker: WASM initialized, sending ready signal.');
+    self.postMessage({ type: 'ready' });
+  })
+  .catch(error => {
+    console.error('AI Worker: Failed to initialize WASM on startup:', error);
+    self.postMessage({ type: 'error', id: -1, error: error.message });
+  });
