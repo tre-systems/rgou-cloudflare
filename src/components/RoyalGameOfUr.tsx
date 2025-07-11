@@ -24,11 +24,14 @@ export default function RoyalGameOfUr() {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
+  const [isLocalDevelopment, setIsLocalDevelopment] = useState(false);
 
   // Only show diagnostics panel when running locally
-  const isLocalDevelopment =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  useEffect(() => {
+    setIsLocalDevelopment(
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    );
+  }, []);
 
   useEffect(() => {
     if (

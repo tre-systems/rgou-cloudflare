@@ -581,11 +581,14 @@ export default function GameBoard({
   >([]);
   const boardRef = useRef<HTMLDivElement>(null);
   const previousGameState = useRef<GameState | null>(null);
+  const [isLocalDevelopment, setIsLocalDevelopment] = useState(false);
 
   // Only show AI toggle button when running locally
-  const isLocalDevelopment =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  useEffect(() => {
+    setIsLocalDevelopment(
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    );
+  }, []);
 
   // Track game state changes for capture and finish effects
   useEffect(() => {
