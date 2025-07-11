@@ -81,3 +81,35 @@ For the client-side WASM AI to work properly in the deployed environment, specif
 ```
 
 These headers ensure that the WASM files can be loaded by web workers while maintaining security isolation. The `Cross-Origin-Embedder-Policy: require-corp` requires all resources to have the `Cross-Origin-Resource-Policy` header set, which is why all three headers are needed together.
+
+## Development vs Production UI
+
+The application includes development-specific UI elements that are automatically hidden in production environments:
+
+### AI Diagnostics Panel
+
+- **Location**: Only visible in local development (`localhost`, `127.0.0.1`)
+- **Purpose**: Shows detailed AI analysis including:
+  - Move evaluation scores
+  - Search depth and nodes evaluated
+  - Transposition table hit rates
+  - Game phase analysis
+  - Board control metrics
+- **Implementation**: Hostname detection in `RoyalGameOfUr.tsx` component
+
+### AI Toggle Button
+
+- **Location**: Control panel in the game board
+- **Purpose**: Allows switching between client-side WASM AI and server-side AI
+- **Production Behavior**: Hidden in production since client-side AI is the default and preferred option
+- **Implementation**: Conditional rendering based on hostname detection in `GameBoard.tsx`
+
+This approach provides a clean production interface while maintaining full debugging capabilities for developers. The hostname detection ensures that these developer tools are only shown when running locally:
+
+```typescript
+const isLocalDevelopment =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '');
+```

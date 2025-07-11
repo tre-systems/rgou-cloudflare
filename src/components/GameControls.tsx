@@ -16,7 +16,7 @@ interface GameControlsProps {
   onAiSourceChange: (source: AISource) => void;
 }
 
-export default function GameControls({ gameState }: GameControlsProps) {
+export default function GameControls({ gameState, onResetGame }: GameControlsProps) {
   return (
     <AnimatePresence>
       {gameState.gameStatus === 'finished' && (
@@ -63,6 +63,21 @@ export default function GameControls({ gameState }: GameControlsProps) {
             >
               {gameState.winner === 'player1' ? 'Victory!' : 'AI Wins!'}
             </h2>
+            
+            <motion.button
+              onClick={onResetGame}
+              className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+              whileHover={{
+                scale: 1.05,
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
+              }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              Play Again
+            </motion.button>
           </motion.div>
         </motion.div>
       )}
