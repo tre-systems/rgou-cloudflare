@@ -836,11 +836,11 @@ export default function GameBoard({
       piece &&
       pieceIndex !== -1 &&
       gameState.validMoves.includes(pieceIndex) &&
-      gameState.currentPlayer === piece.player
+      gameState.currentPlayer === piece.player &&
+      piece.player === 'player1'
     );
 
-    // Check if this piece is being captured or finishing (based on recent state changes)
-    const isBeingCaptured = false; // Will be enhanced with more sophisticated detection if needed
+    const isBeingCaptured = false;
     const isFinishing = piece?.player && squareIndex === 20;
 
     return (
@@ -860,7 +860,6 @@ export default function GameBoard({
         onClick={() => isClickable && onPieceClick(pieceIndex)}
         data-square-id={squareIndex}
       >
-        {/* Rosette decoration */}
         {isRosette && (
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
@@ -870,11 +869,6 @@ export default function GameBoard({
             <Star className="w-6 h-6 text-amber-400 drop-shadow-lg" />
           </motion.div>
         )}
-
-        {/* Square number for debugging (remove in production) */}
-        <div className="absolute top-0 left-0 text-xs text-white/30 p-1">{squareIndex}</div>
-
-        {/* Piece */}
         <AnimatePresence mode="wait">
           {piece && (
             <motion.div
@@ -892,7 +886,6 @@ export default function GameBoard({
           )}
         </AnimatePresence>
 
-        {/* Clickable indicator */}
         {isClickable && (
           <motion.div
             className="absolute inset-0 rounded-lg border-2 border-green-400 pointer-events-none"
@@ -929,7 +922,6 @@ export default function GameBoard({
         }}
         transition={{ duration: 0.5 }}
       >
-        {/* Player header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             {isAI ? (
@@ -948,14 +940,11 @@ export default function GameBoard({
             </h3>
           </div>
 
-          {/* Score display */}
           <div className="flex items-center space-x-1">
             <Sparkles className="w-3 h-3 text-amber-400" />
             <span className="text-amber-400 font-bold text-sm">{finishedPieces.length}/7</span>
           </div>
         </div>
-
-        {/* Compact single line layout */}
         <div className="glass-dark rounded-lg p-2">
           <div className="grid grid-cols-2 gap-3">
             <div
@@ -972,11 +961,13 @@ export default function GameBoard({
                       key={i}
                       className="w-5 h-5"
                       whileHover={{ scale: 1.05 }}
-                      onClick={() => gameState.validMoves.includes(i) && onPieceClick(i)}
+                      onClick={() =>
+                        gameState.validMoves.includes(i) && player === 'player1' && onPieceClick(i)
+                      }
                     >
                       <MemoizedPiece
                         player={player}
-                        isClickable={gameState.validMoves.includes(i)}
+                        isClickable={gameState.validMoves.includes(i) && player === 'player1'}
                         isBeingCaptured={false}
                         isFinishing={false}
                       />

@@ -22,6 +22,7 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 - **Modern UI/UX**: A beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations.
 - **Real-time Gameplay**: Smooth animations and real-time game state updates with immersive sound effects.
 - **Celebration Effects**: Dynamic visual celebrations with screen shake, particle explosions, and triumphant sounds when pieces reach home.
+- **Intuitive Controls**: AI pieces are non-interactive, preventing accidental clicks and ensuring clear game flow.
 - **Detailed Game Analytics**: The AI provides detailed insights into its decision-making process.
 
 ## 🎯 Game Rules
