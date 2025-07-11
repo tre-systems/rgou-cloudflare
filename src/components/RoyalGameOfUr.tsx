@@ -61,7 +61,6 @@ export default function RoyalGameOfUr() {
 
   useEffect(() => {
     if (lastMoveType && lastMovePlayer) {
-      console.log(`🔊 Sound effect for move type: ${lastMoveType} by ${lastMovePlayer}`);
       switch (lastMoveType) {
         case 'capture':
           soundEffects.pieceCapture();

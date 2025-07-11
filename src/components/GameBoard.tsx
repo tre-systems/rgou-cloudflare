@@ -655,12 +655,10 @@ export default function GameBoard({
       const oldFinished = prevPieces.filter(p => p.square === 20).length;
 
       if (newFinished > oldFinished && boardRef.current) {
-        console.log(`🎉 Piece finished for ${player}! New: ${newFinished}, Old: ${oldFinished}`);
         const finishAreaId = player === 'player1' ? 'player1-finish-area' : 'player2-finish-area';
         const finishArea = document.getElementById(finishAreaId);
         if (finishArea) {
           const rect = finishArea.getBoundingClientRect();
-          console.log(`📍 Finish area found, position:`, rect);
           setCelebrations(prev => [
             ...prev,
             {
@@ -676,8 +674,6 @@ export default function GameBoard({
           // Add screen shake for piece finishing
           setScreenShake(true);
           setTimeout(() => setScreenShake(false), 800);
-        } else {
-          console.error(`❌ Finish area not found for ID: ${finishAreaId}`);
         }
       }
     };
