@@ -20,7 +20,8 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
   - **Client AI**: The same core Rust AI logic is compiled to WebAssembly (Wasm) and runs in the browser for offline play and instant responses.
 - **PWA & Offline Ready**: Installable as a Progressive Web App with client-side AI for full offline gameplay.
 - **Modern UI/UX**: A beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations.
-- **Real-time Gameplay**: Smooth animations and real-time game state updates with sound effects.
+- **Real-time Gameplay**: Smooth animations and real-time game state updates with immersive sound effects.
+- **Celebration Effects**: Dynamic visual celebrations with screen shake, particle explosions, and triumphant sounds when pieces reach home.
 - **Detailed Game Analytics**: The AI provides detailed insights into its decision-making process.
 
 ## 🎯 Game Rules

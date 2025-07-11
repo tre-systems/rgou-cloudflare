@@ -237,110 +237,156 @@ const VictoryCelebration = ({
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 3.5 }}
+      transition={{ duration: 4 }}
     >
+      {/* Main celebration text */}
       <motion.div
         className={cn(
-          'absolute -translate-x-1/2 -translate-y-12 font-bold text-xl drop-shadow-lg',
+          'absolute -translate-x-1/2 -translate-y-16 font-bold text-2xl drop-shadow-lg whitespace-nowrap',
           textColor
         )}
         initial={{ scale: 0, y: 0 }}
         animate={{
-          scale: [0, 1.3, 1.1, 0],
-          y: [0, -25, -35, -50],
+          scale: [0, 1.8, 1.4, 1.2, 0],
+          y: [0, -30, -50, -70, -90],
         }}
-        transition={{ duration: 2.5, ease: 'easeOut' }}
+        transition={{ duration: 3.5, ease: 'easeOut' }}
       >
-        {isPlayer ? 'SAFE!' : 'AI SCORES!'}
+        {isPlayer ? '🎉 PIECE HOME! 🎉' : '🤖 AI SCORES! 🤖'}
       </motion.div>
 
+      {/* Large trophy icon */}
       <motion.div
-        className="absolute -translate-x-6 -translate-y-6"
+        className="absolute -translate-x-8 -translate-y-8"
         initial={{ scale: 0, rotate: -180 }}
         animate={{
-          scale: [0, 1.5, 1.2, 0],
-          rotate: [0, 360, 720],
-          y: [0, -10, 0],
+          scale: [0, 2, 1.6, 1.4, 0],
+          rotate: [0, 360, 720, 1080],
+          y: [0, -15, -10, -5, 0],
         }}
-        transition={{ duration: 2.5, ease: 'easeOut' }}
+        transition={{ duration: 3.5, ease: 'easeOut' }}
       >
-        <Trophy className={cn('w-12 h-12', textColor)} />
+        <Trophy className={cn('w-16 h-16', textColor)} />
       </motion.div>
 
-      {[...Array(20)].map((_, i) => (
+      {/* Particle explosion - more particles */}
+      {[...Array(35)].map((_, i) => (
         <motion.div
           key={i}
           className={cn(
             'absolute rounded-full',
-            i % 4 === 0
-              ? 'w-2 h-2 bg-yellow-400'
-              : i % 4 === 1
-                ? 'w-1.5 h-1.5 bg-green-400'
-                : i % 4 === 2
-                  ? `w-2 h-2 bg-${primaryColor}-400`
-                  : 'w-1 h-1 bg-white'
+            i % 5 === 0
+              ? 'w-3 h-3 bg-yellow-400'
+              : i % 5 === 1
+                ? 'w-2.5 h-2.5 bg-green-400'
+                : i % 5 === 2
+                  ? `w-3 h-3 bg-${primaryColor}-400`
+                  : i % 5 === 3
+                    ? 'w-2 h-2 bg-white'
+                    : 'w-1.5 h-1.5 bg-amber-300'
           )}
           initial={{ scale: 0, x: 0, y: 0, opacity: 1, rotate: 0 }}
           animate={{
-            scale: [0, 1, 0.8, 0],
-            x: Math.cos(i * (360 / 20) * (Math.PI / 180)) * (40 + Math.random() * 40),
-            y: Math.sin(i * (360 / 20) * (Math.PI / 180)) * (40 + Math.random() * 40) - 30,
-            opacity: [1, 1, 0.7, 0],
-            rotate: [0, 180 + Math.random() * 360],
+            scale: [0, 1.2, 0.9, 0],
+            x: Math.cos(i * (360 / 35) * (Math.PI / 180)) * (60 + Math.random() * 60),
+            y: Math.sin(i * (360 / 35) * (Math.PI / 180)) * (60 + Math.random() * 60) - 40,
+            opacity: [1, 1, 0.8, 0],
+            rotate: [0, 360 + Math.random() * 720],
           }}
           transition={{
-            duration: 2 + Math.random() * 1,
+            duration: 2.5 + Math.random() * 1.5,
             ease: 'easeOut',
-            delay: Math.random() * 0.8,
+            delay: Math.random() * 0.5,
           }}
         />
       ))}
 
+      {/* Large expanding ring */}
       <motion.div
         className={cn(
-          'absolute w-20 h-20 -translate-x-10 -translate-y-10 border-4 rounded-full',
+          'absolute w-32 h-32 -translate-x-16 -translate-y-16 border-8 rounded-full',
           `border-${primaryColor}-400`
         )}
         initial={{ scale: 0, opacity: 1, rotate: 0 }}
         animate={{
-          scale: [0, 1.2, 2.5],
+          scale: [0, 1.5, 3.5],
           opacity: [1, 0.8, 0],
-          rotate: [0, 180],
+          rotate: [0, 360],
         }}
-        transition={{ duration: 2, ease: 'easeOut' }}
+        transition={{ duration: 2.5, ease: 'easeOut' }}
       />
 
+      {/* Secondary expanding ring */}
       <motion.div
-        className="absolute w-16 h-16 -translate-x-8 -translate-y-8 border-2 border-yellow-400 rounded-full"
+        className="absolute w-24 h-24 -translate-x-12 -translate-y-12 border-4 border-yellow-400 rounded-full"
         initial={{ scale: 0, opacity: 1, rotate: 0 }}
         animate={{
-          scale: [0, 1, 2],
-          opacity: [1, 0.6, 0],
-          rotate: [0, -270],
+          scale: [0, 1.2, 2.8],
+          opacity: [1, 0.7, 0],
+          rotate: [0, -450],
         }}
-        transition={{ duration: 1.8, ease: 'easeOut', delay: 0.3 }}
+        transition={{ duration: 2.2, ease: 'easeOut', delay: 0.2 }}
       />
 
-      {[...Array(8)].map((_, i) => (
+      {/* Halo effect */}
+      <motion.div
+        className={cn(
+          'absolute w-40 h-40 -translate-x-20 -translate-y-20 rounded-full border-2',
+          `border-${primaryColor}-300`
+        )}
+        initial={{ scale: 0, opacity: 0.8 }}
+        animate={{
+          scale: [0, 1, 1.5],
+          opacity: [0.8, 0.4, 0],
+        }}
+        transition={{ duration: 2.8, ease: 'easeOut', delay: 0.1 }}
+      />
+
+      {/* Starburst effect */}
+      {[...Array(12)].map((_, i) => (
         <motion.div
           key={`star-${i}`}
           className="absolute"
           style={{
-            left: Math.cos(i * (360 / 8) * (Math.PI / 180)) * 25,
-            top: Math.sin(i * (360 / 8) * (Math.PI / 180)) * 25,
+            left: Math.cos(i * (360 / 12) * (Math.PI / 180)) * 35,
+            top: Math.sin(i * (360 / 12) * (Math.PI / 180)) * 35,
           }}
           initial={{ scale: 0, opacity: 1 }}
           animate={{
-            scale: [0, 1, 0],
-            opacity: [1, 1, 0],
+            scale: [0, 1.5, 1.2, 0],
+            opacity: [1, 1, 0.8, 0],
           }}
           transition={{
-            duration: 1.5,
+            duration: 2,
             ease: 'easeOut',
-            delay: 0.5 + i * 0.1,
+            delay: 0.3 + i * 0.05,
           }}
         >
-          <Sparkles className={cn('w-4 h-4', textColor)} />
+          <Sparkles className={cn('w-5 h-5', textColor)} />
+        </motion.div>
+      ))}
+
+      {/* Additional burst particles */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={`burst-${i}`}
+          className="absolute"
+          style={{
+            left: Math.cos(i * (360 / 8) * (Math.PI / 180)) * 20,
+            top: Math.sin(i * (360 / 8) * (Math.PI / 180)) * 20,
+          }}
+          initial={{ scale: 0, opacity: 1 }}
+          animate={{
+            scale: [0, 2, 1.5, 0],
+            opacity: [1, 0.8, 0.5, 0],
+          }}
+          transition={{
+            duration: 1.8,
+            ease: 'easeOut',
+            delay: 0.1 + i * 0.03,
+          }}
+        >
+          <div className={cn('w-2 h-2 rounded-full bg-yellow-300')} />
         </motion.div>
       ))}
     </motion.div>
@@ -539,9 +585,7 @@ export default function GameBoard({
   // Only show AI toggle button when running locally
   const isLocalDevelopment =
     typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1' ||
-      window.location.hostname === '');
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   // Track game state changes for capture and finish effects
   useEffect(() => {
@@ -626,6 +670,11 @@ export default function GameBoard({
               player,
             },
           ]);
+
+          // Add screen shake for piece finishing
+          setScreenShake(true);
+          setTimeout(() => setScreenShake(false), 800);
+
           soundEffects.gameWin();
         }
       }

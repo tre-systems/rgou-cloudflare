@@ -26,8 +26,9 @@ export default function RoyalGameOfUr() {
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
 
   // Only show diagnostics panel when running locally
-  const isLocalDevelopment = typeof window !== 'undefined' && 
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '');
+  const isLocalDevelopment =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   useEffect(() => {
     if (
@@ -68,6 +69,8 @@ export default function RoyalGameOfUr() {
           soundEffects.rosetteLanding();
           break;
         case 'finish':
+          soundEffects.pieceFinish();
+          break;
         case 'move':
           soundEffects.pieceMove();
           break;
@@ -110,15 +113,16 @@ export default function RoyalGameOfUr() {
     setSoundEnabled(newState);
   };
 
-  const diagnosticsPanel = isLocalDevelopment && lastAIDiagnostics ? (
-    <AIDiagnosticsPanel
-      lastAIDiagnostics={lastAIDiagnostics}
-      lastAIMoveDuration={lastAIMoveDuration}
-      isOpen={diagnosticsPanelOpen}
-      onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
-      gameState={gameState}
-    />
-  ) : null;
+  const diagnosticsPanel =
+    isLocalDevelopment && lastAIDiagnostics ? (
+      <AIDiagnosticsPanel
+        lastAIDiagnostics={lastAIDiagnostics}
+        lastAIMoveDuration={lastAIMoveDuration}
+        isOpen={diagnosticsPanelOpen}
+        onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+        gameState={gameState}
+      />
+    ) : null;
 
   return (
     <>

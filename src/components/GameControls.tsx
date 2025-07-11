@@ -63,7 +63,7 @@ export default function GameControls({ gameState, onResetGame }: GameControlsPro
             >
               {gameState.winner === 'player1' ? 'Victory!' : 'AI Wins!'}
             </h2>
-            
+
             <motion.button
               onClick={onResetGame}
               className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
