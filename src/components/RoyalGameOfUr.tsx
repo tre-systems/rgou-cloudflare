@@ -100,11 +100,15 @@ export default function RoyalGameOfUr() {
 
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
-      if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
+      if (
+        gameState.canMove &&
+        gameState.validMoves.includes(pieceIndex) &&
+        gameState.currentPlayer === 'player1'
+      ) {
         makeMove(pieceIndex);
       }
     },
-    [gameState.canMove, gameState.validMoves, makeMove]
+    [gameState.canMove, gameState.validMoves, gameState.currentPlayer, makeMove]
   );
 
   const handleReset = () => {

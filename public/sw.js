@@ -1,4 +1,4 @@
-const CACHE_VERSION = '1752263287500-local';
+const CACHE_VERSION = '1752263980253-local';
 const CACHE_NAME = `royal-game-of-ur-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
