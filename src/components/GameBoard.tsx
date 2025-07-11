@@ -536,6 +536,13 @@ export default function GameBoard({
   const boardRef = useRef<HTMLDivElement>(null);
   const previousGameState = useRef<GameState | null>(null);
 
+  // Only show AI toggle button when running locally
+  const isLocalDevelopment =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === '');
+
   // Track game state changes for capture and finish effects
   useEffect(() => {
     if (!previousGameState.current) {
@@ -1116,20 +1123,22 @@ export default function GameBoard({
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-2">
-                {/* AI Source Toggle */}
-                <motion.button
-                  onClick={() => onAiSourceChange(aiSource === 'server' ? 'client' : 'server')}
-                  className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  title={`Switch to ${aiSource === 'server' ? 'Client' : 'Server'} AI`}
-                >
-                  {aiSource === 'server' ? (
-                    <Cloud className="w-3.5 h-3.5" />
-                  ) : (
-                    <Server className="w-3.5 h-3.5" />
-                  )}
-                </motion.button>
+                {/* AI Source Toggle - Only show in development */}
+                {isLocalDevelopment && (
+                  <motion.button
+                    onClick={() => onAiSourceChange(aiSource === 'server' ? 'client' : 'server')}
+                    className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={`Switch to ${aiSource === 'server' ? 'Client' : 'Server'} AI`}
+                  >
+                    {aiSource === 'server' ? (
+                      <Cloud className="w-3.5 h-3.5" />
+                    ) : (
+                      <Server className="w-3.5 h-3.5" />
+                    )}
+                  </motion.button>
+                )}
 
                 {/* Sound Toggle */}
                 <motion.button
