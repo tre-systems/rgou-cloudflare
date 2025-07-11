@@ -25,6 +25,10 @@ export default function RoyalGameOfUr() {
 
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
 
+  // Only show diagnostics panel when running locally
+  const isLocalDevelopment = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '');
+
   useEffect(() => {
     if (
       gameState.currentPlayer === 'player2' &&
@@ -106,7 +110,7 @@ export default function RoyalGameOfUr() {
     setSoundEnabled(newState);
   };
 
-  const diagnosticsPanel = lastAIDiagnostics ? (
+  const diagnosticsPanel = isLocalDevelopment && lastAIDiagnostics ? (
     <AIDiagnosticsPanel
       lastAIDiagnostics={lastAIDiagnostics}
       lastAIMoveDuration={lastAIMoveDuration}
@@ -120,9 +124,11 @@ export default function RoyalGameOfUr() {
     <>
       <AnimatedBackground />
       <div className="relative min-h-screen w-full flex items-center justify-center p-4">
-        <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
-          {diagnosticsPanel}
-        </div>
+        {isLocalDevelopment && (
+          <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
+            {diagnosticsPanel}
+          </div>
+        )}
 
         <motion.div
           className="w-full max-w-sm mx-auto space-y-3"
@@ -185,7 +191,7 @@ export default function RoyalGameOfUr() {
             onToggleSound={toggleSound}
           />
 
-          <div className="xl:hidden">{diagnosticsPanel}</div>
+          {isLocalDevelopment && <div className="xl:hidden">{diagnosticsPanel}</div>}
 
           <motion.div
             className="text-center"
