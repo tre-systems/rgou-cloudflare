@@ -1,5 +1,12 @@
-const CACHE_VERSION = '1752261571494-local';
-const CACHE_NAME = `royal-game-of-ur-${CACHE_VERSION}`;
+#!/usr/bin/env node
+
+import fs from 'fs';
+import path from 'path';
+
+const CACHE_VERSION = `${Date.now()}-${process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local'}`;
+
+const serviceWorkerTemplate = `const CACHE_VERSION = '${CACHE_VERSION}';
+const CACHE_NAME = \`royal-game-of-ur-\${CACHE_VERSION}\`;
 const OFFLINE_URL = '/offline';
 
 const STATIC_ASSETS = [
@@ -178,3 +185,11 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
+`;
+
+const publicDir = path.join(process.cwd(), 'public');
+const swPath = path.join(publicDir, 'sw.js');
+
+console.log('Generating service worker with cache version:', CACHE_VERSION);
+fs.writeFileSync(swPath, serviceWorkerTemplate);
+console.log('Service worker generated successfully');
