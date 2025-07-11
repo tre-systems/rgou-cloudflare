@@ -655,10 +655,12 @@ export default function GameBoard({
       const oldFinished = prevPieces.filter(p => p.square === 20).length;
 
       if (newFinished > oldFinished && boardRef.current) {
+        console.log(`🎉 Piece finished for ${player}! New: ${newFinished}, Old: ${oldFinished}`);
         const finishAreaId = player === 'player1' ? 'player1-finish-area' : 'player2-finish-area';
         const finishArea = document.getElementById(finishAreaId);
         if (finishArea) {
           const rect = finishArea.getBoundingClientRect();
+          console.log(`📍 Finish area found, position:`, rect);
           setCelebrations(prev => [
             ...prev,
             {
@@ -674,8 +676,8 @@ export default function GameBoard({
           // Add screen shake for piece finishing
           setScreenShake(true);
           setTimeout(() => setScreenShake(false), 800);
-
-          soundEffects.gameWin();
+        } else {
+          console.error(`❌ Finish area not found for ID: ${finishAreaId}`);
         }
       }
     };
@@ -991,7 +993,10 @@ export default function GameBoard({
             </div>
             <div className="rounded-md p-1">
               <p className="text-xs text-white/70 font-semibold mb-1 text-center">FINISH</p>
-              <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
+              <div
+                id={player === 'player1' ? 'player1-finish-area' : 'player2-finish-area'}
+                className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1"
+              >
                 {Array(7)
                   .fill(0)
                   .map((_, i) => (

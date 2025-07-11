@@ -86,13 +86,19 @@ class SoundEffects {
     await this.playChord(frequencies, 0.5, 'sine', 0.06);
   }
 
-  async pieceFinish() {
+    async pieceFinish() {
+    console.log('🎵 Playing piece finish sound!');
+    if (!this.enabled) {
+      console.log('❌ Sound is disabled');
+      return;
+    }
+    
     // Triumphant piece completion sound
     const melody = [523.25, 659.25, 783.99]; // C5-E5-G5 ascending
     melody.forEach((freq, i) => {
       setTimeout(() => this.playTone(freq, 0.25, 'sine', 0.12), i * 120);
     });
-
+    
     // Add a celebratory chord at the end
     setTimeout(() => {
       this.playChord([523.25, 659.25, 783.99], 0.8, 'sine', 0.08);

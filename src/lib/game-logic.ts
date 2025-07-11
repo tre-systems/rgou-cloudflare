@@ -115,6 +115,7 @@ export function makeMove(gameState: GameState, pieceIndex: number): [GameState, 
   if (newTrackPos >= getPlayerTrack(gameState.currentPlayer).length) {
     currentPieces[pieceIndex] = { ...piece, square: 20 };
     moveType = 'finish';
+    console.log(`✅ Piece finished! Player: ${gameState.currentPlayer}, Piece: ${pieceIndex}`);
   } else {
     const newActualPos = getActualPosition(gameState.currentPlayer, newTrackPos);
     const occupant = gameState.board[newActualPos];
