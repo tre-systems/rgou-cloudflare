@@ -37,8 +37,8 @@ The Royal Game of Ur is a race game where each player tries to move all 7 of the
 
 This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a powerful server-side AI and an instant client-side AI. The core AI logic is shared in the `worker/rust_ai_core` crate, ensuring consistent AI behavior across both platforms.
 
+- **Client AI**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. It uses a deeper search, making it the **stronger** opponent. This also enables **offline play**. This is now the default AI.
 - **Server AI**: A Rust AI on **Cloudflare Workers**. Due to the short compute time limits of serverless functions, this AI has a lower search depth, making it a faster but weaker opponent.
-- **Client AI**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. It uses a deeper search, making it the **stronger** opponent. This also enables **offline play**.
 
 For a more detailed explanation of the architecture, please see the [Architecture Overview](./docs/architecture-overview.md) document.
 
