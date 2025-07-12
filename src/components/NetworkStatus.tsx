@@ -36,20 +36,12 @@ export default function NetworkStatus() {
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 px-3 py-2 rounded-lg shadow-lg flex items-center space-x-2 text-sm font-medium transition-all duration-300 ${
-        isOnline ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-      }`}
+      className={`fixed top-4 right-4 z-50 p-2 rounded-full shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm flex items-center justify-center`}
     >
       {isOnline ? (
-        <>
-          <Wifi className="h-4 w-4" />
-          <span>Back online</span>
-        </>
+        <Wifi className="h-5 w-5 text-green-400" />
       ) : (
-        <>
-          <WifiOff className="h-4 w-4" />
-          <span>You&apos;re offline</span>
-        </>
+        <WifiOff className="h-5 w-5 text-red-400" />
       )}
     </div>
   );
