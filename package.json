@@ -27,6 +27,7 @@
     "migrate:generate": "drizzle-kit generate",
     "migrate:d1": "wrangler d1 migrations apply rgou-db --remote",
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
+    "db:local:reset": "tsx scripts/reset-local-db.ts",
     "db:exec": "npx wrangler d1 execute rgou-db --remote --file"
   },
   "dependencies": {

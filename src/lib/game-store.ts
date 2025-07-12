@@ -44,7 +44,6 @@ export const useGameStore = create<GameStore>()(
       actions: {
         initialize: (fromStorage = false) => {
           if (fromStorage) {
-            console.log('Initializing game from storage');
             return;
           }
           set(state => {
@@ -55,20 +54,11 @@ export const useGameStore = create<GameStore>()(
             state.lastMoveType = null;
             state.lastMovePlayer = null;
           });
-          console.group('Game Initialized');
-          console.log('Initial State:', get().gameState);
-          console.groupEnd();
         },
         processDiceRoll: (roll?: number) => {
-          const oldState = get().gameState;
           set(state => {
             state.gameState = processDiceRollLogic(state.gameState, roll);
           });
-          const newState = get().gameState;
-          console.group(`Dice Roll by ${oldState.currentPlayer}`);
-          console.log('Roll:', newState.diceRoll);
-          console.log('New state:', newState);
-          console.groupEnd();
         },
         makeMove: (pieceIndex: number) => {
           set(state => {
@@ -85,12 +75,6 @@ export const useGameStore = create<GameStore>()(
                   useStatsStore.getState().actions.incrementLosses();
                 }
               }
-
-              console.group(`Player ${movePlayer} Move`);
-              console.log('Moved piece at index:', pieceIndex);
-              console.log('Move type:', moveType);
-              console.log('Resulting state:', newState);
-              console.groupEnd();
             }
           });
         },
@@ -102,7 +86,6 @@ export const useGameStore = create<GameStore>()(
             state.aiThinking = true;
           });
 
-          console.group(`AI Turn (source: ${aiSource})`);
           const startTime = performance.now();
 
           try {
@@ -113,8 +96,6 @@ export const useGameStore = create<GameStore>()(
 
             const aiResponse = { ...aiResponseFromServer, aiType: aiSource };
             const duration = performance.now() - startTime;
-            console.log('AI Response:', aiResponse);
-            console.log(`AI took ${duration.toFixed(2)}ms`);
 
             set(state => {
               state.lastAIMoveDuration = duration;
@@ -124,27 +105,19 @@ export const useGameStore = create<GameStore>()(
             const { move: aiMove } = aiResponse;
 
             if (aiMove === null || aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
-              console.warn(
-                `AI returned invalid move ${aiMove}. Valid moves:`,
-                gameState.validMoves
-              );
               if (gameState.validMoves.length > 0) {
                 actions.makeMove(gameState.validMoves[0]);
               }
             } else {
               actions.makeMove(aiMove);
             }
-          } catch (error) {
-            console.error('Error during AI move, using fallback:', error);
+          } catch {
             const fallbackMove = AIService.getFallbackAIMove(gameState);
-            console.log('Fallback move:', fallbackMove);
             actions.makeMove(fallbackMove);
           } finally {
             set(state => {
               state.aiThinking = false;
             });
-            console.log('New state after AI move:', get().gameState);
-            console.groupEnd();
           }
         },
         reset: () => {
@@ -156,12 +129,10 @@ export const useGameStore = create<GameStore>()(
             state.lastMoveType = null;
             state.lastMovePlayer = null;
           });
-          console.log('Game Reset.');
         },
         postGameToServer: async () => {
           const { gameState } = get();
           if (gameState.gameStatus !== 'finished' || !gameState.winner) {
-            console.log('Game not finished or no winner, skipping database post');
             return;
           }
 
@@ -170,16 +141,6 @@ export const useGameStore = create<GameStore>()(
 
           const version = '1.0.0';
           const clientHeader = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
-
-          console.log('Attempting to post game to database:', {
-            winner: gameState.winner,
-            historyLength: gameState.history.length,
-            gameStatus: gameState.gameStatus,
-            moveCount,
-            duration,
-            version,
-            clientHeader,
-          });
 
           try {
             const payload = {
@@ -193,24 +154,9 @@ export const useGameStore = create<GameStore>()(
               clientHeader,
             };
 
-            console.log('Sending payload to saveGame:', payload);
-
-            const result = await saveGame(payload);
-
-            if (result?.success) {
-              console.log('✅ Game posted successfully to database. Game ID:', result.gameId);
-            } else {
-              console.error('❌ Failed to post game to database:', result?.error);
-              if (result?.details) {
-                console.error('❌ Error details:', result.details);
-              }
-            }
-          } catch (error) {
-            console.error('❌ Exception occurred while posting game to database:', error);
-            if (error instanceof Error) {
-              console.error('❌ Error message:', error.message);
-              console.error('❌ Error stack:', error.stack);
-            }
+            await saveGame(payload);
+          } catch {
+            // Error handling
           }
         },
       },
