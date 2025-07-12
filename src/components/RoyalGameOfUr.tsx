@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
+import HowToPlayPanel from './HowToPlayPanel';
 
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
@@ -24,6 +25,7 @@ export default function RoyalGameOfUr() {
 
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [isLocalDevelopment, setIsLocalDevelopment] = useState(false);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   // Only show diagnostics panel when running locally
   useEffect(() => {
@@ -119,6 +121,10 @@ export default function RoyalGameOfUr() {
     setSoundEnabled(newState);
   };
 
+  const showHowToPlay = () => {
+    setHowToPlayOpen(true);
+  };
+
   const diagnosticsPanel =
     isLocalDevelopment && lastAIDiagnostics ? (
       <AIDiagnosticsPanel
@@ -191,9 +197,12 @@ export default function RoyalGameOfUr() {
             onAiSourceChange={setAiSource}
             soundEnabled={soundEnabled}
             onToggleSound={toggleSound}
+            onShowHowToPlay={showHowToPlay}
           />
 
           {isLocalDevelopment && <div className="xl:hidden">{diagnosticsPanel}</div>}
+
+          <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
 
           <motion.div
             className="text-center"

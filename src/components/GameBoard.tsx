@@ -17,6 +17,7 @@ import {
   VolumeX,
   Cloud,
   Server,
+  HelpCircle,
 } from 'lucide-react';
 
 interface GameBoardProps {
@@ -28,6 +29,7 @@ interface GameBoardProps {
   onAiSourceChange: (source: 'server' | 'client') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
+  onShowHowToPlay: () => void;
 }
 
 const CaptureExplosion = ({ position }: { position: { x: number; y: number } }) => {
@@ -568,6 +570,7 @@ export default function GameBoard({
   onAiSourceChange,
   soundEnabled,
   onToggleSound,
+  onShowHowToPlay,
 }: GameBoardProps) {
   const [screenShake, setScreenShake] = useState(false);
   const [explosions, setExplosions] = useState<
@@ -1436,6 +1439,17 @@ export default function GameBoard({
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-2">
+                {/* How to Play Button */}
+                <motion.button
+                  onClick={onShowHowToPlay}
+                  className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="How to Play"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </motion.button>
+
                 {/* AI Source Toggle - Only show in development */}
                 {isLocalDevelopment && (
                   <motion.button
