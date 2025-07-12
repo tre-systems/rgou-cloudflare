@@ -4,6 +4,44 @@ import { db } from '@/lib/db';
 import { games, gameMoves } from '@/lib/db/schema';
 import { SaveGamePayload, SaveGamePayloadSchema } from '@/lib/schemas';
 
+export async function testDatabaseConnection() {
+  try {
+    console.log('🔍 Testing database connection...');
+    console.log('Environment check:', {
+      isCloudflareWorker: typeof globalThis !== 'undefined' && 'DB' in globalThis,
+      hasProcessEnvDB: !!process.env.DB,
+      nodeEnv: process.env.NODE_ENV,
+      dbExists: !!db,
+    });
+
+    if (!db) {
+      console.error('❌ Database connection is not available');
+      return { error: 'Database connection is not available', details: 'db is null' };
+    }
+
+    console.log('✅ Database connection available, testing with simple query...');
+
+    // Try a simple query to test the connection
+    try {
+      const result = await db.select().from(games).limit(1);
+      console.log('✅ Database query successful, found', result.length, 'games');
+      return {
+        success: true,
+        message: 'Database connection working',
+        gameCount: result.length,
+        environment:
+          typeof globalThis !== 'undefined' && 'DB' in globalThis ? 'cloudflare' : 'local',
+      };
+    } catch (queryError) {
+      console.error('❌ Database query failed:', queryError);
+      return { error: 'Database query failed', details: queryError };
+    }
+  } catch (error) {
+    console.error('❌ Error testing database connection:', error);
+    return { error: 'Failed to test database connection', details: error };
+  }
+}
+
 export async function saveGame(payload: SaveGamePayload) {
   try {
     console.log('saveGame called with payload:', payload);
