@@ -1074,6 +1074,83 @@ export default function GameBoard({
         ))}
       </AnimatePresence>
 
+      {/* Game Completion Overlay */}
+      <AnimatePresence>
+        {gameState.gameStatus === 'finished' && (
+          <motion.div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="glass rounded-lg p-8 text-center shadow-2xl max-w-sm mx-4"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 260,
+                damping: 20,
+              }}
+            >
+              <motion.div
+                className="text-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 0.2,
+                }}
+              >
+                <motion.div
+                  animate={{
+                    rotate: [0, 10, -10, 0],
+                    scale: [1, 1.1, 1],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                    ease: 'easeInOut',
+                  }}
+                >
+                  {gameState.winner === 'player1' ? (
+                    <Trophy className="w-16 h-16 text-green-400 mx-auto mb-2" />
+                  ) : (
+                    <Zap className="w-16 h-16 text-pink-400 mx-auto mb-2" />
+                  )}
+                </motion.div>
+                <h2
+                  className={cn(
+                    'text-3xl font-bold neon-text mb-4',
+                    gameState.winner === 'player1' ? 'text-green-400' : 'text-pink-400'
+                  )}
+                >
+                  {gameState.winner === 'player1' ? 'Victory!' : 'AI Wins!'}
+                </h2>
+
+                <motion.button
+                  onClick={onResetGame}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  Play Again
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         className="w-full max-w-sm mx-auto space-y-3"
         animate={screenShake ? { x: [0, -2, 2, -2, 2, 0] } : { x: 0 }}
