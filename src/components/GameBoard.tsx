@@ -1471,14 +1471,6 @@ export default function GameBoard({
         >
           {/* Board title */}
           <div className="text-center mb-3">
-            <motion.h3
-              className="text-base font-bold text-white/90 neon-text"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ repeat: Infinity, duration: 3 }}
-            >
-              Ancient Board of Ur
-            </motion.h3>
-
             {/* Status Section */}
             <div className="mt-2 h-10 flex flex-col justify-start relative pt-1">
               <motion.div
