@@ -3,10 +3,6 @@
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { games, gameMoves } from '@/lib/db/schema';
-import * as schema from '@/lib/db/schema';
-import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
-import { D1Result } from '@cloudflare/workers-types';
-import { ExtractTablesWithRelations } from 'drizzle-orm';
 
 const moveRecordSchema = z.object({
   player: z.enum(['player1', 'player2']),
@@ -42,42 +38,34 @@ export async function saveGame(payload: SaveGamePayload) {
       return { error: 'Database connection is not available' };
     }
 
-    const game = await db.transaction(
-      async (
-        tx: SQLiteTransaction<
-          'async',
-          D1Result,
-          typeof schema,
-          ExtractTablesWithRelations<typeof schema>
-        >
-      ) => {
-        const [newGame] = await tx
-          .insert(games)
-          .values({
-            winner,
-            status: 'completed',
-            completedAt: new Date(),
-            clientVersion,
-          })
-          .returning();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const game = await (db as any).transaction(async (tx: any) => {
+      const [newGame] = await tx
+        .insert(games)
+        .values({
+          winner,
+          status: 'completed',
+          completedAt: new Date(),
+          clientVersion,
+        })
+        .returning();
 
-        if (history.length > 0) {
-          const movesToInsert = history.map((move, index) => ({
-            gameId: newGame.id,
-            moveIndex: index,
-            player: move.player,
-            diceRoll: move.diceRoll,
-            pieceIndex: move.pieceIndex,
-            fromSquare: move.fromSquare,
-            toSquare: move.toSquare,
-            moveType: move.moveType || 'unknown',
-          }));
-          await tx.insert(gameMoves).values(movesToInsert);
-        }
-
-        return newGame;
+      if (history.length > 0) {
+        const movesToInsert = history.map((move, index) => ({
+          gameId: newGame.id,
+          moveIndex: index,
+          player: move.player,
+          diceRoll: move.diceRoll,
+          pieceIndex: move.pieceIndex,
+          fromSquare: move.fromSquare,
+          toSquare: move.toSquare,
+          moveType: move.moveType || 'unknown',
+        }));
+        await tx.insert(gameMoves).values(movesToInsert);
       }
-    );
+
+      return newGame;
+    });
 
     return { success: true, gameId: game.id };
   } catch (error) {

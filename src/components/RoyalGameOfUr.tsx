@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
+import { useGameStats } from '@/lib/stats-store';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
 import GameControls, { AISource } from './GameControls';
@@ -14,6 +15,7 @@ import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
   const { processDiceRoll, makeMove, makeAIMove, reset } = useGameActions();
+  const stats = useGameStats();
   const aiThinking = useGameStore(state => state.aiThinking);
   const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
   const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
@@ -135,6 +137,39 @@ export default function RoyalGameOfUr() {
     <>
       <AnimatedBackground />
       <div className="relative min-h-screen w-full flex items-center justify-center p-4">
+        {gameState.gameStatus === 'finished' && (
+          <motion.div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <motion.div
+              className="bg-gray-800/80 border border-purple-500/50 rounded-lg p-8 text-center shadow-2xl"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                type: 'spring',
+                stiffness: 260,
+                damping: 20,
+              }}
+            >
+              <h2 className="text-4xl font-bold mb-4 text-white">
+                {gameState.winner === 'player1' ? 'You Win!' : 'You Lose!'}
+              </h2>
+              <div className="text-lg text-white/80 mb-6">
+                <p>Wins: {stats.wins}</p>
+                <p>Losses: {stats.losses}</p>
+              </div>
+              <button
+                onClick={handleReset}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+              >
+                Play Again
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
         {isLocalDevelopment && (
           <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
             {diagnosticsPanel}
