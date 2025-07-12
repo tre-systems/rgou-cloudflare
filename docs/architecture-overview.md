@@ -22,6 +22,8 @@ The project is primarily composed of three main parts:
 
 A key aspect of this architecture is the **shared Rust AI core**, located in `worker/rust_ai_core`. This single crate contains all the game rules, board evaluation heuristics, and the AI's expectiminimax search algorithm. By sharing this code, we ensure that both the server and client AIs exhibit identical strategic behavior, with the only difference being their computational resources (search depth).
 
+For detailed information about the AI algorithm, evaluation function, and technical implementation, see the [AI System Documentation](./ai-system.md).
+
 ### 1. Frontend Application (`src/`)
 
 The frontend is a Next.js 15 application using the App Router.

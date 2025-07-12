@@ -18,8 +18,8 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 
 - **Authentic Gameplay**: A faithful recreation of the 4,500-year-old Royal Game of Ur.
 - **Dual AI Engine**:
-  - **Cloud AI**: A high-performance Rust AI deployed on Cloudflare Workers for deep strategic analysis.
-  - **Client AI**: The same core Rust AI logic is compiled to WebAssembly (Wasm) and runs in the browser for offline play and instant responses.
+  - **Client AI (Default)**: A high-performance Rust AI compiled to WebAssembly, running in the browser for instant responses and offline play. Uses expectiminimax algorithm with 6-ply search depth.
+  - **Server AI (Fallback)**: The same core Rust AI logic deployed on Cloudflare Workers for consistent performance. Uses 4-ply search depth for faster response times.
 - **PWA & Offline Ready**: Installable as a Progressive Web App with client-side AI for full offline gameplay.
 - **Modern UI/UX**: A beautiful, responsive interface built with React, Tailwind CSS, and Framer Motion animations.
 - **Real-time Gameplay**: Smooth animations and real-time game state updates with immersive sound effects.
@@ -30,22 +30,38 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 
 ## 🎯 Game Rules
 
-The Royal Game of Ur is a race game where each player tries to move all 7 of their pieces around the board and off the finish before their opponent.
+The Royal Game of Ur is a 4,500-year-old race game where each player tries to move all 7 pieces around the board and off the finish before their opponent.
 
-- **Dice**: Roll 4 tetrahedral dice (binary dice). The number of marked corners facing up determines the number of squares you can move (0-4).
-- **Movement**: Move pieces along your designated track from the start to the finish.
-- **Combat**: Landing on a square occupied by an opponent's piece sends it back to the start. This does not apply to squares with a rosette.
-- **Rosettes**: The starred squares are safe zones and grant an extra turn.
-- **Winning**: The first player to move all 7 of their pieces off the board wins.
+**Quick Rules:**
+
+- **Dice**: Roll 4 tetrahedral dice (binary dice). Count marked corners facing up (0-4).
+- **Movement**: Move pieces along your designated track from start to finish.
+- **Combat**: Landing on an opponent's piece sends it back to start (except on rosette squares).
+- **Rosettes**: Starred squares are safe zones and grant an extra turn.
+- **Winning**: First player to move all 7 pieces off the board wins.
+
+For complete rules, historical context, and strategic guidance, see the [Game Rules and Strategy Guide](./docs/game-rules-strategy.md).
 
 ## 🏗️ Architecture
 
 This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a powerful server-side AI and an instant client-side AI. The core AI logic is shared in the `worker/rust_ai_core` crate, ensuring consistent AI behavior across both platforms.
 
-- **Client AI**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. It uses a deeper search, making it the **stronger** opponent. This also enables **offline play**. This is now the default AI.
-- **Server AI**: A Rust AI on **Cloudflare Workers**. Due to the short compute time limits of serverless functions, this AI has a lower search depth, making it a faster but weaker opponent.
+- **Client AI (Default)**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. It uses a deeper search (6 plies), making it the **stronger** opponent. This also enables **offline play**.
+- **Server AI (Fallback)**: A Rust AI on **Cloudflare Workers**. Due to the short compute time limits of serverless functions, this AI has a lower search depth (4 plies), making it a faster but weaker opponent.
 
-For a more detailed explanation of the architecture, please see the [Architecture Overview](./docs/architecture-overview.md) document.
+### AI Algorithm
+
+The AI uses the **Expectiminimax** algorithm, an extension of minimax for games with chance elements (dice rolls). It combines:
+
+- **Minimax search** for deterministic game states
+- **Expectation nodes** for probabilistic dice roll outcomes
+- **Alpha-beta pruning** for search optimization
+- **Transposition tables** for position caching
+- **Quiescence search** to avoid horizon effects
+
+For detailed technical information about the AI system, evaluation function, and academic references, see the [AI System Documentation](./docs/ai-system.md).
+
+For a more detailed explanation of the overall architecture, please see the [Architecture Overview](./docs/architecture-overview.md) document.
 
 ## 🛠️ Tech Stack
 
@@ -53,6 +69,15 @@ For a more detailed explanation of the architecture, please see the [Architectur
 - **PWA**: Service Worker, Web App Manifest
 - **AI Engine**: Rust (Cloudflare Worker) & Rust compiled to WebAssembly (Client)
 - **Deployment**: Cloudflare Pages & Workers
+
+## 📚 Documentation
+
+- **[Documentation Index](./docs/README.md)**: Complete guide to all documentation
+- **[Architecture Overview](./docs/architecture-overview.md)**: Detailed system architecture and component interactions
+- **[AI System Documentation](./docs/ai-system.md)**: Comprehensive guide to the AI algorithm, evaluation function, and technical implementation
+- **[Technical Implementation Guide](./docs/technical-implementation.md)**: Development setup, build process, and technical details
+- **[Game Rules and Strategy](./docs/game-rules-strategy.md)**: Complete rules, historical context, and strategic guidance
+- **[Game Statistics](./docs/game-statistics.md)**: Information about the statistics tracking system
 
 ## 🚀 Getting Started
 
