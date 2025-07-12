@@ -590,10 +590,12 @@ export default function GameBoard({
   const gameStats = useGameStats();
   const { actions } = useGameStore();
 
-  // Only show AI toggle button when running locally
+  // Show AI toggle button and test buttons when running locally or on production for testing
   useEffect(() => {
     setIsLocalDevelopment(
-      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === 'rgou.tre.systems'
     );
   }, []);
 
@@ -1566,14 +1568,14 @@ export default function GameBoard({
                   </motion.button>
                 )}
 
-                {/* Test Database Button - Only show in development */}
+                {/* Test Database Button - Available in development and production for testing */}
                 {isLocalDevelopment && (
                   <motion.button
                     onClick={createNearWinningState}
                     className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    title="Create near-winning state to test database posting"
+                    title="Test Database: Create near-winning state to test game saving"
                   >
                     <Trophy className="w-3.5 h-3.5" />
                   </motion.button>
