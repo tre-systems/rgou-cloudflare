@@ -37,7 +37,10 @@ export async function saveGame(payload: SaveGamePayload) {
 
     let game: { id: string } | undefined;
 
-    if (process.env.DB) {
+    // Check if we're in a Cloudflare Worker environment
+    const isCloudflareWorker = typeof globalThis !== 'undefined' && 'DB' in globalThis;
+
+    if (isCloudflareWorker || process.env.DB) {
       console.log('Using D1 database (production)');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       game = await (db as any).transaction(async (tx: any) => {
