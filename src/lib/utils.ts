@@ -48,3 +48,11 @@ export const isLocalDevelopment = () => {
   const hostname = window.location.hostname;
   return hostname === 'localhost' || hostname === '127.0.0.1';
 };
+
+export function batch<T>(array: T[], size: number): T[][] {
+  const batched: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    batched.push(array.slice(i, i + size));
+  }
+  return batched;
+}
