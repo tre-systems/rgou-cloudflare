@@ -6,7 +6,9 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 
 [![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
 
-![Royal Game of Ur Screenshot](public/screenshot.png)
+<div align="center">
+  <img src="public/screenshot.png" alt="Royal Game of Ur Screenshot" width="600" />
+</div>
 
 <div align="center">
   <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
@@ -53,13 +55,169 @@ For a more detailed explanation of the architecture, please see the [Architectur
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Prerequisites (Install These First!)
 
-- Node.js 18+ and npm
-- Rust and Cargo
-- A Cloudflare account for deployment
-- The `wasm-pack` CLI for building WebAssembly packages: `cargo install wasm-pack`
-- The `worker-build` tool for bundling Rust-based Cloudflare Workers: `cargo install worker-build`
+Before you begin, make sure you have the following installed on your computer:
+
+- **Git** – to clone the project ([Download Git](https://git-scm.com/downloads))
+- **Node.js (v18+) & npm** – JavaScript runtime and package manager ([Download Node.js](https://nodejs.org/))
+- **Rust & Cargo** – for building the AI ([Install Rust](https://www.rust-lang.org/tools/install))
+- **wasm-pack** – for building WebAssembly packages:
+  ```bash
+  cargo install wasm-pack
+  ```
+- **worker-build** – for bundling Rust-based Cloudflare Workers:
+  ```bash
+  cargo install worker-build
+  ```
+- **SQLite** – for local database (most systems have it, or [Download SQLite](https://www.sqlite.org/download.html))
+
+### 1. Check Out the Project
+
+Clone the repository from GitHub:
+
+```bash
+git clone <repository-url>
+cd rgou-cloudflare
+```
+
+### 2. Local Development (with Database)
+
+Follow these steps to get the game running locally, including saving data to the database. No advanced skills required!
+
+1. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Set up the local database**
+   - The game uses SQLite for local development. All your game data will be saved in a file called `local.db` in the project folder.
+   - Run this command to create/update the database:
+
+   ```bash
+   npm run migrate:local
+   ```
+
+3. **Start the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   - The game will open at http://localhost:3000 (or another port if 3000 is busy).
+   - You can now play, and your game results will be saved to `local.db` automatically.
+
+4. **(Optional) Inspect your data**
+   - You can open `local.db` with any free SQLite browser (e.g. [DB Browser for SQLite](https://sqlitebrowser.org/)).
+
+### 3. Deploy to Cloudflare
+
+To host your game on Cloudflare Pages and Workers:
+
+#### Prerequisites for Deployment
+
+- **Cloudflare Account** – Sign up at [cloudflare.com](https://cloudflare.com)
+- **Wrangler CLI** – Install the Cloudflare CLI tool:
+  ```bash
+  npm install -g wrangler
+  ```
+
+#### Setup Steps
+
+1. **Login to Cloudflare**
+
+   ```bash
+   wrangler login
+   ```
+
+2. **Create a D1 Database**
+   - Go to your Cloudflare dashboard
+   - Navigate to "Workers & Pages" → "D1"
+   - Click "Create database"
+   - Name it `rgou-db` (or any name you prefer)
+   - Copy the database ID
+
+3. **Configure Environment Variables**
+   - Create a `.env.local` file in your project root:
+
+   ```bash
+   # Add your Cloudflare account ID (find this in your dashboard)
+   CLOUDFLARE_ACCOUNT_ID=your_account_id_here
+
+   # Add your D1 database ID
+   D1_DATABASE_ID=your_database_id_here
+   ```
+
+4. **Update wrangler.toml**
+   - Open `wrangler.toml` and update the `account_id` and `database_id` with your values
+
+5. **Deploy the Database Schema**
+
+   ```bash
+   npm run migrate:d1
+   ```
+
+6. **Deploy the Application**
+
+   ```bash
+   npm run build
+   npx wrangler deploy
+   ```
+
+7. **Set up Custom Domain (Optional)**
+   - In your Cloudflare dashboard, go to "Workers & Pages"
+   - Find your deployed application
+   - Click "Custom domains" and add your domain
+
+Your game will now be live on Cloudflare with a URL like `https://your-app-name.pages.dev`!
+
+### 4. Set Up GitHub Actions (Automatic Deployment)
+
+For automatic deployment when you push to GitHub:
+
+#### Prerequisites
+
+- **GitHub Repository** – Your code must be in a GitHub repository
+- **Cloudflare API Token** – Create one in your Cloudflare dashboard
+
+#### Setup Steps
+
+1. **Create Cloudflare API Token**
+   - Go to your Cloudflare dashboard → "My Profile" → "API Tokens"
+   - Click "Create Token"
+   - Use "Custom token" template
+   - Add these permissions:
+     - **Account** → **Cloudflare Pages** → **Edit**
+     - **Account** → **Workers Scripts** → **Edit**
+     - **Zone** → **Zone** → **Read** (if using custom domain)
+   - Copy the token
+
+2. **Add GitHub Secrets**
+   - Go to your GitHub repository → "Settings" → "Secrets and variables" → "Actions"
+   - Add these secrets:
+     - `CLOUDFLARE_API_TOKEN` = Your API token from step 1
+     - `CLOUDFLARE_ACCOUNT_ID` = Your Cloudflare account ID
+
+3. **Push to GitHub**
+   - The workflow is already configured in `.github/workflows/deploy.yml`
+   - Simply push to the `main` branch:
+
+   ```bash
+   git add .
+   git commit -m "Initial deployment"
+   git push origin main
+   ```
+
+4. **Monitor Deployment**
+   - Go to your GitHub repository → "Actions" tab
+   - You'll see the deployment progress
+   - The workflow will:
+     - Build the application
+     - Deploy to Cloudflare Pages
+     - Deploy the AI worker
+
+Now every time you push to `main`, your game will automatically deploy to Cloudflare!
 
 ### Development Setup
 

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { GameState, MoveType, Player } from './types';
+import { GameState, MoveType, Player, AIResponse } from './schemas';
 import {
   initializeGame,
   processDiceRoll as processDiceRollLogic,
   makeMove as makeMoveLogic,
 } from './game-logic';
-import { AIService, AIResponse } from './ai-service';
+import { AIService } from './ai-service';
 import { wasmAiService } from './wasm-ai-service';
 import { useStatsStore } from './stats-store';
 import { saveGame } from '@/app/actions';
@@ -44,7 +44,6 @@ export const useGameStore = create<GameStore>()(
         initialize: (fromStorage = false) => {
           if (fromStorage) {
             console.log('Initializing game from storage');
-            // Prevent re-initialization if already hydrated
             return;
           }
           set(state => {

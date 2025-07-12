@@ -1,14 +1,7 @@
-import {
-  GameState,
-  Player,
-  PiecePosition,
-  ROSETTE_SQUARES,
-  TRACK_LENGTH,
-  PIECES_PER_PLAYER,
-  PLAYER1_TRACK,
-  PLAYER2_TRACK,
-  MoveType,
-} from './types';
+import { GameState, Player, PiecePosition, MoveType, GameConstants } from './schemas';
+
+const { ROSETTE_SQUARES, TRACK_LENGTH, PIECES_PER_PLAYER, PLAYER1_TRACK, PLAYER2_TRACK } =
+  GameConstants;
 
 export function initializeGame(): GameState {
   const player1Pieces: PiecePosition[] = Array(PIECES_PER_PLAYER)
@@ -47,7 +40,7 @@ export function rollDice(): number {
   return count;
 }
 
-function getPlayerTrack(player: Player): number[] {
+function getPlayerTrack(player: Player): readonly number[] {
   return player === 'player1' ? PLAYER1_TRACK : PLAYER2_TRACK;
 }
 
@@ -57,7 +50,7 @@ function getActualPosition(player: Player, trackPosition: number): number {
 }
 
 function isRosette(square: number): boolean {
-  return ROSETTE_SQUARES.includes(square);
+  return (ROSETTE_SQUARES as readonly number[]).includes(square);
 }
 
 export function getValidMoves(gameState: GameState): number[] {
@@ -93,7 +86,10 @@ export function getValidMoves(gameState: GameState): number[] {
   return validMoves;
 }
 
-export function makeMove(gameState: GameState, pieceIndex: number): [GameState, MoveType, Player] {
+export function makeMove(
+  gameState: GameState,
+  pieceIndex: number
+): [GameState, MoveType | null, Player] {
   if (!gameState.validMoves.includes(pieceIndex) || !gameState.diceRoll) {
     return [gameState, null, gameState.currentPlayer];
   }

@@ -627,7 +627,7 @@ export default function GameBoard({
         }
       }
       // Rosette Landing
-      else if (newPiece && !oldPiece && ROSETTE_SQUARES.includes(square)) {
+      else if (newPiece && !oldPiece && (ROSETTE_SQUARES as readonly number[]).includes(square)) {
         const squareElement = boardRef.current?.querySelector(
           `[data-square-id='${newPiece.square}']`
         );
@@ -828,7 +828,7 @@ export default function GameBoard({
   };
 
   const renderSquare = (squareIndex: number, key: string) => {
-    const isRosette = ROSETTE_SQUARES.includes(squareIndex);
+    const isRosette = (ROSETTE_SQUARES as readonly number[]).includes(squareIndex);
     const piece = gameState.board[squareIndex];
 
     const pieceIndex = piece ? getPieceIndex(squareIndex, piece.player) : -1;

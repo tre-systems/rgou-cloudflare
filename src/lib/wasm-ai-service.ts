@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { GameState } from './types';
-import type { AIResponse as ServerAIResponse } from './ai-types';
+import type { GameState, ServerAIResponse } from './schemas';
 
 class WasmAiService {
   private worker: Worker | null = null;
