@@ -11,6 +11,7 @@ import { AIService } from './ai-service';
 import { wasmAiService } from './wasm-ai-service';
 import { useStatsStore } from './stats-store';
 import { saveGame } from '@/app/actions';
+import { getPlayerId } from './utils';
 
 type GameStore = {
   gameState: GameState;
@@ -83,7 +84,6 @@ export const useGameStore = create<GameStore>()(
                 } else {
                   useStatsStore.getState().actions.incrementLosses();
                 }
-                get().actions.postGameToServer();
               }
 
               console.group(`Player ${movePlayer} Move`);
@@ -161,27 +161,49 @@ export const useGameStore = create<GameStore>()(
         postGameToServer: async () => {
           const { gameState } = get();
           if (gameState.gameStatus !== 'finished' || !gameState.winner) {
+            console.log('Game not finished or no winner, skipping database post');
             return;
           }
+
+          const moveCount = gameState.history.length;
+          const duration = undefined;
+
+          const version = '1.0.0';
+          const clientHeader = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+
+          console.log('Attempting to post game to database:', {
+            winner: gameState.winner,
+            historyLength: gameState.history.length,
+            gameStatus: gameState.gameStatus,
+            moveCount,
+            duration,
+            version,
+            clientHeader,
+          });
+
           try {
             const payload = {
               winner: gameState.winner,
               history: gameState.history,
               clientVersion: '1.0.0',
+              playerId: getPlayerId(),
+              moveCount,
+              duration,
+              version,
+              clientHeader,
             };
+
+            console.log('Sending payload to saveGame:', payload);
 
             const result = await saveGame(payload);
 
             if (result?.success) {
-              console.log('Game posted successfully.');
+              console.log('✅ Game posted successfully to database. Game ID:', result.gameId);
             } else {
-              console.error(
-                'Failed to post game to server (this is expected if offline):',
-                result?.error
-              );
+              console.error('❌ Failed to post game to database:', result?.error);
             }
           } catch (error) {
-            console.error('Failed to post game to server (this is expected if offline):', error);
+            console.error('❌ Exception occurred while posting game to database:', error);
           }
         },
       },

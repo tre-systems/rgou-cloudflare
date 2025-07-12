@@ -103,8 +103,13 @@ export type ServerAIResponse = z.infer<typeof ServerAIResponseSchema>;
 export const SaveGamePayloadSchema = z.object({
   winner: PlayerSchema,
   history: z.array(MoveRecordSchema),
+  playerId: z.string(),
   clientVersion: z.string().optional().default('unknown'),
   turnstileToken: z.string().optional(),
+  moveCount: z.number().optional(),
+  duration: z.number().optional(),
+  version: z.string().optional().default('1.0.0'),
+  clientHeader: z.string().optional(),
 });
 export type SaveGamePayload = z.infer<typeof SaveGamePayloadSchema>;
 

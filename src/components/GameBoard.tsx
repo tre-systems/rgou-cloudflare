@@ -5,6 +5,8 @@ import { GameState, Player, ROSETTE_SQUARES, PiecePosition } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundEffects } from '@/lib/sound-effects';
+import { useGameStats } from '@/lib/stats-store';
+import { useGameStore } from '@/lib/game-store';
 import {
   Sparkles,
   Crown,
@@ -585,6 +587,8 @@ export default function GameBoard({
   const boardRef = useRef<HTMLDivElement>(null);
   const previousGameState = useRef<GameState | null>(null);
   const [isLocalDevelopment, setIsLocalDevelopment] = useState(false);
+  const gameStats = useGameStats();
+  const { actions } = useGameStore();
 
   // Only show AI toggle button when running locally
   useEffect(() => {
@@ -592,6 +596,77 @@ export default function GameBoard({
       window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     );
   }, []);
+
+  // Ensure DB post happens after state is truly finished
+  React.useEffect(() => {
+    if (gameState.gameStatus === 'finished' && gameState.winner) {
+      actions.postGameToServer();
+    }
+  }, [gameState.gameStatus, gameState.winner, actions]);
+
+  const createNearWinningState = () => {
+    // Create a game state where player1 has 6 pieces finished and 1 piece on the board
+    // This will allow testing the database posting when the game ends
+    const nearWinningState: GameState = {
+      board: Array(21).fill(null),
+      player1Pieces: [
+        { square: 20, player: 'player1' }, // finished
+        { square: 20, player: 'player1' }, // finished
+        { square: 20, player: 'player1' }, // finished
+        { square: 20, player: 'player1' }, // finished
+        { square: 20, player: 'player1' }, // finished
+        { square: 20, player: 'player1' }, // finished
+        { square: 12, player: 'player1' }, // on board, close to finish
+      ],
+      player2Pieces: [
+        { square: -1, player: 'player2' }, // not started
+        { square: -1, player: 'player2' }, // not started
+        { square: -1, player: 'player2' }, // not started
+        { square: -1, player: 'player2' }, // not started
+        { square: -1, player: 'player2' }, // not started
+        { square: -1, player: 'player2' }, // not started
+        { square: -1, player: 'player2' }, // not started
+      ],
+      currentPlayer: 'player1',
+      gameStatus: 'playing',
+      winner: null,
+      diceRoll: 2, // Roll that will allow finishing the last piece
+      canMove: true,
+      validMoves: [6], // Only the last piece can move
+      history: [
+        // Add some sample move history for testing
+        {
+          player: 'player1',
+          diceRoll: 3,
+          pieceIndex: 0,
+          fromSquare: -1,
+          toSquare: 0,
+          moveType: 'move',
+        },
+        {
+          player: 'player1',
+          diceRoll: 2,
+          pieceIndex: 1,
+          fromSquare: -1,
+          toSquare: 1,
+          moveType: 'move',
+        },
+      ],
+    };
+
+    // Update the board to reflect piece positions
+    nearWinningState.board[12] = nearWinningState.player1Pieces[6];
+
+    // Set the game state
+    const { actions } = useGameStore.getState();
+    actions.initialize();
+    useGameStore.setState(state => {
+      state.gameState = nearWinningState;
+      return state;
+    });
+
+    console.log('Created near-winning game state for testing database posting');
+  };
 
   // Track game state changes for capture and finish effects
   useEffect(() => {
@@ -1308,11 +1383,43 @@ export default function GameBoard({
                     delay: 1.0,
                   }}
                 >
-                  <p className="text-lg">
+                  <p className="text-lg mb-3">
                     {gameState.winner === 'player1'
-                      ? '🎉 You conquered the ancient board! 🎉'
+                      ? '🎉 Victory is yours! 🎉'
                       : '💫 The AI mastered the game! 💫'}
                   </p>
+
+                  {/* Game Statistics */}
+                  <motion.div
+                    className="bg-white/10 rounded-lg p-4 backdrop-blur-sm"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 200,
+                      damping: 15,
+                      delay: 1.3,
+                    }}
+                  >
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold text-white/90 mb-2">Your Record</h3>
+                      <div className="flex justify-center space-x-6">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-400">{gameStats.wins}</div>
+                          <div className="text-xs text-white/70">Wins</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-pink-400">{gameStats.losses}</div>
+                          <div className="text-xs text-white/70">Losses</div>
+                        </div>
+                      </div>
+                      {gameStats.gamesPlayed > 0 && (
+                        <div className="mt-2 text-xs text-white/60">
+                          Win Rate: {Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)}%
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                 </motion.div>
 
                 <motion.button
@@ -1464,6 +1571,19 @@ export default function GameBoard({
                     ) : (
                       <Server className="w-3.5 h-3.5" />
                     )}
+                  </motion.button>
+                )}
+
+                {/* Test Database Button - Only show in development */}
+                {isLocalDevelopment && (
+                  <motion.button
+                    onClick={createNearWinningState}
+                    className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title="Create near-winning state to test database posting"
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
                   </motion.button>
                 )}
 

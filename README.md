@@ -26,6 +26,7 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 - **Celebration Effects**: Dynamic visual celebrations with screen shake, particle explosions, and triumphant sounds when pieces reach home.
 - **Intuitive Controls**: AI pieces are non-interactive, preventing accidental clicks and ensuring clear game flow.
 - **Detailed Game Analytics**: The AI provides detailed insights into its decision-making process.
+- **Game Statistics**: Track your wins, losses, and win rate across all games played.
 
 ## 🎯 Game Rules
 
