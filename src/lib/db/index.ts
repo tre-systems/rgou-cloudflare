@@ -8,7 +8,7 @@ export let db: DrizzleD1Database<typeof schema> | BetterSQLite3Database<typeof s
 
 if (process.env.DB) {
   db = drizzleD1(process.env.DB as unknown as D1Database, { schema });
-} else if (process.env.NODE_ENV === 'development') {
+} else if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
   console.warn('D1 database binding not found. Using local SQLite database for development.');
   const sqlite = new Database('local.db');
   db = drizzleBetterSqlite3(sqlite, { schema });

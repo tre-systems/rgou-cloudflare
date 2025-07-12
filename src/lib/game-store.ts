@@ -200,26 +200,14 @@ export const useGameStore = create<GameStore>()(
       },
       version: LATEST_VERSION,
       migrate: (persistedState, version) => {
-        if (
-          version < LATEST_VERSION ||
-          typeof persistedState !== 'object' ||
-          persistedState === null
-        ) {
-          return {
-            gameState: initializeGame(),
-            aiThinking: false,
-            lastAIDiagnostics: null,
-            lastAIMoveDuration: null,
-            lastMoveType: null,
-            lastMovePlayer: null,
-          } as GameStore;
+        const state = persistedState as Partial<GameStore>;
+        if (version < LATEST_VERSION || !state || !state.gameState) {
+          return { gameState: initializeGame() };
         }
-        return persistedState as GameStore;
+        return { gameState: state.gameState };
       },
       partialize: state => ({
-        ...state,
-        aiThinking: false,
-        lastAIDiagnostics: null,
+        gameState: state.gameState,
       }),
     }
   )
