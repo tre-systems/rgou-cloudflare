@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { soundEffects } from '@/lib/sound-effects';
+import { isLocalDevelopment } from '@/lib/utils';
 import GameBoard from './GameBoard';
 import AnimatedBackground from './AnimatedBackground';
 import { motion } from 'framer-motion';
@@ -24,15 +25,7 @@ export default function RoyalGameOfUr() {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
-  const [isLocalDevelopment, setIsLocalDevelopment] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-
-  // Only show diagnostics panel when running locally
-  useEffect(() => {
-    setIsLocalDevelopment(
-      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    );
-  }, []);
 
   useEffect(() => {
     if (
@@ -126,7 +119,7 @@ export default function RoyalGameOfUr() {
   };
 
   const diagnosticsPanel =
-    isLocalDevelopment && lastAIDiagnostics ? (
+    isLocalDevelopment() && lastAIDiagnostics ? (
       <AIDiagnosticsPanel
         lastAIDiagnostics={lastAIDiagnostics}
         lastAIMoveDuration={lastAIMoveDuration}
@@ -157,7 +150,7 @@ export default function RoyalGameOfUr() {
             <span>Pop Out Game</span>
           </button>
         </div>
-        {isLocalDevelopment && (
+        {isLocalDevelopment() && (
           <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
             {diagnosticsPanel}
           </div>
@@ -217,7 +210,7 @@ export default function RoyalGameOfUr() {
             onShowHowToPlay={showHowToPlay}
           />
 
-          {isLocalDevelopment && <div className="xl:hidden">{diagnosticsPanel}</div>}
+          {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanel}</div>}
 
           <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
 

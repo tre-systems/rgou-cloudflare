@@ -21,3 +21,28 @@ export function getPlayerId(): string {
 
   return playerId;
 }
+
+export const isProduction = () => {
+  if (typeof window === 'undefined') {
+    return process.env.NODE_ENV === 'production';
+  }
+
+  const hostname = window.location.hostname;
+  return hostname === 'rgou.tre.systems' || hostname === 'www.rgou.tre.systems';
+};
+
+export const isDevelopment = () => {
+  if (typeof window === 'undefined') {
+    return process.env.NODE_ENV === 'development';
+  }
+
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+};
+
+export const isLocalDevelopment = () => {
+  return (
+    isDevelopment() ||
+    (typeof window !== 'undefined' && window.location.hostname === 'rgou.tre.systems')
+  );
+};

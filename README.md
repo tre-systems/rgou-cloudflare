@@ -351,3 +351,15 @@ The Royal Game of Ur dates back to 2600-2400 BCE and was discovered in the Royal
 ## 📝 License
 
 This project is licensed under the MIT License.
+
+## Development vs Production UI
+
+Certain buttons are only visible when running locally (localhost or 127.0.0.1):
+
+- Switch AI (server/client)
+- Restart game
+- Test end game state (trophy icon)
+
+These are hidden in production for normal users, but can be re-enabled for testing or admin by adjusting the environment detection in `src/lib/utils.ts`.
+
+The "How to Play" and sound toggle buttons are always visible.

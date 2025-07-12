@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { soundEffects } from '@/lib/sound-effects';
 import { useGameStats } from '@/lib/stats-store';
 import { useGameStore } from '@/lib/game-store';
+import { isProduction, isLocalDevelopment } from '@/lib/utils';
 import {
   Sparkles,
   Crown,
@@ -586,18 +587,8 @@ export default function GameBoard({
   >([]);
   const boardRef = useRef<HTMLDivElement>(null);
   const previousGameState = useRef<GameState | null>(null);
-  const [isLocalDevelopment, setIsLocalDevelopment] = useState(false);
   const gameStats = useGameStats();
   const { actions } = useGameStore();
-
-  // Show AI toggle button and test buttons when running locally or on production for testing
-  useEffect(() => {
-    setIsLocalDevelopment(
-      window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname === 'rgou.tre.systems'
-    );
-  }, []);
 
   // Ensure DB post happens after state is truly finished
   React.useEffect(() => {
@@ -1552,7 +1543,7 @@ export default function GameBoard({
                 </motion.button>
 
                 {/* AI Source Toggle - Only show in development */}
-                {isLocalDevelopment && (
+                {isLocalDevelopment() && (
                   <motion.button
                     onClick={() => onAiSourceChange(aiSource === 'server' ? 'client' : 'server')}
                     className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
@@ -1569,7 +1560,7 @@ export default function GameBoard({
                 )}
 
                 {/* Test Database Button - Available in development and production for testing */}
-                {isLocalDevelopment && (
+                {isLocalDevelopment() && (
                   <motion.button
                     onClick={createNearWinningState}
                     className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
@@ -1595,23 +1586,25 @@ export default function GameBoard({
                   )}
                 </motion.button>
 
-                {/* Reset Button */}
-                <motion.button
-                  onClick={handleResetGame}
-                  className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: '0 0 10px rgba(107, 114, 128, 0.3)',
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </motion.div>
-                </motion.button>
+                {/* Reset Button - Hidden in production */}
+                {!isProduction() && (
+                  <motion.button
+                    onClick={handleResetGame}
+                    className="p-1.5 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg"
+                    whileHover={{
+                      scale: 1.05,
+                      boxShadow: '0 0 10px rgba(107, 114, 128, 0.3)',
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </motion.div>
+                  </motion.button>
+                )}
               </div>
             </div>
           </div>
