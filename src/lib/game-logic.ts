@@ -35,6 +35,7 @@ export function initializeGame(): GameState {
     diceRoll: null,
     canMove: false,
     validMoves: [],
+    history: [],
   };
 }
 
@@ -97,12 +98,21 @@ export function makeMove(gameState: GameState, pieceIndex: number): [GameState, 
     return [gameState, null, gameState.currentPlayer];
   }
 
-  const newState = { ...gameState };
+  const newState: GameState = {
+    ...gameState,
+    board: [...gameState.board],
+    player1Pieces: [...gameState.player1Pieces],
+    player2Pieces: [...gameState.player2Pieces],
+    history: [...gameState.history],
+  };
+
   const movePlayer = gameState.currentPlayer;
   let moveType: MoveType = 'move';
   const isPlayer1 = gameState.currentPlayer === 'player1';
-  const currentPieces = isPlayer1 ? [...gameState.player1Pieces] : [...gameState.player2Pieces];
-  const piece = currentPieces[pieceIndex];
+  const currentPieces = isPlayer1 ? newState.player1Pieces : newState.player2Pieces;
+  const piece = { ...currentPieces[pieceIndex] };
+  const fromSquare = piece.square;
+  let toSquare: number;
 
   const currentTrackPos =
     piece.square === -1 ? -1 : getPlayerTrack(gameState.currentPlayer).indexOf(piece.square);
@@ -115,15 +125,15 @@ export function makeMove(gameState: GameState, pieceIndex: number): [GameState, 
   if (newTrackPos >= getPlayerTrack(gameState.currentPlayer).length) {
     currentPieces[pieceIndex] = { ...piece, square: 20 };
     moveType = 'finish';
+    toSquare = 20;
   } else {
     const newActualPos = getActualPosition(gameState.currentPlayer, newTrackPos);
-    const occupant = gameState.board[newActualPos];
+    const occupant = newState.board[newActualPos];
+    toSquare = newActualPos;
 
     if (occupant && occupant.player !== gameState.currentPlayer) {
       moveType = 'capture';
-      const opponentPieces = isPlayer1
-        ? [...gameState.player2Pieces]
-        : [...gameState.player1Pieces];
+      const opponentPieces = isPlayer1 ? [...newState.player2Pieces] : [...newState.player1Pieces];
       const opponentPieceIndex = opponentPieces.findIndex(p => p.square === newActualPos);
       if (opponentPieceIndex >= 0) {
         opponentPieces[opponentPieceIndex] = {
@@ -150,6 +160,15 @@ export function makeMove(gameState: GameState, pieceIndex: number): [GameState, 
   } else {
     newState.player2Pieces = currentPieces;
   }
+
+  newState.history.push({
+    player: movePlayer,
+    diceRoll: gameState.diceRoll,
+    pieceIndex,
+    fromSquare,
+    toSquare,
+    moveType,
+  });
 
   const finishedPieces = currentPieces.filter(p => p.square === 20).length;
   if (finishedPieces === PIECES_PER_PLAYER) {
