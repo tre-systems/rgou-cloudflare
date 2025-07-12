@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#1e40af",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "scope": "/",
   "categories": ["games", "entertainment", "strategy"],

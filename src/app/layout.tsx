@@ -32,16 +32,16 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'rgou',
   },
   applicationName: 'rgou',
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
     'apple-mobile-web-app-title': 'rgou',
-    'msapplication-TileColor': '#1e40af',
+    'msapplication-TileColor': '#000000',
     'msapplication-config': '/browserconfig.xml',
   },
 };
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#1e40af',
+  themeColor: '#000000',
 };
 
 export default function RootLayout({
@@ -66,6 +66,8 @@ export default function RootLayout({
 
         <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
         <script
           dangerouslySetInnerHTML={{
