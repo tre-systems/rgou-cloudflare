@@ -295,18 +295,23 @@ rgou-cloudflare/
 If you encounter "Failed to save game" errors when playing online:
 
 1. **Check Database Migrations**: Ensure the production D1 database has the latest schema:
+
    ```bash
    npx wrangler d1 migrations list rgou-db --remote
    ```
+
    If migrations are pending, apply them:
+
    ```bash
    npx wrangler d1 migrations apply rgou-db --remote
    ```
 
 2. **Verify Database Tables**: Check that the required tables exist:
+
    ```bash
    npx wrangler d1 execute rgou-db --remote --command="SELECT name FROM sqlite_master WHERE type='table';"
    ```
+
    You should see `games` and `game_moves` tables.
 
 3. **Enhanced Logging**: The application now includes detailed logging for database operations. Check the browser console for detailed error messages when games fail to save.
