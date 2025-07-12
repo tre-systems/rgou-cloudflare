@@ -4,21 +4,6 @@ import { getDb } from '@/lib/db';
 import { games, gameMoves } from '@/lib/db/schema';
 import { SaveGamePayload, SaveGamePayloadSchema } from '@/lib/schemas';
 
-export async function testDatabaseConnection() {
-  try {
-    const db = await getDb();
-    const result = await db.select().from(games).limit(1);
-    return {
-      success: true,
-      message: 'Database connection working',
-      gameCount: result.length,
-      environment: process.env.NODE_ENV === 'production' ? 'cloudflare' : 'local',
-    };
-  } catch (error) {
-    return { error: 'Failed to test database connection', details: (error as Error).message };
-  }
-}
-
 export async function saveGame(payload: SaveGamePayload) {
   try {
     const db = await getDb();
