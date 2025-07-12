@@ -36,7 +36,7 @@ export default function NetworkStatus() {
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 p-2 rounded-full shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm flex items-center justify-center`}
+      className={`fixed top-4 left-4 z-50 p-2 rounded-full shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm flex items-center justify-center`}
     >
       {isOnline ? (
         <Wifi className="h-5 w-5 text-green-400" />
