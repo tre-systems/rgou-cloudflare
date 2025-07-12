@@ -35,6 +35,8 @@ export const gameMoves = sqliteTable('game_moves', {
   moveType: text('moveType').notNull(),
 });
 
+export const dbTables = { games, gameMoves };
+
 export const gamesRelations = relations(games, ({ many }) => ({
   moves: many(gameMoves),
 }));
