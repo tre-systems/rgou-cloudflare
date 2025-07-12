@@ -106,6 +106,24 @@ The application includes development-specific UI elements that are automatically
 - **Production Behavior**: Hidden in production since client-side AI is the default and preferred option
 - **Implementation**: Conditional rendering based on hostname detection in `GameBoard.tsx`
 
+### Reset Game Button
+
+- **Location**: Control panel in the game board (next to sound toggle)
+- **Purpose**: Allows developers to restart the current game at any time
+- **Production Behavior**: Hidden in production to prevent accidental game resets during normal gameplay
+- **Implementation**: Conditional rendering based on `!isProduction()` check in `GameBoard.tsx`
+
+### Test End Game Button (Trophy Icon)
+
+- **Location**: Control panel in the game board
+- **Purpose**: Creates a near-winning game state for testing database functionality
+- **Functionality**:
+  - Sets up a game state where player1 has 6 pieces finished and 1 piece close to finishing
+  - Allows testing the game completion and database posting workflow
+  - Useful for verifying that game statistics are properly saved when a game ends
+- **Production Behavior**: Hidden in production since it's purely for development testing
+- **Implementation**: Conditional rendering based on hostname detection in `GameBoard.tsx`
+
 This approach provides a clean production interface while maintaining full debugging capabilities for developers. The hostname detection ensures that these developer tools are only shown when running locally:
 
 ```typescript
