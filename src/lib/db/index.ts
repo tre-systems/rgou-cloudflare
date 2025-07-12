@@ -9,6 +9,8 @@ export const getDb = async () => {
   if (!db) {
     console.log('getDb: Initializing database connection');
     console.log('getDb: NODE_ENV:', process.env.NODE_ENV);
+    console.log('getDb: typeof window:', typeof window);
+    console.log('getDb: typeof process:', typeof process);
 
     if (process.env.NODE_ENV === 'production') {
       console.log('getDb: Setting up D1 database for production');
@@ -18,6 +20,7 @@ export const getDb = async () => {
 
         const { env } = await getCloudflareContext({ async: true });
         console.log('getDb: Cloudflare context retrieved');
+        console.log('getDb: Available env keys:', Object.keys(env));
 
         if (!env.DB) {
           console.error('getDb: DB binding is not available in Cloudflare context');
@@ -33,9 +36,14 @@ export const getDb = async () => {
       }
     } else {
       console.log('getDb: Setting up SQLite database for development');
-      const sqlite = new Database('local.db');
-      db = drizzleSqlite(sqlite, { schema });
-      console.log('getDb: SQLite database instance created successfully');
+      try {
+        const sqlite = new Database('local.db');
+        db = drizzleSqlite(sqlite, { schema });
+        console.log('getDb: SQLite database instance created successfully');
+      } catch (error) {
+        console.error('getDb: Error setting up SQLite database:', error);
+        throw error;
+      }
     }
   }
 

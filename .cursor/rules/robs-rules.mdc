@@ -3,7 +3,6 @@ description:
 globs: 
 alwaysApply: true
 ---
-Always use arrow functions in typescript.
 Make sure we can elegantly handle errors, but don't overcomplicate error handling.
 NEVER ignore linting rules! fix the problems.
 Always look for opportunities to strengthen the linting rules.

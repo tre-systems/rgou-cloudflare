@@ -201,9 +201,16 @@ export const useGameStore = create<GameStore>()(
               console.log('✅ Game posted successfully to database. Game ID:', result.gameId);
             } else {
               console.error('❌ Failed to post game to database:', result?.error);
+              if (result?.details) {
+                console.error('❌ Error details:', result.details);
+              }
             }
           } catch (error) {
             console.error('❌ Exception occurred while posting game to database:', error);
+            if (error instanceof Error) {
+              console.error('❌ Error message:', error.message);
+              console.error('❌ Error stack:', error.stack);
+            }
           }
         },
       },
