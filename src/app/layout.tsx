@@ -100,7 +100,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+        <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>{children}</div>
         <PWAInstallPrompt />
         <NetworkStatus />
       </body>
