@@ -38,6 +38,7 @@ body {
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  padding-top: env(safe-area-inset-top);
 }
 
 @keyframes gradientShift {

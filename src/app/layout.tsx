@@ -65,6 +65,7 @@ export default function RootLayout({
         <link rel="mask-icon" href="/icons/icon-192x192.png" color="#1e40af" />
 
         <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
         <script
           dangerouslySetInnerHTML={{
