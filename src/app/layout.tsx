@@ -73,37 +73,20 @@ export default function RootLayout({
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                      
-                      // Check for updates
                       registration.addEventListener('updatefound', function() {
                         const newWorker = registration.installing;
                         if (newWorker) {
-                          console.log('New service worker found');
                           newWorker.addEventListener('statechange', function() {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                              console.log('New version available');
-                              
-                              // Show update notification
+                              if (document.getElementById('update-banner')) return;
                               const updateBanner = document.createElement('div');
-                              updateBanner.innerHTML = \`
-                                <div style="position: fixed; top: 0; left: 0; right: 0; background: #1e40af; color: white; padding: 12px; text-align: center; z-index: 10000; font-family: system-ui;">
-                                  <span>A new version is available!</span>
-                                  <button onclick="window.location.reload()" style="margin-left: 12px; background: white; color: #1e40af; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
-                                    Update Now
-                                  </button>
-                                  <button onclick="this.parentElement.parentElement.remove()" style="margin-left: 8px; background: transparent; color: white; border: 1px solid white; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                                    Later
-                                  </button>
-                                </div>
-                              \`;
+                              updateBanner.id = 'update-banner';
+                              updateBanner.innerHTML = '<div style="position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.95);color:#fff;padding:10px 20px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:10000;display:flex;align-items:center;gap:16px;font-family:system-ui;min-width:260px;max-width:90vw;"><span style="font-size:15px;font-weight:500;">A new version is available!</span><button onclick="window.location.reload()" style="background:#38bdf8;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-weight:600;cursor:pointer;font-size:14px;">Update Now</button><button onclick="this.closest(\'#update-banner\').remove()" style="background:none;color:#fff;border:none;font-size:14px;text-decoration:underline;cursor:pointer;padding:6px 8px;">Later</button></div>';
                               document.body.appendChild(updateBanner);
                             }
                           });
                         }
                       });
-                      
-                      // Check for updates immediately
                       registration.update();
                     })
                     .catch(function(registrationError) {
