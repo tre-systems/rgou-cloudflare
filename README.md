@@ -288,6 +288,37 @@ rgou-cloudflare/
 └── ...                         # Configuration files
 ```
 
+## 🔧 Troubleshooting
+
+### Database Issues
+
+If you encounter "Failed to save game" errors when playing online:
+
+1. **Check Database Migrations**: Ensure the production D1 database has the latest schema:
+   ```bash
+   npx wrangler d1 migrations list rgou-db --remote
+   ```
+   If migrations are pending, apply them:
+   ```bash
+   npx wrangler d1 migrations apply rgou-db --remote
+   ```
+
+2. **Verify Database Tables**: Check that the required tables exist:
+   ```bash
+   npx wrangler d1 execute rgou-db --remote --command="SELECT name FROM sqlite_master WHERE type='table';"
+   ```
+   You should see `games` and `game_moves` tables.
+
+3. **Enhanced Logging**: The application now includes detailed logging for database operations. Check the browser console for detailed error messages when games fail to save.
+
+4. **Environment Detection**: The application automatically detects whether it's running in development (SQLite) or production (D1). If you're seeing database errors, verify that `NODE_ENV` is set correctly.
+
+### Common Issues
+
+- **"DB binding is not available"**: This error occurs when the D1 database binding is not properly configured in your Cloudflare Worker. Check your `wrangler.toml` configuration.
+- **"Invalid game data"**: This indicates a validation error in the game data being saved. The enhanced logging will show the specific validation errors.
+- **"Failed to save game: missing game ID"**: This suggests an issue with the database insert operation. Check the database connection and schema.
+
 ## 🚀 Deployment
 
 This project is designed for a seamless deployment experience to the Cloudflare ecosystem, leveraging OpenNext to adapt the Next.js application for Cloudflare Pages.
