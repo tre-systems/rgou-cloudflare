@@ -12,7 +12,6 @@ export default function AnimatedBackground() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Responsive canvas sizing
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -21,7 +20,6 @@ export default function AnimatedBackground() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Particle system
     const particles: Array<{
       x: number;
       y: number;
@@ -41,7 +39,6 @@ export default function AnimatedBackground() {
       'rgba(147, 51, 234, 0.6)', // Purple
     ];
 
-    // Create initial particles
     const createParticle = () => ({
       x: Math.random() * canvas.width,
       y: canvas.height + 10,
@@ -53,37 +50,30 @@ export default function AnimatedBackground() {
       life: 1.0,
     });
 
-    // Initialize particles
     for (let i = 0; i < 100; i++) {
       particles.push(createParticle());
     }
 
     const animate = () => {
-      // Clear canvas with subtle fade effect
-      ctx.fillStyle = 'rgba(15, 15, 35, 0.05)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const particle = particles[i];
 
-        // Update particle position
         particle.x += particle.vx;
         particle.y += particle.vy;
         particle.life -= 0.002;
 
-        // Add subtle drift
         particle.vx += (Math.random() - 0.5) * 0.01;
         particle.vy += (Math.random() - 0.5) * 0.01;
 
-        // Remove dead particles
         if (particle.life <= 0 || particle.y < -10) {
           particles.splice(i, 1);
           particles.push(createParticle());
           continue;
         }
 
-        // Draw particle with glow effect
         const gradient = ctx.createRadialGradient(
           particle.x,
           particle.y,

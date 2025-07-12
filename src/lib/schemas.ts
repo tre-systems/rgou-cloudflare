@@ -105,7 +105,6 @@ export const SaveGamePayloadSchema = z.object({
   history: z.array(MoveRecordSchema),
   playerId: z.string(),
   clientVersion: z.string().optional().default('unknown'),
-  turnstileToken: z.string().optional(),
   moveCount: z.number().optional(),
   duration: z.number().optional(),
   version: z.string().optional().default('1.0.0'),

@@ -19,9 +19,42 @@ struct HealthResponse {
     version: String,
 }
 
-fn cors_headers() -> Result<Headers> {
+fn cors_headers_with_origin(origin: &Option<String>, env: &Env) -> Result<Headers> {
     let headers = Headers::new();
-    headers.set("Access-Control-Allow-Origin", "*")?;
+    
+    let allowed_origins = if is_development(env) {
+        vec![
+            "http://localhost:3000",
+            "http://localhost:3001", 
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+        ]
+    } else {
+        vec![
+            "https://rgou.tre.systems",
+            "https://www.rgou.tre.systems",
+        ]
+    };
+    
+    let cors_origin = if let Some(origin_str) = origin {
+        if allowed_origins.contains(&origin_str.as_str()) {
+            origin_str.clone()
+        } else {
+            if is_development(env) {
+                "http://localhost:3000".to_string()
+            } else {
+                "https://rgou.tre.systems".to_string()
+            }
+        }
+    } else {
+        if is_development(env) {
+            "http://localhost:3000".to_string()
+        } else {
+            "https://rgou.tre.systems".to_string()
+        }
+    };
+    
+    headers.set("Access-Control-Allow-Origin", &cors_origin)?;
     headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")?;
     headers.set(
         "Access-Control-Allow-Headers",
@@ -146,19 +179,23 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     console_error_panic_hook::set_once();
 
     let url = req.url()?;
-    console_log!("[Worker] {} {}", req.method(), url.path());
+    let method = req.method();
+    let path = url.path();
+    console_log!("[Worker] {} {}", method, path);
 
-    if req.method() == Method::Options {
-        return Ok(Response::empty()?.with_headers(cors_headers()?));
+    let origin = req.headers().get("Origin").unwrap_or_default();
+
+    if method == Method::Options {
+        return Ok(Response::empty()?.with_headers(cors_headers_with_origin(&origin, &env)?));
     }
 
     let start_time = js_sys::Date::now();
 
-    let result = match (req.method(), url.path()) {
+    let result = match (method, path) {
         (Method::Post, "/ai-move") => handle_ai_move(req, start_time, &env).await,
         (Method::Get, "/health") => handle_health(),
         _ => Ok(Response::error("Not Found", 404)?),
     };
 
-    result.and_then(|response| Ok(response.with_headers(cors_headers()?)))
+    result.and_then(|response| Ok(response.with_headers(cors_headers_with_origin(&origin, &env)?)))
 }

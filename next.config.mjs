@@ -4,10 +4,6 @@ initOpenNextCloudflareForDev();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {
-    NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY:
-      process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY,
-  },
   webpack: (config, { isServer }) => {
     config.experiments = {
       ...config.experiments,

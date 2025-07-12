@@ -30,8 +30,6 @@
     "db:exec": "npx wrangler d1 execute rgou-db --remote --file"
   },
   "dependencies": {
-    "@auth/drizzle-adapter": "^1.9.1",
-    "@marsidev/react-turnstile": "^1.1.0",
     "better-sqlite3": "^11.10.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.19.2",
