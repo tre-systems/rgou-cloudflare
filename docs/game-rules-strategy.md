@@ -14,11 +14,10 @@ The Royal Game of Ur is a **race game** where two players compete to move all se
 
 The game board consists of 20 squares arranged in a distinctive pattern:
 
-```
-    3  2  1  0
-  4  5  6  7  8  9 10 11 12 13
-    19 18 17 16 15 14
-```
+<div align="center">
+  <img src="board.png" alt="Royal Game of Ur Board Annotated" width="500" />
+  <img src="board-numbered.png" alt="Royal Game of Ur Board Numbered" width="500" />
+</div>
 
 ### Key Board Features
 

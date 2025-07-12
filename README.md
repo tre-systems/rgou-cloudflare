@@ -7,7 +7,7 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 [![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
 
 <div align="center">
-  <img src="public/screenshot.png" alt="Royal Game of Ur Screenshot" width="600" />
+  <img src="docs/screenshot.png" alt="Royal Game of Ur Screenshot" width="600" />
 </div>
 
 <div align="center">
@@ -44,7 +44,7 @@ For complete rules, historical context, and strategic guidance, see the [Game Ru
 
 ## 🏗️ Architecture
 
-This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a powerful server-side AI and an instant client-side AI. The core AI logic is shared in the `worker/rust_ai_core` crate, ensuring consistent AI behavior across both platforms.
+This project uses a unique dual-AI architecture, allowing the user to switch seamlessly between a server-side and client-side AI. The core AI logic is shared in the `worker/rust_ai_core` crate, ensuring consistent AI behavior across both platforms. At present only the client AI is used in production as it's cheaper to run.
 
 - **Client AI (Default)**: The same core Rust AI logic compiled to **WebAssembly (Wasm)** runs directly in the browser. It uses a deeper search (6 plies), making it the **stronger** opponent. This also enables **offline play**.
 - **Server AI (Fallback)**: A Rust AI on **Cloudflare Workers**. Due to the short compute time limits of serverless functions, this AI has a lower search depth (4 plies), making it a faster but weaker opponent.
@@ -68,7 +68,7 @@ For a more detailed explanation of the overall architecture, please see the [Arc
 - **Frontend**: Next.js, React, TypeScript, Tailwind CSS
 - **PWA**: Service Worker, Web App Manifest
 - **AI Engine**: Rust (Cloudflare Worker) & Rust compiled to WebAssembly (Client)
-- **Deployment**: Cloudflare Pages & Workers
+- **Deployment**: Cloudflare Workers
 
 ## 📚 Documentation
 
@@ -190,13 +190,6 @@ To host your game on Cloudflare Pages and Workers:
    npm run build
    npx wrangler deploy
    ```
-
-7. **Set up Custom Domain (Optional)**
-   - In your Cloudflare dashboard, go to "Workers & Pages"
-   - Find your deployed application
-   - Click "Custom domains" and add your domain
-
-Your game will now be live on Cloudflare with a URL like `https://your-app-name.pages.dev`!
 
 ### 4. Set Up GitHub Actions (Automatic Deployment)
 
