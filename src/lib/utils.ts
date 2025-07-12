@@ -41,8 +41,10 @@ export const isDevelopment = () => {
 };
 
 export const isLocalDevelopment = () => {
-  return (
-    isDevelopment() ||
-    (typeof window !== 'undefined' && window.location.hostname === 'rgou.tre.systems')
-  );
+  if (typeof window === 'undefined') {
+    return process.env.NODE_ENV === 'development';
+  }
+
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
 };
