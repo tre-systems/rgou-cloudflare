@@ -14,18 +14,17 @@ cd ../..
 
 # Generate high-quality training data
 echo "Generating high-quality training data..."
-python3 scripts/train_ml_ai.py \
-    --num-games 5000 \
-    --epochs 200 \
+# Prevent Mac from sleeping during training
+caffeinate -i python3 scripts/train_ml_ai.py \
+    --num-games 10000 \
+    --epochs 300 \
     --batch-size 128 \
     --learning-rate 0.0005 \
     --use-rust-ai \
-    --output-file ml_ai_weights_optimized.json \
-    --quantize \
-    --compress
+    --output ml_ai_weights_unbeatable.json
 
 echo ""
-echo "Training completed! New weights saved to ml_ai_weights_optimized.json"
+echo "Training completed! New weights saved to ml_ai_weights_unbeatable.json"
 echo ""
 
 # Test the new model

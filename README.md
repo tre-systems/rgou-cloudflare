@@ -125,6 +125,19 @@ python scripts/train_ml_ai.py \
 
 See [Mac Optimization Guide](./docs/mac-optimization-guide.md) for detailed performance tuning.
 
+## Royal Game of Ur ML AI Training
+
+## Preventing Mac Sleep During Training
+
+The training script (`scripts/train_ml_ai_optimized.sh`) now uses `caffeinate` to prevent your Mac from sleeping during long training runs. This ensures that your training will not pause or stop if you lock your screen or leave your Mac unattended.
+
+**If you run training manually:**
+
+- You can use `caffeinate -i python3 scripts/train_ml_ai.py ...` to keep your Mac awake for the duration of the training.
+- Alternatively, open a new Terminal and run `caffeinate` in the background while your training is running.
+
+This is especially important for long runs (10,000+ games, 300+ epochs) to avoid wasted time and interrupted jobs.
+
 ### Deploy to Cloudflare
 
 1. **Install Wrangler CLI**

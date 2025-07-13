@@ -127,6 +127,19 @@ python scripts/train_ml_ai.py \
 ./scripts/build_rust_ai.sh
 ```
 
+## Preventing Mac Sleep During ML Training
+
+When running long ML training jobs (especially with 10,000+ games and many epochs), it's important to prevent your Mac from sleeping, as this will pause or interrupt your training.
+
+### Recommended: Use `caffeinate`
+
+- The training script (`scripts/train_ml_ai_optimized.sh`) now uses `caffeinate -i` to keep your Mac awake for the duration of the training job.
+- If you run training manually, you can:
+  - Prefix your command: `caffeinate -i python3 scripts/train_ml_ai.py ...`
+  - Or, open a new Terminal and run `caffeinate` in the background while your training is running.
+
+This ensures your training will continue even if you lock your screen or step away from your Mac.
+
 ## Performance Monitoring
 
 ### Resource Usage Tracking
