@@ -1,167 +1,31 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
-import { soundEffects } from '@/lib/sound-effects';
-import { isLocalDevelopment } from '@/lib/utils';
-import GameBoard from './GameBoard';
-import AnimatedBackground from './AnimatedBackground';
+import React, { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import { useGameStore } from '@/lib/game-store';
+import { isLocalDevelopment } from '@/lib/utils';
+import { soundEffects } from '@/lib/sound-effects';
+import GameBoard from './GameBoard';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 import HowToPlayPanel from './HowToPlayPanel';
+import AnimatedBackground from './AnimatedBackground';
+import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function RoyalGameOfUr() {
-  const gameState = useGameState();
-  const { processDiceRoll, switchPlayerAfterZeroRoll, makeMove, makeAIMove, reset } =
-    useGameActions();
-  const aiThinking = useGameStore(state => state.aiThinking);
-  const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
-  const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
-  const lastMoveType = useGameStore(state => state.lastMoveType);
-  const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
-
   const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const zeroRollTimeout = React.useRef<NodeJS.Timeout | null>(null);
+  const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
 
-  useEffect(() => {
-    if (gameState.diceRoll === 0 && !gameState.canMove && gameState.gameStatus === 'playing') {
-      zeroRollTimeout.current = setTimeout(() => {
-        switchPlayerAfterZeroRoll();
-      }, 2000);
-    }
-    return () => {
-      if (zeroRollTimeout.current) {
-        clearTimeout(zeroRollTimeout.current);
-        zeroRollTimeout.current = null;
-      }
-    };
-  }, [gameState.diceRoll, gameState.canMove, gameState.gameStatus, switchPlayerAfterZeroRoll]);
-
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player2' &&
-      !gameState.canMove &&
-      gameState.gameStatus === 'playing' &&
-      gameState.diceRoll !== 0
-    ) {
-      setTimeout(() => processDiceRoll(), 500);
-    }
-  }, [
-    gameState.currentPlayer,
-    gameState.canMove,
-    gameState.gameStatus,
-    gameState.diceRoll,
-    processDiceRoll,
-  ]);
-
-  useEffect(() => {
-    if (gameState.currentPlayer === 'player2' && gameState.canMove) {
-      soundEffects.aiThinking();
-      makeAIMove(aiSource);
-    }
-  }, [gameState, makeAIMove, aiSource]);
-
-  useEffect(() => {
-    if (gameState.gameStatus === 'finished') {
-      setTimeout(() => {
-        if (gameState.winner === 'player1') {
-          soundEffects.gameWin();
-        } else {
-          soundEffects.gameLoss();
-        }
-      }, 500);
-    }
-  }, [gameState.gameStatus, gameState.winner]);
-
-  useEffect(() => {
-    if (lastMoveType && lastMovePlayer) {
-      switch (lastMoveType) {
-        case 'capture':
-          soundEffects.pieceCapture();
-          break;
-        case 'rosette':
-          soundEffects.rosetteLanding();
-          break;
-        case 'finish':
-          soundEffects.pieceFinish();
-          break;
-        case 'move':
-          soundEffects.pieceMove();
-          break;
-      }
-    }
-  }, [lastMoveType, lastMovePlayer]);
-
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player1' &&
-      !gameState.canMove &&
-      gameState.diceRoll === null &&
-      gameState.gameStatus === 'playing'
-    ) {
-      setTimeout(() => processDiceRoll(), 500);
-    }
-  }, [
-    gameState.currentPlayer,
-    gameState.canMove,
-    gameState.diceRoll,
-    gameState.gameStatus,
-    processDiceRoll,
-  ]);
-
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player1' &&
-      !gameState.canMove &&
-      gameState.diceRoll !== null &&
-      gameState.gameStatus === 'playing'
-    ) {
-      setTimeout(() => processDiceRoll(), 1000);
-    }
-  }, [
-    gameState.currentPlayer,
-    gameState.canMove,
-    gameState.diceRoll,
-    gameState.gameStatus,
-    processDiceRoll,
-  ]);
-
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player2' &&
-      gameState.diceRoll === 0 &&
-      !gameState.canMove &&
-      gameState.gameStatus === 'playing'
-    ) {
-      zeroRollTimeout.current = setTimeout(() => {
-        switchPlayerAfterZeroRoll();
-      }, 2000);
-    }
-    return () => {
-      if (zeroRollTimeout.current) {
-        clearTimeout(zeroRollTimeout.current);
-        zeroRollTimeout.current = null;
-      }
-    };
-  }, [
-    gameState.currentPlayer,
-    gameState.diceRoll,
-    gameState.canMove,
-    gameState.gameStatus,
-    switchPlayerAfterZeroRoll,
-  ]);
-
-  useEffect(() => {
-    if (gameState.diceRoll !== 0 || gameState.gameStatus !== 'playing') {
-      // Clear pending zero roll if dice roll is not 0 or game status is not playing
-      // This logic is now handled by the useEffect that runs on diceRoll or gameStatus change
-    }
-  }, [gameState.diceRoll, gameState.gameStatus]);
+  const {
+    gameState,
+    aiThinking,
+    lastAIDiagnostics,
+    lastAIMoveDuration,
+    actions: { makeMove, reset },
+  } = useGameStore();
 
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
@@ -194,14 +58,13 @@ export default function RoyalGameOfUr() {
     actions.createNearWinningState();
   };
 
-  // Add a handler to switch AI and reset the game
   const handleAiSourceChange = (source: 'server' | 'client' | 'ml') => {
     setAiSource(source);
     reset();
   };
 
-  const diagnosticsPanel =
-    isLocalDevelopment() && lastAIDiagnostics ? (
+  const diagnosticsPanelOrPlaceholder = isLocalDevelopment() ? (
+    lastAIDiagnostics ? (
       <AIDiagnosticsPanel
         lastAIDiagnostics={lastAIDiagnostics}
         lastAIMoveDuration={lastAIMoveDuration}
@@ -209,7 +72,32 @@ export default function RoyalGameOfUr() {
         onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
         gameState={gameState}
       />
-    ) : null;
+    ) : (
+      <div className="glass-dark rounded-lg p-3">
+        <button
+          className="w-full text-left flex justify-between items-center"
+          onClick={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+        >
+          <div className="flex items-center space-x-2">
+            <Bug className="w-4 h-4 text-green-400" />
+            <span className="font-semibold text-sm text-white/90">AI Diagnostics</span>
+            <span className="text-xs text-white/60">(Waiting for AI move)</span>
+          </div>
+          {diagnosticsPanelOpen ? (
+            <ChevronDown className="w-5 h-5 text-white/70" />
+          ) : (
+            <ChevronRight className="w-5 h-5 text-white/70" />
+          )}
+        </button>
+        {diagnosticsPanelOpen && (
+          <div className="mt-3 text-xs text-white/70">
+            <p>No AI diagnostics available yet. Make a move to see AI analysis.</p>
+            <p className="mt-2">Current AI source: {aiSource}</p>
+          </div>
+        )}
+      </div>
+    )
+  ) : null;
 
   return (
     <>
@@ -233,7 +121,7 @@ export default function RoyalGameOfUr() {
         </div>
         {isLocalDevelopment() && (
           <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
-            {diagnosticsPanel}
+            {diagnosticsPanelOrPlaceholder}
           </div>
         )}
         <motion.div
@@ -317,7 +205,7 @@ export default function RoyalGameOfUr() {
             data-testid="game-board-component"
           />
 
-          {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanel}</div>}
+          {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanelOrPlaceholder}</div>}
 
           <HowToPlayPanel
             isOpen={howToPlayOpen}

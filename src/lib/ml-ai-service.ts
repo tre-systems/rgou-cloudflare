@@ -33,8 +33,8 @@ interface MLResponse {
     policy_network_outputs: number[];
   };
   timings: {
-    ai_move_calculation: number;
-    total_handler_time: number;
+    aiMoveCalculation: number;
+    totalHandlerTime: number;
   };
 }
 
@@ -111,14 +111,19 @@ class MLAIService {
   }
 
   private async ensureWorkerReady(): Promise<void> {
+    console.log('ML AI Service: Ensuring worker is ready...');
     if (!this.initPromise) {
+      console.log('ML AI Service: No init promise, starting initialization');
       this.init();
+      console.log('ML AI Service: Starting to load default weights');
       this.loadDefaultWeights();
     }
+    console.log('ML AI Service: Waiting for init promise...');
     await this.initPromise;
     if (!this.worker) {
       throw new Error('ML AI Worker not initialized.');
     }
+    console.log('ML AI Service: Worker is ready');
   }
 
   async loadWeights(weights: MLWeights): Promise<void> {
@@ -205,12 +210,12 @@ class MLAIService {
     );
     console.log(
       'ML AI Service: WASM calculation time:',
-      response.timings.ai_move_calculation.toFixed(2),
+      response.timings.aiMoveCalculation?.toFixed(2) || 'N/A',
       'ms'
     );
     console.log(
       'ML AI Service: Total handler time:',
-      response.timings.total_handler_time.toFixed(2),
+      response.timings.totalHandlerTime?.toFixed(2) || 'N/A',
       'ms'
     );
 
@@ -279,7 +284,6 @@ class MLAIService {
     try {
       console.log('ML AI Service: Attempting to load default weights...');
 
-      // Try compressed weights first
       let response = await fetch('/ml-weights.json.gz');
       if (response.ok) {
         console.log('ML AI Service: Found compressed weights file');
@@ -294,17 +298,18 @@ class MLAIService {
         );
 
         const weights = JSON.parse(decompressedData) as MLWeights;
+        console.log('ML AI Service: Parsed weights, loading into service...');
         await this.loadWeights(weights);
         console.log('ML AI Service: Loaded compressed default weights successfully');
         return;
       }
 
-      // Fallback to uncompressed weights
       console.log('ML AI Service: Compressed weights not found, trying uncompressed...');
       response = await fetch('/ml-weights.json');
       if (response.ok) {
         console.log('ML AI Service: Found uncompressed weights file');
         const weights = (await response.json()) as MLWeights;
+        console.log('ML AI Service: Parsed uncompressed weights, loading into service...');
         await this.loadWeights(weights);
         console.log('ML AI Service: Loaded uncompressed default weights successfully');
       } else {

@@ -22,16 +22,23 @@ const networkConfig: {
   policy?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
 } = {};
 
+console.log('ML AI Worker: Variables initialized');
+
 const loadMLWasm = (): Promise<void> => {
   if (mlWasmReady) return mlWasmReady;
 
+  console.log('ML AI Worker: Starting loadMLWasm function');
   mlWasmReady = (async () => {
     try {
       console.log('ML AI Worker: Starting to load ML WebAssembly module...');
+      console.log('ML AI Worker: Current location:', self.location.href);
+      console.log('ML AI Worker: Current origin:', self.location.origin);
 
       try {
+        console.log('ML AI Worker: Attempting to import rgou_ml_ai_worker.js...');
         mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ml_ai_worker.js');
         console.log('ML AI Worker: rgou_ml_ai_worker.js loaded successfully.');
+        console.log('ML AI Worker: Module keys:', Object.keys(mlWasmModule));
       } catch (error) {
         console.error('ML AI Worker: Failed to load rgou_ml_ai_worker.js:', error);
         throw new Error(`Failed to load ML WASM JS module: ${error}`);
@@ -49,6 +56,12 @@ const loadMLWasm = (): Promise<void> => {
       }
 
       if (typeof mlWasmModule.init_ml_ai !== 'function') {
+        console.error(
+          'ML AI Worker: Available functions:',
+          Object.keys(mlWasmModule).filter(
+            key => typeof (mlWasmModule as unknown as Record<string, unknown>)[key] === 'function'
+          )
+        );
         throw new Error('ML WASM module does not have init_ml_ai function');
       }
 
@@ -142,6 +155,9 @@ self.addEventListener(
   ) => {
     try {
       console.log('ML AI Worker: Received message:', event.data);
+      console.log('ML AI Worker: Message type:', event.data.type);
+      console.log('ML AI Worker: Message id:', event.data.id);
+
       await loadMLWasm();
       console.log('ML AI Worker: ML Wasm loaded, processing message.');
 
@@ -231,16 +247,16 @@ self.addEventListener(
             );
             console.log(
               'ML AI Worker: - WASM calculation time:',
-              typeof response.timings.ai_move_calculation === 'number'
-                ? response.timings.ai_move_calculation.toFixed(2)
-                : response.timings.ai_move_calculation,
+              typeof response.timings.aiMoveCalculation === 'number'
+                ? response.timings.aiMoveCalculation.toFixed(2)
+                : response.timings.aiMoveCalculation,
               'ms'
             );
             console.log(
               'ML AI Worker: - Total handler time:',
-              typeof response.timings.total_handler_time === 'number'
-                ? response.timings.total_handler_time.toFixed(2)
-                : response.timings.total_handler_time,
+              typeof response.timings.totalHandlerTime === 'number'
+                ? response.timings.totalHandlerTime.toFixed(2)
+                : response.timings.totalHandlerTime,
               'ms'
             );
 
@@ -347,7 +363,7 @@ self.addEventListener(
   }
 );
 
-// Initialize ML WASM on worker startup
+console.log('ML AI Worker: Starting initialization on worker startup');
 loadMLWasm()
   .then(() => {
     console.log('ML AI Worker: ML WASM initialized, sending ready signal.');
@@ -357,3 +373,5 @@ loadMLWasm()
     console.error('ML AI Worker: Failed to initialize ML WASM on startup:', error);
     self.postMessage({ type: 'error', id: -1, error: error.message });
   });
+
+console.log('ML AI Worker: Worker script loaded and event listeners attached');

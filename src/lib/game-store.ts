@@ -1,19 +1,16 @@
 import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { GameState, MoveType, Player, AIResponse } from './schemas';
-import {
-  initializeGame,
-  processDiceRoll as processDiceRollLogic,
-  makeMove as makeMoveLogic,
-  switchPlayerAfterZeroRoll as switchPlayerAfterZeroRollLogic,
-} from './game-logic';
+import { immer } from 'zustand/middleware/immer';
+import { initializeGame, processDiceRoll, makeMove as makeMoveLogic } from './game-logic';
 import { AIService } from './ai-service';
 import { wasmAiService } from './wasm-ai-service';
 import { mlAiService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
-import { saveGame } from '@/lib/actions';
+import type { GameState, Player, MoveType, AIResponse } from './types';
+import { saveGame } from './actions';
 import { getPlayerId } from './utils';
+
+const LATEST_VERSION = 1;
 
 type GameStore = {
   gameState: GameState;
@@ -34,8 +31,6 @@ type GameStore = {
   };
 };
 
-const LATEST_VERSION = 1;
-
 export const useGameStore = create<GameStore>()(
   persist(
     immer((set, get) => ({
@@ -47,32 +42,42 @@ export const useGameStore = create<GameStore>()(
       lastMovePlayer: null,
       actions: {
         initialize: (fromStorage = false) => {
-          if (fromStorage) {
-            return;
+          if (!fromStorage) {
+            set(state => {
+              state.gameState = initializeGame();
+              state.aiThinking = false;
+              state.lastAIDiagnostics = null;
+              state.lastAIMoveDuration = null;
+              state.lastMoveType = null;
+              state.lastMovePlayer = null;
+            });
           }
-          set(state => {
-            state.gameState = initializeGame();
-            state.aiThinking = false;
-            state.lastAIDiagnostics = null;
-            state.lastAIMoveDuration = null;
-            state.lastMoveType = null;
-            state.lastMovePlayer = null;
-          });
         },
-        processDiceRoll: (roll?: number) => {
+        processDiceRoll: roll => {
+          const { gameState } = get();
+          const newState = processDiceRoll(gameState, roll);
           set(state => {
-            state.gameState = processDiceRollLogic(state.gameState, roll);
+            state.gameState = newState;
           });
         },
         switchPlayerAfterZeroRoll: () => {
+          const { gameState } = get();
+          const newState = processDiceRoll({
+            ...gameState,
+            currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
+            diceRoll: null,
+            canMove: false,
+            validMoves: [],
+          });
           set(state => {
-            state.gameState = switchPlayerAfterZeroRollLogic(state.gameState);
+            state.gameState = newState;
           });
         },
         makeMove: (pieceIndex: number) => {
-          set(state => {
-            if (state.gameState.canMove && state.gameState.validMoves.includes(pieceIndex)) {
-              const [newState, moveType, movePlayer] = makeMoveLogic(state.gameState, pieceIndex);
+          const { gameState } = get();
+          if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
+            const [newState, moveType, movePlayer] = makeMoveLogic(gameState, pieceIndex);
+            set(state => {
               state.gameState = newState;
               state.lastMoveType = moveType;
               state.lastMovePlayer = movePlayer;
@@ -84,17 +89,25 @@ export const useGameStore = create<GameStore>()(
                   useStatsStore.getState().actions.incrementLosses();
                 }
               }
-            }
-          });
+            });
+          }
         },
         makeAIMove: async (aiSource: 'server' | 'client' | 'ml') => {
           const { gameState, actions } = get();
           if (gameState.currentPlayer !== 'player2' || !gameState.canMove) return;
 
-          // If there are no valid moves, immediately switch turn
+          console.log('GameStore: Starting AI move with source:', aiSource);
+          console.log('GameStore: Current game state:', {
+            currentPlayer: gameState.currentPlayer,
+            diceRoll: gameState.diceRoll,
+            validMoves: gameState.validMoves,
+            canMove: gameState.canMove,
+          });
+
           if (gameState.validMoves.length === 0) {
+            console.log('GameStore: No valid moves, switching turn');
             set(state => {
-              state.gameState = processDiceRollLogic({
+              state.gameState = processDiceRoll({
                 ...state.gameState,
                 currentPlayer: 'player1',
                 diceRoll: null,
@@ -116,14 +129,16 @@ export const useGameStore = create<GameStore>()(
             let aiResponseFromServer;
 
             if (aiSource === 'ml') {
+              console.log('GameStore: Using ML AI service');
               const mlResponse = await mlAiService.getAIMove(gameState);
+              console.log('GameStore: ML AI response received:', mlResponse);
               aiResponseFromServer = {
                 move: mlResponse.move,
                 evaluation: Math.round(mlResponse.evaluation * 1000),
                 thinking: mlResponse.thinking,
                 timings: {
-                  aiMoveCalculation: mlResponse.timings.ai_move_calculation,
-                  totalHandlerTime: mlResponse.timings.total_handler_time,
+                  aiMoveCalculation: mlResponse.timings?.aiMoveCalculation || 0,
+                  totalHandlerTime: mlResponse.timings?.totalHandlerTime || 0,
                 },
                 diagnostics: {
                   searchDepth: 0,
@@ -140,7 +155,9 @@ export const useGameStore = create<GameStore>()(
                 },
                 aiType: 'ml',
               };
+              console.log('GameStore: Processed ML AI response:', aiResponseFromServer);
             } else {
+              console.log('GameStore: Using', aiSource, 'AI service');
               aiResponseFromServer =
                 aiSource === 'server'
                   ? await AIService.getAIMove(gameState)
@@ -151,6 +168,7 @@ export const useGameStore = create<GameStore>()(
             const aiResponse = { ...aiResponseFromServer, aiType: aiSource };
             const duration = performance.now() - startTime;
 
+            console.log('GameStore: Setting AI diagnostics:', aiResponse);
             set(state => {
               state.lastAIMoveDuration = duration;
               state.lastAIDiagnostics = aiResponse;
@@ -159,13 +177,16 @@ export const useGameStore = create<GameStore>()(
             const { move: aiMove } = aiResponse;
 
             if (aiMove === null || aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
+              console.log('GameStore: Invalid AI move, using fallback');
               if (gameState.validMoves.length > 0) {
                 actions.makeMove(gameState.validMoves[0]);
               }
             } else {
+              console.log('GameStore: Making AI move:', aiMove);
               actions.makeMove(aiMove);
             }
-          } catch {
+          } catch (error) {
+            console.error('GameStore: AI move failed:', error);
             const fallbackMove = AIService.getFallbackAIMove(gameState);
             actions.makeMove(fallbackMove);
           } finally {
@@ -186,16 +207,12 @@ export const useGameStore = create<GameStore>()(
         },
         createNearWinningState: () => {
           set(state => {
-            // Create a near-winning state for player1
-            // Set 6 pieces to finished (square 20)
             for (let i = 0; i < 6; i++) {
               state.gameState.player1Pieces[i].square = 20;
             }
-            // Set the 7th piece to square 12 (which is the 12th square in the test)
             state.gameState.player1Pieces[6].square = 12;
             state.gameState.board[12] = state.gameState.player1Pieces[6];
 
-            // Set current player to player1 and ensure it's their turn
             state.gameState.currentPlayer = 'player1';
             state.gameState.gameStatus = 'playing';
             state.gameState.winner = null;
@@ -203,7 +220,6 @@ export const useGameStore = create<GameStore>()(
             state.gameState.canMove = false;
             state.gameState.validMoves = [];
 
-            // Clear any AI state
             state.aiThinking = false;
             state.lastAIDiagnostics = null;
             state.lastAIMoveDuration = null;
@@ -217,28 +233,16 @@ export const useGameStore = create<GameStore>()(
             return;
           }
 
-          const moveCount = gameState.history.length;
-          const duration = undefined;
-
-          const version = '1.0.0';
-          const clientHeader = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
-
           try {
             const payload = {
               winner: gameState.winner,
               history: gameState.history,
               clientVersion: '1.0.0',
               playerId: getPlayerId(),
-              moveCount,
-              duration,
-              version,
-              clientHeader,
+              version: '1.0.0',
             };
-
             await saveGame(payload);
-          } catch {
-            // Error handling
-          }
+          } catch {}
         },
       },
     })),
