@@ -44,9 +44,7 @@ class MLAIService {
   private messageCounter = 0;
   private readonly pendingRequests = new Map<number, PendingRequestType>();
 
-  constructor() {
-    this.init();
-  }
+  constructor() {}
 
   private init(): Promise<void> {
     if (!this.initPromise) {
@@ -64,7 +62,6 @@ class MLAIService {
             const promise = this.pendingRequests.get(event.data.id);
             if (promise) {
               if (event.data.type === 'success') {
-                // Type-safe resolve
                 (promise.resolve as (value: unknown) => void)(event.data.response);
               } else {
                 promise.reject(new Error(event.data.error));
@@ -86,6 +83,7 @@ class MLAIService {
   private async ensureWorkerReady(): Promise<void> {
     if (!this.initPromise) {
       this.init();
+      this.loadDefaultWeights();
     }
     await this.initPromise;
     if (!this.worker) {
@@ -145,6 +143,21 @@ class MLAIService {
     });
     this.worker!.postMessage({ id: messageId, type: 'rollDice' });
     return promise;
+  }
+
+  private async loadDefaultWeights(): Promise<void> {
+    try {
+      const response = await fetch('/ml-weights.json');
+      if (response.ok) {
+        const weights = (await response.json()) as MLWeights;
+        await this.loadWeights(weights);
+        console.log('ML AI: Loaded default weights successfully');
+      } else {
+        console.log('ML AI: No default weights found, using untrained networks');
+      }
+    } catch (error) {
+      console.log('ML AI: Failed to load default weights, using untrained networks:', error);
+    }
   }
 }
 

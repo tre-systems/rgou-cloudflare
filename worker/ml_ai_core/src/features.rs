@@ -5,7 +5,7 @@ pub const SIZE: usize = 100;
 
 #[derive(Clone, Debug)]
 pub struct GameFeatures {
-  pub features: [f32; 100],
+    pub features: [f32; 100],
 }
 
 impl GameFeatures {

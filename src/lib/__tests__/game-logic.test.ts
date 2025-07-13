@@ -7,7 +7,7 @@ describe('game-logic', () => {
     it('should initialize game with correct default state', () => {
       const gameState = initializeGame();
 
-      expect(gameState.board).toHaveLength(20);
+      expect(gameState.board).toHaveLength(21);
       expect(gameState.board.every(square => square === null)).toBe(true);
       expect(gameState.player1Pieces).toHaveLength(7);
       expect(gameState.player2Pieces).toHaveLength(7);

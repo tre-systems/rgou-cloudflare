@@ -26,9 +26,9 @@ const loadMLWasm = (): Promise<void> => {
 
       try {
         mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ml_ai_worker.js');
-        console.log('ML AI Worker: ml_ai_core.js loaded successfully.');
+        console.log('ML AI Worker: rgou_ml_ai_worker.js loaded successfully.');
       } catch (error) {
-        console.error('ML AI Worker: Failed to load ml_ai_core.js:', error);
+        console.error('ML AI Worker: Failed to load rgou_ml_ai_worker.js:', error);
         throw new Error(`Failed to load ML WASM JS module: ${error}`);
       }
 

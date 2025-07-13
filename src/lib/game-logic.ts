@@ -1,6 +1,6 @@
 import { GameState, Player, PiecePosition, MoveType, GameConstants } from './schemas';
 
-const { ROSETTE_SQUARES, TRACK_LENGTH, PIECES_PER_PLAYER, PLAYER1_TRACK, PLAYER2_TRACK } =
+const { ROSETTE_SQUARES, BOARD_ARRAY_SIZE, PIECES_PER_PLAYER, PLAYER1_TRACK, PLAYER2_TRACK } =
   GameConstants;
 
 export function initializeGame(): GameState {
@@ -19,7 +19,7 @@ export function initializeGame(): GameState {
     }));
 
   return {
-    board: Array(TRACK_LENGTH).fill(null),
+    board: Array(BOARD_ARRAY_SIZE).fill(null),
     player1Pieces,
     player2Pieces,
     currentPlayer: 'player1',

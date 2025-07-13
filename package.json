@@ -34,7 +34,10 @@
     "migrate:generate": "drizzle-kit generate",
     "migrate:d1": "wrangler d1 migrations apply rgou-db --remote",
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
-    "train:ml": "python scripts/train_ml_ai.py",
+    "train:ml": "python scripts/train_ml_ai.py --use-rust-ai",
+    "train:ml:synthetic": "python scripts/train_ml_ai.py --synthetic",
+    "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
+    "load:ml-weights": "tsx scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts",
     "db:exec": "npx wrangler d1 execute rgou-db --remote --file"
   },

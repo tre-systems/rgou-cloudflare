@@ -17,8 +17,11 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import random
 import os
+import subprocess
+import tempfile
 from typing import List, Tuple, Dict, Any
 import argparse
+from tqdm import tqdm
 
 
 class GameFeatures:
@@ -99,7 +102,7 @@ class GameFeatures:
         features[idx] = 1.0 if game_state["current_player"] == "player1" else -1.0
         idx += 1
 
-        features[idx] = game_state.get("dice_roll", 0) / 4.0
+        features[idx] = game_state["dice_roll"] / 4.0
         idx += 1
 
         # Valid moves count
@@ -134,15 +137,19 @@ class GameFeatures:
         rosette_squares = [0, 7, 13, 15, 16]
         score = 0
         for rosette in rosette_squares:
-            square = game_state["board"][rosette]
-            if square is not None:
-                score += 1 if square["player"] == "player1" else -1
+            if (
+                rosette < len(game_state["board"])
+                and game_state["board"][rosette] is not None
+            ):
+                score += (
+                    1.0 if game_state["board"][rosette]["player"] == "player1" else -1.0
+                )
         return score
 
     @staticmethod
     def _pieces_on_board_count(game_state: Dict[str, Any], player: str) -> float:
         pieces = game_state[f"{player}_pieces"]
-        return sum(1 for p in pieces if p["square"] >= 0 and p["square"] < 20)
+        return sum(1 for p in pieces if 0 <= p["square"] < 20)
 
     @staticmethod
     def _finished_pieces_count(game_state: Dict[str, Any], player: str) -> float:
@@ -162,7 +169,7 @@ class GameFeatures:
         count = 0
 
         for piece in pieces:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if 0 <= piece["square"] < 20:
                 try:
                     track_pos = track.index(piece["square"])
                     total_score += track_pos
@@ -179,13 +186,13 @@ class GameFeatures:
         return sum(
             1
             for p in pieces
-            if p["square"] >= 0 and p["square"] < 20 and p["square"] in rosette_squares
+            if 0 <= p["square"] < 20 and p["square"] in rosette_squares
         )
 
     @staticmethod
     def _center_lane_control(game_state: Dict[str, Any], player: str) -> float:
         pieces = game_state[f"{player}_pieces"]
-        return sum(1 for p in pieces if p["square"] >= 4 and p["square"] <= 11)
+        return sum(1 for p in pieces if 4 <= p["square"] <= 11)
 
     @staticmethod
     def _capture_opportunities(game_state: Dict[str, Any], player: str) -> float:
@@ -194,9 +201,7 @@ class GameFeatures:
         return sum(
             1
             for p in pieces
-            if p["square"] >= 0
-            and p["square"] < 20
-            and p["square"] not in rosette_squares
+            if 0 <= p["square"] < 21 and p["square"] not in rosette_squares
         )
 
     @staticmethod
@@ -206,9 +211,7 @@ class GameFeatures:
         return sum(
             1
             for p in pieces
-            if p["square"] >= 0
-            and p["square"] < 20
-            and p["square"] not in rosette_squares
+            if 0 <= p["square"] < 21 and p["square"] not in rosette_squares
         )
 
     @staticmethod
@@ -227,7 +230,7 @@ class GameFeatures:
             if piece["square"] == 20:
                 total_progress += 1.0
                 count += 1
-            elif piece["square"] >= 0 and piece["square"] < 20:
+            elif 0 <= piece["square"] < 20:
                 try:
                     track_pos = track.index(piece["square"])
                     total_progress += track_pos / len(track)
@@ -236,6 +239,193 @@ class GameFeatures:
                     pass
 
         return total_progress / count if count > 0 else 0.0
+
+
+class RustAIClient:
+    """Client to communicate with the Rust AI for generating training data"""
+
+    def __init__(
+        self, rust_ai_path: str = "worker/rust_ai_core/target/release/rgou_ai_core"
+    ):
+        self.rust_ai_path = rust_ai_path
+
+    def get_ai_move(self, game_state: Dict[str, Any]) -> Dict[str, Any]:
+        """Get AI move from Rust AI"""
+        try:
+            # Create temporary file with game state
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(game_state, f)
+                temp_file = f.name
+
+            # Call Rust AI
+            result = subprocess.run(
+                [self.rust_ai_path, "get_move", temp_file],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+            # Clean up temp file
+            os.unlink(temp_file)
+
+            if result.returncode == 0:
+                return json.loads(result.stdout)
+            else:
+                print(f"Rust AI error: {result.stderr}")
+                return {"move": None, "evaluation": 0.0}
+
+        except Exception as e:
+            print(f"Error calling Rust AI: {e}")
+            return {"move": None, "evaluation": 0.0}
+
+    def evaluate_position(self, game_state: Dict[str, Any]) -> float:
+        """Evaluate position using Rust AI"""
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(game_state, f)
+                temp_file = f.name
+
+            result = subprocess.run(
+                [self.rust_ai_path, "evaluate", temp_file],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+            os.unlink(temp_file)
+
+            if result.returncode == 0:
+                return float(result.stdout.strip())
+            else:
+                return 0.0
+
+        except Exception as e:
+            print(f"Error evaluating position: {e}")
+            return 0.0
+
+
+class GameSimulator:
+    """Simulates games to generate training data"""
+
+    def __init__(self, rust_ai_client: RustAIClient):
+        self.rust_ai = rust_ai_client
+
+    def simulate_game(self) -> List[Dict[str, Any]]:
+        """Simulate a complete game and return training examples"""
+        game_state = self._create_initial_state()
+        training_examples = []
+
+        while not self._is_game_over(game_state):
+            # Extract features
+            features = GameFeatures.from_game_state(game_state)
+
+            # Get expert evaluation
+            expert_evaluation = self.rust_ai.evaluate_position(game_state)
+
+            # Get expert move
+            expert_response = self.rust_ai.get_ai_move(game_state)
+            expert_move = expert_response.get("move")
+
+            # Create target policy
+            target_policy = self._create_target_policy(game_state, expert_move)
+
+            # Create training example
+            training_examples.append(
+                {
+                    "features": features.tolist(),
+                    "target_value": expert_evaluation,
+                    "target_policy": target_policy,
+                    "game_state": game_state.copy(),
+                }
+            )
+
+            # Make move
+            if expert_move is not None and expert_move < len(game_state["valid_moves"]):
+                move_idx = game_state["valid_moves"][expert_move]
+                self._make_move(game_state, move_idx)
+            else:
+                # No valid moves, switch player
+                game_state["current_player"] = (
+                    "player2"
+                    if game_state["current_player"] == "player1"
+                    else "player1"
+                )
+                game_state["dice_roll"] = random.randint(0, 4)
+                game_state["valid_moves"] = []
+
+        return training_examples
+
+    def _create_initial_state(self) -> Dict[str, Any]:
+        """Create initial game state"""
+        return {
+            "board": [None] * 21,
+            "player1_pieces": [{"square": -1, "player": "player1"} for _ in range(7)],
+            "player2_pieces": [{"square": -1, "player": "player2"} for _ in range(7)],
+            "current_player": "player1",
+            "dice_roll": random.randint(0, 4),
+            "valid_moves": self._get_valid_moves(
+                [{"square": -1} for _ in range(7)], random.randint(0, 4)
+            ),
+        }
+
+    def _is_game_over(self, game_state: Dict[str, Any]) -> bool:
+        """Check if game is over"""
+        p1_finished = sum(1 for p in game_state["player1_pieces"] if p["square"] == 20)
+        p2_finished = sum(1 for p in game_state["player2_pieces"] if p["square"] == 20)
+        return p1_finished == 7 or p2_finished == 7
+
+    def _get_valid_moves(
+        self, pieces: List[Dict[str, Any]], dice_roll: int
+    ) -> List[int]:
+        """Get valid moves for current state"""
+        valid_moves = []
+        for i, piece in enumerate(pieces):
+            if piece["square"] == -1 and dice_roll == 0:
+                valid_moves.append(i)
+            elif piece["square"] >= 0 and piece["square"] + dice_roll < 20:
+                valid_moves.append(i)
+        return valid_moves
+
+    def _make_move(self, game_state: Dict[str, Any], piece_index: int) -> None:
+        """Make a move in the game state"""
+        pieces = game_state[f"{game_state['current_player']}_pieces"]
+        piece = pieces[piece_index]
+        dice_roll = game_state["dice_roll"]
+
+        if piece["square"] == -1 and dice_roll == 0:
+            # Enter piece
+            piece["square"] = 0
+            game_state["board"][0] = piece
+        elif piece["square"] >= 0:
+            # Move piece
+            new_square = piece["square"] + dice_roll
+            if new_square < 20:
+                game_state["board"][piece["square"]] = None
+                piece["square"] = new_square
+                game_state["board"][new_square] = piece
+
+        # Switch player and roll dice
+        game_state["current_player"] = (
+            "player2" if game_state["current_player"] == "player1" else "player1"
+        )
+        game_state["dice_roll"] = random.randint(0, 4)
+        game_state["valid_moves"] = self._get_valid_moves(
+            game_state[f"{game_state['current_player']}_pieces"],
+            game_state["dice_roll"],
+        )
+
+    def _create_target_policy(
+        self, game_state: Dict[str, Any], expert_move: int
+    ) -> List[float]:
+        """Create target policy from expert move"""
+        policy = [0.0] * 7
+        if expert_move is not None and 0 <= expert_move < 7:
+            policy[expert_move] = 1.0
+        return policy
 
 
 class ValueNetwork(nn.Module):
@@ -291,54 +481,73 @@ class GameDataset(Dataset):
         return features, target_value, target_policy
 
 
-def generate_training_data(num_games: int = 1000) -> List[Dict[str, Any]]:
+def generate_training_data(
+    num_games: int = 1000, use_rust_ai: bool = True
+) -> List[Dict[str, Any]]:
     """Generate training data using the existing AI as teacher"""
     training_data = []
 
-    # This would normally call the Rust AI, but for now we'll simulate
-    # In practice, you'd call the existing expectiminimax AI via subprocess or API
+    if use_rust_ai:
+        # Use Rust AI for training data generation
+        rust_ai_client = RustAIClient()
+        simulator = GameSimulator(rust_ai_client)
 
-    for _ in range(num_games):
-        # Simulate a game state
-        game_state = {
-            "board": [None] * 21,
-            "player1_pieces": [{"square": -1, "player": "player1"} for _ in range(7)],
-            "player2_pieces": [{"square": -1, "player": "player2"} for _ in range(7)],
-            "current_player": "player1",
-            "dice_roll": random.randint(0, 4),
-            "valid_moves": [],
-        }
-
-        # Generate some random positions
-        for i in range(random.randint(0, 5)):
-            if game_state["current_player"] == "player1":
-                piece_idx = random.randint(0, 6)
-                square = random.randint(0, 19)
-                game_state["player1_pieces"][piece_idx]["square"] = square
-                game_state["board"][square] = {"player": "player1"}
-            else:
-                piece_idx = random.randint(0, 6)
-                square = random.randint(0, 19)
-                game_state["player2_pieces"][piece_idx]["square"] = square
-                game_state["board"][square] = {"player": "player2"}
-
-        # Extract features
-        features = GameFeatures.from_game_state(game_state)
-
-        # Generate target values (simplified)
-        target_value = random.uniform(-1.0, 1.0)
-        target_policy = [random.random() for _ in range(7)]
-        policy_sum = sum(target_policy)
-        target_policy = [p / policy_sum for p in target_policy]
-
-        training_data.append(
-            {
-                "features": features.tolist(),
-                "target_value": target_value,
-                "target_policy": target_policy,
+        print(f"Generating {num_games} games using Rust AI...")
+        for i in tqdm(range(num_games), desc="Generating games"):
+            try:
+                game_examples = simulator.simulate_game()
+                training_data.extend(game_examples)
+            except Exception as e:
+                print(f"Error simulating game {i}: {e}")
+                continue
+    else:
+        # Fallback to synthetic data
+        print(f"Generating {num_games} synthetic games...")
+        for _ in tqdm(range(num_games), desc="Generating synthetic data"):
+            game_state = {
+                "board": [None] * 21,
+                "player1_pieces": [
+                    {"square": -1, "player": "player1"} for _ in range(7)
+                ],
+                "player2_pieces": [
+                    {"square": -1, "player": "player2"} for _ in range(7)
+                ],
+                "current_player": "player1",
+                "dice_roll": random.randint(0, 4),
+                "valid_moves": [],
             }
-        )
 
+            # Generate some random positions
+            for i in range(random.randint(0, 5)):
+                if game_state["current_player"] == "player1":
+                    piece_idx = random.randint(0, 6)
+                    square = random.randint(0, 19)
+                    game_state["player1_pieces"][piece_idx]["square"] = square
+                    game_state["board"][square] = {"player": "player1"}
+                else:
+                    piece_idx = random.randint(0, 6)
+                    square = random.randint(0, 19)
+                    game_state["player2_pieces"][piece_idx]["square"] = square
+                    game_state["board"][square] = {"player": "player2"}
+
+            # Extract features
+            features = GameFeatures.from_game_state(game_state)
+
+            # Generate target values (simplified)
+            target_value = random.uniform(-1.0, 1.0)
+            target_policy = [random.random() for _ in range(7)]
+            policy_sum = sum(target_policy)
+            target_policy = [p / policy_sum for p in target_policy]
+
+            training_data.append(
+                {
+                    "features": features.tolist(),
+                    "target_value": target_value,
+                    "target_policy": target_policy,
+                }
+            )
+
+    print(f"Generated {len(training_data)} training examples")
     return training_data
 
 
@@ -408,18 +617,27 @@ def extract_weights(network: nn.Module) -> List[float]:
 def save_weights(
     value_network: ValueNetwork, policy_network: PolicyNetwork, filename: str
 ):
-    """Save network weights in format compatible with Rust"""
+    """Save trained weights to JSON file"""
     value_weights = extract_weights(value_network)
     policy_weights = extract_weights(policy_network)
 
-    weights_data = {"value_weights": value_weights, "policy_weights": policy_weights}
+    weights_data = {
+        "value_weights": value_weights,
+        "policy_weights": policy_weights,
+        "value_network_config": {
+            "input_size": 100,
+            "hidden_sizes": [64, 32],
+            "output_size": 1,
+        },
+        "policy_network_config": {
+            "input_size": 100,
+            "hidden_sizes": [64, 32],
+            "output_size": 7,
+        },
+    }
 
     with open(filename, "w") as f:
         json.dump(weights_data, f, indent=2)
-
-    print(f"Saved weights to {filename}")
-    print(f"Value network: {len(value_weights)} weights")
-    print(f"Policy network: {len(policy_weights)} weights")
 
 
 def main():
@@ -439,11 +657,34 @@ def main():
     parser.add_argument(
         "--output", type=str, default="ml_ai_weights.json", help="Output weights file"
     )
+    parser.add_argument(
+        "--use-rust-ai",
+        action="store_true",
+        help="Use Rust AI for training data generation",
+    )
+    parser.add_argument(
+        "--synthetic", action="store_true", help="Use synthetic data instead of Rust AI"
+    )
 
     args = parser.parse_args()
 
+    print("==============================")
+    print("Royal Game of Ur ML AI Trainer")
+    print("==============================")
+    print(f"Games to generate: {args.num_games}")
+    print(f"Epochs: {args.epochs}")
+    print(f"Batch size: {args.batch_size}")
+    print(f"Learning rate: {args.learning_rate}")
+    print(f"Output file: {args.output}")
+    print(
+        f"Data source: {'Rust AI' if args.use_rust_ai and not args.synthetic else 'Synthetic'}"
+    )
+    print("------------------------------")
+
     print("Generating training data...")
-    training_data = generate_training_data(args.num_games)
+    training_data = generate_training_data(
+        args.num_games, use_rust_ai=args.use_rust_ai and not args.synthetic
+    )
     print(f"Generated {len(training_data)} training examples")
 
     print("Training networks...")
@@ -457,7 +698,10 @@ def main():
     print("Saving weights...")
     save_weights(value_network, policy_network, args.output)
 
+    print("==============================")
     print("Training complete!")
+    print(f"Weights saved to: {args.output}")
+    print("==============================")
 
 
 if __name__ == "__main__":
