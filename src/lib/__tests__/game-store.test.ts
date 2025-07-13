@@ -127,6 +127,23 @@ describe('GameStore', () => {
       expect(state.gameState.player1Pieces[0].square).toBeGreaterThan(-1);
     });
 
+    it('should set lastMoveType to finish when piece finishes', () => {
+      useGameStore.setState(state => {
+        state.gameState.canMove = true;
+        state.gameState.validMoves = [0];
+        state.gameState.diceRoll = 1;
+        state.gameState.player1Pieces[0] = { square: 13, player: 'player1' };
+      });
+
+      const { actions } = useGameStore.getState();
+      actions.makeMove(0);
+
+      const state = useGameStore.getState();
+      expect(state.lastMoveType).toBe('finish');
+      expect(state.lastMovePlayer).toBe('player1');
+      expect(state.gameState.player1Pieces[0].square).toBe(20);
+    });
+
     it('should handle game finish and increment losses for player2', () => {
       // This test is too complex for the current game logic implementation
       // We'll test the basic move functionality instead
@@ -142,6 +159,24 @@ describe('GameStore', () => {
 
       const state = useGameStore.getState();
       expect(state.gameState.player2Pieces[0].square).toBeGreaterThan(-1);
+    });
+
+    it('should set lastMoveType to finish when player2 piece finishes', () => {
+      useGameStore.setState(state => {
+        state.gameState.currentPlayer = 'player2';
+        state.gameState.canMove = true;
+        state.gameState.validMoves = [0];
+        state.gameState.diceRoll = 1;
+        state.gameState.player2Pieces[0] = { square: 15, player: 'player2' };
+      });
+
+      const { actions } = useGameStore.getState();
+      actions.makeMove(0);
+
+      const state = useGameStore.getState();
+      expect(state.lastMoveType).toBe('finish');
+      expect(state.lastMovePlayer).toBe('player2');
+      expect(state.gameState.player2Pieces[0].square).toBe(20);
     });
   });
 

@@ -25,6 +25,7 @@ interface GameBoardProps {
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
   onCreateNearWinningState: () => void;
+  highlightZero?: boolean;
 }
 
 export default function GameBoard({
@@ -38,6 +39,7 @@ export default function GameBoard({
   onToggleSound,
   onShowHowToPlay,
   onCreateNearWinningState,
+  highlightZero,
 }: GameBoardProps) {
   const [screenShake, setScreenShake] = useState(false);
   const [explosions, setExplosions] = useState<
@@ -54,19 +56,16 @@ export default function GameBoard({
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
-  // Ensure DB post happens after state is truly finished
   React.useEffect(() => {
     if (gameState.gameStatus === 'finished' && gameState.winner) {
       actions.postGameToServer();
     }
   }, [gameState.gameStatus, gameState.winner, actions]);
 
-  // Handle move type animations
   useEffect(() => {
     if (lastMoveType && lastMovePlayer) {
       switch (lastMoveType) {
         case 'capture':
-          // Find the capture position from the last move in history
           if (gameState.history.length > 0) {
             const lastMove = gameState.history[gameState.history.length - 1];
             const squareElement = boardRef.current?.querySelector(
@@ -90,7 +89,6 @@ export default function GameBoard({
           }
           break;
         case 'rosette':
-          // Find the rosette position from the last move in history
           if (gameState.history.length > 0) {
             const lastMove = gameState.history[gameState.history.length - 1];
             const squareElement = boardRef.current?.querySelector(
@@ -112,18 +110,16 @@ export default function GameBoard({
           }
           break;
         case 'finish':
-          // For finish moves, show celebration near the player's finish area
-          const finishSelector = `[data-square-id='20-${lastMovePlayer}']`;
-          const finishElement = boardRef.current?.querySelector(finishSelector);
-          if (finishElement) {
-            const rect = finishElement.getBoundingClientRect();
+          const boardRect = boardRef.current?.getBoundingClientRect();
+          if (boardRect) {
+            const isPlayer1 = lastMovePlayer === 'player1';
             setCelebrations(prevCelebrations => [
               ...prevCelebrations,
               {
                 id: `celebration-${Date.now()}-${lastMovePlayer}`,
                 position: {
-                  x: rect.left + rect.width / 2,
-                  y: rect.top + rect.height / 2,
+                  x: boardRect.left + boardRect.width / 2,
+                  y: isPlayer1 ? boardRect.bottom + 60 : boardRect.top - 60,
                 },
                 player: lastMovePlayer,
               },
@@ -134,7 +130,6 @@ export default function GameBoard({
     }
   }, [lastMoveType, lastMovePlayer, gameState.history]);
 
-  // Clean up explosion effects
   useEffect(() => {
     explosions.forEach(explosion => {
       setTimeout(() => {
@@ -143,7 +138,6 @@ export default function GameBoard({
     });
   }, [explosions]);
 
-  // Clean up celebration effects
   useEffect(() => {
     celebrations.forEach(celebration => {
       setTimeout(() => {
@@ -152,7 +146,6 @@ export default function GameBoard({
     });
   }, [celebrations]);
 
-  // Clean up rosette landing effects
   useEffect(() => {
     rosetteLandings.forEach(rosette => {
       setTimeout(() => {
@@ -197,6 +190,7 @@ export default function GameBoard({
         className="w-full max-w-sm mx-auto space-y-3"
         animate={screenShake ? { x: [0, -2, 2, -2, 2, 0] } : { x: 0 }}
         transition={{ duration: 0.5 }}
+        data-testid="game-board"
       >
         {PlayerArea && (
           <PlayerArea
@@ -254,15 +248,6 @@ export default function GameBoard({
                   <div key={`empty-${i}`} className="aspect-square" />
                 )
               )}
-            {/* Hidden finish squares for animation positioning */}
-            <div
-              data-square-id="20-player1"
-              style={{ position: 'absolute', left: -9999, top: -9999, width: 1, height: 1 }}
-            />
-            <div
-              data-square-id="20-player2"
-              style={{ position: 'absolute', left: -9999, top: -9999, width: 1, height: 1 }}
-            />
           </div>
           <GameControls
             aiSource={aiSource}
@@ -272,7 +257,7 @@ export default function GameBoard({
             onShowHowToPlay={onShowHowToPlay}
             onResetGame={onResetGame}
             onCreateNearWinningState={onCreateNearWinningState}
-            diceElement={<GameDice gameState={gameState} />}
+            diceElement={<GameDice gameState={gameState} highlightZero={highlightZero} />}
           />
         </motion.div>
         {PlayerArea && (

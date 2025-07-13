@@ -6,9 +6,10 @@ import { GameState } from '@/lib/types';
 
 interface GameDiceProps {
   gameState: GameState;
+  highlightZero?: boolean;
 }
 
-export default function GameDice({ gameState }: GameDiceProps) {
+export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
   const [rolling, setRolling] = useState(false);
   const [displayPattern, setDisplayPattern] = useState<boolean[]>([false, false, false, false]);
   const [lastRoll, setLastRoll] = useState<{ pattern: boolean[]; value: number } | null>(null);
@@ -29,7 +30,6 @@ export default function GameDice({ gameState }: GameDiceProps) {
     return arr;
   }
 
-  // Animate rolling effect
   useEffect(() => {
     if (gameState.diceRoll === null) {
       setRolling(false);
@@ -64,18 +64,36 @@ export default function GameDice({ gameState }: GameDiceProps) {
   const pipGlow = '#FFF200';
   const pipSize = 7;
   const pipFinalSize = 14;
-  const borderColor = 'rgba(253, 230, 138, 0.3)'; // tailwind yellow-200/30
+  const borderColor = 'rgba(253, 230, 138, 0.3)';
   const borderWidth = 1.5;
 
   if (gameState.diceRoll === null) {
     if (lastRoll) {
       return (
         <motion.div
-          className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
+          className={
+            'flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box' +
+            (highlightZero && lastRoll.value === 0
+              ? ' ring-4 ring-red-500 animate-pulse bg-red-900/50'
+              : '')
+          }
           style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
           initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          animate={{
+            scale: 1,
+            x: highlightZero && lastRoll.value === 0 ? [0, -1, 1, -1, 1, 0] : 0,
+            backgroundColor:
+              highlightZero && lastRoll.value === 0
+                ? ['rgba(127, 29, 29, 0.5)', 'rgba(185, 28, 28, 0.7)', 'rgba(127, 29, 29, 0.5)']
+                : 'rgba(0, 0, 0, 0.3)',
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 25,
+            x: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' },
+            backgroundColor: { duration: 1, repeat: Infinity, ease: 'easeInOut' },
+          }}
           data-testid="roll-dice"
         >
           <div className="flex flex-1 items-center justify-between h-full px-3">
@@ -92,18 +110,27 @@ export default function GameDice({ gameState }: GameDiceProps) {
                     cx={pipFinalSize / 2}
                     cy={pipFinalSize / 2}
                     r={pipSize / 2}
-                    fill={pipColor}
+                    fill={highlightZero && lastRoll.value === 0 ? '#F87171' : pipColor}
                     style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
                   />
                 )}
               </svg>
             ))}
             <span
-              className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
+              className={
+                'font-bold tracking-wider text-center select-none ' +
+                (highlightZero && lastRoll.value === 0
+                  ? 'text-red-400 animate-pulse text-lg w-5'
+                  : 'text-yellow-400 text-base w-4')
+              }
               style={{
-                textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
+                textShadow:
+                  highlightZero && lastRoll.value === 0
+                    ? '0 0 20px #F87171, 0 0 4px #fff'
+                    : '0 0 6px #FFD600, 0 0 2px #fff',
                 lineHeight: '1',
                 alignSelf: 'center',
+                marginLeft: '4px',
               }}
             >
               {lastRoll.value}
@@ -147,11 +174,29 @@ export default function GameDice({ gameState }: GameDiceProps) {
 
   return (
     <motion.div
-      className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box relative overflow-visible"
+      className={
+        'flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box relative overflow-visible' +
+        (highlightZero && gameState.diceRoll === 0 && !rolling
+          ? ' ring-4 ring-red-500 animate-pulse bg-red-900/50'
+          : '')
+      }
       style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
       initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      animate={{
+        scale: 1,
+        x: highlightZero && gameState.diceRoll === 0 && !rolling ? [0, -1, 1, -1, 1, 0] : 0,
+        backgroundColor:
+          highlightZero && gameState.diceRoll === 0 && !rolling
+            ? ['rgba(127, 29, 29, 0.5)', 'rgba(185, 28, 28, 0.7)', 'rgba(127, 29, 29, 0.5)']
+            : 'rgba(0, 0, 0, 0.3)',
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 25,
+        x: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' },
+        backgroundColor: { duration: 1, repeat: Infinity, ease: 'easeInOut' },
+      }}
       data-testid="roll-dice"
     >
       <div className="flex flex-1 items-center justify-between h-full px-3">
@@ -184,27 +229,42 @@ export default function GameDice({ gameState }: GameDiceProps) {
                 cx={pipFinalSize / 2}
                 cy={pipFinalSize / 2}
                 r={pipSize / 2}
-                fill={pipColor}
+                fill={highlightZero && gameState.diceRoll === 0 && !rolling ? '#F87171' : pipColor}
                 style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
               />
             )}
           </motion.svg>
         ))}
         <motion.span
-          className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
+          className={
+            'font-bold tracking-wider text-center select-none ' +
+            (highlightZero && gameState.diceRoll === 0 && !rolling
+              ? 'text-red-400 animate-pulse text-lg w-5'
+              : 'text-yellow-400 text-base w-4')
+          }
           style={{
-            textShadow: '0 0 10px #FFD600, 0 0 2px #fff',
+            textShadow:
+              highlightZero && gameState.diceRoll === 0 && !rolling
+                ? '0 0 20px #F87171, 0 0 4px #fff'
+                : '0 0 10px #FFD600, 0 0 2px #fff',
             lineHeight: '1',
             alignSelf: 'center',
+            marginLeft: '4px',
           }}
           animate={
             numberPulse
-              ? { scale: [1, 1.3, 1], textShadow: '0 0 24px #FFD600, 0 0 2px #fff' }
+              ? {
+                  scale: [1, 1.3, 1],
+                  textShadow:
+                    highlightZero && gameState.diceRoll === 0 && !rolling
+                      ? '0 0 24px #F87171, 0 0 2px #fff'
+                      : '0 0 24px #FFD600, 0 0 2px #fff',
+                }
               : { scale: 1 }
           }
           transition={{ duration: 0.5 }}
         >
-          {gameState.diceRoll}
+          {rolling ? '' : gameState.diceRoll}
         </motion.span>
       </div>
       <AnimatePresence>
@@ -227,7 +287,8 @@ export default function GameDice({ gameState }: GameDiceProps) {
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  background: pipColor,
+                  background:
+                    highlightZero && gameState.diceRoll === 0 && !rolling ? '#F87171' : pipColor,
                   boxShadow: `0 0 12px 4px ${pipGlow}`,
                   transform: `rotate(${j * 45}deg) translateY(-18px)`,
                 }}

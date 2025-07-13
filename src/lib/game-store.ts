@@ -6,6 +6,7 @@ import {
   initializeGame,
   processDiceRoll as processDiceRollLogic,
   makeMove as makeMoveLogic,
+  switchPlayerAfterZeroRoll as switchPlayerAfterZeroRollLogic,
 } from './game-logic';
 import { AIService } from './ai-service';
 import { wasmAiService } from './wasm-ai-service';
@@ -23,6 +24,7 @@ type GameStore = {
   actions: {
     initialize: (fromStorage?: boolean) => void;
     processDiceRoll: (roll?: number) => void;
+    switchPlayerAfterZeroRoll: () => void;
     makeMove: (pieceIndex: number) => void;
     makeAIMove: (aiSource: 'server' | 'client') => Promise<void>;
     reset: () => void;
@@ -59,6 +61,11 @@ export const useGameStore = create<GameStore>()(
         processDiceRoll: (roll?: number) => {
           set(state => {
             state.gameState = processDiceRollLogic(state.gameState, roll);
+          });
+        },
+        switchPlayerAfterZeroRoll: () => {
+          set(state => {
+            state.gameState = switchPlayerAfterZeroRollLogic(state.gameState);
           });
         },
         makeMove: (pieceIndex: number) => {

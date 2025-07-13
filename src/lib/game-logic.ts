@@ -37,6 +37,7 @@ export function rollDice(): number {
   for (let i = 0; i < 4; i++) {
     if (Math.random() < 0.5) count++;
   }
+
   return count;
 }
 
@@ -197,16 +198,16 @@ export function processDiceRoll(gameState: GameState, providedRoll?: number): Ga
   };
 
   if (diceRoll === 0) {
+    console.log('Zero roll detected - keeping dice visible for UI delay');
     return {
       ...newState,
-      currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
-      diceRoll: null,
       canMove: false,
       validMoves: [],
     };
   }
 
   if (diceRoll > 0 && newState.validMoves.length === 0) {
+    console.log('No valid moves for roll', diceRoll, '- switching player');
     return {
       ...newState,
       currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
@@ -217,4 +218,15 @@ export function processDiceRoll(gameState: GameState, providedRoll?: number): Ga
   }
 
   return newState;
+}
+
+export function switchPlayerAfterZeroRoll(gameState: GameState): GameState {
+  console.log('Switching player after zero roll delay');
+  return {
+    ...gameState,
+    currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
+    diceRoll: null,
+    canMove: false,
+    validMoves: [],
+  };
 }

@@ -7,14 +7,15 @@ import { isLocalDevelopment } from '@/lib/utils';
 import GameBoard from './GameBoard';
 import AnimatedBackground from './AnimatedBackground';
 import { motion } from 'framer-motion';
-import { Sparkles, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 import HowToPlayPanel from './HowToPlayPanel';
 
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
-  const { processDiceRoll, makeMove, makeAIMove, reset } = useGameActions();
+  const { processDiceRoll, switchPlayerAfterZeroRoll, makeMove, makeAIMove, reset } =
+    useGameActions();
   const aiThinking = useGameStore(state => state.aiThinking);
   const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
   const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
@@ -23,19 +24,49 @@ export default function RoyalGameOfUr() {
 
   const [aiSource, setAiSource] = useState<'server' | 'client'>('client');
   const [soundEnabled, setSoundEnabled] = useState(true);
-
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [zeroRollPending, setZeroRollPending] = useState(false);
+
+  useEffect(() => {
+    if (
+      gameState.diceRoll === 0 &&
+      !gameState.canMove &&
+      gameState.gameStatus === 'playing' &&
+      !zeroRollPending
+    ) {
+      setZeroRollPending(true);
+      setTimeout(() => {
+        setZeroRollPending(false);
+        switchPlayerAfterZeroRoll();
+      }, 2000);
+    }
+  }, [
+    gameState.diceRoll,
+    gameState.canMove,
+    gameState.gameStatus,
+    switchPlayerAfterZeroRoll,
+    zeroRollPending,
+  ]);
 
   useEffect(() => {
     if (
       gameState.currentPlayer === 'player2' &&
       !gameState.canMove &&
-      gameState.gameStatus === 'playing'
+      gameState.gameStatus === 'playing' &&
+      gameState.diceRoll !== 0 &&
+      !zeroRollPending
     ) {
       setTimeout(() => processDiceRoll(), 500);
     }
-  }, [gameState.currentPlayer, gameState.canMove, gameState.gameStatus, processDiceRoll]);
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.gameStatus,
+    gameState.diceRoll,
+    processDiceRoll,
+    zeroRollPending,
+  ]);
 
   useEffect(() => {
     if (gameState.currentPlayer === 'player2' && gameState.canMove) {
@@ -80,7 +111,8 @@ export default function RoyalGameOfUr() {
       gameState.currentPlayer === 'player1' &&
       !gameState.canMove &&
       gameState.diceRoll === null &&
-      gameState.gameStatus === 'playing'
+      gameState.gameStatus === 'playing' &&
+      !zeroRollPending
     ) {
       setTimeout(() => processDiceRoll(), 500);
     }
@@ -90,6 +122,7 @@ export default function RoyalGameOfUr() {
     gameState.diceRoll,
     gameState.gameStatus,
     processDiceRoll,
+    zeroRollPending,
   ]);
 
   const handlePieceClick = useCallback(
@@ -138,7 +171,6 @@ export default function RoyalGameOfUr() {
     <>
       <AnimatedBackground />
       <div className="relative min-h-screen w-full flex items-center justify-center p-4">
-        {/* Pop Out Button - Desktop only */}
         <div className="hidden md:block absolute top-4 right-4 z-50">
           <button
             onClick={() => {
@@ -160,50 +192,12 @@ export default function RoyalGameOfUr() {
             {diagnosticsPanel}
           </div>
         )}
-
         <motion.div
-          className="w-full max-w-sm mx-auto space-y-3"
+          className="w-full max-w-md mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          data-testid="game-board"
+          transition={{ duration: 0.5 }}
         >
-          <motion.div
-            className="text-center space-y-1"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <motion.h1
-              className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 neon-text"
-              animate={{
-                backgroundPosition: ['0%', '100%', '0%'],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-              style={{
-                backgroundSize: '200% 200%',
-              }}
-            >
-              Royal Game of Ur
-            </motion.h1>
-
-            <motion.div
-              className="flex items-center justify-center space-x-2"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ repeat: Infinity, duration: 2.5 }}
-            >
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span className="text-white/80 font-medium text-sm">
-                Ancient Mesopotamian Board Game
-              </span>
-              <Sparkles className="w-3 h-3 text-amber-400" />
-            </motion.div>
-          </motion.div>
-
           <GameBoard
             gameState={gameState}
             onPieceClick={handlePieceClick}
@@ -216,6 +210,7 @@ export default function RoyalGameOfUr() {
             onShowHowToPlay={showHowToPlay}
             onCreateNearWinningState={createNearWinningState}
             data-testid="game-board-component"
+            highlightZero={zeroRollPending}
           />
 
           {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanel}</div>}
