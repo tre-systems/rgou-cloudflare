@@ -47,6 +47,12 @@ jobs:
           cargo install wasm-pack --force
           cargo install worker-build --force
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run all tests
+        run: npm run check
+
       - name: Build
         run: npm run build:cf
 

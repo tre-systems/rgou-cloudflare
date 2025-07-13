@@ -264,7 +264,7 @@ Now every time you push to `main`, your game will automatically deploy to Cloudf
 - `npm run start`: Start a production server.
 - `npm run deploy:worker`: Deploy the AI worker to Cloudflare. This script is primarily for development purposes to quickly update the server-side AI without triggering a full application deployment. The automated GitHub Actions workflow handles the production deployment.
 - `npm run lint`: Run ESLint.
-- `npm run check`: Run Prettier, ESLint, and TypeScript type checking.
+- `npm run check`: Run all tests including unit tests, Rust tests, and end-to-end tests.
 - `npm run migrate:d1`: Apply database migrations to the production D1 database.
 
 ## 📂 Project Structure
@@ -363,8 +363,12 @@ Deployment is automated via a GitHub Actions workflow defined in `.github/workfl
 1.  Checks out the code.
 2.  Sets up Node.js and Rust environments.
 3.  Installs dependencies.
-4.  Builds the application using `npm run build`.
-5.  Deploys to Cloudflare using the `wrangler-action`.
+4.  Installs Playwright browsers for end-to-end testing.
+5.  Runs all tests (unit tests, Rust tests, and e2e tests) using `npm run check`.
+6.  Builds the application using `npm run build:cf`.
+7.  Deploys to Cloudflare using the `wrangler-action`.
+
+The deployment will only proceed if all tests pass, ensuring code quality and preventing broken deployments.
 
 ## 📚 Historical Context
 
@@ -394,5 +398,48 @@ These are hidden in production for normal users, but can be re-enabled for testi
 The "How to Play" and sound toggle buttons are always visible.
 
 ## Testing and Coverage
+
+This project includes comprehensive testing across multiple layers:
+
+### Test Types
+
+- **Unit Tests**: Vitest-based tests for core game logic, AI services, and utilities
+- **Rust Tests**: Cargo tests for the AI engine and game state management
+- **End-to-End Tests**: Playwright tests for full user workflows and UI interactions
+
+### Running Tests
+
+```bash
+# Run all tests (unit, Rust, and e2e)
+npm run check
+
+# Run only unit tests
+npm run test
+
+# Run unit tests with coverage
+npm run test:coverage
+
+# Run only end-to-end tests
+npm run test:e2e
+
+# Run tests in watch mode
+npm run test:watch
+```
+
+### GitHub Actions
+
+The project includes two GitHub Actions workflows:
+
+1. **Test Workflow** (`.github/workflows/test.yml`): Runs on every push and pull request
+   - Executes all tests including e2e tests
+   - Uploads test results as artifacts
+   - Ensures code quality before merging
+
+2. **Deploy Workflow** (`.github/workflows/deploy.yml`): Runs on pushes to main
+   - Runs all tests before deployment
+   - Builds and deploys to Cloudflare
+   - Only deploys if all tests pass
+
+### Test Coverage
 
 Sound effects (src/lib/sound-effects.ts) are intentionally excluded from test coverage and are not unit tested, as they rely on browser APIs and are not business-critical.
