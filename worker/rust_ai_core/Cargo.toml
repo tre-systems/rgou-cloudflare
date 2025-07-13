@@ -32,9 +32,14 @@ js-sys = { version = "0.3", optional = true }
 web-sys = { version = "0.3", optional = true, features = ["console"] }
 
 [profile.release]
-opt-level = "s"
-lto = true
+opt-level = 3
+lto = "fat"
 codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 1
 
 [dev-dependencies]
 criterion = "0.6.0"

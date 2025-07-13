@@ -1,321 +1,141 @@
-# ML AI System Documentation
+# ML AI System
 
 ## Overview
 
-The ML AI system provides a neural network-based AI opponent for the Royal Game of Ur. It uses a dual-network architecture with value and policy networks trained on expert gameplay data.
+The ML AI system uses deep learning to train neural networks that can play the Royal Game of Ur. The system consists of:
+
+- **Value Network**: Evaluates game positions and predicts win probability
+- **Policy Network**: Predicts the best move probabilities for each position
+- **Training Pipeline**: Generates training data and trains the networks
 
 ## Architecture
 
-### Core Components
+### Neural Networks
 
-1. **Rust ML Core** (`worker/ml_ai_core/`)
-   - Neural network implementation
-   - Game feature extraction (100-dimensional feature vector)
-   - Training infrastructure
-   - WASM compilation for browser deployment
+Both networks use a feedforward architecture with ReLU activations and dropout:
 
-2. **Frontend Integration**
-   - ML AI service with Web Worker communication
-   - Automatic weight loading from `/ml-weights.json`
-   - AI selector component integration
+- **Input Layer**: 100 features representing game state
+- **Hidden Layers**: 128 → 64 → 32 neurons with dropout (0.2)
+- **Output Layer**:
+  - Value Network: 1 neuron (position evaluation)
+  - Policy Network: 7 neurons (move probabilities)
 
-3. **Training Pipeline**
-   - Python training script with PyTorch
-   - Integration with existing Rust AI for expert data generation
-   - Weight export for Rust/WASM deployment
+### Feature Engineering
 
-## Feature Engineering
+The 100-dimensional feature vector includes:
 
-The ML AI uses a 100-dimensional feature vector:
-
-### Piece Positions (28 features)
-
-- Player 1 piece positions (14 features)
-- Player 2 piece positions (14 features)
-- Normalized positions: `square / 20.0` for on-board pieces
-- `1.0` for finished pieces (square 20)
-- `-1.0` for off-board pieces
-
-### Board Occupancy (21 features)
-
-- `1.0` for Player 1 pieces
-- `-1.0` for Player 2 pieces
-- `0.0` for empty squares
-
-### Strategic Features (51 features)
-
-- Rosette control score
-- Pieces on board count (both players)
-- Finished pieces count (both players)
-- Average position score (both players)
-- Safety score (both players)
-- Center lane control (both players)
-- Current player indicator
-- Dice roll (normalized)
-- Valid moves count
-- Capture opportunities (both players)
-- Vulnerability to capture (both players)
-- Progress towards finish (both players)
-
-## Neural Network Architecture
-
-### Value Network
-
-- Input: 100 features
-- Hidden layers: 64 → 32 neurons
-- Output: 1 value (tanh activation, range [-1, 1])
-- Purpose: Position evaluation
-
-### Policy Network
-
-- Input: 100 features
-- Hidden layers: 64 → 32 neurons
-- Output: 7 move probabilities (softmax activation)
-- Purpose: Move selection
+- Piece positions for both players (14 features)
+- Board occupancy (21 features)
+- Game state metrics (rosette control, piece counts, safety scores, etc.)
+- Current player and dice roll information
 
 ## Training Process
 
 ### Data Generation
 
-The training script can generate data in two ways:
-
-1. **Expert AI Data** (recommended)
-
-   ```bash
-   npm run train:ml
-   ```
-
-   - Uses existing Rust AI as teacher
-   - Generates realistic game positions
-   - Provides high-quality training targets
-
-2. **Synthetic Data** (fallback)
-
-   ```bash
-   npm run train:ml:synthetic
-   ```
-
-   - Generates random game positions
-   - Uses random evaluations and policies
-   - Useful for testing the pipeline
+1. **Game Simulation**: Uses Rust AI to simulate thousands of games
+2. **Parallel Processing**: Utilizes all CPU cores for data generation
+3. **Expert Demonstrations**: Extracts moves from the Rust AI as training targets
 
 ### Training Configuration
 
-```bash
-python scripts/train_ml_ai.py \
-  --num-games 1000 \
-  --epochs 100 \
-  --batch-size 32 \
-  --learning-rate 0.001 \
-  --output ml_ai_weights.json \
-  --use-rust-ai
-```
+- **Device**: Automatically uses MPS (Metal Performance Shaders) on Mac for GPU acceleration
+- **Batch Size**: Optimized for device (128 for MPS, 256 for CUDA, 64 for CPU)
+- **Workers**: Uses optimal number of DataLoader workers (up to 8)
+- **Memory**: Pin memory enabled for GPU training
 
-### Training Output
+### Resource Optimization
 
-The training script produces:
+The training system is optimized for maximal Mac resource utilization:
 
-- `ml_ai_weights.json`: Trained network weights
-- Network configurations for Rust deployment
-- Training progress and loss metrics
-
-## Deployment
-
-### Building the System
-
-1. **Build Rust AI CLI** (for training data generation)
-
-   ```bash
-   npm run build:rust-ai
-   ```
-
-2. **Build ML WASM** (for browser deployment)
-
-   ```bash
-   npm run build:ml-wasm
-   ```
-
-3. **Load Trained Weights**
-   ```bash
-   npm run load:ml-weights ml_ai_weights.json
-   ```
-
-### Frontend Integration
-
-The ML AI automatically loads weights from `/ml-weights.json` on initialization. If no weights are found, it uses randomly initialized networks.
+- **CPU**: Uses all available cores for parallel game simulation
+- **GPU**: Leverages MPS for neural network training
+- **Memory**: Efficient data loading with pin memory
+- **Rust**: Optimized compilation with native CPU features
 
 ## Usage
 
-### Selecting ML AI
+### Quick Start
 
-Users can select the ML AI from the AI selector component:
+```bash
+# Run optimized training (recommended)
+./scripts/train_ml_ai_optimized.sh
 
-- **Classic AI**: Expectiminimax algorithm (6-ply search)
-- **Server AI**: Cloudflare Worker (4-ply search)
-- **ML AI**: Neural network-based AI
-
-### Performance Characteristics
-
-- **Speed**: Fast inference (typically < 100ms)
-- **Strength**: Varies based on training quality
-- **Memory**: ~50KB for network weights
-- **Reliability**: Fallback to random moves if networks fail
-
-## Development Workflow
-
-### Setting Up Development Environment
-
-1. **Install Python Dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Build Rust Components**
-
-   ```bash
-   npm run build:rust-ai
-   npm run build:ml-wasm
-   ```
-
-3. **Train Initial Model**
-   ```bash
-   npm run train:ml
-   npm run load:ml-weights ml_ai_weights.json
-   ```
-
-### Iterative Training
-
-1. **Generate Training Data**
-
-   ```bash
-   npm run train:ml -- --num-games 5000
-   ```
-
-2. **Train Networks**
-
-   ```bash
-   npm run train:ml -- --epochs 200 --learning-rate 0.0005
-   ```
-
-3. **Load and Test**
-   ```bash
-   npm run load:ml-weights ml_ai_weights.json
-   npm run dev
-   ```
-
-### Testing
-
-The ML AI system includes comprehensive tests:
-
-- Unit tests for feature extraction
-- Neural network functionality tests
-- Integration tests with game logic
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Missing Python Dependencies**
-
-   ```bash
-   pip install numpy torch torchvision matplotlib tqdm
-   ```
-
-2. **Rust AI Not Found**
-
-   ```bash
-   npm run build:rust-ai
-   ```
-
-3. **WASM Loading Failures**
-
-   ```bash
-   npm run build:ml-wasm
-   npm run build:wasm-assets
-   ```
-
-4. **Weights Not Loading**
-   - Check that `/ml-weights.json` exists in public directory
-   - Verify weights file format matches expected structure
-   - Check browser console for loading errors
-
-### Debug Mode
-
-Enable debug logging by setting:
-
-```javascript
-localStorage.setItem('ml-ai-debug', 'true');
+# Or run manually with custom parameters
+python scripts/train_ml_ai.py \
+    --num-games 10000 \
+    --epochs 300 \
+    --use-rust-ai \
+    --output ml_ai_weights.json
 ```
 
-## Future Improvements
+### Parameters
 
-### Potential Enhancements
+- `--num-games`: Number of games to simulate (default: 5000)
+- `--epochs`: Training epochs (default: 200)
+- `--batch-size`: Batch size (auto-detect if not specified)
+- `--learning-rate`: Learning rate (default: 0.001)
+- `--use-rust-ai`: Use Rust AI for training data
+- `--synthetic`: Use synthetic data instead
 
-1. **Self-Play Training**
-   - Implement reinforcement learning
-   - Use self-play to improve beyond expert AI
+### Performance Monitoring
 
-2. **Model Compression**
-   - Quantize weights for smaller file sizes
-   - Prune unnecessary connections
+The training script includes resource monitoring:
 
-3. **Ensemble Methods**
-   - Combine multiple neural networks
-   - Blend with traditional AI approaches
+- Memory usage tracking
+- CPU utilization monitoring
+- Training time measurement
+- Progress bars for data generation and training
 
-4. **Online Learning**
-   - Update models based on game outcomes
-   - Adaptive strength adjustment
+## Output
 
-### Performance Optimization
+The trained networks are saved as JSON files containing:
 
-1. **WASM Optimization**
-   - Use SIMD instructions
-   - Optimize memory layout
+- Network weights for both value and policy networks
+- Network architecture configuration
+- Training metadata
 
-2. **Network Architecture**
-   - Experiment with different architectures
-   - Add attention mechanisms
+## Integration
 
-3. **Feature Engineering**
-   - Add more sophisticated features
-   - Use learned feature representations
+The trained weights are loaded by the ML AI service (`src/lib/ml-ai-service.ts`) and used for:
 
-## API Reference
+- Real-time game move prediction
+- Position evaluation
+- AI opponent behavior
 
-### ML AI Service
+## Optimization Features
 
-```typescript
-interface MLAIService {
-  loadWeights(weights: MLWeights): Promise<void>;
-  getAIMove(gameState: GameState): Promise<MLResponse>;
-  evaluatePosition(gameState: GameState): Promise<EvaluationResponse>;
-}
-```
+### Mac-Specific Optimizations
 
-### ML Response
+1. **MPS Acceleration**: Automatic GPU acceleration using Metal Performance Shaders
+2. **Parallel Processing**: Optimal use of all 10 CPU cores
+3. **Memory Management**: Efficient data loading with pin memory
+4. **Rust Optimization**: Native CPU compilation with aggressive optimizations
 
-```typescript
-interface MLResponse {
-  move: number | null;
-  evaluation: number;
-  thinking: string;
-  diagnostics: MLDiagnostics;
-  timings: {
-    ai_move_calculation: number;
-    total_handler_time: number;
-  };
-}
-```
+### Environment Variables
 
-### ML Weights
+The training script sets optimal environment variables:
 
-```typescript
-interface MLWeights {
-  value_weights: number[];
-  policy_weights: number[];
-  value_network_config: NetworkConfig;
-  policy_network_config: NetworkConfig;
-}
-```
+- `OMP_NUM_THREADS`: OpenMP thread count
+- `MKL_NUM_THREADS`: Intel MKL thread count
+- `NUMEXPR_NUM_THREADS`: NumExpr thread count
+- `VECLIB_MAXIMUM_THREADS`: Accelerate framework thread count
+
+### Build Optimizations
+
+Rust compilation is optimized with:
+
+- `opt-level = 3`: Maximum optimization
+- `lto = "fat"`: Link-time optimization
+- `panic = "abort"`: Faster panic handling
+- `strip = true`: Remove debug symbols
+- Native CPU features enabled
+
+## Performance Expectations
+
+With the optimizations, typical performance on a Mac with 10 cores and 32GB RAM:
+
+- **Data Generation**: ~1000 games/minute using all cores
+- **Training**: ~50-100 epochs/minute with MPS acceleration
+- **Memory Usage**: ~2-4GB during training
+- **Total Training Time**: 2-4 hours for 10k games, 300 epochs

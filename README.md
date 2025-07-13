@@ -17,9 +17,10 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
 ## 🌟 Features
 
 - **Authentic Gameplay**: A faithful recreation of the 4,500-year-old Royal Game of Ur
-- **Dual AI Engine**:
+- **Triple AI Engine**:
   - **Client AI (Default)**: Rust AI compiled to WebAssembly, running in browser for instant responses and offline play
   - **Server AI (Fallback)**: Same core Rust AI on Cloudflare Workers
+  - **ML AI (Experimental)**: Neural network-based AI trained with PyTorch and MPS acceleration
 - **PWA & Offline Ready**: Installable Progressive Web App with full offline gameplay
 - **Modern UI/UX**: Beautiful, responsive interface with smooth animations and sound effects
 - **Game Statistics**: Track wins, losses, and win rate across all games
@@ -55,7 +56,7 @@ For detailed technical information, see [AI System Documentation](./docs/ai-syst
 
 - **Frontend**: Next.js, React, TypeScript, Tailwind CSS
 - **PWA**: Service Worker, Web App Manifest
-- **AI Engine**: Rust (Cloudflare Worker) & Rust compiled to WebAssembly (Client)
+- **AI Engine**: Rust (Cloudflare Worker) & Rust compiled to WebAssembly (Client) & PyTorch ML (MPS acceleration)
 - **Database**: SQLite (local) / Cloudflare D1 (production)
 - **State Management**: Zustand with Immer
 - **Deployment**: Cloudflare Workers & Pages
@@ -65,6 +66,8 @@ For detailed technical information, see [AI System Documentation](./docs/ai-syst
 - **[Documentation Index](./docs/README.md)**: Complete guide to all documentation
 - **[Architecture Overview](./docs/architecture-overview.md)**: System design and component interactions
 - **[AI System Documentation](./docs/ai-system.md)**: AI algorithm, evaluation function, and technical implementation
+- **[ML AI System](./docs/ml-ai-system.md)**: Neural network training and optimization
+- **[Mac Optimization Guide](./docs/mac-optimization-guide.md)**: Maximal resource utilization for Mac
 - **[Technical Implementation Guide](./docs/technical-implementation.md)**: Development setup and build process
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)**: Complete rules and strategic guidance
 - **[Testing Strategy](./docs/testing-strategy.md)**: Testing approach and guidelines
@@ -78,6 +81,8 @@ For detailed technical information, see [AI System Documentation](./docs/ai-syst
 - **Rust & Cargo** – [Install Rust](https://www.rust-lang.org/tools/install)
 - **wasm-pack** – `cargo install wasm-pack`
 - **worker-build** – `cargo install worker-build`
+- **Python (3.8+)** – [Download Python](https://www.python.org/downloads/) (for ML training)
+- **PyTorch** – `pip install torch torchvision` (for ML training)
 
 ### Local Development
 
@@ -101,6 +106,24 @@ For detailed technical information, see [AI System Documentation](./docs/ai-syst
    ```
 
 The game will open at http://localhost:3000 with full database functionality.
+
+### ML AI Training (Optional)
+
+For optimal Mac performance, the ML AI system is specifically optimized:
+
+```bash
+# Quick start with optimized settings
+./scripts/train_ml_ai_optimized.sh
+
+# Or run with custom parameters
+python scripts/train_ml_ai.py \
+    --num-games 10000 \
+    --epochs 300 \
+    --use-rust-ai \
+    --output ml_ai_weights.json
+```
+
+See [Mac Optimization Guide](./docs/mac-optimization-guide.md) for detailed performance tuning.
 
 ### Deploy to Cloudflare
 
