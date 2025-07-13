@@ -175,6 +175,9 @@ npm run test
 
 # E2E tests
 npm run test:e2e
+
+# ML AI vs Deterministic AI comparison
+./scripts/test_ml_vs_deterministic.sh
 ```
 
 ## 🔧 Troubleshooting
