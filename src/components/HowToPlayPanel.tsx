@@ -34,6 +34,7 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
                 className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                data-testid="help-close"
               >
                 <X className="w-4 h-4" />
               </motion.button>

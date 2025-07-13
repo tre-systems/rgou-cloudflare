@@ -21,6 +21,7 @@ Keep the test coverage high.
 We are using vitest for unit testing.
 We are using playwright for end to end testing.
 Don't write unit tests for UI components.
+Use data-testid for testing.
 Extract logic from UI components into the lib folder so it can be tested.
 When I just type 'rcp' that means "review all changes in each file, remove comments, run 'npm run check' fix any issues then 'git add -A' and commit and push all changed files."
 When I just type 'p' that means "proceed"
