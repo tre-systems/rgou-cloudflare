@@ -392,3 +392,7 @@ Certain buttons are only visible when running locally (localhost or 127.0.0.1):
 These are hidden in production for normal users, but can be re-enabled for testing or admin by adjusting the environment detection in `src/lib/utils.ts`.
 
 The "How to Play" and sound toggle buttons are always visible.
+
+## Testing and Coverage
+
+Sound effects (src/lib/sound-effects.ts) are intentionally excluded from test coverage and are not unit tested, as they rely on browser APIs and are not business-critical.

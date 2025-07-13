@@ -58,6 +58,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
+        'src/lib/sound-effects.ts',
         'node_modules/**',
         '**/node_modules/**',
         'src/lib/__tests__/**',
