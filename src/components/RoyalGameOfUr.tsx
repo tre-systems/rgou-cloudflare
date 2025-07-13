@@ -118,6 +118,11 @@ export default function RoyalGameOfUr() {
     setHowToPlayOpen(true);
   };
 
+  const createNearWinningState = () => {
+    const { actions } = useGameStore.getState();
+    actions.createNearWinningState();
+  };
+
   const diagnosticsPanel =
     isLocalDevelopment() && lastAIDiagnostics ? (
       <AIDiagnosticsPanel
@@ -209,6 +214,7 @@ export default function RoyalGameOfUr() {
             soundEnabled={soundEnabled}
             onToggleSound={toggleSound}
             onShowHowToPlay={showHowToPlay}
+            onCreateNearWinningState={createNearWinningState}
             data-testid="game-board-component"
           />
 

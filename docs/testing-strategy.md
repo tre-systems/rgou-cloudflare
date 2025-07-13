@@ -323,10 +323,14 @@ Tests are run automatically on:
 
 - E2E tests verify the presence and functionality of all interactive elements (buttons, toggles, popouts, etc.).
 - Tests do not attempt to play the game by making moves.
-- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies the win UI is shown and the game is saved to the database.
-- All interactive elements must have a `data-testid` for robust and reliable selection in tests.
+- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies:
+  - The win UI is shown
+  - The stats panel is visible and the win count increments
+  - The game is actually saved to the local SQLite database (`local.db`) by querying the DB directly from Node after the win
+- All interactive elements and stats fields must have a `data-testid` for robust and reliable selection in tests.
+- DB checks only run in development mode to avoid interfering with production data.
 
-This approach ensures UI and DB integration are covered without relying on game logic or AI behavior in E2E tests.
+This approach provides true end-to-end confidence for both UI and DB integration.
 
 ## Conclusion
 

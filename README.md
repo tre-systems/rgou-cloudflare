@@ -448,8 +448,12 @@ Sound effects (src/lib/sound-effects.ts) are intentionally excluded from test co
 
 - E2E tests check the presence and functionality of all interactive elements (buttons, toggles, popouts, etc.).
 - The tests do not attempt to play the game by making moves.
-- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies the win UI is shown and the game is saved to the database.
-- All interactive elements should have a `data-testid` for robust selection in tests.
+- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies:
+  - The win UI is shown
+  - The stats panel is visible and the win count increments
+  - The game is actually saved to the local SQLite database (`local.db`) by querying the DB directly from Node after the win
+- All interactive elements and stats fields have a `data-testid` for robust selection in tests.
+- DB checks only run in development mode to avoid interfering with production data.
 
 Run e2e tests with:
 

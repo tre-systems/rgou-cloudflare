@@ -27,6 +27,7 @@ type GameStore = {
     makeAIMove: (aiSource: 'server' | 'client') => Promise<void>;
     reset: () => void;
     postGameToServer: () => Promise<void>;
+    createNearWinningState: () => void;
   };
 };
 
@@ -123,6 +124,33 @@ export const useGameStore = create<GameStore>()(
         reset: () => {
           set(state => {
             state.gameState = initializeGame();
+            state.aiThinking = false;
+            state.lastAIDiagnostics = null;
+            state.lastAIMoveDuration = null;
+            state.lastMoveType = null;
+            state.lastMovePlayer = null;
+          });
+        },
+        createNearWinningState: () => {
+          set(state => {
+            // Create a near-winning state for player1
+            // Set 6 pieces to finished (square 20)
+            for (let i = 0; i < 6; i++) {
+              state.gameState.player1Pieces[i].square = 20;
+            }
+            // Set the 7th piece to square 12 (which is the 12th square in the test)
+            state.gameState.player1Pieces[6].square = 12;
+            state.gameState.board[12] = state.gameState.player1Pieces[6];
+
+            // Set current player to player1 and ensure it's their turn
+            state.gameState.currentPlayer = 'player1';
+            state.gameState.gameStatus = 'playing';
+            state.gameState.winner = null;
+            state.gameState.diceRoll = null;
+            state.gameState.canMove = false;
+            state.gameState.validMoves = [];
+
+            // Clear any AI state
             state.aiThinking = false;
             state.lastAIDiagnostics = null;
             state.lastAIMoveDuration = null;
