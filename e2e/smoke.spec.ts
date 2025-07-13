@@ -28,7 +28,7 @@ test.describe('Game Smoke Tests', () => {
     await page.goto('/');
     const rollDiceButton = page.getByTestId('roll-dice');
     await expect(rollDiceButton).toBeVisible();
-    await rollDiceButton.click();
+    // Removed click, dice roll is automatic
   });
 
   test('game board squares are visible', async ({ page }) => {
@@ -44,7 +44,7 @@ test.describe('Game Smoke Tests', () => {
 
     const rollDiceButton = page.getByTestId('roll-dice');
     await expect(rollDiceButton).toBeVisible();
-    await rollDiceButton.click();
+    // Removed click, dice roll is automatic
 
     await page.waitForTimeout(1000);
 
@@ -67,14 +67,14 @@ test.describe('Game Smoke Tests', () => {
     await expect(page.locator('text=How to Play')).toBeVisible({ timeout: 5000 });
     await page.getByTestId('help-close').click();
     await expect(page.locator('text=How to Play')).not.toBeVisible({ timeout: 5000 });
-    await page.getByTestId('roll-dice').click();
+    // Removed dice click, dice roll is automatic
   });
 
   test('simulate win and verify game is saved and stats panel updates', async ({ page }) => {
     await page.goto('/');
     if (process.env.NODE_ENV === 'development') {
       await page.getByTestId('create-near-winning-state').click();
-      await page.getByTestId('roll-dice').click();
+      // Removed dice click, dice roll is automatic
       await page.waitForTimeout(500);
       const squares = page.locator('[data-testid^="square-"]');
       await squares.nth(12).click();

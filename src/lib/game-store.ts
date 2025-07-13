@@ -90,6 +90,21 @@ export const useGameStore = create<GameStore>()(
           const { gameState, actions } = get();
           if (gameState.currentPlayer !== 'player2' || !gameState.canMove) return;
 
+          // If there are no valid moves, immediately switch turn
+          if (gameState.validMoves.length === 0) {
+            set(state => {
+              state.gameState = processDiceRollLogic({
+                ...state.gameState,
+                currentPlayer: 'player1',
+                diceRoll: null,
+                canMove: false,
+                validMoves: [],
+              });
+              state.aiThinking = false;
+            });
+            return;
+          }
+
           set(state => {
             state.aiThinking = true;
           });

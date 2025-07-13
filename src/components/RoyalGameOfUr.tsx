@@ -26,19 +26,11 @@ export default function RoyalGameOfUr() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const [zeroRollPending, setZeroRollPending] = useState(false);
   const zeroRollTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (
-      gameState.diceRoll === 0 &&
-      !gameState.canMove &&
-      gameState.gameStatus === 'playing' &&
-      !zeroRollPending
-    ) {
-      setZeroRollPending(true);
+    if (gameState.diceRoll === 0 && !gameState.canMove && gameState.gameStatus === 'playing') {
       zeroRollTimeout.current = setTimeout(() => {
-        setZeroRollPending(false);
         switchPlayerAfterZeroRoll();
       }, 2000);
     }
@@ -48,21 +40,14 @@ export default function RoyalGameOfUr() {
         zeroRollTimeout.current = null;
       }
     };
-  }, [
-    gameState.diceRoll,
-    gameState.canMove,
-    gameState.gameStatus,
-    switchPlayerAfterZeroRoll,
-    zeroRollPending,
-  ]);
+  }, [gameState.diceRoll, gameState.canMove, gameState.gameStatus, switchPlayerAfterZeroRoll]);
 
   useEffect(() => {
     if (
       gameState.currentPlayer === 'player2' &&
       !gameState.canMove &&
       gameState.gameStatus === 'playing' &&
-      gameState.diceRoll !== 0 &&
-      !zeroRollPending
+      gameState.diceRoll !== 0
     ) {
       setTimeout(() => processDiceRoll(), 500);
     }
@@ -72,7 +57,6 @@ export default function RoyalGameOfUr() {
     gameState.gameStatus,
     gameState.diceRoll,
     processDiceRoll,
-    zeroRollPending,
   ]);
 
   useEffect(() => {
@@ -118,8 +102,7 @@ export default function RoyalGameOfUr() {
       gameState.currentPlayer === 'player1' &&
       !gameState.canMove &&
       gameState.diceRoll === null &&
-      gameState.gameStatus === 'playing' &&
-      !zeroRollPending
+      gameState.gameStatus === 'playing'
     ) {
       setTimeout(() => processDiceRoll(), 500);
     }
@@ -129,8 +112,56 @@ export default function RoyalGameOfUr() {
     gameState.diceRoll,
     gameState.gameStatus,
     processDiceRoll,
-    zeroRollPending,
   ]);
+
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === 'player1' &&
+      !gameState.canMove &&
+      gameState.diceRoll !== null &&
+      gameState.gameStatus === 'playing'
+    ) {
+      setTimeout(() => processDiceRoll(), 1000);
+    }
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.diceRoll,
+    gameState.gameStatus,
+    processDiceRoll,
+  ]);
+
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === 'player2' &&
+      gameState.diceRoll === 0 &&
+      !gameState.canMove &&
+      gameState.gameStatus === 'playing'
+    ) {
+      zeroRollTimeout.current = setTimeout(() => {
+        switchPlayerAfterZeroRoll();
+      }, 2000);
+    }
+    return () => {
+      if (zeroRollTimeout.current) {
+        clearTimeout(zeroRollTimeout.current);
+        zeroRollTimeout.current = null;
+      }
+    };
+  }, [
+    gameState.currentPlayer,
+    gameState.diceRoll,
+    gameState.canMove,
+    gameState.gameStatus,
+    switchPlayerAfterZeroRoll,
+  ]);
+
+  useEffect(() => {
+    if (gameState.diceRoll !== 0 || gameState.gameStatus !== 'playing') {
+      // Clear pending zero roll if dice roll is not 0 or game status is not playing
+      // This logic is now handled by the useEffect that runs on diceRoll or gameStatus change
+    }
+  }, [gameState.diceRoll, gameState.gameStatus]);
 
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
@@ -278,7 +309,6 @@ export default function RoyalGameOfUr() {
             onShowHowToPlay={showHowToPlay}
             onCreateNearWinningState={createNearWinningState}
             data-testid="game-board-component"
-            highlightZero={zeroRollPending}
           />
 
           {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanel}</div>}

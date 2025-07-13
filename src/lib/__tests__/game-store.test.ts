@@ -310,7 +310,9 @@ describe('GameStore', () => {
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('server');
 
-      expect(AIService.getAIMove).toHaveBeenCalled();
+      expect(AIService.getAIMove).not.toHaveBeenCalled();
+      const state = useGameStore.getState();
+      expect(state.gameState.currentPlayer).toBe('player1');
     });
   });
 

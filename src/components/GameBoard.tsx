@@ -25,7 +25,6 @@ interface GameBoardProps {
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
   onCreateNearWinningState: () => void;
-  highlightZero?: boolean;
 }
 
 export default function GameBoard({
@@ -39,7 +38,6 @@ export default function GameBoard({
   onToggleSound,
   onShowHowToPlay,
   onCreateNearWinningState,
-  highlightZero,
 }: GameBoardProps) {
   const [screenShake, setScreenShake] = useState(false);
   const [explosions, setExplosions] = useState<
@@ -257,7 +255,7 @@ export default function GameBoard({
             onShowHowToPlay={onShowHowToPlay}
             onResetGame={onResetGame}
             onCreateNearWinningState={onCreateNearWinningState}
-            diceElement={<GameDice gameState={gameState} highlightZero={highlightZero} />}
+            diceElement={<GameDice gameState={gameState} />}
           />
         </motion.div>
         {PlayerArea && (

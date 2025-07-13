@@ -6,10 +6,9 @@ import { GameState } from '@/lib/types';
 
 interface GameDiceProps {
   gameState: GameState;
-  highlightZero?: boolean;
 }
 
-export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
+export default function GameDice({ gameState }: GameDiceProps) {
   const [rolling, setRolling] = useState(false);
   const [displayPattern, setDisplayPattern] = useState<boolean[]>([false, false, false, false]);
   const [lastRoll, setLastRoll] = useState<{ pattern: boolean[]; value: number } | null>(null);
@@ -71,21 +70,13 @@ export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
     if (lastRoll) {
       return (
         <motion.div
-          className={
-            'flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box' +
-            (highlightZero && lastRoll.value === 0
-              ? ' ring-4 ring-red-500 animate-pulse bg-red-900/50'
-              : '')
-          }
+          className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
           style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
           initial={{ scale: 0 }}
           animate={{
             scale: 1,
-            x: highlightZero && lastRoll.value === 0 ? [0, -1, 1, -1, 1, 0] : 0,
-            backgroundColor:
-              highlightZero && lastRoll.value === 0
-                ? ['rgba(127, 29, 29, 0.5)', 'rgba(185, 28, 28, 0.7)', 'rgba(127, 29, 29, 0.5)']
-                : 'rgba(0, 0, 0, 0.3)',
+            x: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}
           transition={{
             type: 'spring',
@@ -110,27 +101,18 @@ export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
                     cx={pipFinalSize / 2}
                     cy={pipFinalSize / 2}
                     r={pipSize / 2}
-                    fill={highlightZero && lastRoll.value === 0 ? '#F87171' : pipColor}
+                    fill={pipColor}
                     style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
                   />
                 )}
               </svg>
             ))}
             <span
-              className={
-                'font-bold tracking-wider text-center select-none ' +
-                (highlightZero && lastRoll.value === 0
-                  ? 'text-red-400 animate-pulse text-lg w-5'
-                  : 'text-yellow-400 text-base w-4')
-              }
+              className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
               style={{
-                textShadow:
-                  highlightZero && lastRoll.value === 0
-                    ? '0 0 20px #F87171, 0 0 4px #fff'
-                    : '0 0 6px #FFD600, 0 0 2px #fff',
+                textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
                 lineHeight: '1',
                 alignSelf: 'center',
-                marginLeft: '4px',
               }}
             >
               {lastRoll.value}
@@ -174,21 +156,13 @@ export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
 
   return (
     <motion.div
-      className={
-        'flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box relative overflow-visible' +
-        (highlightZero && gameState.diceRoll === 0 && !rolling
-          ? ' ring-4 ring-red-500 animate-pulse bg-red-900/50'
-          : '')
-      }
+      className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box relative overflow-visible"
       style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
       initial={{ scale: 0 }}
       animate={{
         scale: 1,
-        x: highlightZero && gameState.diceRoll === 0 && !rolling ? [0, -1, 1, -1, 1, 0] : 0,
-        backgroundColor:
-          highlightZero && gameState.diceRoll === 0 && !rolling
-            ? ['rgba(127, 29, 29, 0.5)', 'rgba(185, 28, 28, 0.7)', 'rgba(127, 29, 29, 0.5)']
-            : 'rgba(0, 0, 0, 0.3)',
+        x: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
       }}
       transition={{
         type: 'spring',
@@ -229,24 +203,16 @@ export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
                 cx={pipFinalSize / 2}
                 cy={pipFinalSize / 2}
                 r={pipSize / 2}
-                fill={highlightZero && gameState.diceRoll === 0 && !rolling ? '#F87171' : pipColor}
+                fill={pipColor}
                 style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
               />
             )}
           </motion.svg>
         ))}
         <motion.span
-          className={
-            'font-bold tracking-wider text-center select-none ' +
-            (highlightZero && gameState.diceRoll === 0 && !rolling
-              ? 'text-red-400 animate-pulse text-lg w-5'
-              : 'text-yellow-400 text-base w-4')
-          }
+          className="font-bold tracking-wider text-center select-none"
           style={{
-            textShadow:
-              highlightZero && gameState.diceRoll === 0 && !rolling
-                ? '0 0 20px #F87171, 0 0 4px #fff'
-                : '0 0 10px #FFD600, 0 0 2px #fff',
+            textShadow: '0 0 10px #FFD600, 0 0 2px #fff',
             lineHeight: '1',
             alignSelf: 'center',
             marginLeft: '4px',
@@ -255,10 +221,7 @@ export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
             numberPulse
               ? {
                   scale: [1, 1.3, 1],
-                  textShadow:
-                    highlightZero && gameState.diceRoll === 0 && !rolling
-                      ? '0 0 24px #F87171, 0 0 2px #fff'
-                      : '0 0 24px #FFD600, 0 0 2px #fff',
+                  textShadow: '0 0 24px #FFD600, 0 0 2px #fff',
                 }
               : { scale: 1 }
           }
@@ -287,8 +250,7 @@ export default function GameDice({ gameState, highlightZero }: GameDiceProps) {
                   width: 6,
                   height: 6,
                   borderRadius: '50%',
-                  background:
-                    highlightZero && gameState.diceRoll === 0 && !rolling ? '#F87171' : pipColor,
+                  background: pipColor,
                   boxShadow: `0 0 12px 4px ${pipGlow}`,
                   transform: `rotate(${j * 45}deg) translateY(-18px)`,
                 }}
