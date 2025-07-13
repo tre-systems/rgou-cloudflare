@@ -27,6 +27,7 @@ export default function RoyalGameOfUr() {
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [zeroRollPending, setZeroRollPending] = useState(false);
+  const zeroRollTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (
@@ -36,11 +37,17 @@ export default function RoyalGameOfUr() {
       !zeroRollPending
     ) {
       setZeroRollPending(true);
-      setTimeout(() => {
+      zeroRollTimeout.current = setTimeout(() => {
         setZeroRollPending(false);
         switchPlayerAfterZeroRoll();
       }, 2000);
     }
+    return () => {
+      if (zeroRollTimeout.current) {
+        clearTimeout(zeroRollTimeout.current);
+        zeroRollTimeout.current = null;
+      }
+    };
   }, [
     gameState.diceRoll,
     gameState.canMove,
@@ -193,11 +200,72 @@ export default function RoyalGameOfUr() {
           </div>
         )}
         <motion.div
-          className="w-full max-w-md mx-auto"
+          className="w-full max-w-sm mx-auto space-y-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.8 }}
         >
+          <motion.div
+            className="text-center space-y-1"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            <motion.h1
+              className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 neon-text"
+              animate={{
+                backgroundPosition: ['0%', '100%', '0%'],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+              style={{
+                backgroundSize: '200% 200%',
+              }}
+              data-testid="main-title"
+            >
+              Royal Game of Ur
+            </motion.h1>
+
+            <motion.div
+              className="flex items-center justify-center space-x-2"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ repeat: Infinity, duration: 2.5 }}
+            >
+              <svg
+                className="w-3 h-3 text-amber-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-6.364l-1.414 1.414M6.05 17.95l-1.414 1.414m12.728 0l-1.414-1.414M6.05 6.05L4.636 4.636"
+                />
+              </svg>
+              <span className="text-white/80 font-medium text-sm" data-testid="main-subtitle">
+                Ancient Mesopotamian Board Game
+              </span>
+              <svg
+                className="w-3 h-3 text-amber-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-6.364l-1.414 1.414M6.05 17.95l-1.414 1.414m12.728 0l-1.414-1.414M6.05 6.05L4.636 4.636"
+                />
+              </svg>
+            </motion.div>
+          </motion.div>
+
           <GameBoard
             gameState={gameState}
             onPieceClick={handlePieceClick}

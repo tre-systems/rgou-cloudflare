@@ -92,4 +92,15 @@ test.describe('Game Smoke Tests', () => {
       db.close();
     }
   });
+
+  test('title and subtitle are always visible and unique', async ({ page }) => {
+    await page.goto('/');
+    const title = page.getByTestId('main-title');
+    const subtitle = page.getByTestId('main-subtitle');
+    await expect(title).toBeVisible();
+    await expect(subtitle).toBeVisible();
+    // Ensure only one of each
+    await expect(page.locator('[data-testid="main-title"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid="main-subtitle"]')).toHaveCount(1);
+  });
 });
