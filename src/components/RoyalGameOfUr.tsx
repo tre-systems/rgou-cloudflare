@@ -161,6 +161,7 @@ export default function RoyalGameOfUr() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
+          data-testid="game-board"
         >
           <motion.div
             className="text-center space-y-1"
@@ -208,11 +209,16 @@ export default function RoyalGameOfUr() {
             soundEnabled={soundEnabled}
             onToggleSound={toggleSound}
             onShowHowToPlay={showHowToPlay}
+            data-testid="game-board-component"
           />
 
           {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanel}</div>}
 
-          <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
+          <HowToPlayPanel
+            isOpen={howToPlayOpen}
+            onClose={() => setHowToPlayOpen(false)}
+            data-testid="help-panel"
+          />
 
           <motion.div
             className="text-center"

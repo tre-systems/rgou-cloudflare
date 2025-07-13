@@ -1,0 +1,807 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Game State Snapshots > After First Move > should match state after player 1 first move > after-player1-first-move 1`] = `
+{
+  "board": [
+    {
+      "player": "player1",
+      "square": 0,
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player1",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [
+    {
+      "diceRoll": 4,
+      "fromSquare": -1,
+      "moveType": "rosette",
+      "pieceIndex": 0,
+      "player": "player1",
+      "toSquare": 0,
+    },
+  ],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": 0,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;
+
+exports[`Game State Snapshots > Capture Scenario > should match state after capture > after-capture-move 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+      "player": "player1",
+      "square": 6,
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player2",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [
+    {
+      "diceRoll": 2,
+      "fromSquare": 4,
+      "moveType": "capture",
+      "pieceIndex": 0,
+      "player": "player1",
+      "toSquare": 6,
+    },
+  ],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": 6,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;
+
+exports[`Game State Snapshots > Finish Move > should match state after finish move > after-finish-move 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player2",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [
+    {
+      "diceRoll": 1,
+      "fromSquare": 13,
+      "moveType": "finish",
+      "pieceIndex": 0,
+      "player": "player1",
+      "toSquare": 20,
+    },
+  ],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;
+
+exports[`Game State Snapshots > Game Win Scenario > should match state after game win > after-game-win 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player1",
+  "diceRoll": null,
+  "gameStatus": "finished",
+  "history": [
+    {
+      "diceRoll": 1,
+      "fromSquare": 13,
+      "moveType": "finish",
+      "pieceIndex": 6,
+      "player": "player1",
+      "toSquare": 20,
+    },
+  ],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": "player1",
+}
+`;
+
+exports[`Game State Snapshots > Initial Game State > should match initial game state snapshot > initial-game-state 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player1",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;
+
+exports[`Game State Snapshots > No Valid Moves > should match state when no valid moves available > no-valid-moves 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player2",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+    {
+      "player": "player1",
+      "square": 20,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;
+
+exports[`Game State Snapshots > Roll of Zero > should match state after roll of zero > after-roll-of-zero 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player2",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;
+
+exports[`Game State Snapshots > Rosette Scenario > should match state after rosette move > after-rosette-move 1`] = `
+{
+  "board": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+      "player": "player1",
+      "square": 7,
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ],
+  "canMove": false,
+  "currentPlayer": "player1",
+  "diceRoll": null,
+  "gameStatus": "playing",
+  "history": [
+    {
+      "diceRoll": 2,
+      "fromSquare": 5,
+      "moveType": "rosette",
+      "pieceIndex": 0,
+      "player": "player1",
+      "toSquare": 7,
+    },
+  ],
+  "player1Pieces": [
+    {
+      "player": "player1",
+      "square": 7,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+    {
+      "player": "player1",
+      "square": -1,
+    },
+  ],
+  "player2Pieces": [
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+    {
+      "player": "player2",
+      "square": -1,
+    },
+  ],
+  "validMoves": [],
+  "winner": null,
+}
+`;

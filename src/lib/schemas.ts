@@ -9,10 +9,15 @@ export type MoveType = z.infer<typeof MoveTypeSchema>;
 export const GameStatusSchema = z.enum(['waiting', 'playing', 'finished']);
 export type GameStatus = z.infer<typeof GameStatusSchema>;
 
-export const PiecePositionSchema = z.object({
-  square: z.number(),
-  player: PlayerSchema,
-});
+export const PiecePositionSchema = z
+  .object({
+    square: z.number(),
+    player: PlayerSchema,
+  })
+  .refine(val => val.square === -1 || val.square === 20 || (val.square >= 0 && val.square < 20), {
+    message: 'square must be -1 (start), 0-19 (board), or 20 (finished)',
+    path: ['square'],
+  });
 export type PiecePosition = z.infer<typeof PiecePositionSchema>;
 
 export const MoveRecordSchema = z.object({
@@ -26,7 +31,7 @@ export const MoveRecordSchema = z.object({
 export type MoveRecord = z.infer<typeof MoveRecordSchema>;
 
 export const GameStateSchema = z.object({
-  board: z.array(PiecePositionSchema.nullable()),
+  board: z.array(PiecePositionSchema.nullable()).length(21),
   player1Pieces: z.array(PiecePositionSchema),
   player2Pieces: z.array(PiecePositionSchema),
   currentPlayer: PlayerSchema,

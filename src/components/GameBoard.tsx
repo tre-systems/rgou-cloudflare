@@ -846,6 +846,7 @@ export default function GameBoard({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        data-testid="roll-dice"
       >
         <span className="text-xs font-semibold text-white/80">Roll:</span>
         <div className="flex space-x-1">
@@ -930,6 +931,7 @@ export default function GameBoard({
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         onClick={() => isClickable && onPieceClick(pieceIndex)}
         data-square-id={squareIndex}
+        data-testid={`square-${squareIndex}`}
       >
         {isRosette && (
           <motion.div
@@ -946,6 +948,7 @@ export default function GameBoard({
               key={`${piece.player}-${pieceIndex}`}
               className="w-3/5 h-3/5 p-0.5"
               layoutId={`piece-${piece.player}-${pieceIndex}`}
+              data-testid={`piece-${pieceIndex}`}
             >
               <MemoizedPiece
                 player={piece.player}
@@ -1538,6 +1541,7 @@ export default function GameBoard({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   title="How to Play"
+                  data-testid="help-button"
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
                 </motion.button>
@@ -1578,6 +1582,7 @@ export default function GameBoard({
                   className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  data-testid="sound-toggle"
                 >
                   {soundEnabled ? (
                     <Volume2 className="w-3.5 h-3.5" />

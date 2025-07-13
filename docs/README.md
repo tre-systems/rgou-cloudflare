@@ -47,7 +47,8 @@ docs/
 ├── ai-system.md                # AI algorithm and implementation
 ├── technical-implementation.md  # Development guide
 ├── game-rules-strategy.md      # Game rules and strategy
-└── game-statistics.md          # Statistics system
+├── game-statistics.md          # Statistics system
+└── testing-strategy.md         # Testing strategy and guidelines
 ```
 
 ## 🔍 Quick Reference
@@ -63,6 +64,7 @@ docs/
 1. Review **[Architecture Overview](./architecture-overview.md)** for system design
 2. Read **[Technical Implementation Guide](./technical-implementation.md)** for setup
 3. Study **[AI System Documentation](./ai-system.md)** for AI implementation details
+4. Follow **[Testing Strategy](./testing-strategy.md)** for testing guidelines
 
 ### For AI Researchers
 

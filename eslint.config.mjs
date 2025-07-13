@@ -24,6 +24,12 @@ const eslintConfig = [
       'node_modules/**/*',
     ],
   },
+  {
+    files: ['src/lib/__tests__/**/*.ts', 'src/lib/__tests__/**/*.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ];
 
 export default eslintConfig;
