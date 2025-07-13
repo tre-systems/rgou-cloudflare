@@ -76,25 +76,69 @@ class WasmAiService {
 
   async getAIMove(gameState: GameState): Promise<ServerAIResponse> {
     console.log('WasmAiService: getAIMove() called.');
-    await this.ensureWorkerReady();
 
-    const messageId = this.messageCounter++;
-    const promise = new Promise<ServerAIResponse>((resolve, reject) => {
-      this.pendingRequests.set(messageId, { resolve, reject });
-    });
+    try {
+      await this.ensureWorkerReady();
 
-    console.log(`WasmAiService: Posting message to worker (id: ${messageId}):`, {
-      id: messageId,
-      gameState,
-    });
-    this.worker!.postMessage({ id: messageId, gameState });
+      const messageId = this.messageCounter++;
+      const promise = new Promise<ServerAIResponse>((resolve, reject) => {
+        this.pendingRequests.set(messageId, { resolve, reject });
+      });
 
-    return promise;
+      console.log(`WasmAiService: Posting message to worker (id: ${messageId}):`, {
+        id: messageId,
+        gameState,
+      });
+      this.worker!.postMessage({ id: messageId, gameState });
+
+      const response = await promise;
+      console.log('WasmAiService: AI move response received:', response);
+      return response;
+    } catch (error) {
+      console.error('WasmAiService: Error getting AI move:', error);
+
+      // Fallback to simple random move if worker fails
+      if (gameState.validMoves.length > 0) {
+        const fallbackMove =
+          gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
+        console.warn('WasmAiService: Using fallback random move:', fallbackMove);
+        return {
+          move: fallbackMove,
+          evaluation: 0,
+          thinking: 'Fallback: Random move due to worker error',
+          diagnostics: {
+            validMoves: gameState.validMoves,
+            moveEvaluations: [],
+            searchDepth: 0,
+            transpositionHits: 0,
+            nodesEvaluated: 0,
+          },
+          timings: {
+            aiMoveCalculation: 0,
+            totalHandlerTime: 0,
+          },
+        };
+      }
+
+      throw new Error(`Failed to get AI move: ${error}`);
+    }
   }
 
   async rollDice(): Promise<number> {
-    console.warn('rollDice in wasm-ai-service is not implemented with worker.');
-    return Math.floor(Math.random() * 5);
+    console.log('WasmAiService: rollDice() called.');
+    await this.ensureWorkerReady();
+
+    const messageId = this.messageCounter++;
+    const promise = new Promise<number>((resolve, reject) => {
+      this.pendingRequests.set(messageId, { resolve, reject });
+    });
+
+    console.log(`WasmAiService: Posting rollDice message to worker (id: ${messageId})`);
+    this.worker!.postMessage({ id: messageId, type: 'rollDice' });
+
+    const response = await promise;
+    console.log('WasmAiService: Dice roll result:', response);
+    return response;
   }
 }
 

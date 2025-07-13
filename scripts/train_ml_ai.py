@@ -817,8 +817,23 @@ def simulate_games_parallel(num_games, rust_ai_path):
 
 
 def generate_training_data(
-    num_games: int = 1000, use_rust_ai: bool = True
+    num_games: int = 1000,
+    use_rust_ai: bool = True,
+    save_data: bool = True,
+    load_existing: bool = False,
 ) -> List[Dict[str, Any]]:
+    # Try to load existing training data first
+    if load_existing:
+        try:
+            with open("training_data_cache.json", "r") as f:
+                cached_data = json.load(f)
+                print(f"Loaded {len(cached_data)} training examples from cache")
+                return cached_data
+        except FileNotFoundError:
+            print("No cached training data found, generating new data...")
+        except Exception as e:
+            print(f"Error loading cached data: {e}, generating new data...")
+
     if use_rust_ai:
         rust_ai_path = "worker/rust_ai_core/target/release/rgou-ai-core"
 
@@ -840,6 +855,18 @@ def generate_training_data(
         print(
             f"Generated {len(training_data)} training examples from {num_games} games."
         )
+
+        # Save training data for future use
+        if save_data:
+            try:
+                with open("training_data_cache.json", "w") as f:
+                    json.dump(training_data, f)
+                print(
+                    f"Saved {len(training_data)} training examples to training_data_cache.json"
+                )
+            except Exception as e:
+                print(f"Warning: Could not save training data cache: {e}")
+
         return training_data
     else:
         training_data = []
@@ -1090,6 +1117,11 @@ def main():
     parser.add_argument(
         "--no-compress", action="store_true", help="Disable weight compression"
     )
+    parser.add_argument(
+        "--load-existing",
+        action="store_true",
+        help="Load existing training data from cache",
+    )
 
     args = parser.parse_args()
 
@@ -1107,11 +1139,14 @@ def main():
     print(
         f"Data source: {'Rust AI' if args.use_rust_ai and not args.synthetic else 'Synthetic'}"
     )
+    print(f"Load existing data: {args.load_existing}")
     print("------------------------------")
 
     print("Generating training data...")
     training_data = generate_training_data(
-        args.num_games, use_rust_ai=args.use_rust_ai and not args.synthetic
+        args.num_games,
+        use_rust_ai=args.use_rust_ai and not args.synthetic,
+        load_existing=args.load_existing,
     )
     print(f"Generated {len(training_data)} training examples")
 

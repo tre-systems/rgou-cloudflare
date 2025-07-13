@@ -8,6 +8,7 @@ import type { AIResponse as ServerAIResponse } from './ai-types';
 interface WasmModule {
   default: (input?: string | URL) => Promise<unknown>;
   get_ai_move_wasm: (gameState: unknown) => string;
+  roll_dice_wasm?: () => number;
 }
 
 let wasmModule: WasmModule;
@@ -72,21 +73,45 @@ const transformWasmResponse = (responseJson: string): ServerAIResponse => {
   };
 };
 
+const rollDice = (): number => {
+  // Use WASM roll_dice_wasm if available, otherwise use Math.random
+  if (typeof wasmModule.roll_dice_wasm === 'function') {
+    return wasmModule.roll_dice_wasm();
+  }
+
+  // Fallback to Math.random for dice roll (0-4)
+  return Math.floor(Math.random() * 5);
+};
+
 self.addEventListener(
   'message',
-  async (event: MessageEvent<{ id: number; gameState: GameState }>) => {
+  async (event: MessageEvent<{ id: number; gameState?: GameState; type?: string }>) => {
     try {
       console.log('AI Worker: Received message:', event.data);
       await loadWasm();
       console.log('AI Worker: Wasm loaded, processing message.');
-      const { id, gameState } = event.data;
-      const request = transformGameStateToRequest(gameState);
 
-      const responseJson = wasmModule.get_ai_move_wasm(request);
-      const response = transformWasmResponse(responseJson);
+      const { id, gameState, type } = event.data;
 
-      console.log('AI Worker: Sending success response:', { type: 'success', id, response });
-      self.postMessage({ type: 'success', id, response });
+      // Handle rollDice requests
+      if (type === 'rollDice') {
+        const diceRoll = rollDice();
+        console.log('AI Worker: Rolling dice, result:', diceRoll);
+        self.postMessage({ type: 'success', id, response: { diceRoll } });
+        return;
+      }
+
+      // Handle AI move requests (default behavior)
+      if (gameState) {
+        const request = transformGameStateToRequest(gameState);
+        const responseJson = wasmModule.get_ai_move_wasm(request);
+        const response = transformWasmResponse(responseJson);
+
+        console.log('AI Worker: Sending success response:', { type: 'success', id, response });
+        self.postMessage({ type: 'success', id, response });
+      } else {
+        throw new Error('No game state provided for AI move request');
+      }
     } catch (error) {
       console.error('AI Worker: Error processing message:', error);
       console.log('AI Worker: Sending error response:', {

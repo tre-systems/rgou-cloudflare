@@ -177,49 +177,58 @@ class MLAIService {
       console.warn('ML AI Service: Weights not loaded, using untrained networks');
     }
 
-    const startTime = performance.now();
-    await this.ensureWorkerReady();
-    const messageId = this.messageCounter++;
-    const promise = new Promise<MLResponse>((resolve, reject) => {
-      this.pendingRequests.set(messageId, { type: 'getAIMove', resolve, reject });
-    });
+    try {
+      const startTime = performance.now();
+      await this.ensureWorkerReady();
+      const messageId = this.messageCounter++;
+      const promise = new Promise<MLResponse>((resolve, reject) => {
+        this.pendingRequests.set(messageId, { type: 'getAIMove', resolve, reject });
+      });
 
-    console.log('ML AI Service: Sending game state to worker (id:', messageId, ')');
-    this.worker!.postMessage({ id: messageId, type: 'getAIMove', gameState });
+      console.log('ML AI Service: Sending game state to worker (id:', messageId, ')');
+      this.worker!.postMessage({ id: messageId, type: 'getAIMove', gameState });
 
-    const response = await promise;
-    const totalTime = performance.now() - startTime;
+      const response = await promise;
+      const totalTime = performance.now() - startTime;
 
-    console.log('ML AI Service: AI move response received in', totalTime.toFixed(2), 'ms');
-    console.log('ML AI Service: Chosen move:', response.move);
-    console.log('ML AI Service: Position evaluation:', response.evaluation.toFixed(3));
-    console.log('ML AI Service: AI thinking:', response.thinking);
-    console.log(
-      'ML AI Service: Move evaluations:',
-      response.diagnostics.move_evaluations.length,
-      'moves analyzed'
-    );
-    console.log(
-      'ML AI Service: Value network output:',
-      response.diagnostics.value_network_output.toFixed(3)
-    );
-    console.log(
-      'ML AI Service: Policy network outputs:',
-      response.diagnostics.policy_network_outputs.length,
-      'outputs'
-    );
-    console.log(
-      'ML AI Service: WASM calculation time:',
-      response.timings.aiMoveCalculation?.toFixed(2) || 'N/A',
-      'ms'
-    );
-    console.log(
-      'ML AI Service: Total handler time:',
-      response.timings.totalHandlerTime?.toFixed(2) || 'N/A',
-      'ms'
-    );
+      console.log('ML AI Service: AI move response received in', totalTime.toFixed(2), 'ms');
+      console.log('ML AI Service: Chosen move:', response.move);
+      console.log('ML AI Service: Position evaluation:', response.evaluation.toFixed(3));
+      console.log('ML AI Service: AI thinking:', response.thinking);
+      console.log(
+        'ML AI Service: Move evaluations:',
+        response.diagnostics.move_evaluations.length,
+        'moves analyzed'
+      );
 
-    return response;
+      return response;
+    } catch (error) {
+      console.error('ML AI Service: Error getting AI move:', error);
+
+      // Fallback to simple random move if ML AI fails
+      if (gameState.validMoves.length > 0) {
+        const fallbackMove =
+          gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
+        console.warn('ML AI Service: Using fallback random move:', fallbackMove);
+        return {
+          move: fallbackMove,
+          evaluation: 0,
+          thinking: 'Fallback: Random move due to ML AI error',
+          diagnostics: {
+            valid_moves: gameState.validMoves,
+            move_evaluations: [],
+            value_network_output: 0,
+            policy_network_outputs: [],
+          },
+          timings: {
+            aiMoveCalculation: 0,
+            totalHandlerTime: 0,
+          },
+        };
+      }
+
+      throw new Error(`Failed to get ML AI move: ${error}`);
+    }
   }
 
   async evaluatePosition(
