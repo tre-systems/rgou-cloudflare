@@ -9,6 +9,9 @@ pub mod training;
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
 
+#[cfg(feature = "wasm")]
+pub use wasm_api::*;
+
 use features::GameFeatures;
 use neural_network::{NetworkConfig, NeuralNetwork};
 

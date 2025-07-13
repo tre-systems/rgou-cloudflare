@@ -33,7 +33,7 @@ const loadMLWasm = (): Promise<void> => {
       }
 
       try {
-        const wasmUrl = `${self.location.origin}/wasm/ml_ai_core_bg.wasm`;
+        const wasmUrl = `${self.location.origin}/wasm/rgou_ml_ai_worker_bg.wasm`;
         console.log(`ML AI Worker: Initializing ML WASM with URL: ${wasmUrl}`);
 
         await mlWasmModule.default(wasmUrl);

@@ -22,7 +22,7 @@ export default function RoyalGameOfUr() {
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
-  const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('client');
+  const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
@@ -194,6 +194,12 @@ export default function RoyalGameOfUr() {
     actions.createNearWinningState();
   };
 
+  // Add a handler to switch AI and reset the game
+  const handleAiSourceChange = (source: 'server' | 'client' | 'ml') => {
+    setAiSource(source);
+    reset();
+  };
+
   const diagnosticsPanel =
     isLocalDevelopment() && lastAIDiagnostics ? (
       <AIDiagnosticsPanel
@@ -303,7 +309,7 @@ export default function RoyalGameOfUr() {
             aiThinking={aiThinking}
             onResetGame={handleReset}
             aiSource={aiSource}
-            onAiSourceChange={setAiSource}
+            onAiSourceChange={handleAiSourceChange}
             soundEnabled={soundEnabled}
             onToggleSound={toggleSound}
             onShowHowToPlay={showHowToPlay}
