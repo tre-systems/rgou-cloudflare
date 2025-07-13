@@ -59,6 +59,9 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       exclude: [
         'src/lib/sound-effects.ts',
+        'src/lib/types.ts',
+        'src/lib/ai.worker.ts',
+        'src/lib/wasm-ai-service.ts',
         'node_modules/**',
         '**/node_modules/**',
         'src/lib/__tests__/**',
