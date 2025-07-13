@@ -1,141 +1,129 @@
-# ML AI System
+# ML AI System Documentation
 
 ## Overview
 
-The ML AI system uses deep learning to train neural networks that can play the Royal Game of Ur. The system consists of:
+This document explains the machine learning (ML) system used to power the Royal Game of Ur AI. It is written for experienced programmers who may be new to ML, and covers the architecture, training pipeline, features, model structure, and references for further reading.
 
-- **Value Network**: Evaluates game positions and predicts win probability
-- **Policy Network**: Predicts the best move probabilities for each position
-- **Training Pipeline**: Generates training data and trains the networks
+---
+
+## What is the ML AI?
+
+The ML AI is a neural network-based agent that learns to play the Royal Game of Ur by imitating a strong deterministic AI (expectiminimax) and, optionally, through self-play. The goal is to create an AI that can match or exceed the performance of traditional search-based algorithms, but with much faster move selection.
+
+---
 
 ## Architecture
 
-### Neural Networks
+- **Input:** A feature vector representing the current game state (150 features).
+- **Model:** Two neural networks ("heads") sharing the same input:
+  - **Value Network:** Predicts the value (expected outcome) of the current position.
+  - **Policy Network:** Predicts the best move to make (probability distribution over possible moves).
+- **Output:**
+  - The move with the highest score (combining value and policy outputs, plus bonuses for captures, finishes, etc.).
 
-Both networks use a feedforward architecture with ReLU activations and dropout:
+---
 
-- **Input Layer**: 100 features representing game state
-- **Hidden Layers**: 128 → 64 → 32 neurons with dropout (0.2)
-- **Output Layer**:
-  - Value Network: 1 neuron (position evaluation)
-  - Policy Network: 7 neurons (move probabilities)
+## Features
 
-### Feature Engineering
+The input to the neural network is a 150-dimensional feature vector encoding:
 
-The 100-dimensional feature vector includes:
+- Piece positions for both players
+- Board occupancy
+- Rosette control
+- Pieces on board, finished pieces
+- Average position, safety, center lane control
+- Current player, dice roll, valid moves count
+- Capture opportunities, vulnerability, progress to finish
+- Advanced features: mobility, development, tactical opportunities, king safety, center control, piece coordination, attack/defense, endgame, time advantage, material balance, positional advantage
 
-- Piece positions for both players (14 features)
-- Board occupancy (21 features)
-- Game state metrics (rosette control, piece counts, safety scores, etc.)
-- Current player and dice roll information
+This rich feature set allows the network to "see" the strategic and tactical aspects of the game.
 
-## Training Process
+---
 
-### Data Generation
+## Model Structure
 
-1. **Game Simulation**: Uses Rust AI to simulate thousands of games
-2. **Parallel Processing**: Utilizes all CPU cores for data generation
-3. **Expert Demonstrations**: Extracts moves from the Rust AI as training targets
+Both the value and policy networks are deep, fully connected feedforward neural networks:
 
-### Training Configuration
+- **Input layer:** 150 features
+- **Hidden layers:** 256 → 128 → 64 → 32 neurons, with ReLU activations and dropout for regularization
+- **Output:**
+  - Value: 1 neuron (tanh activation, predicts [-1, 1] outcome)
+  - Policy: 7 neurons (softmax activation, one for each possible move)
 
-- **Device**: Automatically uses MPS (Metal Performance Shaders) on Mac for GPU acceleration
-- **Batch Size**: Optimized for device (128 for MPS, 256 for CUDA, 64 for CPU)
-- **Workers**: Uses optimal number of DataLoader workers (up to 8)
-- **Memory**: Pin memory enabled for GPU training
+---
 
-### Resource Optimization
+## Training Pipeline
 
-The training system is optimized for maximal Mac resource utilization:
+1. **Data Generation:**
+   - Play thousands of games using the deterministic AI (expectiminimax, depth 4+)
+   - For each move, extract features, the expert move (policy), and the game outcome (value)
+   - Optionally, save these games for future reuse
 
-- **CPU**: Uses all available cores for parallel game simulation
-- **GPU**: Leverages MPS for neural network training
-- **Memory**: Efficient data loading with pin memory
-- **Rust**: Optimized compilation with native CPU features
+2. **Training:**
+   - Use the generated data to train the neural networks
+   - Loss functions:
+     - Value: Mean squared error (MSE) between predicted and actual outcome
+     - Policy: Cross-entropy loss between predicted and expert move
+   - Optimizer: AdamW (adaptive learning rate)
+   - Training runs for many epochs (e.g., 300) over the dataset
 
-## Usage
+3. **Evaluation:**
+   - After training, the ML model is tested against the deterministic AI in 100+ games
+   - Metrics: win rate, average pieces finished, move quality, speed
 
-### Quick Start
+---
 
-```bash
-# Run optimized training (recommended)
-./scripts/train_ml_ai_optimized.sh
+## How the ML AI Makes Moves
 
-# Or run manually with custom parameters
-python scripts/train_ml_ai.py \
-    --num-games 10000 \
-    --epochs 300 \
-    --use-rust-ai \
-    --output ml_ai_weights.json
-```
+- For each valid move, the AI simulates the move, extracts features, and evaluates the resulting state using the value and policy networks.
+- The move with the highest combined score (value + policy + bonuses for captures, finishes, etc.) is selected.
+- This approach is inspired by AlphaZero-style architectures, but without tree search.
 
-### Parameters
+---
 
-- `--num-games`: Number of games to simulate (default: 5000)
-- `--epochs`: Training epochs (default: 200)
-- `--batch-size`: Batch size (auto-detect if not specified)
-- `--learning-rate`: Learning rate (default: 0.001)
-- `--use-rust-ai`: Use Rust AI for training data
-- `--synthetic`: Use synthetic data instead
+## Why Use ML Instead of Search?
 
-### Performance Monitoring
+- **Speed:** Once trained, the ML AI can select moves in milliseconds, much faster than search-based AIs.
+- **Generalization:** The ML AI can learn subtle strategies and tactics from data, not just brute-force search.
+- **Deployment:** The model can run efficiently on the web, mobile, or server.
 
-The training script includes resource monitoring:
+---
 
-- Memory usage tracking
-- CPU utilization monitoring
-- Training time measurement
-- Progress bars for data generation and training
+## Key References
 
-## Output
+- **AlphaZero/AlphaGo:**
+  - [Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm (Silver et al., 2017)](https://www.nature.com/articles/nature24270)
+  - [AlphaGo: Mastering the game of Go with deep neural networks and tree search (Silver et al., 2016)](https://www.nature.com/articles/nature16961)
+- **Expectiminimax Algorithm:**
+  - [Wikipedia: Expectiminimax](https://en.wikipedia.org/wiki/Expectiminimax)
+  - [Russell & Norvig, Artificial Intelligence: A Modern Approach (4th ed.), Ch. 6](https://aima.cs.berkeley.edu/)
+- **Neural Networks for Board Games:**
+  - [Deep Reinforcement Learning and Search for Board Games (blog)](https://sebastianraschka.com/blog/2022/alphazero.html)
+- **Royal Game of Ur:**
+  - [British Museum: The Royal Game of Ur](https://www.britishmuseum.org/collection/object/W_1928-1009-378)
+  - [Irving Finkel, On the Rules for the Royal Game of Ur](https://www.britishmuseum.org/blog/real-rules-royal-game-ur)
 
-The trained networks are saved as JSON files containing:
+---
 
-- Network weights for both value and policy networks
-- Network architecture configuration
-- Training metadata
+## Further Reading
 
-## Integration
+- [A Beginner’s Guide to Neural Networks and Deep Learning](https://skymind.ai/wiki/neural-network)
+- [PyTorch Tutorials](https://pytorch.org/tutorials/)
+- [Machine Learning for Programmers (Google Developers)](https://developers.google.com/machine-learning/crash-course)
 
-The trained weights are loaded by the ML AI service (`src/lib/ml-ai-service.ts`) and used for:
+---
 
-- Real-time game move prediction
-- Position evaluation
-- AI opponent behavior
+## FAQ
 
-## Optimization Features
+**Q: Can I retrain the model with my own data or tweaks?**
+A: Yes! You can generate new games, adjust features, or change the model architecture and retrain as you like.
 
-### Mac-Specific Optimizations
+**Q: How do I make the AI even stronger?**
+A: Use more training data, deeper networks, self-play, or experiment with new features and architectures.
 
-1. **MPS Acceleration**: Automatic GPU acceleration using Metal Performance Shaders
-2. **Parallel Processing**: Optimal use of all 10 CPU cores
-3. **Memory Management**: Efficient data loading with pin memory
-4. **Rust Optimization**: Native CPU compilation with aggressive optimizations
+**Q: Where do I start if I want to learn more about ML?**
+A: See the "Further Reading" section above for beginner-friendly resources.
 
-### Environment Variables
+---
 
-The training script sets optimal environment variables:
-
-- `OMP_NUM_THREADS`: OpenMP thread count
-- `MKL_NUM_THREADS`: Intel MKL thread count
-- `NUMEXPR_NUM_THREADS`: NumExpr thread count
-- `VECLIB_MAXIMUM_THREADS`: Accelerate framework thread count
-
-### Build Optimizations
-
-Rust compilation is optimized with:
-
-- `opt-level = 3`: Maximum optimization
-- `lto = "fat"`: Link-time optimization
-- `panic = "abort"`: Faster panic handling
-- `strip = true`: Remove debug symbols
-- Native CPU features enabled
-
-## Performance Expectations
-
-With the optimizations, typical performance on a Mac with 10 cores and 32GB RAM:
-
-- **Data Generation**: ~1000 games/minute using all cores
-- **Training**: ~50-100 epochs/minute with MPS acceleration
-- **Memory Usage**: ~2-4GB during training
-- **Total Training Time**: 2-4 hours for 10k games, 300 epochs
+If you have more questions or want to dive deeper, just ask!
