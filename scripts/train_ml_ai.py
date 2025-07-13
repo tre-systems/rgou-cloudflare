@@ -15,7 +15,6 @@ import argparse
 from tqdm import tqdm
 import concurrent.futures
 import multiprocessing
-import psutil
 import time
 from pathlib import Path
 import gzip
@@ -72,11 +71,8 @@ def compress_weights(weights_data: Dict[str, Any]) -> bytes:
     return gzip.compress(json_str.encode("utf-8"))
 
 
-
-
-
 class GameFeatures:
-    SIZE = 100
+    SIZE = 150
 
     @staticmethod
     def from_game_state(game_state: Dict[str, Any]) -> np.ndarray:
@@ -170,6 +166,76 @@ class GameFeatures:
         features[idx] = GameFeatures._progress_towards_finish(game_state, "player2")
         idx += 1
 
+        # NEW: Advanced strategic features
+        features[idx] = GameFeatures._mobility_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._mobility_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._development_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._development_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._tactical_opportunities(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._tactical_opportunities(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._king_safety_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._king_safety_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._center_control_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._center_control_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._piece_coordination_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._piece_coordination_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._attack_pressure_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._attack_pressure_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._defensive_structure_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._defensive_structure_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._endgame_evaluation(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._endgame_evaluation(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._time_advantage_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._time_advantage_score(game_state, "player2")
+        idx += 1
+
+        features[idx] = GameFeatures._material_balance_score(game_state)
+        idx += 1
+
+        features[idx] = GameFeatures._positional_advantage_score(game_state, "player1")
+        idx += 1
+
+        features[idx] = GameFeatures._positional_advantage_score(game_state, "player2")
+        idx += 1
+
         return features
 
     @staticmethod
@@ -210,12 +276,10 @@ class GameFeatures:
 
         for piece in pieces:
             if 0 <= piece["square"] < 20:
-                try:
+                if piece["square"] in track:
                     track_pos = track.index(piece["square"])
                     total_score += track_pos
                     count += 1
-                except ValueError:
-                    pass
 
         return total_score / count if count > 0 else 0.0
 
@@ -237,41 +301,22 @@ class GameFeatures:
     @staticmethod
     def _capture_opportunities(game_state: Dict[str, Any], player: str) -> float:
         pieces = game_state[f"{player}_pieces"]
-        opponent = "player2" if player == "player1" else "player1"
-        opponent_pieces = game_state[f"{opponent}_pieces"]
-        rosette_squares = {0, 7, 13, 15, 16}
-        opportunities = 0
-
-        for piece in pieces:
-            if 0 <= piece["square"] < 20:
-                for opp_piece in opponent_pieces:
-                    if (
-                        0 <= opp_piece["square"] < 20
-                        and opp_piece["square"] not in rosette_squares
-                        and abs(piece["square"] - opp_piece["square"]) <= 4
-                    ):
-                        opportunities += 1
-
-        return opportunities
+        rosette_squares = [0, 7, 13, 15, 16]
+        return sum(
+            1
+            for p in pieces
+            if 0 <= p["square"] < 20 and p["square"] not in rosette_squares
+        )
 
     @staticmethod
     def _vulnerability_to_capture(game_state: Dict[str, Any], player: str) -> float:
         pieces = game_state[f"{player}_pieces"]
-        opponent = "player2" if player == "player1" else "player1"
-        opponent_pieces = game_state[f"{opponent}_pieces"]
-        rosette_squares = {0, 7, 13, 15, 16}
-        vulnerability = 0
-
-        for piece in pieces:
-            if 0 <= piece["square"] < 20 and piece["square"] not in rosette_squares:
-                for opp_piece in opponent_pieces:
-                    if (
-                        0 <= opp_piece["square"] < 20
-                        and abs(piece["square"] - opp_piece["square"]) <= 4
-                    ):
-                        vulnerability += 1
-
-        return vulnerability
+        rosette_squares = [0, 7, 13, 15, 16]
+        return sum(
+            1
+            for p in pieces
+            if 0 <= p["square"] < 20 and p["square"] not in rosette_squares
+        )
 
     @staticmethod
     def _progress_towards_finish(game_state: Dict[str, Any], player: str) -> float:
@@ -286,16 +331,159 @@ class GameFeatures:
         count = 0
 
         for piece in pieces:
-            if 0 <= piece["square"] < 20:
-                try:
+            if piece["square"] == 20:
+                total_progress += 1.0
+                count += 1
+            elif 0 <= piece["square"] < 20:
+                if piece["square"] in track:
                     track_pos = track.index(piece["square"])
-                    progress = track_pos / len(track)
-                    total_progress += progress
+                    total_progress += track_pos / len(track)
                     count += 1
-                except ValueError:
-                    pass
 
         return total_progress / count if count > 0 else 0.0
+
+    # NEW: Advanced strategic features
+    @staticmethod
+    def _mobility_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        track = (
+            [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+            if player == "player1"
+            else [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
+        )
+
+        mobility = 0.0
+        for piece in pieces:
+            if 0 <= piece["square"] < 20:
+                if piece["square"] in track:
+                    track_pos = track.index(piece["square"])
+                    remaining_steps = len(track) - track_pos
+                    mobility += remaining_steps
+
+        return mobility / 7.0
+
+    @staticmethod
+    def _development_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        developed_pieces = sum(1 for p in pieces if 0 <= p["square"] < 20)
+        return developed_pieces / 7.0
+
+    @staticmethod
+    def _tactical_opportunities(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        rosette_squares = [0, 7, 13, 15, 16]
+        return sum(
+            1
+            for p in pieces
+            if 0 <= p["square"] < 20 and p["square"] not in rosette_squares
+        )
+
+    @staticmethod
+    def _king_safety_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        rosette_squares = [0, 7, 13, 15, 16]
+        safety_score = sum(
+            1
+            for p in pieces
+            if 0 <= p["square"] < 20 and p["square"] in rosette_squares
+        )
+        return safety_score / 7.0
+
+    @staticmethod
+    def _center_control_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        center_control = sum(1 for p in pieces if 4 <= p["square"] <= 11)
+        return center_control / 7.0
+
+    @staticmethod
+    def _piece_coordination_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        on_board_pieces = [p["square"] for p in pieces if 0 <= p["square"] < 20]
+
+        coordination = 0.0
+        for i in range(len(on_board_pieces)):
+            for j in range(i + 1, len(on_board_pieces)):
+                distance = abs(on_board_pieces[i] - on_board_pieces[j])
+                if distance <= 3:
+                    coordination += 1.0
+
+        if len(on_board_pieces) > 1:
+            return coordination / (
+                len(on_board_pieces) * (len(on_board_pieces) - 1) / 2
+            )
+        return 0.0
+
+    @staticmethod
+    def _attack_pressure_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        opponent = "player2" if player == "player1" else "player1"
+        opponent_pieces = game_state[f"{opponent}_pieces"]
+
+        pressure = 0.0
+        for piece in pieces:
+            if 0 <= piece["square"] < 20:
+                for opponent_piece in opponent_pieces:
+                    if 0 <= opponent_piece["square"] < 20:
+                        distance = abs(piece["square"] - opponent_piece["square"])
+                        if distance <= 4:
+                            pressure += 1.0 / (distance + 1.0)
+
+        return pressure
+
+    @staticmethod
+    def _defensive_structure_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        rosette_squares = [0, 7, 13, 15, 16]
+
+        defensive_score = 0.0
+        for piece in pieces:
+            if 0 <= piece["square"] < 20:
+                if piece["square"] in rosette_squares:
+                    defensive_score += 2.0
+                else:
+                    defensive_score += 0.5
+
+        return defensive_score / 7.0
+
+    @staticmethod
+    def _endgame_evaluation(game_state: Dict[str, Any], player: str) -> float:
+        finished_pieces = GameFeatures._finished_pieces_count(game_state, player)
+        return finished_pieces / 7.0
+
+    @staticmethod
+    def _time_advantage_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        time_score = 0.0
+        for piece in pieces:
+            if piece["square"] == 20:
+                time_score += 1.0
+            elif 0 <= piece["square"] < 20:
+                time_score += 0.5
+        return time_score / 7.0
+
+    @staticmethod
+    def _material_balance_score(game_state: Dict[str, Any]) -> float:
+        p1_finished = GameFeatures._finished_pieces_count(game_state, "player1")
+        p2_finished = GameFeatures._finished_pieces_count(game_state, "player2")
+        return (p1_finished - p2_finished) / 7.0
+
+    @staticmethod
+    def _positional_advantage_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        track = (
+            [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+            if player == "player1"
+            else [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
+        )
+
+        positional_score = 0.0
+        for piece in pieces:
+            if 0 <= piece["square"] < 20:
+                if piece["square"] in track:
+                    track_pos = track.index(piece["square"])
+                    positional_score += track_pos / len(track)
+
+        return positional_score / 7.0
 
 
 class RustAIClient:
@@ -543,37 +731,45 @@ class GameSimulator:
 
 
 class ValueNetwork(nn.Module):
-    def __init__(self, input_size: int = 100):
+    def __init__(self, input_size: int = 150):
         super(ValueNetwork, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(input_size, 128),
+            nn.Linear(input_size, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(128, 64),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.Linear(32, 1),
+            nn.Tanh(),
         )
 
     def forward(self, x):
-        return self.layers(x).squeeze(-1)
+        return self.layers(x)
 
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_size: int = 100, output_size: int = 7):
+    def __init__(self, input_size: int = 150, output_size: int = 7):
         super(PolicyNetwork, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(input_size, 128),
+            nn.Linear(input_size, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Dropout(0.2),
             nn.Linear(128, 64),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.Linear(32, output_size),
+            nn.Softmax(dim=1),
         )
 
     def forward(self, x):
@@ -692,11 +888,7 @@ def generate_training_data(
 
 
 def print_resource_usage():
-    process = psutil.Process()
-    memory_info = process.memory_info()
-    cpu_percent = process.cpu_percent()
-    print(f"Memory usage: {memory_info.rss / 1024 / 1024:.1f} MB")
-    print(f"CPU usage: {cpu_percent:.1f}%")
+    print("Resource monitoring not available")
 
 
 def train_networks(
@@ -782,11 +974,11 @@ def extract_weights(network: nn.Module) -> List[float]:
 
 
 def save_weights_optimized(
-    value_network: ValueNetwork, 
-    policy_network: PolicyNetwork, 
+    value_network: ValueNetwork,
+    policy_network: PolicyNetwork,
     filename: str,
     quantize: bool = True,
-    compress: bool = True
+    compress: bool = True,
 ):
     """Save weights with optional quantization and compression."""
     value_weights = extract_weights(value_network)
@@ -815,27 +1007,27 @@ def save_weights_optimized(
     if compress:
         print("Compressing weights with gzip...")
         compressed_data = compress_weights(weights_data)
-        
+
         # Save both compressed and uncompressed versions
-        compressed_filename = filename.replace('.json', '.json.gz')
-        with open(compressed_filename, 'wb') as f:
+        compressed_filename = filename.replace(".json", ".json.gz")
+        with open(compressed_filename, "wb") as f:
             f.write(compressed_data)
-        
+
         # Also save uncompressed for compatibility
-        with open(filename, 'w') as f:
-            json.dump(weights_data, f, separators=(',', ':'))
-        
+        with open(filename, "w") as f:
+            json.dump(weights_data, f, separators=(",", ":"))
+
         # Print size comparison
         uncompressed_size = os.path.getsize(filename)
         compressed_size = os.path.getsize(compressed_filename)
         print(f"Uncompressed size: {uncompressed_size / 1024:.1f} KB")
         print(f"Compressed size: {compressed_size / 1024:.1f} KB")
         print(f"Compression ratio: {uncompressed_size / compressed_size:.1f}x")
-        
+
         return compressed_filename
     else:
-        with open(filename, 'w') as f:
-            json.dump(weights_data, f, separators=(',', ':'))
+        with open(filename, "w") as f:
+            json.dump(weights_data, f, separators=(",", ":"))
         return filename
 
 

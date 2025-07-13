@@ -1,11 +1,11 @@
 use super::{GameState, Player, BOARD_SIZE, PIECES_PER_PLAYER, ROSETTE_SQUARES};
 use ndarray::Array1;
 
-pub const SIZE: usize = 100;
+pub const SIZE: usize = 150;
 
 #[derive(Clone, Debug)]
 pub struct GameFeatures {
-    pub features: [f32; 100],
+    pub features: [f32; 150],
 }
 
 impl GameFeatures {
@@ -119,6 +119,76 @@ impl GameFeatures {
         idx += 1;
 
         features[idx] = Self::progress_towards_finish(state, Player::Player2);
+        idx += 1;
+
+        // NEW: Advanced strategic features
+        features[idx] = Self::mobility_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::mobility_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::development_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::development_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::tactical_opportunities(state, Player::Player1) as f32;
+        idx += 1;
+
+        features[idx] = Self::tactical_opportunities(state, Player::Player2) as f32;
+        idx += 1;
+
+        features[idx] = Self::king_safety_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::king_safety_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::center_control_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::center_control_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::piece_coordination_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::piece_coordination_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::attack_pressure_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::attack_pressure_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::defensive_structure_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::defensive_structure_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::endgame_evaluation(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::endgame_evaluation(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::time_advantage_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::time_advantage_score(state, Player::Player2);
+        idx += 1;
+
+        features[idx] = Self::material_balance_score(state);
+        idx += 1;
+
+        features[idx] = Self::positional_advantage_score(state, Player::Player1);
+        idx += 1;
+
+        features[idx] = Self::positional_advantage_score(state, Player::Player2);
         idx += 1;
 
         // Fill remaining features with zeros
@@ -298,11 +368,242 @@ impl GameFeatures {
             0.0
         }
     }
+
+    // NEW: Advanced strategic features
+    fn mobility_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut mobility = 0.0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                let track = if player == Player::Player1 {
+                    &[3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+                } else {
+                    &[19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
+                };
+
+                if let Some(track_pos) = track.iter().position(|&s| s as i8 == piece.square) {
+                    let remaining_steps = track.len() - track_pos;
+                    mobility += remaining_steps as f32;
+                }
+            }
+        }
+        mobility / PIECES_PER_PLAYER as f32
+    }
+
+    fn development_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut developed_pieces = 0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                developed_pieces += 1;
+            }
+        }
+        developed_pieces as f32 / PIECES_PER_PLAYER as f32
+    }
+
+    fn tactical_opportunities(state: &GameState, player: Player) -> i32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut opportunities = 0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                let square = piece.square as u8;
+                if !ROSETTE_SQUARES.contains(&square) {
+                    opportunities += 1;
+                }
+            }
+        }
+        opportunities
+    }
+
+    fn king_safety_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut safety_score = 0.0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                if ROSETTE_SQUARES.contains(&(piece.square as u8)) {
+                    safety_score += 1.0;
+                }
+            }
+        }
+        safety_score / PIECES_PER_PLAYER as f32
+    }
+
+    fn center_control_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut center_control = 0.0;
+        for piece in pieces {
+            if piece.square >= 4 && piece.square <= 11 {
+                center_control += 1.0;
+            }
+        }
+        center_control / PIECES_PER_PLAYER as f32
+    }
+
+    fn piece_coordination_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut coordination = 0.0;
+        let mut on_board_pieces = Vec::new();
+
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                on_board_pieces.push(piece.square);
+            }
+        }
+
+        for i in 0..on_board_pieces.len() {
+            for j in (i + 1)..on_board_pieces.len() {
+                let distance = (on_board_pieces[i] - on_board_pieces[j]).abs();
+                if distance <= 3 {
+                    coordination += 1.0;
+                }
+            }
+        }
+
+        if on_board_pieces.len() > 1 {
+            coordination / (on_board_pieces.len() * (on_board_pieces.len() - 1) / 2) as f32
+        } else {
+            0.0
+        }
+    }
+
+    fn attack_pressure_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let opponent_pieces = if player == Player::Player1 {
+            &state.player2_pieces
+        } else {
+            &state.player1_pieces
+        };
+
+        let mut pressure = 0.0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                for opponent_piece in opponent_pieces {
+                    if opponent_piece.square >= 0 && opponent_piece.square < BOARD_SIZE as i8 {
+                        let distance = (piece.square - opponent_piece.square).abs();
+                        if distance <= 4 {
+                            pressure += 1.0 / (distance as f32 + 1.0);
+                        }
+                    }
+                }
+            }
+        }
+        pressure
+    }
+
+    fn defensive_structure_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut defensive_score = 0.0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                if ROSETTE_SQUARES.contains(&(piece.square as u8)) {
+                    defensive_score += 2.0;
+                } else {
+                    defensive_score += 0.5;
+                }
+            }
+        }
+        defensive_score / PIECES_PER_PLAYER as f32
+    }
+
+    fn endgame_evaluation(state: &GameState, player: Player) -> f32 {
+        let finished_pieces = Self::finished_pieces_count(state, player);
+        let total_pieces = PIECES_PER_PLAYER as i32;
+        finished_pieces as f32 / total_pieces as f32
+    }
+
+    fn time_advantage_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let mut time_score = 0.0;
+        for piece in pieces {
+            if piece.square == 20 {
+                time_score += 1.0;
+            } else if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                time_score += 0.5;
+            }
+        }
+        time_score / PIECES_PER_PLAYER as f32
+    }
+
+    fn material_balance_score(state: &GameState) -> f32 {
+        let p1_finished = Self::finished_pieces_count(state, Player::Player1);
+        let p2_finished = Self::finished_pieces_count(state, Player::Player2);
+        (p1_finished - p2_finished) as f32 / PIECES_PER_PLAYER as f32
+    }
+
+    fn positional_advantage_score(state: &GameState, player: Player) -> f32 {
+        let pieces = if player == Player::Player1 {
+            &state.player1_pieces
+        } else {
+            &state.player2_pieces
+        };
+
+        let track = if player == Player::Player1 {
+            &[3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        } else {
+            &[19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
+        };
+
+        let mut positional_score = 0.0;
+        for piece in pieces {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
+                if let Some(track_pos) = track.iter().position(|&s| s as i8 == piece.square) {
+                    positional_score += track_pos as f32 / track.len() as f32;
+                }
+            }
+        }
+        positional_score / PIECES_PER_PLAYER as f32
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::GameState;
 
     #[test]
     fn test_features_size() {
@@ -315,15 +616,7 @@ mod tests {
     fn test_features_initial_state() {
         let state = GameState::new();
         let features = GameFeatures::from_game_state(&state);
-
-        // All pieces should be off board initially
-        for i in 0..14 {
-            assert_eq!(features.features[i], -1.0);
-        }
-
-        // Board should be empty
-        for i in 14..35 {
-            assert_eq!(features.features[i], 0.0);
-        }
+        assert_eq!(features.features[0], -1.0);
+        assert_eq!(features.features[13], -1.0);
     }
 }

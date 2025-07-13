@@ -271,14 +271,14 @@ pub struct MLAI {
 impl MLAI {
     pub fn new() -> Self {
         let value_config = NetworkConfig {
-            input_size: 100,
-            hidden_sizes: vec![64, 32],
+            input_size: 150,
+            hidden_sizes: vec![256, 128, 64, 32],
             output_size: 1,
         };
 
         let policy_config = NetworkConfig {
-            input_size: 100,
-            hidden_sizes: vec![64, 32],
+            input_size: 150,
+            hidden_sizes: vec![256, 128, 64, 32],
             output_size: PIECES_PER_PLAYER,
         };
 
@@ -376,7 +376,21 @@ impl MLAI {
                 "move".to_string()
             };
 
-            let score = next_value[0] + policy_outputs[move_idx as usize] * 0.1;
+            let mut score = next_value[0] * 0.7 + policy_outputs[move_idx as usize] * 0.3;
+
+            if move_type == "finish" {
+                score += 2.0;
+            } else if move_type == "capture" {
+                score += 1.5;
+            } else if move_type == "rosette" {
+                score += 1.0;
+            }
+
+            if to_square == 20 {
+                score += 3.0;
+            } else if GameState::is_rosette(to_square) {
+                score += 1.5;
+            }
 
             move_evaluations.push(MLMoveEvaluation {
                 piece_index: move_idx,

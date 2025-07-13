@@ -1,46 +1,36 @@
 #!/bin/bash
 
-set -e
-
-echo "=========================================="
-echo "Royal Game of Ur ML AI Training - Optimized"
-echo "=========================================="
-
-echo "System Information:"
-echo "CPU cores: $(sysctl -n hw.ncpu)"
-echo "Memory: $(($(sysctl -n hw.memsize) / 1024 / 1024 / 1024)) GB"
-echo "PyTorch MPS available: $(python -c "import torch; print(torch.backends.mps.is_available())")"
-
+echo "Starting optimized ML AI training..."
+echo "This will generate high-quality training data and train a much stronger model."
 echo ""
-echo "Building Rust AI core with optimal settings..."
-./scripts/build_rust_ai.sh
 
-echo ""
-echo "Installing/updating Python dependencies..."
-pip install -r requirements.txt
+cd /Users/robertgilks/Source/rgou-cloudflare
 
-echo ""
-echo "Setting optimal environment variables..."
-export OMP_NUM_THREADS=$(sysctl -n hw.ncpu)
-export MKL_NUM_THREADS=$(sysctl -n hw.ncpu)
-export NUMEXPR_NUM_THREADS=$(sysctl -n hw.ncpu)
-export VECLIB_MAXIMUM_THREADS=$(sysctl -n hw.ncpu)
+# Build the Rust AI core first
+echo "Building Rust AI core..."
+cd worker/rust_ai_core
+cargo build --release
+cd ../..
 
-echo "OMP_NUM_THREADS: $OMP_NUM_THREADS"
-echo "MKL_NUM_THREADS: $MKL_NUM_THREADS"
-echo "NUMEXPR_NUM_THREADS: $NUMEXPR_NUM_THREADS"
-echo "VECLIB_MAXIMUM_THREADS: $VECLIB_MAXIMUM_THREADS"
-
-echo ""
-echo "Starting optimized training..."
-
-python scripts/train_ml_ai.py \
-    --num-games 10000 \
-    --epochs 300 \
-    --learning-rate 0.001 \
+# Generate high-quality training data
+echo "Generating high-quality training data..."
+python3 scripts/train_ml_ai.py \
+    --num-games 5000 \
+    --epochs 200 \
+    --batch-size 128 \
+    --learning-rate 0.0005 \
     --use-rust-ai \
-    --output ml_ai_weights_optimized.json
+    --output-file ml_ai_weights_optimized.json \
+    --quantize \
+    --compress
 
 echo ""
-echo "Training complete!"
-echo "Weights saved to: ml_ai_weights_optimized.json"
+echo "Training completed! New weights saved to ml_ai_weights_optimized.json"
+echo ""
+
+# Test the new model
+echo "Testing the new model against deterministic AI..."
+./scripts/test_ml_vs_deterministic.sh
+
+echo ""
+echo "Optimized training complete!"
