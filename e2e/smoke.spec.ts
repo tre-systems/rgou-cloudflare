@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import Database from 'better-sqlite3';
 
 test.describe('Game Smoke Tests', () => {
   test('loads main page and shows key elements', async ({ page }) => {
@@ -69,7 +70,7 @@ test.describe('Game Smoke Tests', () => {
     await page.getByTestId('roll-dice').click();
   });
 
-  test('simulate win and verify game is saved', async ({ page }) => {
+  test('simulate win and verify game is saved and stats panel updates', async ({ page }) => {
     await page.goto('/');
     if (process.env.NODE_ENV === 'development') {
       await page.getByTestId('create-near-winning-state').click();
@@ -78,6 +79,17 @@ test.describe('Game Smoke Tests', () => {
       const squares = page.locator('[data-testid^="square-"]');
       await squares.nth(12).click();
       await expect(page.locator('text=Victory!')).toBeVisible({ timeout: 3000 });
+      await expect(page.getByTestId('stats-panel')).toBeVisible();
+      await expect(page.getByTestId('wins-count')).toHaveText('1');
+      // Check the DB for a saved game
+      const db = new Database('local.db');
+      const row = db
+        .prepare('SELECT * FROM games WHERE winner = ? ORDER BY completedAt DESC LIMIT 1')
+        .get('player1');
+      expect(row).toBeTruthy();
+      const gameRow = row as { winner: string };
+      expect(gameRow.winner).toBe('player1');
+      db.close();
     }
   });
 });

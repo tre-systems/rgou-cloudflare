@@ -1396,21 +1396,32 @@ export default function GameBoard({
                       damping: 15,
                       delay: 1.3,
                     }}
+                    data-testid="stats-panel"
                   >
                     <div className="text-center">
                       <h3 className="text-sm font-semibold text-white/90 mb-2">Your Record</h3>
                       <div className="flex justify-center space-x-6">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-green-400">{gameStats.wins}</div>
+                          <div
+                            className="text-2xl font-bold text-green-400"
+                            data-testid="wins-count"
+                          >
+                            {gameStats.wins}
+                          </div>
                           <div className="text-xs text-white/70">Wins</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-pink-400">{gameStats.losses}</div>
+                          <div
+                            className="text-2xl font-bold text-pink-400"
+                            data-testid="losses-count"
+                          >
+                            {gameStats.losses}
+                          </div>
                           <div className="text-xs text-white/70">Losses</div>
                         </div>
                       </div>
                       {gameStats.gamesPlayed > 0 && (
-                        <div className="mt-2 text-xs text-white/60">
+                        <div className="mt-2 text-xs text-white/60" data-testid="games-played">
                           Win Rate: {Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)}%
                         </div>
                       )}
