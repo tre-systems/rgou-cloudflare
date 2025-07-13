@@ -16,6 +16,11 @@ interface MLWasmModule {
 
 let mlWasmModule: MLWasmModule;
 let mlWasmReady: Promise<void> | null = null;
+let weightsLoaded = false;
+const networkConfig: {
+  value?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
+  policy?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
+} = {};
 
 const loadMLWasm = (): Promise<void> => {
   if (mlWasmReady) return mlWasmReady;
@@ -58,22 +63,76 @@ const loadMLWasm = (): Promise<void> => {
   return mlWasmReady;
 };
 
-const transformGameStateToRequest = (gameState: GameState) => ({
-  player1Pieces: gameState.player1Pieces.map(p => ({ square: p.square })),
-  player2Pieces: gameState.player2Pieces.map(p => ({ square: p.square })),
-  currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
-  diceRoll: gameState.diceRoll,
-});
+const transformGameStateToRequest = (gameState: GameState) => {
+  console.log('ML AI Worker: Transforming game state for WASM...');
+  console.log('ML AI Worker: Original game state:', {
+    currentPlayer: gameState.currentPlayer,
+    diceRoll: gameState.diceRoll,
+    validMoves: gameState.validMoves,
+    player1Pieces: gameState.player1Pieces.length,
+    player2Pieces: gameState.player2Pieces.length,
+  });
+
+  const request = {
+    player1Pieces: gameState.player1Pieces.map(p => ({ square: p.square })),
+    player2Pieces: gameState.player2Pieces.map(p => ({ square: p.square })),
+    currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
+    diceRoll: gameState.diceRoll,
+  };
+
+  console.log('ML AI Worker: Transformed request:', request);
+  return request;
+};
 
 const transformMLResponse = (responseJson: string) => {
+  console.log('ML AI Worker: Transforming ML response...');
+  console.log('ML AI Worker: Raw response JSON:', responseJson);
+
   const parsed = JSON.parse(responseJson);
-  return {
+  console.log('ML AI Worker: Parsed response:', parsed);
+
+  const response = {
     move: parsed.move,
     evaluation: parsed.evaluation,
     thinking: parsed.thinking,
     diagnostics: parsed.diagnostics,
     timings: parsed.timings,
   };
+
+  console.log('ML AI Worker: Final transformed response:', response);
+  return response;
+};
+
+const logGameStateAnalysis = (gameState: GameState) => {
+  console.log('ML AI Worker: === GAME STATE ANALYSIS ===');
+  console.log('ML AI Worker: Current player:', gameState.currentPlayer);
+  console.log('ML AI Worker: Dice roll:', gameState.diceRoll);
+  console.log('ML AI Worker: Valid moves count:', gameState.validMoves.length);
+  console.log('ML AI Worker: Valid moves:', gameState.validMoves);
+
+  const player1OnBoard = gameState.player1Pieces.filter(p => p.square >= 0 && p.square < 20).length;
+  const player2OnBoard = gameState.player2Pieces.filter(p => p.square >= 0 && p.square < 20).length;
+  const player1Finished = gameState.player1Pieces.filter(p => p.square === 20).length;
+  const player2Finished = gameState.player2Pieces.filter(p => p.square === 20).length;
+
+  console.log('ML AI Worker: Player 1 - On board:', player1OnBoard, 'Finished:', player1Finished);
+  console.log('ML AI Worker: Player 2 - On board:', player2OnBoard, 'Finished:', player2Finished);
+
+  const rosetteSquares = [0, 7, 13, 15, 16];
+  const player1OnRosettes = gameState.player1Pieces.filter(p =>
+    rosetteSquares.includes(p.square)
+  ).length;
+  const player2OnRosettes = gameState.player2Pieces.filter(p =>
+    rosetteSquares.includes(p.square)
+  ).length;
+
+  console.log(
+    'ML AI Worker: Rosette control - Player 1:',
+    player1OnRosettes,
+    'Player 2:',
+    player2OnRosettes
+  );
+  console.log('ML AI Worker: ===============================');
 };
 
 self.addEventListener(
@@ -91,7 +150,33 @@ self.addEventListener(
       switch (type) {
         case 'loadWeights':
           if (event.data.weights) {
+            console.log('ML AI Worker: Loading weights into WASM...');
+            const weights = event.data.weights as {
+              valueWeights: number[];
+              policyWeights: number[];
+              valueNetworkConfig?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
+              policyNetworkConfig?: {
+                inputSize: number;
+                hiddenSizes: number[];
+                outputSize: number;
+              };
+            };
+
+            if (weights.valueWeights) {
+              console.log('ML AI Worker: Value weights size:', weights.valueWeights.length);
+              networkConfig.value = weights.valueNetworkConfig;
+              console.log('ML AI Worker: Value network config:', weights.valueNetworkConfig);
+            }
+
+            if (weights.policyWeights) {
+              console.log('ML AI Worker: Policy weights size:', weights.policyWeights.length);
+              networkConfig.policy = weights.policyNetworkConfig;
+              console.log('ML AI Worker: Policy network config:', weights.policyNetworkConfig);
+            }
+
             mlWasmModule.load_ml_weights(event.data.weights);
+            weightsLoaded = true;
+            console.log('ML AI Worker: Weights loaded successfully into WASM');
             self.postMessage({ type: 'success', id, response: { status: 'weights_loaded' } });
           } else {
             throw new Error('No weights provided');
@@ -100,9 +185,86 @@ self.addEventListener(
 
         case 'getAIMove':
           if (event.data.gameState) {
+            console.log('ML AI Worker: === AI MOVE REQUEST ===');
+            logGameStateAnalysis(event.data.gameState);
+
+            if (!weightsLoaded) {
+              console.warn('ML AI Worker: Weights not loaded, using untrained networks');
+            }
+
+            const startTime = performance.now();
             const request = transformGameStateToRequest(event.data.gameState);
+
+            console.log('ML AI Worker: Calling WASM get_ml_ai_move...');
             const responseJson = mlWasmModule.get_ml_ai_move(request);
+            const wasmTime = performance.now() - startTime;
+
+            console.log('ML AI Worker: WASM response received in', wasmTime.toFixed(2), 'ms');
             const response = transformMLResponse(responseJson);
+
+            console.log('ML AI Worker: AI decision analysis:');
+            console.log('ML AI Worker: - Chosen move:', response.move);
+            console.log(
+              'ML AI Worker: - Position evaluation:',
+              typeof response.evaluation === 'number'
+                ? response.evaluation.toFixed(3)
+                : response.evaluation
+            );
+            console.log('ML AI Worker: - AI reasoning:', response.thinking);
+            console.log(
+              'ML AI Worker: - Move evaluations analyzed:',
+              Array.isArray(response.diagnostics.move_evaluations)
+                ? response.diagnostics.move_evaluations.length
+                : 0
+            );
+            console.log(
+              'ML AI Worker: - Value network output:',
+              typeof response.diagnostics.value_network_output === 'number'
+                ? response.diagnostics.value_network_output.toFixed(3)
+                : response.diagnostics.value_network_output
+            );
+            console.log(
+              'ML AI Worker: - Policy network outputs:',
+              Array.isArray(response.diagnostics.policy_network_outputs)
+                ? response.diagnostics.policy_network_outputs.length
+                : 0
+            );
+            console.log(
+              'ML AI Worker: - WASM calculation time:',
+              typeof response.timings.ai_move_calculation === 'number'
+                ? response.timings.ai_move_calculation.toFixed(2)
+                : response.timings.ai_move_calculation,
+              'ms'
+            );
+            console.log(
+              'ML AI Worker: - Total handler time:',
+              typeof response.timings.total_handler_time === 'number'
+                ? response.timings.total_handler_time.toFixed(2)
+                : response.timings.total_handler_time,
+              'ms'
+            );
+
+            if (
+              Array.isArray(response.diagnostics.move_evaluations) &&
+              response.diagnostics.move_evaluations.length > 0
+            ) {
+              console.log('ML AI Worker: Top move evaluations:');
+              response.diagnostics.move_evaluations
+                .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
+                .slice(0, 3)
+                .forEach(
+                  (
+                    move: { piece_index: number; score: number; move_type: string },
+                    index: number
+                  ) => {
+                    console.log(
+                      `ML AI Worker:   ${index + 1}. Piece ${move.piece_index}: ${typeof move.score === 'number' ? move.score.toFixed(3) : move.score} (${move.move_type})`
+                    );
+                  }
+                );
+            }
+
+            console.log('ML AI Worker: =======================');
 
             console.log('ML AI Worker: Sending success response:', {
               type: 'success',
@@ -117,9 +279,17 @@ self.addEventListener(
 
         case 'evaluatePosition':
           if (event.data.gameState) {
+            console.log('ML AI Worker: === POSITION EVALUATION ===');
+            logGameStateAnalysis(event.data.gameState);
+
             const request = transformGameStateToRequest(event.data.gameState);
+            console.log('ML AI Worker: Calling WASM evaluate_ml_position...');
+
             const responseJson = mlWasmModule.evaluate_ml_position(request);
             const response = JSON.parse(responseJson);
+
+            console.log('ML AI Worker: Position evaluation result:', response);
+            console.log('ML AI Worker: ===========================');
 
             console.log('ML AI Worker: Sending evaluation response:', {
               type: 'success',
@@ -133,8 +303,13 @@ self.addEventListener(
           break;
 
         case 'getInfo':
+          console.log('ML AI Worker: Getting AI info...');
           const infoJson = mlWasmModule.get_ml_ai_info();
           const info = JSON.parse(infoJson);
+
+          console.log('ML AI Worker: AI info:', info);
+          console.log('ML AI Worker: Weights loaded:', weightsLoaded);
+          console.log('ML AI Worker: Network config:', networkConfig);
 
           console.log('ML AI Worker: Sending info response:', {
             type: 'success',
@@ -145,7 +320,9 @@ self.addEventListener(
           break;
 
         case 'rollDice':
+          console.log('ML AI Worker: Rolling dice...');
           const diceRoll = mlWasmModule.roll_dice_ml();
+          console.log('ML AI Worker: Dice roll result:', diceRoll);
 
           console.log('ML AI Worker: Sending dice roll response:', {
             type: 'success',

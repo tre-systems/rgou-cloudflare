@@ -18,6 +18,8 @@ import multiprocessing
 import psutil
 import time
 from pathlib import Path
+import gzip
+import struct
 
 
 def get_device():
@@ -41,6 +43,36 @@ def get_optimal_batch_size(device, model_size=100):
 def get_optimal_workers():
     cpu_count = multiprocessing.cpu_count()
     return min(cpu_count, 8)
+
+
+def quantize_weights(weights: List[float], bits: int = 16) -> List[float]:
+    """Quantize weights to reduce precision and file size."""
+    weights_array = np.array(weights, dtype=np.float32)
+
+    if bits == 16:
+        # Convert to float16 (half precision)
+        weights_quantized = weights_array.astype(np.float16).astype(np.float32)
+    elif bits == 8:
+        # More aggressive quantization to 8-bit
+        min_val = np.min(weights_array)
+        max_val = np.max(weights_array)
+        scale = (max_val - min_val) / 255.0
+        weights_quantized = (
+            np.round((weights_array - min_val) / scale) * scale + min_val
+        )
+    else:
+        return weights
+
+    return weights_quantized.tolist()
+
+
+def compress_weights(weights_data: Dict[str, Any]) -> bytes:
+    """Compress weights data using gzip."""
+    json_str = json.dumps(weights_data, separators=(",", ":"))
+    return gzip.compress(json_str.encode("utf-8"))
+
+
+
 
 
 class GameFeatures:
@@ -749,6 +781,64 @@ def extract_weights(network: nn.Module) -> List[float]:
     return weights
 
 
+def save_weights_optimized(
+    value_network: ValueNetwork, 
+    policy_network: PolicyNetwork, 
+    filename: str,
+    quantize: bool = True,
+    compress: bool = True
+):
+    """Save weights with optional quantization and compression."""
+    value_weights = extract_weights(value_network)
+    policy_weights = extract_weights(policy_network)
+
+    if quantize:
+        print("Quantizing weights to 16-bit precision...")
+        value_weights = quantize_weights(value_weights, bits=16)
+        policy_weights = quantize_weights(policy_weights, bits=16)
+
+    weights_data = {
+        "valueWeights": value_weights,
+        "policyWeights": policy_weights,
+        "valueNetworkConfig": {
+            "inputSize": 100,
+            "hiddenSizes": [128, 64, 32],
+            "outputSize": 1,
+        },
+        "policyNetworkConfig": {
+            "inputSize": 100,
+            "hiddenSizes": [128, 64, 32],
+            "outputSize": 7,
+        },
+    }
+
+    if compress:
+        print("Compressing weights with gzip...")
+        compressed_data = compress_weights(weights_data)
+        
+        # Save both compressed and uncompressed versions
+        compressed_filename = filename.replace('.json', '.json.gz')
+        with open(compressed_filename, 'wb') as f:
+            f.write(compressed_data)
+        
+        # Also save uncompressed for compatibility
+        with open(filename, 'w') as f:
+            json.dump(weights_data, f, separators=(',', ':'))
+        
+        # Print size comparison
+        uncompressed_size = os.path.getsize(filename)
+        compressed_size = os.path.getsize(compressed_filename)
+        print(f"Uncompressed size: {uncompressed_size / 1024:.1f} KB")
+        print(f"Compressed size: {compressed_size / 1024:.1f} KB")
+        print(f"Compression ratio: {uncompressed_size / compressed_size:.1f}x")
+        
+        return compressed_filename
+    else:
+        with open(filename, 'w') as f:
+            json.dump(weights_data, f, separators=(',', ':'))
+        return filename
+
+
 def save_weights(
     value_network: ValueNetwork, policy_network: PolicyNetwork, filename: str
 ):
@@ -802,6 +892,12 @@ def main():
     parser.add_argument(
         "--synthetic", action="store_true", help="Use synthetic data instead of Rust AI"
     )
+    parser.add_argument(
+        "--no-quantize", action="store_true", help="Disable weight quantization"
+    )
+    parser.add_argument(
+        "--no-compress", action="store_true", help="Disable weight compression"
+    )
 
     args = parser.parse_args()
 
@@ -814,6 +910,8 @@ def main():
     print(f"Batch size: {args.batch_size or 'auto-detect'}")
     print(f"Learning rate: {args.learning_rate}")
     print(f"Output file: {args.output}")
+    print(f"Quantization: {'disabled' if args.no_quantize else 'enabled'}")
+    print(f"Compression: {'disabled' if args.no_compress else 'enabled'}")
     print(
         f"Data source: {'Rust AI' if args.use_rust_ai and not args.synthetic else 'Synthetic'}"
     )
@@ -834,11 +932,17 @@ def main():
     )
 
     print("Saving weights...")
-    save_weights(value_network, policy_network, args.output)
+    output_file = save_weights_optimized(
+        value_network,
+        policy_network,
+        args.output,
+        quantize=not args.no_quantize,
+        compress=not args.no_compress,
+    )
 
     print("==============================")
     print("Training complete!")
-    print(f"Weights saved to: {args.output}")
+    print(f"Weights saved to: {output_file}")
     print("==============================")
 
 

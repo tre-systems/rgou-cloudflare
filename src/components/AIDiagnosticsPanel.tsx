@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
+import { Bug, ChevronDown, ChevronRight, Brain, Zap } from 'lucide-react';
 import { AIResponse, MoveEvaluation } from '@/lib/ai-types';
 import { GameState } from '@/lib/types';
 import {
@@ -33,6 +33,12 @@ export default function AIDiagnosticsPanel({
   const piecePositions = calculatePiecePositions(gameState);
   const gamePhase = calculateGamePhase(piecePositions);
   const boardControl = calculateBoardControl(gameState);
+
+  const isMLAI = lastAIDiagnostics.aiType === 'ml';
+  const mlDiagnostics = lastAIDiagnostics.diagnostics as {
+    value_network_output?: number;
+    policy_network_outputs?: number[];
+  };
 
   return (
     <motion.div
@@ -103,6 +109,29 @@ export default function AIDiagnosticsPanel({
                 </div>
               </div>
 
+              {isMLAI && mlDiagnostics.value_network_output !== undefined && (
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="glass-light p-2 rounded-md">
+                    <div className="flex items-center justify-center space-x-1">
+                      <Brain className="w-3 h-3 text-blue-400" />
+                      <p className="text-white/70">Value Network</p>
+                    </div>
+                    <p className="font-mono text-white/90">
+                      {mlDiagnostics.value_network_output?.toFixed(3) || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="glass-light p-2 rounded-md">
+                    <div className="flex items-center justify-center space-x-1">
+                      <Zap className="w-3 h-3 text-purple-400" />
+                      <p className="text-white/70">Policy Outputs</p>
+                    </div>
+                    <p className="font-mono text-white/90">
+                      {mlDiagnostics.policy_network_outputs?.length || 0}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3 text-center">
                 <div className="glass-light p-2 rounded-md">
                   <p className="text-white/70">Game Phase</p>
@@ -128,6 +157,27 @@ export default function AIDiagnosticsPanel({
               {lastAIDiagnostics.thinking && (
                 <div className="text-center bg-gray-800/50 p-2 rounded-md">
                   <p className="text-white/70 italic">{lastAIDiagnostics.thinking}</p>
+                </div>
+              )}
+
+              {isMLAI && mlDiagnostics.policy_network_outputs && (
+                <div className="space-y-1">
+                  <p className="font-semibold text-white/80 flex items-center space-x-1">
+                    <Zap className="w-3 h-3 text-purple-400" />
+                    <span>Policy Network Outputs</span>
+                  </p>
+                  <div className="max-h-24 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-4 gap-1 text-center">
+                      {mlDiagnostics.policy_network_outputs
+                        .slice(0, 8)
+                        .map((output: number, index: number) => (
+                          <div key={index} className="bg-gray-800/30 p-1 rounded text-xs">
+                            <p className="text-white/60">P{index}</p>
+                            <p className="font-mono text-white/90">{output.toFixed(3)}</p>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
                 </div>
               )}
 
