@@ -27,7 +27,7 @@ vi.mock('../stats-store', () => ({
   },
 }));
 
-vi.mock('@/app/actions', () => ({
+vi.mock('@/lib/actions', () => ({
   saveGame: vi.fn(),
 }));
 
@@ -335,7 +335,7 @@ describe('GameStore', () => {
     });
 
     it('should post game when game is finished with winner', async () => {
-      const { saveGame } = await import('@/app/actions');
+      const { saveGame } = await import('@/lib/actions');
 
       useGameStore.setState(state => {
         state.gameState.gameStatus = 'finished';
@@ -361,7 +361,7 @@ describe('GameStore', () => {
     });
 
     it('should handle saveGame error gracefully', async () => {
-      const { saveGame } = await import('@/app/actions');
+      const { saveGame } = await import('@/lib/actions');
 
       useGameStore.setState(state => {
         state.gameState.gameStatus = 'finished';

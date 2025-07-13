@@ -10,7 +10,7 @@ import {
 import { AIService } from './ai-service';
 import { wasmAiService } from './wasm-ai-service';
 import { useStatsStore } from './stats-store';
-import { saveGame } from '@/app/actions';
+import { saveGame } from '@/lib/actions';
 import { getPlayerId } from './utils';
 
 type GameStore = {
