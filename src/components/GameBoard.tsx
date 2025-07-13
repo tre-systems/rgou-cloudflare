@@ -1571,6 +1571,7 @@ export default function GameBoard({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     title="Test Database: Create near-winning state to test game saving"
+                    data-testid="create-near-winning-state"
                   >
                     <Trophy className="w-3.5 h-3.5" />
                   </motion.button>

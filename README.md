@@ -443,3 +443,16 @@ The project includes two GitHub Actions workflows:
 ### Test Coverage
 
 Sound effects (src/lib/sound-effects.ts) are intentionally excluded from test coverage and are not unit tested, as they rely on browser APIs and are not business-critical.
+
+## End-to-End (E2E) Testing
+
+- E2E tests check the presence and functionality of all interactive elements (buttons, toggles, popouts, etc.).
+- The tests do not attempt to play the game by making moves.
+- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies the win UI is shown and the game is saved to the database.
+- All interactive elements should have a `data-testid` for robust selection in tests.
+
+Run e2e tests with:
+
+```
+npm run test:e2e
+```

@@ -319,6 +319,15 @@ Tests are run automatically on:
 3. **Flaky Test Detection**: Identify and fix unstable tests
 4. **Test Maintenance**: Regular review and cleanup
 
+## E2E Testing Strategy
+
+- E2E tests verify the presence and functionality of all interactive elements (buttons, toggles, popouts, etc.).
+- Tests do not attempt to play the game by making moves.
+- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies the win UI is shown and the game is saved to the database.
+- All interactive elements must have a `data-testid` for robust and reliable selection in tests.
+
+This approach ensures UI and DB integration are covered without relying on game logic or AI behavior in E2E tests.
+
 ## Conclusion
 
 This testing strategy provides a solid foundation for confident refactoring while keeping maintenance overhead manageable. The focus on deterministic, high-value tests ensures that the test suite remains a valuable asset rather than a burden.
