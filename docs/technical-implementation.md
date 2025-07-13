@@ -57,6 +57,24 @@ npm run dev
 npm run build
 ```
 
+### PostCSS Configuration
+
+The PostCSS configuration is environment-aware and automatically adjusts based on the current environment:
+
+- **Development/Production**: Uses `@tailwindcss/postcss` for Tailwind CSS processing
+- **Test Environment**: Uses an empty plugins array to avoid CSS processing during tests
+
+```javascript
+// postcss.config.mjs
+const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST;
+
+const config = {
+  plugins: isTest ? [] : ['@tailwindcss/postcss'],
+};
+
+export default config;
+```
+
 ### AI Build Process
 
 The AI system has multiple build targets:

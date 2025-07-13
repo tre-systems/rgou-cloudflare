@@ -1,7 +1,7 @@
-import tailwindcss from 'tailwindcss';
+const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST;
 
 const config = {
-  plugins: [tailwindcss],
+  plugins: isTest ? [] : ['@tailwindcss/postcss'],
 };
 
 export default config;
