@@ -470,8 +470,6 @@ class GameSimulator:
                     actual_move = valid_moves[piece_index]
                 else:
                     actual_move = valid_moves[0]
-                
-
 
                 features = GameFeatures.from_game_state(game_state)
                 target_policy = self._create_target_policy(game_state, actual_move)
@@ -758,17 +756,17 @@ def save_weights(
     policy_weights = extract_weights(policy_network)
 
     weights_data = {
-        "value_weights": value_weights,
-        "policy_weights": policy_weights,
-        "value_network_config": {
-            "input_size": 100,
-            "hidden_sizes": [128, 64, 32],
-            "output_size": 1,
+        "valueWeights": value_weights,
+        "policyWeights": policy_weights,
+        "valueNetworkConfig": {
+            "inputSize": 100,
+            "hiddenSizes": [128, 64, 32],
+            "outputSize": 1,
         },
-        "policy_network_config": {
-            "input_size": 100,
-            "hidden_sizes": [128, 64, 32],
-            "output_size": 7,
+        "policyNetworkConfig": {
+            "inputSize": 100,
+            "hiddenSizes": [128, 64, 32],
+            "outputSize": 7,
         },
     }
 
