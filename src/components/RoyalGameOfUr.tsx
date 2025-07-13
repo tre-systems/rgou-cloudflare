@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
-import { useGameStore } from '@/lib/game-store';
+import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { isLocalDevelopment } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
@@ -14,18 +14,148 @@ import AnimatedBackground from './AnimatedBackground';
 import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function RoyalGameOfUr() {
+  const gameState = useGameState();
+  const { processDiceRoll, switchPlayerAfterZeroRoll, makeMove, makeAIMove, reset } =
+    useGameActions();
+  const aiThinking = useGameStore(state => state.aiThinking);
+  const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
+  const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
+  const lastMoveType = useGameStore(state => state.lastMoveType);
+  const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
+
   const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const zeroRollTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const {
-    gameState,
-    aiThinking,
-    lastAIDiagnostics,
-    lastAIMoveDuration,
-    actions: { makeMove, reset },
-  } = useGameStore();
+  useEffect(() => {
+    if (gameState.diceRoll === 0 && !gameState.canMove && gameState.gameStatus === 'playing') {
+      zeroRollTimeout.current = setTimeout(() => {
+        switchPlayerAfterZeroRoll();
+      }, 2000);
+    }
+    return () => {
+      if (zeroRollTimeout.current) {
+        clearTimeout(zeroRollTimeout.current);
+        zeroRollTimeout.current = null;
+      }
+    };
+  }, [gameState.diceRoll, gameState.canMove, gameState.gameStatus, switchPlayerAfterZeroRoll]);
+
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === 'player2' &&
+      !gameState.canMove &&
+      gameState.gameStatus === 'playing' &&
+      gameState.diceRoll !== 0
+    ) {
+      setTimeout(() => processDiceRoll(), 500);
+    }
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.gameStatus,
+    gameState.diceRoll,
+    processDiceRoll,
+  ]);
+
+  useEffect(() => {
+    if (gameState.currentPlayer === 'player2' && gameState.canMove) {
+      soundEffects.aiThinking();
+      makeAIMove(aiSource);
+    }
+  }, [gameState, makeAIMove, aiSource]);
+
+  useEffect(() => {
+    if (gameState.gameStatus === 'finished') {
+      setTimeout(() => {
+        if (gameState.winner === 'player1') {
+          soundEffects.gameWin();
+        } else {
+          soundEffects.gameLoss();
+        }
+      }, 500);
+    }
+  }, [gameState.gameStatus, gameState.winner]);
+
+  useEffect(() => {
+    if (lastMoveType && lastMovePlayer) {
+      switch (lastMoveType) {
+        case 'capture':
+          soundEffects.pieceCapture();
+          break;
+        case 'rosette':
+          soundEffects.rosetteLanding();
+          break;
+        case 'finish':
+          soundEffects.pieceFinish();
+          break;
+        case 'move':
+          soundEffects.pieceMove();
+          break;
+      }
+    }
+  }, [lastMoveType, lastMovePlayer]);
+
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === 'player1' &&
+      !gameState.canMove &&
+      gameState.diceRoll === null &&
+      gameState.gameStatus === 'playing'
+    ) {
+      setTimeout(() => processDiceRoll(), 500);
+    }
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.diceRoll,
+    gameState.gameStatus,
+    processDiceRoll,
+  ]);
+
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === 'player1' &&
+      !gameState.canMove &&
+      gameState.diceRoll !== null &&
+      gameState.gameStatus === 'playing'
+    ) {
+      setTimeout(() => processDiceRoll(), 1000);
+    }
+  }, [
+    gameState.currentPlayer,
+    gameState.canMove,
+    gameState.diceRoll,
+    gameState.gameStatus,
+    processDiceRoll,
+  ]);
+
+  useEffect(() => {
+    if (
+      gameState.currentPlayer === 'player2' &&
+      gameState.diceRoll === 0 &&
+      !gameState.canMove &&
+      gameState.gameStatus === 'playing'
+    ) {
+      zeroRollTimeout.current = setTimeout(() => {
+        switchPlayerAfterZeroRoll();
+      }, 2000);
+    }
+    return () => {
+      if (zeroRollTimeout.current) {
+        clearTimeout(zeroRollTimeout.current);
+        zeroRollTimeout.current = null;
+      }
+    };
+  }, [
+    gameState.currentPlayer,
+    gameState.diceRoll,
+    gameState.canMove,
+    gameState.gameStatus,
+    switchPlayerAfterZeroRoll,
+  ]);
 
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
