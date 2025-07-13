@@ -249,63 +249,129 @@ fn quiescence_search(&mut self, state: &GameState, depth: u8, mut alpha: f32, mu
    - Chapter 6: Adversarial Search and Games
    - Section 6.5: Stochastic Games
 
-2. **Korf, R. E.** (1991). "Depth-first iterative-deepening: An optimal admissible tree search." _Artificial Intelligence_, 27(1), 97-109.
+2. **Ballard, B. W.** (1983). The \*-minimax search procedure for trees containing chance nodes. _Artificial Intelligence_, 21(3), 327-350.
 
-3. **Knuth, D. E., & Moore, R. W.** (1975). "An analysis of alpha-beta pruning." _Artificial Intelligence_, 6(4), 293-326.
+3. **Finkel, I. L.** (2007). On the rules for the Royal Game of Ur. In I. L. Finkel (Ed.), _Ancient Board Games in Perspective_ (pp. 16-32). British Museum Press.
 
-### Expectiminimax Algorithm
+### Historical Context
 
-4. **Ballard, B. W.** (1983). "The *-minimax search procedure for trees containing chance nodes." *Artificial Intelligence\*, 21(3), 327-350.
+The Royal Game of Ur is one of the oldest known board games, dating back to approximately 2500 BCE. The rules were reconstructed by Irving Finkel at the British Museum based on archaeological findings and cuneiform texts.
 
-5. **Hauk, T., Buro, M., & Schaeffer, J.** (2004). "*-Minimax performance in backgammon." *Computers and Games\*, 51-66.
+## Implementation Details
 
-### Game-Specific Research
+### Rust Core (`worker/rust_ai_core/src/lib.rs`)
 
-6. **Bell, R. C.** (1979). _Board and Table Games from Many Civilizations_. Dover Publications.
-   - Chapter on The Royal Game of Ur
+The core AI logic is implemented in Rust for maximum performance:
 
-7. **Finkel, I. L.** (2007). "On the rules for the Royal Game of Ur." _Ancient Board Games in Perspective_, 16-32.
+```rust
+pub struct AI {
+    transposition_table: HashMap<u64, TranspositionEntry>,
+    pub nodes_evaluated: u32,
+    pub transposition_hits: u32,
+}
 
-## Implementation Notes
+impl AI {
+    pub fn new() -> Self {
+        Self {
+            transposition_table: HashMap::new(),
+            nodes_evaluated: 0,
+            transposition_hits: 0,
+        }
+    }
 
-### Rust Performance Benefits
+    pub fn get_best_move(&mut self, state: &GameState, depth: u8) -> Option<usize> {
+        // Implementation of expectiminimax search
+    }
+}
+```
 
-- **Zero-cost abstractions**: No runtime overhead for high-level constructs
-- **Memory safety**: Prevents common bugs without garbage collection
-- **Concurrent safety**: Thread-safe by design
-- **WebAssembly compilation**: Near-native performance in browsers
+### WebAssembly Interface (`worker/rust_ai_core/src/wasm_api.rs`)
 
-### WebAssembly Integration
+The WASM interface provides a JavaScript-compatible API:
 
-The AI is compiled to WebAssembly using `wasm-pack`, enabling:
+```rust
+#[wasm_bindgen]
+pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsValue> {
+    let game_state: GameState = game_state_request_js.into_serde().unwrap();
+    let mut ai = AI::new();
+    let best_move = ai.get_best_move(&game_state, 6);
 
-- Cross-platform compatibility
-- Near-native performance in browsers
-- Offline functionality
-- Secure execution environment
+    let response = AIResponse {
+        move_index: best_move,
+        evaluation: ai.get_last_evaluation(),
+        nodes_evaluated: ai.nodes_evaluated,
+        transposition_hits: ai.transposition_hits,
+    };
 
-### Testing and Validation
+    Ok(JsValue::from_serde(&response).unwrap())
+}
+```
 
-The AI system includes comprehensive tests:
+### Cloudflare Worker (`worker/src/lib.rs`)
 
-- Unit tests for evaluation function
-- Integration tests for move generation
-- Performance benchmarks
-- AI vs AI simulation tests
+The server-side AI provides a REST API:
 
-## Future Enhancements
+```rust
+#[event(fetch)]
+async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
+    let router = Router::new();
 
-### Potential Improvements
+    router
+        .post_async("/ai-move", |req, ctx| handle_ai_move(req, ctx))
+        .get("/health", |_req, _ctx| handle_health())
+        .run(req, env)
+        .await
+}
 
-1. **Opening Book**: Pre-computed optimal moves for common opening positions
-2. **Endgame Database**: Perfect play for simplified endgame positions
-3. **Machine Learning**: Neural network evaluation function
-4. **Parallel Search**: Multi-threaded search for deeper analysis
-5. **Opening Theory**: Historical analysis of strong opening moves
+async fn handle_ai_move(req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+    let game_state: GameState = req.json().await?;
+    let mut ai = AI::new();
+    let best_move = ai.get_best_move(&game_state, 4);
 
-### Research Opportunities
+    let response = AIResponse {
+        move_index: best_move,
+        evaluation: ai.get_last_evaluation(),
+        nodes_evaluated: ai.nodes_evaluated,
+        transposition_hits: ai.transposition_hits,
+    };
 
-- **Monte Carlo Tree Search (MCTS)**: Alternative to expectiminimax
-- **Reinforcement Learning**: Self-play training for improved evaluation
-- **Opening Theory Development**: Analysis of optimal opening strategies
-- **Endgame Classification**: Categorization of endgame types and strategies
+    Response::from_json(&response)
+}
+```
+
+## Testing and Validation
+
+### AI vs AI Simulation
+
+The AI is validated through self-play simulations:
+
+```rust
+#[test]
+fn test_ai_vs_ai() {
+    let mut ai1 = AI::new();
+    let mut ai2 = AI::new();
+
+    for _ in 0..100 {
+        let winner = play_game(&mut ai1, &mut ai2);
+        assert!(winner.is_some(), "Game should always have a winner");
+    }
+}
+```
+
+### Performance Benchmarks
+
+Regular performance testing ensures consistent behavior:
+
+```rust
+#[test]
+fn test_ai_performance() {
+    let mut ai = AI::new();
+    let state = GameState::new();
+
+    let start = std::time::Instant::now();
+    let _move = ai.get_best_move(&state, 6);
+    let duration = start.elapsed();
+
+    assert!(duration.as_millis() < 100, "AI should respond within 100ms");
+}
+```

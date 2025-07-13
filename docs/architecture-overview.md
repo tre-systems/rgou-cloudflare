@@ -6,19 +6,19 @@ This document provides a detailed look into the architecture of the Royal Game o
 
 The architecture was designed with the following goals in mind:
 
-- **High Performance**: Utilize Rust and WebAssembly for CPU-intensive AI calculations.
-- **Offline Capability**: The game must be fully playable without an internet connection.
-- **Seamless User Experience**: The user should be able to switch between AI opponents without a noticeable difference in behavior.
-- **Modern Tooling**: Leverage modern web development practices with Next.js, TypeScript, and a serverless backend on Cloudflare.
-- **Maintainability**: Keep a clean separation of concerns between the UI, game logic, and AI services.
+- **High Performance**: Utilize Rust and WebAssembly for CPU-intensive AI calculations
+- **Offline Capability**: The game must be fully playable without an internet connection
+- **Seamless User Experience**: The user should be able to switch between AI opponents without a noticeable difference in behavior
+- **Modern Tooling**: Leverage modern web development practices with Next.js, TypeScript, and a serverless backend on Cloudflare
+- **Maintainability**: Keep a clean separation of concerns between the UI, game logic, and AI services
 
 ## Core Components
 
 The project is primarily composed of three main parts:
 
-1.  **Next.js Frontend**: A modern React-based application for the user interface and game state management.
-2.  **Server-Side AI (Cloudflare Worker)**: A Rust-based AI that runs on Cloudflare's edge network. This serves as a fallback option.
-3.  **Client-Side AI (WebAssembly)**: The same Rust AI logic compiled to WebAssembly (Wasm) to run directly in the user's browser. This is now the default opponent and provides an offline-capable experience.
+1. **Next.js Frontend**: A modern React-based application for the user interface and game state management
+2. **Server-Side AI (Cloudflare Worker)**: A Rust-based AI that runs on Cloudflare's edge network. This serves as a fallback option
+3. **Client-Side AI (WebAssembly)**: The same Rust AI logic compiled to WebAssembly (Wasm) to run directly in the user's browser. This is now the default opponent and provides an offline-capable experience
 
 A key aspect of this architecture is the **shared Rust AI core**, located in `worker/rust_ai_core`. This single crate contains all the game rules, board evaluation heuristics, and the AI's expectiminimax search algorithm. By sharing this code, we ensure that both the server and client AIs exhibit identical strategic behavior, with the only difference being their computational resources (search depth).
 
@@ -28,12 +28,14 @@ For detailed information about the AI algorithm, evaluation function, and techni
 
 The frontend is a Next.js 15 application using the App Router.
 
-- **UI Components (`src/components/`)**: React components responsible for rendering the game board, controls, and other UI elements. They are built with Tailwind CSS for styling and Framer Motion for animations.
-- **State Management (`src/lib/game-store.ts`)**: Global game state is managed by a Zustand store. This store holds the entire `GameState` and provides actions to manipulate it (e.g., `makeMove`, `processDiceRoll`). Using Immer middleware allows for safe and simple immutable state updates.
-- **Game Logic (`src/lib/game-logic.ts`)**: This TypeScript module contains the rules of the game. It consists of pure functions that take the current game state and an action, and return the new game state. This logic is used for validating and applying player moves on the client side.
+- **UI Components (`src/components/`)**: React components responsible for rendering the game board, controls, and other UI elements. They are built with Tailwind CSS for styling and Framer Motion for animations
+- **State Management (`src/lib/game-store.ts`)**: Global game state is managed by a Zustand store. This store holds the entire `GameState` and provides actions to manipulate it (e.g., `makeMove`, `processDiceRoll`). Using Immer middleware allows for safe and simple immutable state updates
+- **Game Logic (`src/lib/game-logic.ts`)**: This TypeScript module contains the rules of the game. It consists of pure functions that take the current game state and an action, and return the new game state. This logic is used for validating and applying player moves on the client side
 - **AI Services (`src/lib/ai-service.ts` & `src/lib/wasm-ai-service.ts`)**:
-  - `ai-service.ts`: A simple client to communicate with the server-side Cloudflare Worker via a `fetch` request.
-  - `wasm-ai-service.ts`: A service that interacts with the client-side WebAssembly AI. It loads the Wasm module and calls the exported `get_ai_move_wasm` function.
+  - `ai-service.ts`: A simple client to communicate with the server-side Cloudflare Worker via a `fetch` request
+  - `wasm-ai-service.ts`: A service that interacts with the client-side WebAssembly AI. It loads the Wasm module and calls the exported `get_ai_move_wasm` function
+- **Database Integration (`src/lib/actions.ts`)**: Server actions for saving completed games to the database
+- **Statistics Store (`src/lib/stats-store.ts`)**: Local statistics tracking with persistent storage
 
 ### 2. Dual-AI Engine (`worker/`)
 
@@ -41,35 +43,79 @@ The power of this project lies in its dual-AI engine, which provides flexibility
 
 #### Server-Side AI (`worker/src/lib.rs`)
 
-- **Technology**: A Cloudflare Worker written in Rust using the `workers-rs` crate.
-- **Role**: It exposes a single API endpoint (`/ai-move`) that receives the current game state, computes the best move, and returns it.
-- **Performance**: To keep response times low and adhere to serverless function execution limits, the server-side AI uses a **lower search depth** (e.g., depth 4). This makes it a slightly faster but weaker opponent, available as a fallback option.
+- **Technology**: A Cloudflare Worker written in Rust using the `workers-rs` crate
+- **Role**: It exposes a single API endpoint (`/ai-move`) that receives the current game state, computes the best move, and returns it
+- **Performance**: To keep response times low and adhere to serverless function execution limits, the server-side AI uses a **lower search depth** (e.g., depth 4). This makes it a slightly faster but weaker opponent, available as a fallback option
 
 #### Client-Side AI (`worker/rust_ai_core/src/wasm_api.rs`)
 
-- **Technology**: The core Rust AI logic from `rgou-ai-core` is compiled to WebAssembly using `wasm-pack`.
-- **Role**: It runs entirely in the user's browser, enabling instant AI responses and full offline gameplay. The Wasm module is loaded and managed by `src/lib/wasm-ai-service.ts`. This is now the default AI for the application.
-- **Performance**: Since it runs on the user's machine, it can afford a **deeper search depth** (e.g., depth 6), making it the stronger of the two AI opponents.
+- **Technology**: The core Rust AI logic from `rgou-ai-core` is compiled to WebAssembly using `wasm-pack`
+- **Role**: It runs entirely in the user's browser, enabling instant AI responses and full offline gameplay. The Wasm module is loaded and managed by `src/lib/wasm-ai-service.ts`. This is now the default AI for the application
+- **Performance**: Since it runs on the user's machine, it can afford a **deeper search depth** (e.g., depth 6), making it the stronger of the two AI opponents
 
 ### 3. Data Flow: An AI's Turn
 
 When it's the AI's turn, the following sequence occurs:
 
-1.  The `RoyalGameOfUr.tsx` component detects it's the AI's turn based on the `gameState` from the Zustand store.
-2.  It calls the `makeAIMove` action in `game-store.ts`, passing the currently selected AI source (`'client'` by default).
-3.  The `makeAIMove` action then calls the appropriate AI service:
-    - **Client**: `wasmAiService.getAIMove` calls the Wasm function `get_ai_move_wasm`, passing it the game state. The Wasm module runs the AI calculation synchronously within the browser's main thread (or a worker thread, if implemented) and returns the result.
-    - **Server**: `AIService.getAIMove` sends a POST request with the game state to the Cloudflare Worker. The worker deserializes the state, runs the Rust AI, and returns the chosen move.
-4.  The chosen move is then processed by the `makeMoveLogic` function from `game-logic.ts` to update the board state in the Zustand store.
-5.  The UI re-renders to reflect the AI's move.
+1. The `RoyalGameOfUr.tsx` component detects it's the AI's turn based on the `gameState` from the Zustand store
+2. It calls the `makeAIMove` action in `game-store.ts`, passing the currently selected AI source (`'client'` by default)
+3. The `makeAIMove` action then calls the appropriate AI service:
+   - **Client**: `wasmAiService.getAIMove` calls the Wasm function `get_ai_move_wasm`, passing it the game state. The Wasm module runs the AI calculation synchronously within the browser's main thread (or a worker thread, if implemented) and returns the result
+   - **Server**: `AIService.getAIMove` sends a POST request with the game state to the Cloudflare Worker. The worker deserializes the state, runs the Rust AI, and returns the chosen move
+4. The chosen move is then processed by the `makeMoveLogic` function from `game-logic.ts` to update the board state in the Zustand store
+5. The UI re-renders to reflect the AI's move
+
+### 4. Game Completion and Database Integration
+
+When a game ends, the following sequence occurs:
+
+1. The game state is updated to `gameStatus: 'finished'` with a winner
+2. Local statistics are updated via `useStatsStore` (wins/losses count)
+3. The `postGameToServer` action is triggered automatically
+4. Game data is saved to the database via the `saveGame` server action
+5. The game completion overlay displays updated statistics
+
+## Database Architecture
+
+### Local Development (SQLite)
+
+- **Database**: Local SQLite file (`local.db`)
+- **ORM**: Drizzle ORM with SQLite adapter
+- **Migrations**: Automatic schema management
+- **Testing**: E2E tests verify actual database saves
+
+### Production (Cloudflare D1)
+
+- **Database**: Cloudflare D1 (SQLite-compatible)
+- **ORM**: Drizzle ORM with D1 adapter
+- **Migrations**: Applied via Wrangler CLI
+- **Environment**: Automatic detection via `NODE_ENV`
+
+### Schema
+
+```typescript
+export const games = sqliteTable('games', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  playerId: text('playerId').notNull(),
+  winner: text('winner', { enum: ['player1', 'player2'] }),
+  completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
+  status: text('status', { enum: ['in_progress', 'completed', 'abandoned'] }),
+  moveCount: integer('moveCount'),
+  duration: integer('duration'),
+  history: text('history', { mode: 'json' }),
+});
+```
 
 ## Deployment
 
 The project is deployed entirely within the Cloudflare ecosystem.
 
-- **Frontend**: The Next.js application is adapted for Cloudflare Pages using the `@opennextjs/cloudflare` build adapter.
-- **AI Worker**: The server-side AI is deployed as a separate Cloudflare Worker. The frontend knows the worker's URL via an environment variable (`NEXT_PUBLIC_AI_WORKER_URL`).
-- **Automation**: Deployment is automated through a GitHub Actions workflow defined in `.github/workflows/deploy.yml`, which builds the Next.js app and deploys it to Cloudflare Pages.
+- **Frontend**: The Next.js application is adapted for Cloudflare Pages using the `@opennextjs/cloudflare` build adapter
+- **AI Worker**: The server-side AI is deployed as a separate Cloudflare Worker. The frontend knows the worker's URL via an environment variable (`NEXT_PUBLIC_AI_WORKER_URL`)
+- **Database**: Cloudflare D1 database for production game storage
+- **Automation**: Deployment is automated through a GitHub Actions workflow defined in `.github/workflows/deploy.yml`, which builds the Next.js app and deploys it to Cloudflare Pages
 
 ### WASM Security Headers
 

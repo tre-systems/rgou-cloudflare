@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameState, Player } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { soundEffects } from '@/lib/sound-effects';
 import { useGameStore } from '@/lib/game-store';
 import CaptureExplosion from './animations/CaptureExplosion';
 import RosetteLanding from './animations/RosetteLanding';
@@ -51,8 +50,9 @@ export default function GameBoard({
     Array<{ id: string; position: { x: number; y: number } }>
   >([]);
   const boardRef = useRef<HTMLDivElement>(null);
-  const previousGameState = useRef<GameState | null>(null);
   const { actions } = useGameStore();
+  const lastMoveType = useGameStore(state => state.lastMoveType);
+  const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
   // Ensure DB post happens after state is truly finished
   React.useEffect(() => {
@@ -61,43 +61,78 @@ export default function GameBoard({
     }
   }, [gameState.gameStatus, gameState.winner, actions]);
 
-  // Track game state changes for capture and finish effects
+  // Handle move type animations
   useEffect(() => {
-    if (!previousGameState.current) {
-      previousGameState.current = gameState;
-      return;
-    }
-
-    const prev = previousGameState.current;
-    const current = gameState;
-
-    // Check for captures by comparing board states
-    current.board.forEach((newPiece, square) => {
-      const oldPiece = prev.board[square];
-      if (newPiece?.player === oldPiece?.player) return;
-      // Capture
-      if (newPiece && oldPiece && newPiece.player !== oldPiece.player) {
-        const squareElement = boardRef.current?.querySelector(`[data-square-id='${square}']`);
-        if (squareElement) {
-          const rect = squareElement.getBoundingClientRect();
-          setExplosions(prevExplosions => [
-            ...prevExplosions,
-            {
-              id: `explosion-${Date.now()}-${square}`,
-              position: {
-                x: rect.left + rect.width / 2,
-                y: rect.top + rect.height / 2,
+    if (lastMoveType && lastMovePlayer) {
+      switch (lastMoveType) {
+        case 'capture':
+          // Find the capture position from the last move in history
+          if (gameState.history.length > 0) {
+            const lastMove = gameState.history[gameState.history.length - 1];
+            const squareElement = boardRef.current?.querySelector(
+              `[data-square-id='${lastMove.toSquare}']`
+            );
+            if (squareElement) {
+              const rect = squareElement.getBoundingClientRect();
+              setExplosions(prevExplosions => [
+                ...prevExplosions,
+                {
+                  id: `explosion-${Date.now()}-${lastMove.toSquare}`,
+                  position: {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                  },
+                },
+              ]);
+              setScreenShake(true);
+              setTimeout(() => setScreenShake(false), 500);
+            }
+          }
+          break;
+        case 'rosette':
+          // Find the rosette position from the last move in history
+          if (gameState.history.length > 0) {
+            const lastMove = gameState.history[gameState.history.length - 1];
+            const squareElement = boardRef.current?.querySelector(
+              `[data-square-id='${lastMove.toSquare}']`
+            );
+            if (squareElement) {
+              const rect = squareElement.getBoundingClientRect();
+              setRosetteLandings(prevRosettes => [
+                ...prevRosettes,
+                {
+                  id: `rosette-${Date.now()}-${lastMove.toSquare}`,
+                  position: {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                  },
+                },
+              ]);
+            }
+          }
+          break;
+        case 'finish':
+          // For finish moves, show celebration near the player's finish area
+          const finishSelector = `[data-square-id='20-${lastMovePlayer}']`;
+          const finishElement = boardRef.current?.querySelector(finishSelector);
+          if (finishElement) {
+            const rect = finishElement.getBoundingClientRect();
+            setCelebrations(prevCelebrations => [
+              ...prevCelebrations,
+              {
+                id: `celebration-${Date.now()}-${lastMovePlayer}`,
+                position: {
+                  x: rect.left + rect.width / 2,
+                  y: rect.top + rect.height / 2,
+                },
+                player: lastMovePlayer,
               },
-            },
-          ]);
-          setScreenShake(true);
-          setTimeout(() => setScreenShake(false), 500);
-          soundEffects.pieceCapture();
-        }
+            ]);
+          }
+          break;
       }
-    });
-    previousGameState.current = gameState;
-  }, [gameState]);
+    }
+  }, [lastMoveType, lastMovePlayer, gameState.history]);
 
   // Clean up explosion effects
   useEffect(() => {
@@ -219,6 +254,15 @@ export default function GameBoard({
                   <div key={`empty-${i}`} className="aspect-square" />
                 )
               )}
+            {/* Hidden finish squares for animation positioning */}
+            <div
+              data-square-id="20-player1"
+              style={{ position: 'absolute', left: -9999, top: -9999, width: 1, height: 1 }}
+            />
+            <div
+              data-square-id="20-player2"
+              style={{ position: 'absolute', left: -9999, top: -9999, width: 1, height: 1 }}
+            />
           </div>
           <GameControls
             aiSource={aiSource}

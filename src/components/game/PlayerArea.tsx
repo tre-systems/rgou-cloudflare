@@ -90,9 +90,6 @@ export default function PlayerArea({
                       isClickable={validMoves.includes(i) && player === 'player1'}
                       isBeingCaptured={false}
                       isFinishing={false}
-                      onClick={() =>
-                        validMoves.includes(i) && player === 'player1' && onPieceClick(i)
-                      }
                     />
                   </motion.div>
                 ) : (

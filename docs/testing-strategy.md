@@ -11,8 +11,6 @@
 | UI smoke          | App loads, basic flows      | Playwright | Medium | Low         |
 | Full E2E          | Full game, random flows     | Avoid      | Low    | High        |
 
----
-
 This document outlines the comprehensive testing strategy for the Royal Game of Ur project, designed to provide confidence during refactoring while minimizing maintenance overhead.
 
 ## Testing Philosophy
@@ -249,7 +247,7 @@ describe('Feature', () => {
       const result = functionUnderTest(input);
 
       // Assert
-      expect(result).toBe(expected);
+      expect(result).toEqual(expectedOutput);
     });
   });
 });
@@ -257,83 +255,140 @@ describe('Feature', () => {
 
 ### 2. Test Data
 
-- Use factory functions for complex test data
+- Use factory functions for creating test data
 - Keep test data minimal and focused
 - Use descriptive variable names
+- Avoid magic numbers and strings
 
-### 3. Mocking
+### 3. Assertions
 
-- Mock external dependencies (WASM, API calls)
-- Don't mock internal business logic
-- Use consistent mock patterns
-
-### 4. Assertions
-
+- Use specific assertions (e.g., `toBe` vs `toBeTruthy`)
 - Test one thing per test
 - Use descriptive assertion messages
-- Prefer specific assertions over generic ones
+- Group related assertions together
 
-## Continuous Integration
+### 4. Mocking
 
-Tests are run automatically on:
-
-1. **Pull Requests**: All tests must pass
-2. **Main Branch**: Full test suite including Rust tests
-3. **Deployment**: Pre-deployment verification
-
-## Coverage Goals
-
-- **Unit Tests**: > 90% coverage of business logic
-- **Integration Tests**: > 80% coverage of user workflows
-- **Schema Tests**: 100% coverage of validation logic
-- **Overall**: > 85% coverage excluding UI components
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Test Flakiness**: Usually indicates timing or async issues
-2. **Mock Failures**: Check mock setup and cleanup
-3. **Snapshot Failures**: Review changes and update if intentional
-4. **Performance Issues**: Check for unnecessary test setup
-
-### Debugging
-
-1. **Unit Tests**: Use `console.log` or debugger
-2. **Integration Tests**: Check store state and mock calls
-3. **Snapshot Tests**: Compare actual vs expected output
-
-## Future Enhancements
-
-### Potential Additions
-
-1. **Property-Based Testing**: Using libraries like fast-check
-2. **Visual Regression Tests**: For UI components
-3. **Performance Benchmarks**: For AI algorithm
-4. **Contract Tests**: For API endpoints
-
-### Monitoring
-
-1. **Test Execution Time**: Monitor for performance degradation
-2. **Coverage Trends**: Track coverage over time
-3. **Flaky Test Detection**: Identify and fix unstable tests
-4. **Test Maintenance**: Regular review and cleanup
+- Mock external dependencies
+- Use dependency injection for testability
+- Keep mocks simple and focused
+- Document mock behavior
 
 ## E2E Testing Strategy
 
-- E2E tests verify the presence and functionality of all interactive elements (buttons, toggles, popouts, etc.).
-- Tests do not attempt to play the game by making moves.
-- In development mode, the 'create near-winning state' button is used to simulate a win. The test then verifies:
-  - The win UI is shown
-  - The stats panel is visible and the win count increments
-  - The game is actually saved to the local SQLite database (`local.db`) by querying the DB directly from Node after the win
-- All interactive elements and stats fields must have a `data-testid` for robust and reliable selection in tests.
-- DB checks only run in development mode to avoid interfering with production data.
+### What We Test
 
-This approach provides true end-to-end confidence for both UI and DB integration.
+- **App Loading**: Verify the app loads without errors
+- **Basic Interactions**: Test that all interactive elements work
+- **Game Flow**: Verify basic game mechanics function
+- **Database Integration**: Test that games are saved correctly
 
-## Conclusion
+### What We Avoid
 
-This testing strategy provides a solid foundation for confident refactoring while keeping maintenance overhead manageable. The focus on deterministic, high-value tests ensures that the test suite remains a valuable asset rather than a burden.
+- **Full Game Playthroughs**: Too slow and fragile
+- **Random Game Scenarios**: Non-deterministic and hard to debug
+- **Complex UI Testing**: High maintenance, low value
 
-The combination of unit tests, integration tests, and snapshot tests provides comprehensive coverage of the game logic while avoiding the pitfalls of fragile, time-consuming tests.
+### E2E Test Example
+
+```typescript
+test('simulate win and verify game is saved and stats panel updates', async ({ page }) => {
+  await page.goto('/');
+  if (process.env.NODE_ENV === 'development') {
+    await page.getByTestId('create-near-winning-state').click();
+    await page.getByTestId('roll-dice').click();
+    await page.waitForTimeout(500);
+    const squares = page.locator('[data-testid^="square-"]');
+    await squares.nth(12).click();
+    await expect(page.locator('text=Victory!')).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId('wins-count')).toHaveText('1');
+
+    // Verify database save
+    const db = new Database('local.db');
+    const row = db
+      .prepare('SELECT * FROM games WHERE winner = ? ORDER BY completedAt DESC LIMIT 1')
+      .get('player1');
+    expect(row).toBeTruthy();
+    db.close();
+  }
+});
+```
+
+## Continuous Integration
+
+### GitHub Actions
+
+The project uses GitHub Actions for automated testing:
+
+```yaml
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - uses: actions/setup-rust@v1
+      - run: npm install
+      - run: npm run check # Run all tests
+```
+
+### Pre-commit Hooks
+
+Consider using pre-commit hooks to run tests before commits:
+
+```bash
+# .husky/pre-commit
+#!/bin/sh
+npm run check
+```
+
+## Performance Considerations
+
+### Test Execution Time
+
+- **Unit Tests**: < 1 second
+- **Integration Tests**: < 5 seconds
+- **E2E Tests**: < 30 seconds
+- **Full Test Suite**: < 2 minutes
+
+### Memory Usage
+
+- Keep test data minimal
+- Clean up resources after tests
+- Use test isolation patterns
+- Monitor memory usage in CI
+
+## Debugging Tests
+
+### Common Issues
+
+1. **Flaky Tests**: Usually caused by timing or async issues
+2. **Slow Tests**: Often due to unnecessary setup or teardown
+3. **False Positives**: May indicate test logic errors
+4. **Environment Issues**: Different behavior in CI vs local
+
+### Debugging Tools
+
+- **Vitest UI**: Interactive test runner
+- **Playwright Inspector**: Step-through E2E tests
+- **Console Logging**: Add temporary logs for debugging
+- **Test Isolation**: Run tests in isolation to identify issues
+
+## Future Improvements
+
+### Potential Enhancements
+
+1. **Test Coverage**: Increase coverage of edge cases
+2. **Performance Testing**: Add performance benchmarks
+3. **Visual Regression Testing**: Test UI changes
+4. **Accessibility Testing**: Ensure accessibility compliance
+5. **Load Testing**: Test under high load conditions
+
+### Monitoring
+
+- Track test execution time
+- Monitor test failure rates
+- Analyze test coverage trends
+- Review test maintenance overhead

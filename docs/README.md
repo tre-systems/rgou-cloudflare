@@ -4,14 +4,14 @@ Welcome to the Royal Game of Ur documentation! This guide will help you find the
 
 ## 📖 Documentation Overview
 
-The Royal Game of Ur is a modern implementation of the ancient Mesopotamian board game, featuring a sophisticated dual-AI engine and comprehensive documentation. This documentation is organized to serve different audiences and use cases.
+The Royal Game of Ur is a modern implementation of the ancient Mesopotamian board game, featuring a sophisticated dual-AI engine and comprehensive documentation.
 
 ## 🎯 For Players
 
 ### Getting Started
 
 - **[Main README](../README.md)**: Overview, features, and quick start guide
-- **[Game Rules and Strategy](./game-rules-strategy.md)**: Complete rules, historical context, and strategic guidance
+- **[Game Rules and Strategy](./game-rules-strategy.md)**: Complete rules and strategic guidance
 
 ### Understanding the AI
 
@@ -23,7 +23,7 @@ The Royal Game of Ur is a modern implementation of the ancient Mesopotamian boar
 ### Architecture & Implementation
 
 - **[Architecture Overview](./architecture-overview.md)**: System design and component interactions
-- **[Technical Implementation Guide](./technical-implementation.md)**: Development setup, build process, and technical details
+- **[Technical Implementation Guide](./technical-implementation.md)**: Development setup and build process
 
 ### AI Development
 
@@ -96,6 +96,7 @@ docs/
 - **Cloudflare Workers**: Serverless AI deployment
 - **TypeScript**: Type-safe frontend development
 - **Zustand + Immer**: Efficient state management
+- **Database Integration**: SQLite (local) / D1 (production)
 
 ## 🔗 Related Resources
 
@@ -107,9 +108,9 @@ docs/
 
 ### Online Resources
 
-- **British Museum**: Original game artifacts
-- **Metropolitan Museum**: Historical game pieces
-- **University of Pennsylvania**: Archaeological findings
+- **British Museum**: [Original game artifacts](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
+- **Metropolitan Museum**: [Historical game pieces](https://www.metmuseum.org/art/collection/search/329072)
+- **University of Pennsylvania**: [Archaeological findings](https://www.penn.museum/collections/object/30-12-702)
 
 ### Code Repositories
 
@@ -164,7 +165,3 @@ docs/
 - **Documentation**: Check relevant documentation sections
 - **Code Comments**: Review inline code documentation
 - **Community**: Engage with other developers and players
-
----
-
-_This documentation is maintained alongside the codebase and updated regularly. For the most current information, always refer to the latest version in the repository._

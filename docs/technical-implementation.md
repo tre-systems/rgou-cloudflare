@@ -36,7 +36,6 @@ rgou-cloudflare/
 │   └── lib/                      # Shared utilities and services
 ├── worker/                       # Rust backend and AI
 │   ├── rust_ai_core/            # Shared AI logic
-│   ├── rgou-ai-worker/          # Cloudflare Worker
 │   └── src/                     # Worker entry point
 ├── docs/                        # Documentation
 ├── migrations/                  # Database schema migrations
@@ -183,13 +182,22 @@ async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response>
 ### Schema (`src/lib/db/schema.ts`)
 
 ```typescript
-export const gameStats = pgTable('game_stats', {
-  id: serial('id').primaryKey(),
-  playerWins: integer('player_wins').notNull().default(0),
-  playerLosses: integer('player_losses').notNull().default(0),
-  gamesPlayed: integer('games_played').notNull().default(0),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+export const games = sqliteTable('games', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  playerId: text('playerId').notNull(),
+  clientVersion: text('clientVersion').notNull().default('unknown'),
+  winner: text('winner', { enum: ['player1', 'player2'] }),
+  completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
+  status: text('status', { enum: ['in_progress', 'completed', 'abandoned'] })
+    .notNull()
+    .default('in_progress'),
+  moveCount: integer('moveCount'),
+  duration: integer('duration'),
+  version: text('version').notNull().default('1.0.0'),
+  clientHeader: text('clientHeader'),
+  history: text('history', { mode: 'json' }),
 });
 ```
 
@@ -210,6 +218,35 @@ export const getDb = async () => {
 };
 ```
 
+### Game Saving (`src/lib/actions.ts`)
+
+Games are automatically saved upon completion:
+
+```typescript
+export async function saveGame(payload: SaveGamePayload) {
+  const db = await getDb();
+  const validation = SaveGamePayloadSchema.safeParse(payload);
+
+  if (!validation.success) {
+    return { error: 'Invalid game data' };
+  }
+
+  const [newGame] = await db
+    .insert(games)
+    .values({
+      winner: payload.winner,
+      playerId: payload.playerId,
+      status: 'completed',
+      completedAt: new Date(),
+      history: payload.history,
+      // ... other fields
+    })
+    .returning();
+
+  return { success: true, gameId: newGame?.id };
+}
+```
+
 ## State Management
 
 ### Game Store (`src/lib/game-store.ts`)
@@ -218,20 +255,64 @@ Uses Zustand with Immer for immutable state updates:
 
 ```typescript
 export const useGameStore = create<GameStore>()(
-  immer((set, get) => ({
-    gameState: initialGameState,
-    actions: {
-      makeMove: (pieceIndex: number) => {
-        set(state => {
-          const newState = makeMoveLogic(state.gameState, pieceIndex);
-          state.gameState = newState;
-        });
+  persist(
+    immer((set, get) => ({
+      gameState: initialGameState,
+      actions: {
+        makeMove: (pieceIndex: number) => {
+          set(state => {
+            const newState = makeMoveLogic(state.gameState, pieceIndex);
+            state.gameState = newState;
+          });
+        },
+        postGameToServer: async () => {
+          const { gameState } = get();
+          if (gameState.gameStatus === 'finished' && gameState.winner) {
+            await saveGame({
+              winner: gameState.winner,
+              history: gameState.history,
+              playerId: getPlayerId(),
+              // ... other fields
+            });
+          }
+        },
       },
-      makeAIMove: async (aiSource: 'server' | 'client') => {
-        // AI move implementation
+    }))
+  )
+);
+```
+
+### Statistics Store (`src/lib/stats-store.ts`)
+
+Local statistics are managed with persistent storage:
+
+```typescript
+export const useStatsStore = create<StatsStore>()(
+  persist(
+    (set, get) => ({
+      stats: {
+        wins: 0,
+        losses: 0,
+        gamesPlayed: 0,
       },
-    },
-  }))
+      actions: {
+        incrementWins: () => {
+          const { stats } = get();
+          set({
+            stats: {
+              ...stats,
+              wins: stats.wins + 1,
+              gamesPlayed: stats.gamesPlayed + 1,
+            },
+          });
+        },
+      },
+    }),
+    {
+      name: 'rgou-stats-storage',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
 );
 ```
 
@@ -251,73 +332,76 @@ cargo test --test ai_simulation
 ### Frontend Tests
 
 ```bash
-# Run TypeScript type checking
-npm run type-check
+# Run unit tests
+npm run test
 
-# Run linting
-npm run lint
+# Run E2E tests
+npm run test:e2e
 
-# Run all checks
+# Run all tests (including Rust)
 npm run check
 ```
 
-### AI Performance Testing
+### E2E Testing
 
-The project includes AI vs AI simulation tests to validate performance:
+E2E tests verify complete game workflows:
 
-```rust
-#[test]
-fn test_ai_performance() {
-    let mut ai1 = AI::new();
-    let mut ai2 = AI::new();
+```typescript
+// e2e/smoke.spec.ts
+test('simulate win and verify game is saved and stats panel updates', async ({ page }) => {
+  await page.goto('/');
+  if (process.env.NODE_ENV === 'development') {
+    await page.getByTestId('create-near-winning-state').click();
+    await page.getByTestId('roll-dice').click();
+    await page.waitForTimeout(500);
+    const squares = page.locator('[data-testid^="square-"]');
+    await squares.nth(12).click();
+    await expect(page.locator('text=Victory!')).toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId('wins-count')).toHaveText('1');
 
-    for _ in 0..NUM_GAMES {
-        let winner = play_game(&mut ai1, &mut ai2);
-        // Validate game completion and winner determination
-    }
-}
+    // Verify database save
+    const db = new Database('local.db');
+    const row = db
+      .prepare('SELECT * FROM games WHERE winner = ? ORDER BY completedAt DESC LIMIT 1')
+      .get('player1');
+    expect(row).toBeTruthy();
+    db.close();
+  }
+});
 ```
 
-## Performance Optimization
+## Deployment
 
-### WebAssembly Optimization
+### Cloudflare Pages
 
-- **Size optimization**: WASM module is ~500KB
-- **Memory management**: Efficient Rust memory model
-- **Caching**: Transposition tables for position caching
+The application is deployed to Cloudflare Pages using OpenNext:
 
-### Frontend Optimization
+```bash
+# Build for Cloudflare
+npm run build
 
-- **Code splitting**: Dynamic imports for WASM modules
-- **Lazy loading**: AI diagnostics only in development
-- **Service worker**: Offline caching and PWA support
+# Deploy
+npx wrangler deploy
+```
 
-### Database Optimization
+### WASM Security Headers
 
-- **Connection pooling**: Efficient database connections
-- **Indexing**: Optimized queries for statistics
-- **Caching**: Local storage for game statistics
+Required headers for WASM loading:
 
-## Security Considerations
+```
+/wasm/*
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+```
 
-### WebAssembly Security
+### GitHub Actions
 
-- **CORS headers**: Proper cross-origin resource policy
-- **Content Security Policy**: Restricted WASM loading
-- **Sandboxing**: Browser-enforced security isolation
-
-### API Security
-
-- **CORS configuration**: Restricted origins
-- **Rate limiting**: Cloudflare Workers rate limiting
-- **Input validation**: Zod schema validation
-
-## Deployment Pipeline
-
-### GitHub Actions Workflow
+Automated deployment workflow:
 
 ```yaml
-name: Deploy to Cloudflare
+# .github/workflows/deploy.yml
+name: Deploy
 on:
   push:
     branches: [main]
@@ -326,76 +410,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-      - name: Build and Deploy
-        run: |
-          npm install
-          npm run build
-          npx wrangler deploy
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - uses: actions/setup-rust@v1
+      - run: npm run check # Run all tests
+      - run: npm run build # Build application
+      - uses: cloudflare/wrangler-action@v3
 ```
 
-### Environment Configuration
+## Development vs Production
 
-```bash
-# Development
-NODE_ENV=development
-DATABASE_URL=file:local.db
+### Development Features
 
-# Production
-NODE_ENV=production
-CLOUDFLARE_ACCOUNT_ID=your_account_id
-D1_DATABASE_ID=your_database_id
-```
+- **AI Diagnostics Panel**: Real-time AI analysis
+- **AI Toggle**: Switch between client/server AI
+- **Reset Game**: Restart current game
+- **Test End Game**: Create near-winning state for testing
 
-## Monitoring and Debugging
+### Production Features
 
-### Development Tools
-
-- **AI Diagnostics Panel**: Real-time AI analysis (development only)
-- **Console Logging**: Detailed AI move analysis
-- **Performance Timing**: Move calculation timing
-
-### Production Monitoring
-
-- **Cloudflare Analytics**: Request metrics and performance
-- **Error Tracking**: Worker error logging
-- **Performance Monitoring**: Response time tracking
-
-## Troubleshooting
-
-### Common Issues
-
-1. **WASM Loading Failures**
-   - Check CORS headers in `public/_headers`
-   - Verify WASM file paths
-   - Ensure proper MIME types
-
-2. **Database Connection Issues**
-   - Verify environment variables
-   - Check D1 database permissions
-   - Validate schema migrations
-
-3. **AI Performance Issues**
-   - Monitor search depth settings
-   - Check transposition table size
-   - Verify memory usage
-
-### Debug Commands
-
-```bash
-# Check WASM build
-wasm-pack build --target web --out-dir public/wasm
-
-# Test worker locally
-wrangler dev
-
-# Validate database schema
-npm run migrate:local
-
-# Check TypeScript types
-npm run type-check
-```
+- **Client AI Only**: Default to WASM AI for better performance
+- **Database Integration**: Automatic game saving
+- **Statistics Tracking**: Win/loss tracking with local storage
+- **PWA Support**: Installable with offline capability

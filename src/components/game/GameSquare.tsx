@@ -26,7 +26,7 @@ export default function GameSquare({
 }: GameSquareProps) {
   const isRosette = (ROSETTE_SQUARES as readonly number[]).includes(squareIndex);
 
-  const handlePieceClick = () => {
+  const handleSquareClick = () => {
     if (isClickable) {
       onPieceClick(pieceIndex);
     }
@@ -38,7 +38,7 @@ export default function GameSquare({
         'aspect-square relative flex items-center justify-center overflow-hidden',
         'board-square rounded-lg',
         isRosette && 'rosette-glow',
-        isClickable && 'clickable-square'
+        isClickable && 'clickable-square cursor-pointer'
       )}
       whileHover={{
         scale: 1.02,
@@ -47,6 +47,7 @@ export default function GameSquare({
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       data-square-id={squareIndex}
       data-testid={`square-${squareIndex}`}
+      onClick={handleSquareClick}
     >
       {isRosette && (
         <motion.div
@@ -71,7 +72,6 @@ export default function GameSquare({
               isClickable={isClickable}
               isBeingCaptured={false}
               isFinishing={isFinishing || false}
-              onClick={handlePieceClick}
             />
           </motion.div>
         )}

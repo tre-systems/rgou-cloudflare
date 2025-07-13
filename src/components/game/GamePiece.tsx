@@ -9,7 +9,6 @@ interface GamePieceProps {
   isClickable: boolean;
   isBeingCaptured?: boolean;
   isFinishing?: boolean;
-  onClick?: () => void;
 }
 
 const GamePiece = React.memo(function GamePiece({
@@ -17,7 +16,6 @@ const GamePiece = React.memo(function GamePiece({
   isClickable,
   isBeingCaptured = false,
   isFinishing = false,
-  onClick,
 }: GamePieceProps) {
   const isPlayer1 = player === 'player1';
   const colors = isPlayer1
@@ -34,20 +32,13 @@ const GamePiece = React.memo(function GamePiece({
         glow: 'shadow-pink-400',
       };
 
-  const handleClick = () => {
-    if (isClickable && onClick) {
-      onClick();
-    }
-  };
-
   return (
     <motion.div
-      className={`w-full h-full rounded-full border-2 relative overflow-hidden cursor-pointer ${
+      className={`w-full h-full rounded-full border-2 relative overflow-hidden ${
         isClickable ? 'cursor-pointer' : 'cursor-default'
       } ${colors.bg} ${colors.border} ${colors.shadow}`}
       whileHover={isClickable ? { scale: 1.1, boxShadow: `0 0 20px ${colors.glow}` } : {}}
       whileTap={isClickable ? { scale: 0.95 } : {}}
-      onClick={handleClick}
       animate={
         isBeingCaptured
           ? {
