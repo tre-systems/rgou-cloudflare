@@ -11,6 +11,7 @@ interface GameDiceProps {
 export default function GameDice({ gameState }: GameDiceProps) {
   const [rolling, setRolling] = useState(false);
   const [displayPattern, setDisplayPattern] = useState<boolean[]>([false, false, false, false]);
+  const [lastRoll, setLastRoll] = useState<{ pattern: boolean[]; value: number } | null>(null);
   const [burst, setBurst] = useState(false);
   const [numberPulse, setNumberPulse] = useState(false);
 
@@ -31,7 +32,6 @@ export default function GameDice({ gameState }: GameDiceProps) {
   // Animate rolling effect
   useEffect(() => {
     if (gameState.diceRoll === null) {
-      setDisplayPattern([false, false, false, false]);
       setRolling(false);
       setBurst(false);
       setNumberPulse(false);
@@ -47,7 +47,9 @@ export default function GameDice({ gameState }: GameDiceProps) {
       ticks++;
       if (ticks >= maxTicks) {
         clearInterval(interval);
-        setDisplayPattern(getDicePattern(gameState.diceRoll!));
+        const pattern = getDicePattern(gameState.diceRoll!);
+        setDisplayPattern(pattern);
+        setLastRoll({ pattern, value: gameState.diceRoll! });
         setRolling(false);
         setBurst(true);
         setNumberPulse(true);
@@ -66,36 +68,81 @@ export default function GameDice({ gameState }: GameDiceProps) {
   const borderWidth = 1.5;
 
   if (gameState.diceRoll === null) {
-    return (
-      <motion.div
-        className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
-        style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        data-testid="roll-dice"
-      >
-        <div className="flex flex-1 items-center justify-between h-full px-3">
-          {[0, 1, 2, 3].map(i => (
-            <svg
-              key={i}
-              width={pipFinalSize}
-              height={pipFinalSize}
-              viewBox={`0 0 ${pipFinalSize} ${pipFinalSize}`}
-              style={{ display: 'block' }}
+    if (lastRoll) {
+      return (
+        <motion.div
+          className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
+          style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          data-testid="roll-dice"
+        >
+          <div className="flex flex-1 items-center justify-between h-full px-3">
+            {lastRoll.pattern.map((isDot, i) => (
+              <svg
+                key={i}
+                width={pipFinalSize}
+                height={pipFinalSize}
+                viewBox={`0 0 ${pipFinalSize} ${pipFinalSize}`}
+                style={{ display: 'block', overflow: 'visible' }}
+              >
+                {isDot && (
+                  <circle
+                    cx={pipFinalSize / 2}
+                    cy={pipFinalSize / 2}
+                    r={pipSize / 2}
+                    fill={pipColor}
+                    style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
+                  />
+                )}
+              </svg>
+            ))}
+            <span
+              className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
+              style={{
+                textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
+                lineHeight: '1',
+                alignSelf: 'center',
+              }}
+            >
+              {lastRoll.value}
+            </span>
+          </div>
+        </motion.div>
+      );
+    } else {
+      return (
+        <motion.div
+          className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
+          style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          data-testid="roll-dice"
+        >
+          <div className="flex flex-1 items-center justify-between h-full px-3">
+            {[0, 1, 2, 3].map(i => (
+              <svg
+                key={i}
+                width={pipFinalSize}
+                height={pipFinalSize}
+                viewBox={`0 0 ${pipFinalSize} ${pipFinalSize}`}
+                style={{ display: 'block' }}
+              />
+            ))}
+            <span
+              className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
+              style={{
+                textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
+                lineHeight: '1',
+                alignSelf: 'center',
+              }}
             />
-          ))}
-          <span
-            className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
-            style={{
-              textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
-              lineHeight: '1',
-              alignSelf: 'center',
-            }}
-          />
-        </div>
-      </motion.div>
-    );
+          </div>
+        </motion.div>
+      );
+    }
   }
 
   return (
