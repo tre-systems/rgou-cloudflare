@@ -1,13 +1,4 @@
 #!/usr/bin/env python3
-"""
-Machine Learning AI Training Script for Royal Game of Ur
-
-This script trains neural networks to play the Royal Game of Ur by:
-1. Using the existing expectiminimax AI as a teacher
-2. Generating training data from self-play
-3. Training value and policy networks
-4. Exporting trained weights for use in Rust/WASM
-"""
 
 import json
 import numpy as np
@@ -22,20 +13,18 @@ import tempfile
 from typing import List, Tuple, Dict, Any
 import argparse
 from tqdm import tqdm
+import concurrent.futures
+import multiprocessing
 
 
 class GameFeatures:
-    """Python implementation of game features for training"""
-
     SIZE = 100
 
     @staticmethod
     def from_game_state(game_state: Dict[str, Any]) -> np.ndarray:
-        """Convert game state to feature vector"""
         features = np.zeros(GameFeatures.SIZE, dtype=np.float32)
         idx = 0
 
-        # Piece positions for player 1 (14 features)
         for piece in game_state["player1_pieces"]:
             square = piece["square"]
             if square >= 0 and square < 20:
@@ -46,7 +35,6 @@ class GameFeatures:
                 features[idx] = -1.0
             idx += 1
 
-        # Piece positions for player 2 (14 features)
         for piece in game_state["player2_pieces"]:
             square = piece["square"]
             if square >= 0 and square < 20:
@@ -57,7 +45,6 @@ class GameFeatures:
                 features[idx] = -1.0
             idx += 1
 
-        # Board occupancy (21 features)
         for square in game_state["board"]:
             if square is None:
                 features[idx] = 0.0
@@ -65,7 +52,6 @@ class GameFeatures:
                 features[idx] = 1.0 if square["player"] == "player1" else -1.0
             idx += 1
 
-        # Strategic features
         features[idx] = GameFeatures._rosette_control_score(game_state)
         idx += 1
 
@@ -105,25 +91,21 @@ class GameFeatures:
         features[idx] = game_state["dice_roll"] / 4.0
         idx += 1
 
-        # Valid moves count
         features[idx] = len(game_state.get("valid_moves", [])) / 7.0
         idx += 1
 
-        # Capture opportunities
         features[idx] = GameFeatures._capture_opportunities(game_state, "player1")
         idx += 1
 
         features[idx] = GameFeatures._capture_opportunities(game_state, "player2")
         idx += 1
 
-        # Vulnerability to capture
         features[idx] = GameFeatures._vulnerability_to_capture(game_state, "player1")
         idx += 1
 
         features[idx] = GameFeatures._vulnerability_to_capture(game_state, "player2")
         idx += 1
 
-        # Progress towards finish
         features[idx] = GameFeatures._progress_towards_finish(game_state, "player1")
         idx += 1
 
@@ -197,22 +179,41 @@ class GameFeatures:
     @staticmethod
     def _capture_opportunities(game_state: Dict[str, Any], player: str) -> float:
         pieces = game_state[f"{player}_pieces"]
-        rosette_squares = [0, 7, 13, 15, 16]
-        return sum(
-            1
-            for p in pieces
-            if 0 <= p["square"] < 21 and p["square"] not in rosette_squares
-        )
+        opponent = "player2" if player == "player1" else "player1"
+        opponent_pieces = game_state[f"{opponent}_pieces"]
+        rosette_squares = {0, 7, 13, 15, 16}
+        opportunities = 0
+
+        for piece in pieces:
+            if 0 <= piece["square"] < 20:
+                for opp_piece in opponent_pieces:
+                    if (
+                        0 <= opp_piece["square"] < 20
+                        and opp_piece["square"] not in rosette_squares
+                        and abs(piece["square"] - opp_piece["square"]) <= 4
+                    ):
+                        opportunities += 1
+
+        return opportunities
 
     @staticmethod
     def _vulnerability_to_capture(game_state: Dict[str, Any], player: str) -> float:
         pieces = game_state[f"{player}_pieces"]
-        rosette_squares = [0, 7, 13, 15, 16]
-        return sum(
-            1
-            for p in pieces
-            if 0 <= p["square"] < 21 and p["square"] not in rosette_squares
-        )
+        opponent = "player2" if player == "player1" else "player1"
+        opponent_pieces = game_state[f"{opponent}_pieces"]
+        rosette_squares = {0, 7, 13, 15, 16}
+        vulnerability = 0
+
+        for piece in pieces:
+            if 0 <= piece["square"] < 20 and piece["square"] not in rosette_squares:
+                for opp_piece in opponent_pieces:
+                    if (
+                        0 <= opp_piece["square"] < 20
+                        and abs(piece["square"] - opp_piece["square"]) <= 4
+                    ):
+                        vulnerability += 1
+
+        return vulnerability
 
     @staticmethod
     def _progress_towards_finish(game_state: Dict[str, Any], player: str) -> float:
@@ -227,13 +228,11 @@ class GameFeatures:
         count = 0
 
         for piece in pieces:
-            if piece["square"] == 20:
-                total_progress += 1.0
-                count += 1
-            elif 0 <= piece["square"] < 20:
+            if 0 <= piece["square"] < 20:
                 try:
                     track_pos = track.index(piece["square"])
-                    total_progress += track_pos / len(track)
+                    progress = track_pos / len(track)
+                    total_progress += progress
                     count += 1
                 except ValueError:
                     pass
@@ -242,186 +241,314 @@ class GameFeatures:
 
 
 class RustAIClient:
-    """Client to communicate with the Rust AI for generating training data"""
-
     def __init__(
         self, rust_ai_path: str = "worker/rust_ai_core/target/release/rgou_ai_core"
     ):
         self.rust_ai_path = rust_ai_path
 
     def get_ai_move(self, game_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Get AI move from Rust AI"""
         try:
-            # Create temporary file with game state
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".json", delete=False
             ) as f:
                 json.dump(game_state, f)
                 temp_file = f.name
-
-            # Call Rust AI
             result = subprocess.run(
                 [self.rust_ai_path, "get_move", temp_file],
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=5,
             )
-
-            # Clean up temp file
             os.unlink(temp_file)
-
             if result.returncode == 0:
                 return json.loads(result.stdout)
             else:
-                print(f"Rust AI error: {result.stderr}")
-                return {"move": None, "evaluation": 0.0}
-
+                return None
         except Exception as e:
-            print(f"Error calling Rust AI: {e}")
-            return {"move": None, "evaluation": 0.0}
+            return None
 
     def evaluate_position(self, game_state: Dict[str, Any]) -> float:
-        """Evaluate position using Rust AI"""
         try:
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".json", delete=False
             ) as f:
                 json.dump(game_state, f)
                 temp_file = f.name
-
             result = subprocess.run(
                 [self.rust_ai_path, "evaluate", temp_file],
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=5,
             )
-
             os.unlink(temp_file)
-
             if result.returncode == 0:
                 return float(result.stdout.strip())
             else:
                 return 0.0
-
         except Exception as e:
-            print(f"Error evaluating position: {e}")
             return 0.0
 
 
-class GameSimulator:
-    """Simulates games to generate training data"""
+PLAYER1_TRACK = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+PLAYER2_TRACK = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
+TRACK_LENGTH = 14
+PIECES_PER_PLAYER = 7
 
+
+class GameSimulator:
     def __init__(self, rust_ai_client: RustAIClient):
         self.rust_ai = rust_ai_client
 
-    def simulate_game(self) -> List[Dict[str, Any]]:
-        """Simulate a complete game and return training examples"""
+    def _get_player_track(self, player: str):
+        return PLAYER1_TRACK if player == "player1" else PLAYER2_TRACK
+
+    def _is_square_occupied(
+        self, square: int, player: str, game_state: Dict[str, Any]
+    ) -> bool:
+        occupant = game_state["board"][square]
+        return occupant is not None and occupant["player"] == player
+
+    def _all_pieces(self, game_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+        return game_state["player1_pieces"] + game_state["player2_pieces"]
+
+    def _get_valid_moves(
+        self,
+        pieces: List[Dict[str, Any]],
+        dice_roll: int,
+        player: str,
+        game_state: Dict[str, Any],
+    ) -> List[int]:
+        track = self._get_player_track(player)
+        opponent = "player2" if player == "player1" else "player1"
+        rosettes = {0, 7, 13, 15, 16}
+        valid_moves = []
+        for i, piece in enumerate(pieces):
+            if piece["square"] == -1 and dice_roll > 0:
+                entry_square = track[0]
+                occupant = game_state["board"][entry_square]
+                if occupant is None or (
+                    occupant["player"] == opponent and entry_square not in rosettes
+                ):
+                    valid_moves.append(i)
+            elif 0 <= piece["square"] < 20:
+                try:
+                    pos_on_track = track.index(piece["square"])
+                    new_pos = pos_on_track + dice_roll
+                    if new_pos == len(track):
+                        valid_moves.append(i)
+                    elif new_pos < len(track):
+                        dest_square = track[new_pos]
+                        occupant = game_state["board"][dest_square]
+                        if occupant is None or (
+                            occupant["player"] == opponent
+                            and dest_square not in rosettes
+                        ):
+                            valid_moves.append(i)
+                except ValueError:
+                    piece_square = piece["square"]
+                    if piece_square + dice_roll <= 20:
+                        occupant = game_state["board"][piece_square + dice_roll]
+                        if occupant is None or (
+                            occupant["player"] == opponent
+                            and (piece_square + dice_roll) not in rosettes
+                        ):
+                            valid_moves.append(i)
+        return valid_moves
+
+    def _make_move(self, game_state: Dict[str, Any], piece_index: int):
+        player = game_state["current_player"]
+        pieces = (
+            game_state["player1_pieces"]
+            if player == "player1"
+            else game_state["player2_pieces"]
+        )
+        opponent = "player2" if player == "player1" else "player1"
+        opponent_pieces = (
+            game_state["player2_pieces"]
+            if player == "player1"
+            else game_state["player1_pieces"]
+        )
+        dice_roll = game_state["dice_roll"]
+        track = self._get_player_track(player)
+        rosettes = {0, 7, 13, 15, 16}
+        piece = pieces[piece_index]
+        old_square = piece["square"]
+        if piece["square"] == -1:
+            new_square = track[0]
+        else:
+            pos_on_track = track.index(piece["square"])
+            new_pos = pos_on_track + dice_roll
+            if new_pos == len(track):
+                new_square = 20
+            else:
+                new_square = track[new_pos]
+        if old_square >= 0 and old_square < 20:
+            game_state["board"][old_square] = None
+        if new_square == 20:
+            piece["square"] = 20
+        else:
+            occupant = game_state["board"][new_square]
+            if (
+                occupant is not None
+                and occupant["player"] == opponent
+                and new_square not in rosettes
+            ):
+                for op in opponent_pieces:
+                    if op["square"] == new_square:
+                        op["square"] = -1
+                        break
+            game_state["board"][new_square] = piece
+            piece["square"] = new_square
+        game_state["current_player"] = opponent
+        game_state["dice_roll"] = random.randint(0, 4)
+        next_pieces = (
+            game_state["player1_pieces"]
+            if game_state["current_player"] == "player1"
+            else game_state["player2_pieces"]
+        )
+        game_state["valid_moves"] = self._get_valid_moves(
+            next_pieces,
+            game_state["dice_roll"],
+            game_state["current_player"],
+            game_state,
+        )
+
+    def _is_game_over(self, game_state: Dict[str, Any]) -> bool:
+        player1_finished = sum(
+            1 for p in game_state["player1_pieces"] if p["square"] == 20
+        )
+        player2_finished = sum(
+            1 for p in game_state["player2_pieces"] if p["square"] == 20
+        )
+        return (
+            player1_finished == PIECES_PER_PLAYER
+            or player2_finished == PIECES_PER_PLAYER
+        )
+
+    def _create_initial_state(self) -> Dict[str, Any]:
+        board = [None] * 21
+        player1_pieces = [
+            {"square": -1, "player": "player1"} for _ in range(PIECES_PER_PLAYER)
+        ]
+        player2_pieces = [
+            {"square": -1, "player": "player2"} for _ in range(PIECES_PER_PLAYER)
+        ]
+        current_player = "player1"
+        dice_roll = random.randint(0, 4)
+        valid_moves = self._get_valid_moves(
+            player1_pieces,
+            dice_roll,
+            current_player,
+            {
+                "board": board,
+                "player1_pieces": player1_pieces,
+                "player2_pieces": player2_pieces,
+            },
+        )
+        return {
+            "board": board,
+            "player1_pieces": player1_pieces,
+            "player2_pieces": player2_pieces,
+            "current_player": current_player,
+            "dice_roll": dice_roll,
+            "valid_moves": valid_moves,
+        }
+
+    def simulate_game(self) -> Dict[str, Any]:
         game_state = self._create_initial_state()
         training_examples = []
-
+        step = 0
+        reason = None
+        seen_states = {}
         while not self._is_game_over(game_state):
-            # Extract features
-            features = GameFeatures.from_game_state(game_state)
-
-            # Get expert evaluation
-            expert_evaluation = self.rust_ai.evaluate_position(game_state)
-
-            # Get expert move
-            expert_response = self.rust_ai.get_ai_move(game_state)
-            expert_move = expert_response.get("move")
-
-            # Create target policy
-            target_policy = self._create_target_policy(game_state, expert_move)
-
-            # Create training example
-            training_examples.append(
-                {
-                    "features": features.tolist(),
-                    "target_value": expert_evaluation,
-                    "target_policy": target_policy,
-                    "game_state": game_state.copy(),
-                }
+            if step % 100 == 0:
+                p1_positions = [p["square"] for p in game_state["player1_pieces"]]
+                p2_positions = [p["square"] for p in game_state["player2_pieces"]]
+                print(
+                    f"Step {step}: P1={p1_positions}, P2={p2_positions}, dice={game_state['dice_roll']}, valid_moves={game_state['valid_moves']}, player={game_state['current_player']}"
+                )
+            state_tuple = (
+                tuple([p["square"] for p in game_state["player1_pieces"]]),
+                tuple([p["square"] for p in game_state["player2_pieces"]]),
+                game_state["current_player"],
+                game_state["dice_roll"],
             )
-
-            # Make move
-            if expert_move is not None and expert_move < len(game_state["valid_moves"]):
-                move_idx = game_state["valid_moves"][expert_move]
-                self._make_move(game_state, move_idx)
+            seen_states[state_tuple] = seen_states.get(state_tuple, 0) + 1
+            if seen_states[state_tuple] >= 10:
+                reason = "repeat_state"
+                print(f"Breaking due to repeated state at step {step}")
+                break
+            features = GameFeatures.from_game_state(game_state)
+            expert_evaluation = self.rust_ai.evaluate_position(game_state)
+            if game_state["valid_moves"]:
+                expert_move = self.rust_ai.get_ai_move(game_state)
+                move = expert_move.get("move") if expert_move else None
+                if move in game_state["valid_moves"]:
+                    self._make_move(game_state, move)
+                    training_examples.append(
+                        {
+                            "features": features,
+                            "target_value": expert_evaluation,
+                            "target_policy": self._create_target_policy(
+                                game_state, move
+                            ),
+                        }
+                    )
+                else:
+                    game_state["current_player"] = (
+                        "player2"
+                        if game_state["current_player"] == "player1"
+                        else "player1"
+                    )
+                    game_state["dice_roll"] = random.randint(0, 4)
+                    next_pieces = (
+                        game_state["player1_pieces"]
+                        if game_state["current_player"] == "player1"
+                        else game_state["player2_pieces"]
+                    )
+                    game_state["valid_moves"] = self._get_valid_moves(
+                        next_pieces,
+                        game_state["dice_roll"],
+                        game_state["current_player"],
+                        game_state,
+                    )
             else:
-                # No valid moves, switch player
                 game_state["current_player"] = (
                     "player2"
                     if game_state["current_player"] == "player1"
                     else "player1"
                 )
                 game_state["dice_roll"] = random.randint(0, 4)
-                game_state["valid_moves"] = []
-
-        return training_examples
-
-    def _create_initial_state(self) -> Dict[str, Any]:
-        """Create initial game state"""
+                next_pieces = (
+                    game_state["player1_pieces"]
+                    if game_state["current_player"] == "player1"
+                    else game_state["player2_pieces"]
+                )
+                game_state["valid_moves"] = self._get_valid_moves(
+                    next_pieces,
+                    game_state["dice_roll"],
+                    game_state["current_player"],
+                    game_state,
+                )
+            step += 1
+            if step > 1000:
+                reason = "step_limit"
+                break
+        if reason is None:
+            reason = "game_over"
+        finished_p1 = sum(1 for p in game_state["player1_pieces"] if p["square"] == 20)
+        finished_p2 = sum(1 for p in game_state["player2_pieces"] if p["square"] == 20)
         return {
-            "board": [None] * 21,
-            "player1_pieces": [{"square": -1, "player": "player1"} for _ in range(7)],
-            "player2_pieces": [{"square": -1, "player": "player2"} for _ in range(7)],
-            "current_player": "player1",
-            "dice_roll": random.randint(0, 4),
-            "valid_moves": self._get_valid_moves(
-                [{"square": -1} for _ in range(7)], random.randint(0, 4)
-            ),
+            "examples": training_examples,
+            "steps": step,
+            "reason": reason,
+            "finished_p1": finished_p1,
+            "finished_p2": finished_p2,
         }
-
-    def _is_game_over(self, game_state: Dict[str, Any]) -> bool:
-        """Check if game is over"""
-        p1_finished = sum(1 for p in game_state["player1_pieces"] if p["square"] == 20)
-        p2_finished = sum(1 for p in game_state["player2_pieces"] if p["square"] == 20)
-        return p1_finished == 7 or p2_finished == 7
-
-    def _get_valid_moves(
-        self, pieces: List[Dict[str, Any]], dice_roll: int
-    ) -> List[int]:
-        """Get valid moves for current state"""
-        valid_moves = []
-        for i, piece in enumerate(pieces):
-            if piece["square"] == -1 and dice_roll == 0:
-                valid_moves.append(i)
-            elif piece["square"] >= 0 and piece["square"] + dice_roll < 20:
-                valid_moves.append(i)
-        return valid_moves
-
-    def _make_move(self, game_state: Dict[str, Any], piece_index: int) -> None:
-        """Make a move in the game state"""
-        pieces = game_state[f"{game_state['current_player']}_pieces"]
-        piece = pieces[piece_index]
-        dice_roll = game_state["dice_roll"]
-
-        if piece["square"] == -1 and dice_roll == 0:
-            # Enter piece
-            piece["square"] = 0
-            game_state["board"][0] = piece
-        elif piece["square"] >= 0:
-            # Move piece
-            new_square = piece["square"] + dice_roll
-            if new_square < 20:
-                game_state["board"][piece["square"]] = None
-                piece["square"] = new_square
-                game_state["board"][new_square] = piece
-
-        # Switch player and roll dice
-        game_state["current_player"] = (
-            "player2" if game_state["current_player"] == "player1" else "player1"
-        )
-        game_state["dice_roll"] = random.randint(0, 4)
-        game_state["valid_moves"] = self._get_valid_moves(
-            game_state[f"{game_state['current_player']}_pieces"],
-            game_state["dice_roll"],
-        )
 
     def _create_target_policy(
         self, game_state: Dict[str, Any], expert_move: int
     ) -> List[float]:
-        """Create target policy from expert move"""
         policy = [0.0] * 7
         if expert_move is not None and 0 <= expert_move < 7:
             policy[expert_move] = 1.0
@@ -429,8 +556,6 @@ class GameSimulator:
 
 
 class ValueNetwork(nn.Module):
-    """Value network for position evaluation"""
-
     def __init__(self, input_size: int = 100):
         super(ValueNetwork, self).__init__()
         self.layers = nn.Sequential(
@@ -447,8 +572,6 @@ class ValueNetwork(nn.Module):
 
 
 class PolicyNetwork(nn.Module):
-    """Policy network for move selection"""
-
     def __init__(self, input_size: int = 100, output_size: int = 7):
         super(PolicyNetwork, self).__init__()
         self.layers = nn.Sequential(
@@ -465,8 +588,6 @@ class PolicyNetwork(nn.Module):
 
 
 class GameDataset(Dataset):
-    """Dataset for training data"""
-
     def __init__(self, training_data: List[Dict[str, Any]]):
         self.data = training_data
 
@@ -475,35 +596,81 @@ class GameDataset(Dataset):
 
     def __getitem__(self, idx):
         example = self.data[idx]
-        features = torch.FloatTensor(example["features"])
-        target_value = torch.FloatTensor([example["target_value"]])
-        target_policy = torch.FloatTensor(example["target_policy"])
+        features = torch.tensor(example["features"], dtype=torch.float32)
+        target_value = torch.tensor([example["target_value"]], dtype=torch.float32)
+        target_policy = torch.tensor(example["target_policy"], dtype=torch.float32)
         return features, target_value, target_policy
+
+
+def simulate_game_worker(args):
+    rust_ai_path = args["rust_ai_path"]
+    sim = GameSimulator(RustAIClient(rust_ai_path=rust_ai_path))
+    return sim.simulate_game()
+
+
+def simulate_games_parallel(num_games, rust_ai_path):
+    print(f"Starting parallel simulation with {multiprocessing.cpu_count()} workers...")
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=multiprocessing.cpu_count()
+    ) as executor:
+        futures = []
+        for i in range(num_games):
+            future = executor.submit(
+                simulate_game_worker, {"rust_ai_path": rust_ai_path}
+            )
+            futures.append(future)
+
+        results = []
+        for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            try:
+                result = future.result()
+                results.append(result)
+                print(f"Completed game {len(results)}/{num_games}")
+            except Exception as e:
+                print(f"Game {i + 1} failed: {e}")
+                results.append(
+                    {
+                        "examples": [],
+                        "steps": 0,
+                        "reason": "error",
+                        "finished_p1": 0,
+                        "finished_p2": 0,
+                    }
+                )
+
+    return results
 
 
 def generate_training_data(
     num_games: int = 1000, use_rust_ai: bool = True
 ) -> List[Dict[str, Any]]:
-    """Generate training data using the existing AI as teacher"""
-    training_data = []
-
     if use_rust_ai:
-        # Use Rust AI for training data generation
-        rust_ai_client = RustAIClient()
-        simulator = GameSimulator(rust_ai_client)
+        rust_ai_path = "worker/rust_ai_core/target/release/rgou_ai_core"
+        print(f"Using Rust AI at: {rust_ai_path}")
 
-        print(f"Generating {num_games} games using Rust AI...")
-        for i in tqdm(range(num_games), desc="Generating games"):
-            try:
-                game_examples = simulator.simulate_game()
-                training_data.extend(game_examples)
-            except Exception as e:
-                print(f"Error simulating game {i}: {e}")
-                continue
+        if num_games == 1:
+            print("Running single game test...")
+            sim = GameSimulator(RustAIClient(rust_ai_path=rust_ai_path))
+            game_result = sim.simulate_game()
+            print(
+                f"Game 1: {game_result['steps']} moves, P1={game_result['finished_p1']}/7, P2={game_result['finished_p2']}/7, reason={game_result['reason']}"
+            )
+            return game_result["examples"]
+
+        results = simulate_games_parallel(num_games, rust_ai_path)
+        training_data = []
+        for i, game_result in enumerate(results):
+            print(
+                f"Game {i + 1}: {game_result['steps']} moves, P1={game_result['finished_p1']}/7, P2={game_result['finished_p2']}/7, reason={game_result['reason']}"
+            )
+            training_data.extend(game_result["examples"])
+        print(
+            f"Generated {len(training_data)} training examples from {num_games} games."
+        )
+        return training_data
     else:
-        # Fallback to synthetic data
-        print(f"Generating {num_games} synthetic games...")
-        for _ in tqdm(range(num_games), desc="Generating synthetic data"):
+        training_data = []
+        for _ in range(num_games):
             game_state = {
                 "board": [None] * 21,
                 "player1_pieces": [
@@ -514,11 +681,9 @@ def generate_training_data(
                 ],
                 "current_player": "player1",
                 "dice_roll": random.randint(0, 4),
-                "valid_moves": [],
             }
 
-            # Generate some random positions
-            for i in range(random.randint(0, 5)):
+            for _ in range(50):
                 if game_state["current_player"] == "player1":
                     piece_idx = random.randint(0, 6)
                     square = random.randint(0, 19)
@@ -530,10 +695,8 @@ def generate_training_data(
                     game_state["player2_pieces"][piece_idx]["square"] = square
                     game_state["board"][square] = {"player": "player2"}
 
-            # Extract features
             features = GameFeatures.from_game_state(game_state)
 
-            # Generate target values (simplified)
             target_value = random.uniform(-1.0, 1.0)
             target_policy = [random.random() for _ in range(7)]
             policy_sum = sum(target_policy)
@@ -547,8 +710,8 @@ def generate_training_data(
                 }
             )
 
-    print(f"Generated {len(training_data)} training examples")
-    return training_data
+        print(f"Generated {len(training_data)} training examples")
+        return training_data
 
 
 def train_networks(
@@ -557,30 +720,23 @@ def train_networks(
     batch_size: int = 32,
     learning_rate: float = 0.001,
 ) -> Tuple[ValueNetwork, PolicyNetwork]:
-    """Train the value and policy networks"""
-
-    # Create datasets
     dataset = GameDataset(training_data)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-    # Initialize networks
     value_network = ValueNetwork()
     policy_network = PolicyNetwork()
 
-    # Loss functions and optimizers
     value_criterion = nn.MSELoss()
     policy_criterion = nn.CrossEntropyLoss()
 
     value_optimizer = optim.Adam(value_network.parameters(), lr=learning_rate)
     policy_optimizer = optim.Adam(policy_network.parameters(), lr=learning_rate)
 
-    # Training loop
     for epoch in range(epochs):
         value_loss_total = 0.0
         policy_loss_total = 0.0
 
         for features, target_values, target_policies in dataloader:
-            # Train value network
             value_optimizer.zero_grad()
             value_outputs = value_network(features)
             value_loss = value_criterion(value_outputs, target_values)
@@ -588,7 +744,6 @@ def train_networks(
             value_optimizer.step()
             value_loss_total += value_loss.item()
 
-            # Train policy network
             policy_optimizer.zero_grad()
             policy_outputs = policy_network(features)
             policy_loss = policy_criterion(policy_outputs, target_policies)
@@ -607,7 +762,6 @@ def train_networks(
 
 
 def extract_weights(network: nn.Module) -> List[float]:
-    """Extract weights from PyTorch network"""
     weights = []
     for param in network.parameters():
         weights.extend(param.data.flatten().tolist())
@@ -617,7 +771,6 @@ def extract_weights(network: nn.Module) -> List[float]:
 def save_weights(
     value_network: ValueNetwork, policy_network: PolicyNetwork, filename: str
 ):
-    """Save trained weights to JSON file"""
     value_weights = extract_weights(value_network)
     policy_weights = extract_weights(policy_network)
 

@@ -15,6 +15,7 @@ Use Zustand to manage state.
 Don't add a logging facility, the console is fine.
 Code should be as simple and concise as possible.
 REMOVE ALL COMMENTS! unless they are really important.
+Logging should be sufficient to diagnose problems but not overdone.
 Use blank lines to make code easier to read.
 Please ALWAYS! keep the README file up to date.
 When reviewing a file, should it be broken up? can it be improved? is this functionality in the right location within the project
