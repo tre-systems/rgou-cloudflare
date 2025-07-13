@@ -10,6 +10,7 @@ import {
 } from './game-logic';
 import { AIService } from './ai-service';
 import { wasmAiService } from './wasm-ai-service';
+import { mlAiService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
 import { saveGame } from '@/lib/actions';
 import { getPlayerId } from './utils';
@@ -26,7 +27,7 @@ type GameStore = {
     processDiceRoll: (roll?: number) => void;
     switchPlayerAfterZeroRoll: () => void;
     makeMove: (pieceIndex: number) => void;
-    makeAIMove: (aiSource: 'server' | 'client') => Promise<void>;
+    makeAIMove: (aiSource: 'server' | 'client' | 'ml') => Promise<void>;
     reset: () => void;
     postGameToServer: () => Promise<void>;
     createNearWinningState: () => void;
@@ -86,7 +87,7 @@ export const useGameStore = create<GameStore>()(
             }
           });
         },
-        makeAIMove: async (aiSource: 'server' | 'client') => {
+        makeAIMove: async (aiSource: 'server' | 'client' | 'ml') => {
           const { gameState, actions } = get();
           if (gameState.currentPlayer !== 'player2' || !gameState.canMove) return;
 
@@ -112,10 +113,40 @@ export const useGameStore = create<GameStore>()(
           const startTime = performance.now();
 
           try {
-            const aiResponseFromServer =
-              aiSource === 'server'
-                ? await AIService.getAIMove(gameState)
-                : await wasmAiService.getAIMove(gameState);
+            let aiResponseFromServer;
+
+            if (aiSource === 'ml') {
+              const mlResponse = await mlAiService.getAIMove(gameState);
+              aiResponseFromServer = {
+                move: mlResponse.move,
+                evaluation: Math.round(mlResponse.evaluation * 1000),
+                thinking: mlResponse.thinking,
+                timings: {
+                  aiMoveCalculation: mlResponse.timings.ai_move_calculation,
+                  totalHandlerTime: mlResponse.timings.total_handler_time,
+                },
+                diagnostics: {
+                  searchDepth: 0,
+                  validMoves: mlResponse.diagnostics.valid_moves,
+                  moveEvaluations: mlResponse.diagnostics.move_evaluations.map(e => ({
+                    pieceIndex: e.piece_index,
+                    score: e.score,
+                    moveType: e.move_type,
+                    fromSquare: e.from_square,
+                    toSquare: e.to_square ?? null,
+                  })),
+                  transpositionHits: 0,
+                  nodesEvaluated: 1,
+                },
+                aiType: 'ml',
+              };
+            } else {
+              aiResponseFromServer =
+                aiSource === 'server'
+                  ? await AIService.getAIMove(gameState)
+                  : await wasmAiService.getAIMove(gameState);
+              aiResponseFromServer = { ...aiResponseFromServer, aiType: aiSource };
+            }
 
             const aiResponse = { ...aiResponseFromServer, aiType: aiSource };
             const duration = performance.now() - startTime;

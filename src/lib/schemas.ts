@@ -98,7 +98,7 @@ export const AIResponseSchema = z.object({
   thinking: z.string(),
   timings: TimingsSchema,
   diagnostics: DiagnosticsSchema,
-  aiType: z.enum(['client', 'server', 'fallback']),
+  aiType: z.enum(['client', 'server', 'fallback', 'ml']),
 });
 export type AIResponse = z.infer<typeof AIResponseSchema>;
 

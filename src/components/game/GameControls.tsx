@@ -2,12 +2,21 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { HelpCircle, Cloud, Server, Trophy, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import {
+  HelpCircle,
+  Cloud,
+  Server,
+  Brain,
+  Trophy,
+  Volume2,
+  VolumeX,
+  RotateCcw,
+} from 'lucide-react';
 import { isLocalDevelopment, isProduction } from '@/lib/utils';
 
 interface GameControlsProps {
-  aiSource: 'server' | 'client';
-  onAiSourceChange: (source: 'server' | 'client') => void;
+  aiSource: 'server' | 'client' | 'ml';
+  onAiSourceChange: (source: 'server' | 'client' | 'ml') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
@@ -46,19 +55,49 @@ export default function GameControls({
           </motion.button>
 
           {isLocalDevelopment() && (
-            <motion.button
-              onClick={() => onAiSourceChange(aiSource === 'server' ? 'client' : 'server')}
-              className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title={`Switch to ${aiSource === 'server' ? 'Client' : 'Server'} AI`}
-            >
-              {aiSource === 'server' ? (
+            <div className="flex items-center space-x-1">
+              <motion.button
+                onClick={() => onAiSourceChange('client')}
+                className={`p-1.5 glass-dark rounded-lg transition-colors ${
+                  aiSource === 'client'
+                    ? 'text-blue-400 bg-blue-400/20'
+                    : 'text-white/70 hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Classic AI (Expectiminimax)"
+              >
                 <Cloud className="w-3.5 h-3.5" />
-              ) : (
+              </motion.button>
+
+              <motion.button
+                onClick={() => onAiSourceChange('server')}
+                className={`p-1.5 glass-dark rounded-lg transition-colors ${
+                  aiSource === 'server'
+                    ? 'text-green-400 bg-green-400/20'
+                    : 'text-white/70 hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Server AI (Cloudflare Worker)"
+              >
                 <Server className="w-3.5 h-3.5" />
-              )}
-            </motion.button>
+              </motion.button>
+
+              <motion.button
+                onClick={() => onAiSourceChange('ml')}
+                className={`p-1.5 glass-dark rounded-lg transition-colors ${
+                  aiSource === 'ml'
+                    ? 'text-purple-400 bg-purple-400/20'
+                    : 'text-white/70 hover:text-white'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="ML AI (Neural Network)"
+              >
+                <Brain className="w-3.5 h-3.5" />
+              </motion.button>
+            </div>
           )}
 
           {isLocalDevelopment() && (

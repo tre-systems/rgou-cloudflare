@@ -22,7 +22,7 @@ export default function RoyalGameOfUr() {
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
-  const [aiSource, setAiSource] = useState<'server' | 'client'>('client');
+  const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('client');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
