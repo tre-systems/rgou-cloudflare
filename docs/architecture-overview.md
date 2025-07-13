@@ -19,10 +19,11 @@ The project is primarily composed of three main parts:
 1. **Next.js Frontend**: A modern React-based application for the user interface and game state management
 2. **Server-Side AI (Cloudflare Worker)**: A Rust-based AI that runs on Cloudflare's edge network. This serves as a fallback option
 3. **Client-Side AI (WebAssembly)**: The same Rust AI logic compiled to WebAssembly (Wasm) to run directly in the user's browser. This is now the default opponent and provides an offline-capable experience
+4. **ML AI System (Neural Network, Experimental)**: See [ML AI System](./ml-ai-system.md) for details on the neural network-based AI, training pipeline, and integration.
 
 A key aspect of this architecture is the **shared Rust AI core**, located in `worker/rust_ai_core`. This single crate contains all the game rules, board evaluation heuristics, and the AI's expectiminimax search algorithm. By sharing this code, we ensure that both the server and client AIs exhibit identical strategic behavior, with the only difference being their computational resources (search depth).
 
-For detailed information about the AI algorithm, evaluation function, and technical implementation, see the [AI System Documentation](./ai-system.md).
+For detailed information about the AI algorithm, evaluation function, and technical implementation, see the [AI System Documentation](./ai-system.md). For the neural network-based ML AI, see [ML AI System](./ml-ai-system.md).
 
 ### 1. Frontend Application (`src/`)
 

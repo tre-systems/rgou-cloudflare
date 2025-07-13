@@ -1,5 +1,7 @@
 # Mac Optimization Guide
 
+**Related Docs:** [ML AI System](./ml-ai-system.md) | [Technical Implementation Guide](./technical-implementation.md)
+
 ## Overview
 
 This guide documents the optimizations implemented to make maximal use of Mac resources for ML training. The system is specifically tuned for Mac hardware with MPS (Metal Performance Shaders) support.

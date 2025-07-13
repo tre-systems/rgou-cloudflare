@@ -1,5 +1,8 @@
 # ML AI System Documentation
 
+**See Also:** [AI System Documentation (Classic Expectiminimax)](./ai-system.md) — for details on the classic search-based AI.
+**See Also:** [Architecture Overview](./architecture-overview.md) — for system context and integration.
+
 ## Overview
 
 This document explains the machine learning (ML) system used to power the Royal Game of Ur AI. It is written for experienced programmers who may be new to ML, and covers the architecture, training pipeline, features, model structure, and references for further reading.
@@ -54,6 +57,8 @@ Both the value and policy networks are deep, fully connected feedforward neural 
 
 ## Training Pipeline
 
+(For details on how the classic AI generates expert moves for training, see [AI System Documentation](./ai-system.md).)
+
 1. **Data Generation:**
    - Play thousands of games using the deterministic AI (expectiminimax, depth 4+)
    - For each move, extract features, the expert move (policy), and the game outcome (value)
@@ -82,6 +87,8 @@ Both the value and policy networks are deep, fully connected feedforward neural 
 ---
 
 ## Why Use ML Instead of Search?
+
+(For a comparison with the classic expectiminimax search, see [AI System Documentation](./ai-system.md).)
 
 - **Speed:** Once trained, the ML AI can select moves in milliseconds, much faster than search-based AIs.
 - **Generalization:** The ML AI can learn subtle strategies and tactics from data, not just brute-force search.

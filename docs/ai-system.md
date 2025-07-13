@@ -1,5 +1,7 @@
 # AI System Documentation
 
+**See Also:** [ML AI System (Neural Network)](./ml-ai-system.md) — for details on the neural network-based AI and training pipeline.
+
 ## Overview
 
 The Royal Game of Ur features a sophisticated dual-AI engine built in Rust that provides both server-side and client-side gameplay. The AI uses advanced game theory algorithms to provide challenging and intelligent gameplay while maintaining fast response times.
@@ -19,6 +21,8 @@ The project implements a unique dual-AI architecture:
   - Search depth: 4 plies
   - Advantages: Consistent performance, network-based
   - Location: `worker/src/lib.rs`
+
+- **ML AI (Experimental)**: See [ML AI System](./ml-ai-system.md) for the neural network-based AI, which learns from data and offers a different approach to move selection and strategy.
 
 Both AIs share the same core logic from `worker/rust_ai_core/src/lib.rs`, ensuring identical strategic behavior.
 

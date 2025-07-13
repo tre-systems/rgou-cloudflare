@@ -28,6 +28,8 @@ npm install
 
 ## Project Structure
 
+(For classic AI details, see [AI System Documentation](./ai-system.md). For the neural network-based ML AI, see [ML AI System](./ml-ai-system.md).)
+
 ```
 rgou-cloudflare/
 ├── src/                          # Next.js frontend application
@@ -76,7 +78,7 @@ export default config;
 
 ### AI Build Process
 
-The AI system has multiple build targets:
+The AI system has multiple build targets (see [AI System Documentation](./ai-system.md) for classic AI, [ML AI System](./ml-ai-system.md) for neural network AI):
 
 #### 1. WebAssembly (Client AI)
 

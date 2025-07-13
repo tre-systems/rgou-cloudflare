@@ -15,7 +15,8 @@ The Royal Game of Ur is a modern implementation of the ancient Mesopotamian boar
 
 ### Understanding the AI
 
-- **[AI System Documentation](./ai-system.md)**: How the AI works, algorithms, and technical details
+- **[AI System Documentation](./ai-system.md)**: How the classic AI works, algorithms, and technical details
+- **[ML AI System](./ml-ai-system.md)**: Neural network-based AI, training pipeline, and optimization
 - **AI Diagnostics Panel**: Available in development mode for real-time AI analysis
 
 ## 🛠️ For Developers
@@ -27,7 +28,8 @@ The Royal Game of Ur is a modern implementation of the ancient Mesopotamian boar
 
 ### AI Development
 
-- **[AI System Documentation](./ai-system.md)**: Algorithm details, evaluation function, and optimization techniques
+- **[AI System Documentation](./ai-system.md)**: Classic algorithm details, evaluation function, and optimization techniques
+- **[ML AI System](./ml-ai-system.md)**: Neural network architecture, training, and evaluation
 - **Rust AI Core**: `worker/rust_ai_core/src/lib.rs` - Core AI logic
 - **WebAssembly API**: `worker/rust_ai_core/src/wasm_api.rs` - WASM interface
 - **Worker Implementation**: `worker/src/lib.rs` - Cloudflare Worker
@@ -63,14 +65,16 @@ docs/
 
 1. Review **[Architecture Overview](./architecture-overview.md)** for system design
 2. Read **[Technical Implementation Guide](./technical-implementation.md)** for setup
-3. Study **[AI System Documentation](./ai-system.md)** for AI implementation details
-4. Follow **[Testing Strategy](./testing-strategy.md)** for testing guidelines
+3. Study **[AI System Documentation](./ai-system.md)** for classic AI implementation details
+4. Study **[ML AI System](./ml-ai-system.md)** for neural network AI details
+5. Follow **[Testing Strategy](./testing-strategy.md)** for testing guidelines
 
 ### For AI Researchers
 
-1. Focus on **[AI System Documentation](./ai-system.md)** for algorithm details
-2. Review the academic references and mathematical foundations
-3. Examine the Rust implementation in `worker/rust_ai_core/`
+1. Focus on **[AI System Documentation](./ai-system.md)** for classic algorithm details
+2. Review **[ML AI System](./ml-ai-system.md)** for neural network architecture and training
+3. Review the academic references and mathematical foundations
+4. Examine the Rust implementation in `worker/rust_ai_core/`
 
 ## 🎮 Game Features
 
