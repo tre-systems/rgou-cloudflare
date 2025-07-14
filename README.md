@@ -145,6 +145,6 @@ Open source. See [LICENSE](LICENSE).
 
 ## Resources
 
-- [British Museum: Original game artifacts](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
-- [Metropolitan Museum: Historical game pieces](https://www.metmuseum.org/art/collection/search/329072)
-- [University of Pennsylvania: Archaeological findings](https://www.penn.museum/collections/object/30-12-702)
+- [Royal Game of Ur at the British Museum (object ME 120834)](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
+- [Gameboard and Gaming Pieces (Senet and Twenty Squares) at The Metropolitan Museum of Art](https://www.metmuseum.org/art/collection/search/544775)
+- [Expedition Magazine: Ur and Its Treasures (Penn Museum)](https://www.penn.museum/sites/expedition/ur-and-its-treasures/)
