@@ -42,8 +42,8 @@ echo "Training data cached for future use in training_data_cache.json"
 echo ""
 
 # Test the new model
-echo "Testing the new model against deterministic AI..."
-./scripts/test_ml_vs_deterministic.sh
+echo "Testing the new model against expectiminimax AI..."
+./scripts/test_ml_vs_expectiminimax.sh
 
 echo ""
 echo "Training with cache complete!"

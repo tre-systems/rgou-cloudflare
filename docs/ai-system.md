@@ -22,7 +22,7 @@ The AI uses the expectiminimax algorithm, an extension of minimax for games with
 
 ### Algorithm
 
-- **Minimax**: For deterministic states
+- **Minimax**: For non-chance states
 - **Expectation nodes**: For dice rolls
 - **Alpha-beta pruning**: For optimization
 

@@ -123,7 +123,7 @@ The training script uses `caffeinate` to prevent sleep. If running manually, pre
 npm run check      # All tests (including Rust)
 npm run test       # Unit tests
 npm run test:e2e   # E2E tests
-./scripts/test_ml_vs_deterministic.sh # ML vs deterministic AI
+./scripts/test_ml_vs_expectiminimax.sh # ML vs expectiminimax AI
 ```
 
 ## Troubleshooting

@@ -17,7 +17,7 @@ This document details the architecture of the Royal Game of Ur project, focusing
 3. **Client-Side AI (WebAssembly)**: Same Rust AI logic compiled to Wasm for browser
 4. **ML AI System (Experimental)**: See [ML AI System](./ml-ai-system.md)
 
-The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both AIs use this for identical strategy.
+The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both classic (expectiminimax) and ML AIs use this for identical strategy.
 
 For AI algorithm details, see [AI System Documentation](./ai-system.md). For ML AI, see [ML AI System](./ml-ai-system.md).
 

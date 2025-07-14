@@ -14,7 +14,7 @@ const aiOptions = [
   {
     value: 'client' as const,
     label: 'Classic AI',
-    description: 'Expectiminimax algorithm (6-ply search)',
+    description: 'Expectiminimax (classic) algorithm (6-ply search)',
     icon: Cpu,
     color: 'text-blue-400',
     bgColor: 'bg-blue-400/10',

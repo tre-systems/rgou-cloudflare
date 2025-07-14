@@ -68,20 +68,3 @@ npm run test            # CI/CD
 npm run test:coverage   # Coverage
 npm run check           # All checks (including Rust)
 ```
-
-## Maintenance
-
-- Add new tests to appropriate files
-- Update tests when logic or schemas change
-- Use clear naming: `should [expected behavior]`
-
-## Best Practices
-
-- Structure tests by feature and behavior
-- Use data-testid for robust selectors in E2E
-- Focus on business logic and integration
-
-## See Also
-
-- [Technical Implementation Guide](./technical-implementation.md)
-- [AI System Documentation](./ai-system.md)

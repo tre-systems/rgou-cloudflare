@@ -2,7 +2,7 @@ use ml_ai_core::{GameState as MLGameState, Player as MLPlayer, MLAI};
 use rand::Rng;
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
-const DETERMINISTIC_SEARCH_DEPTH: u8 = 4;
+const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 4;
 const NUM_GAMES: usize = 100;
 const ML_WEIGHTS_FILE: &str = "../../ml_ai_weights_fast.json";
 
@@ -14,9 +14,9 @@ struct GameResult {
     p1_finished_pieces: usize,
     p2_finished_pieces: usize,
     ml_ai_total_time_ms: u64,
-    deterministic_ai_total_time_ms: u64,
+    expectiminimax_ai_total_time_ms: u64,
     ml_ai_moves: usize,
-    deterministic_ai_moves: usize,
+    expectiminimax_ai_moves: usize,
 }
 
 fn convert_piece_position_to_ml(
@@ -84,18 +84,18 @@ fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>
     Ok((value_weights, policy_weights))
 }
 
-fn play_game_ml_vs_deterministic(
+fn play_game_ml_vs_expectiminimax(
     ml_ai: &mut MLAI,
-    deterministic_ai: &mut AI,
+    expectiminimax_ai: &mut AI,
     ml_plays_first: bool,
 ) -> GameResult {
     let mut game_state = GameState::new();
     let mut moves_played = 0;
     let max_moves = 200;
     let mut ml_ai_total_time_ms = 0;
-    let mut deterministic_ai_total_time_ms = 0;
+    let mut expectiminimax_ai_total_time_ms = 0;
     let mut ml_ai_moves = 0;
-    let mut deterministic_ai_moves = 0;
+    let mut expectiminimax_ai_moves = 0;
 
     while !game_state.is_game_over() && moves_played < max_moves {
         let current_player = game_state.current_player;
@@ -119,11 +119,11 @@ fn play_game_ml_vs_deterministic(
         } else {
             let start_time = std::time::Instant::now();
             let (move_option, _) =
-                deterministic_ai.get_best_move(&game_state, DETERMINISTIC_SEARCH_DEPTH);
+                expectiminimax_ai.get_best_move(&game_state, EXPECTIMINIMAX_SEARCH_DEPTH);
             let end_time = std::time::Instant::now();
-            deterministic_ai_total_time_ms +=
+            expectiminimax_ai_total_time_ms +=
                 end_time.duration_since(start_time).as_millis() as u64;
-            deterministic_ai_moves += 1;
+            expectiminimax_ai_moves += 1;
             move_option
         };
 
@@ -156,9 +156,9 @@ fn play_game_ml_vs_deterministic(
                     p1_finished_pieces: p1_finished,
                     p2_finished_pieces: p2_finished,
                     ml_ai_total_time_ms,
-                    deterministic_ai_total_time_ms,
+                    expectiminimax_ai_total_time_ms,
                     ml_ai_moves,
-                    deterministic_ai_moves,
+                    expectiminimax_ai_moves,
                 };
             }
         } else {
@@ -181,48 +181,48 @@ fn play_game_ml_vs_deterministic(
             .filter(|p| p.square == 20)
             .count(),
         ml_ai_total_time_ms,
-        deterministic_ai_total_time_ms,
+        expectiminimax_ai_total_time_ms,
         ml_ai_moves,
-        deterministic_ai_moves,
+        expectiminimax_ai_moves,
     }
 }
 
 #[test]
-fn test_ml_vs_deterministic_ai() {
+fn test_ml_vs_expectiminimax_ai() {
     println!("Loading ML AI weights from {}", ML_WEIGHTS_FILE);
 
     let (value_weights, policy_weights) = match load_ml_weights() {
         Ok(weights) => weights,
         Err(e) => {
             eprintln!("Failed to load ML weights: {}", e);
-            eprintln!("Skipping ML vs Deterministic test");
+            eprintln!("Skipping ML vs Expectiminimax test");
             return;
         }
     };
 
     let mut ml_wins = 0;
-    let mut deterministic_wins = 0;
+    let mut expectiminimax_wins = 0;
     let mut total_moves = 0;
     let mut ml_first_wins = 0;
     let mut ml_second_wins = 0;
     let mut total_ml_finished_pieces = 0;
-    let mut total_deterministic_finished_pieces = 0;
+    let mut total_expectiminimax_finished_pieces = 0;
     let mut total_ml_ai_time_ms = 0;
-    let mut total_deterministic_ai_time_ms = 0;
+    let mut total_expectiminimax_ai_time_ms = 0;
     let mut total_ml_ai_moves = 0;
-    let mut total_deterministic_ai_moves = 0;
+    let mut total_expectiminimax_ai_moves = 0;
 
-    println!("Starting {} games: ML AI vs Deterministic AI", NUM_GAMES);
+    println!("Starting {} games: ML AI vs Expectiminimax AI", NUM_GAMES);
 
     for i in 0..NUM_GAMES {
         let mut ml_ai = MLAI::new();
         ml_ai.load_pretrained(&value_weights, &policy_weights);
 
-        let mut deterministic_ai = AI::new();
+        let mut expectiminimax_ai = AI::new();
 
         let ml_plays_first = i % 2 == 0;
         let result =
-            play_game_ml_vs_deterministic(&mut ml_ai, &mut deterministic_ai, ml_plays_first);
+            play_game_ml_vs_expectiminimax(&mut ml_ai, &mut expectiminimax_ai, ml_plays_first);
 
         total_moves += result.moves_played;
 
@@ -240,21 +240,21 @@ fn test_ml_vs_deterministic_ai() {
                 ml_second_wins += 1;
             }
         } else {
-            deterministic_wins += 1;
+            expectiminimax_wins += 1;
         }
 
         if result.ml_ai_was_player1 {
             total_ml_finished_pieces += result.p1_finished_pieces;
-            total_deterministic_finished_pieces += result.p2_finished_pieces;
+            total_expectiminimax_finished_pieces += result.p2_finished_pieces;
         } else {
             total_ml_finished_pieces += result.p2_finished_pieces;
-            total_deterministic_finished_pieces += result.p1_finished_pieces;
+            total_expectiminimax_finished_pieces += result.p1_finished_pieces;
         }
 
         total_ml_ai_time_ms += result.ml_ai_total_time_ms;
-        total_deterministic_ai_time_ms += result.deterministic_ai_total_time_ms;
+        total_expectiminimax_ai_time_ms += result.expectiminimax_ai_total_time_ms;
         total_ml_ai_moves += result.ml_ai_moves;
-        total_deterministic_ai_moves += result.deterministic_ai_moves;
+        total_expectiminimax_ai_moves += result.expectiminimax_ai_moves;
 
         if (i + 1) % 10 == 0 {
             let ml_avg_time = if result.ml_ai_moves > 0 {
@@ -262,8 +262,9 @@ fn test_ml_vs_deterministic_ai() {
             } else {
                 0.0
             };
-            let det_avg_time = if result.deterministic_ai_moves > 0 {
-                result.deterministic_ai_total_time_ms as f64 / result.deterministic_ai_moves as f64
+            let det_avg_time = if result.expectiminimax_ai_moves > 0 {
+                result.expectiminimax_ai_total_time_ms as f64
+                    / result.expectiminimax_ai_moves as f64
             } else {
                 0.0
             };
@@ -289,43 +290,44 @@ fn test_ml_vs_deterministic_ai() {
     let ml_win_rate = (ml_wins as f64 / NUM_GAMES as f64) * 100.0;
     let avg_moves = total_moves as f64 / NUM_GAMES as f64;
     let avg_ml_finished = total_ml_finished_pieces as f64 / NUM_GAMES as f64;
-    let avg_deterministic_finished = total_deterministic_finished_pieces as f64 / NUM_GAMES as f64;
+    let avg_expectiminimax_finished =
+        total_expectiminimax_finished_pieces as f64 / NUM_GAMES as f64;
     let avg_ml_time_per_move = if total_ml_ai_moves > 0 {
         total_ml_ai_time_ms as f64 / total_ml_ai_moves as f64
     } else {
         0.0
     };
-    let avg_deterministic_time_per_move = if total_deterministic_ai_moves > 0 {
-        total_deterministic_ai_time_ms as f64 / total_deterministic_ai_moves as f64
+    let avg_expectiminimax_time_per_move = if total_expectiminimax_ai_moves > 0 {
+        total_expectiminimax_ai_time_ms as f64 / total_expectiminimax_ai_moves as f64
     } else {
         0.0
     };
 
-    println!("\n=== ML AI vs Deterministic AI Results ===");
+    println!("\n=== ML AI vs Expectiminimax AI Results ===");
     println!("Total games: {}", NUM_GAMES);
     println!("ML AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
     println!(
-        "Deterministic AI wins: {} ({:.1}%)",
-        deterministic_wins,
+        "Expectiminimax AI wins: {} ({:.1}%)",
+        expectiminimax_wins,
         100.0 - ml_win_rate
     );
     println!("Average moves per game: {:.1}", avg_moves);
     println!("Average pieces finished - ML AI: {:.1}/7", avg_ml_finished);
     println!(
-        "Average pieces finished - Deterministic AI: {:.1}/7",
-        avg_deterministic_finished
+        "Average pieces finished - Expectiminimax AI: {:.1}/7",
+        avg_expectiminimax_finished
     );
     println!(
         "Average time per move - ML AI: {:.1}ms",
         avg_ml_time_per_move
     );
     println!(
-        "Average time per move - Deterministic AI: {:.1}ms",
-        avg_deterministic_time_per_move
+        "Average time per move - Expectiminimax AI: {:.1}ms",
+        avg_expectiminimax_time_per_move
     );
     println!(
-        "Total moves made - ML AI: {}, Deterministic AI: {}",
-        total_ml_ai_moves, total_deterministic_ai_moves
+        "Total moves made - ML AI: {}, Expectiminimax AI: {}",
+        total_ml_ai_moves, total_expectiminimax_ai_moves
     );
     println!(
         "ML AI wins playing first: {} / {}",
@@ -339,7 +341,7 @@ fn test_ml_vs_deterministic_ai() {
     );
 
     if ml_win_rate > 45.0 {
-        println!("✅ ML AI shows competitive performance against deterministic AI");
+        println!("✅ ML AI shows competitive performance against expectiminimax AI");
     } else if ml_win_rate > 35.0 {
         println!("⚠️  ML AI shows some promise but needs improvement");
     } else {
@@ -374,7 +376,7 @@ fn test_ml_ai_consistency() {
 
     assert_eq!(
         response1.r#move, response2.r#move,
-        "ML AI should be deterministic"
+        "ML AI should be consistent"
     );
     assert!(
         (response1.evaluation - response2.evaluation).abs() < 0.001,

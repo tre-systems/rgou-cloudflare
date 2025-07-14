@@ -28,8 +28,8 @@ echo "Training completed! New weights saved to ml_ai_weights_unbeatable.json"
 echo ""
 
 # Test the new model
-echo "Testing the new model against deterministic AI..."
-./scripts/test_ml_vs_deterministic.sh
+echo "Testing the new model against expectiminimax AI..."
+./scripts/test_ml_vs_expectiminimax.sh
 
 echo ""
 echo "Optimized training complete!"

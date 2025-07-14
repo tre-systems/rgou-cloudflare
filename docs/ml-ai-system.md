@@ -8,7 +8,7 @@ This document explains the machine learning (ML) system powering the Royal Game 
 
 ## What is the ML AI?
 
-The ML AI is a neural network agent that learns to play by imitating a strong deterministic AI (expectiminimax) and, optionally, through self-play. The goal is to match or exceed traditional search-based AI performance, but with much faster move selection.
+The ML AI is a neural network agent that learns to play by imitating a strong expectiminimax AI (classic search-based AI) and, optionally, through self-play. The goal is to match or exceed traditional search-based AI performance, but with much faster move selection.
 
 ## Architecture
 
@@ -37,9 +37,9 @@ The input vector encodes:
 
 ## Training Pipeline
 
-1. **Data Generation:** Play games using deterministic AI, extract features, expert move, and outcome
+1. **Data Generation:** Play games using expectiminimax AI, extract features, expert move, and outcome
 2. **Training:** Train networks (value: MSE loss, policy: cross-entropy, AdamW optimizer)
-3. **Evaluation:** Test ML model vs deterministic AI (win rate, move quality, speed)
+3. **Evaluation:** Test ML model vs expectiminimax AI (win rate, move quality, speed)
 
 ## Move Selection
 
