@@ -59,6 +59,8 @@ export default function GameStatus({ gameState, aiThinking }: GameStatusProps) {
 
   const status = getStatusMessage();
   const StatusIcon = status.icon;
+  const isValidIcon =
+    typeof StatusIcon === 'function' || (typeof StatusIcon === 'object' && StatusIcon !== null);
 
   return (
     <div className="text-center mb-3">
@@ -68,7 +70,7 @@ export default function GameStatus({ gameState, aiThinking }: GameStatusProps) {
           animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
           transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
         >
-          <StatusIcon className={cn('w-4 h-4', status.color)} />
+          {isValidIcon ? <StatusIcon className={cn('w-4 h-4', status.color)} /> : null}
           <span className={cn('font-bold text-sm', status.color, 'neon-text')}>{status.text}</span>
         </motion.div>
 
