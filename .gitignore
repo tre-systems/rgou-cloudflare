@@ -1,8 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-worker/node_modules
+node_modules/
+worker/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,16 +12,19 @@ worker/node_modules
 !.yarn/versions
 
 # testing
-/coverage
+coverage/
+test-results/
+playwright-report/
 
 # next.js
-/.next/
-/out/
-/dist
+.next/
+out/
+dist/
 
 # production
-/build
-worker/dist
+build/
+worker/build/
+worker/dist/
 
 # misc
 .DS_Store
@@ -37,7 +40,7 @@ yarn-error.log*
 .env*
 
 # vercel
-.vercel
+.vercel/
 
 # typescript
 *.tsbuildinfo
@@ -57,30 +60,34 @@ wrangler.toml.backup
 Thumbs.db
 
 # Zig build artifacts
-worker/zig-out
-worker/zig-cache
+worker/zig-out/
+worker/zig-cache/
 worker/*.o
 worker/*.a
-
-worker/.zig-cache
-
-.open-next
-
-worker/target
+worker/.zig-cache/
 
 # Rust and wasm-pack
-/worker/rust_ai_core/pkg/
-/worker/rust_ai_core/target/
-/src/lib/wasm/
-/public/wasm/
+worker/rust_ai_core/pkg/
+worker/rust_ai_core/target/
+worker/ml_ai_core/pkg/
+worker/ml_ai_core/target/
+worker/target/
+src/lib/wasm/
+public/wasm/
 Cargo.lock
 
-# Cloudflare
-.wrangler/
-/worker/build/
+# OpenNext
+.open-next/
 
 # Local
 local.db
 
-# OpenNext
-.open-next
+# Large model files (ignore uncompressed versions, keep .gz versions)
+training_data_cache.json
+ml_ai_weights*.json
+!ml_ai_weights*.json.gz
+test_ml_weights*.json
+!test_ml_weights*.json.gz
+debug_ml_weights.json
+public/ml-weights.json
+!public/ml-weights.json.gz

@@ -788,7 +788,9 @@ class GameDataset(Dataset):
         features = torch.tensor(data["features"], dtype=torch.float32)
         target_value = torch.tensor(data.get("target_value", 0.0), dtype=torch.float32)
         target_policy = torch.tensor(data["target_policy"], dtype=torch.float32)
-        return features, target_value, target_policy
+        # Convert one-hot policy to class index for CrossEntropyLoss
+        policy_class = torch.argmax(target_policy).long()
+        return features, target_value, policy_class
 
 
 def simulate_game_worker(args):
@@ -938,7 +940,7 @@ def train_networks(
         batch_size=batch_size,
         shuffle=True,
         num_workers=get_optimal_workers(),
-        pin_memory=device.type != "cpu",
+        pin_memory=device.type == "cuda",
     )
 
     value_network = ValueNetwork().to(device)
@@ -958,23 +960,23 @@ def train_networks(
         policy_loss_total = 0.0
         num_batches = 0
 
-        for features, target_values, target_policies in tqdm(
+        for features, target_values, policy_classes in tqdm(
             dataloader, desc=f"Epoch {epoch + 1}/{epochs}"
         ):
             features = features.to(device)
             target_values = target_values.to(device)
-            target_policies = target_policies.to(device)
+            policy_classes = policy_classes.to(device)
 
             value_optimizer.zero_grad()
             value_outputs = value_network(features)
-            value_loss = value_criterion(value_outputs, target_values)
+            value_loss = value_criterion(value_outputs, target_values.unsqueeze(1))
             value_loss.backward()
             value_optimizer.step()
             value_loss_total += value_loss.item()
 
             policy_optimizer.zero_grad()
             policy_outputs = policy_network(features)
-            policy_loss = policy_criterion(policy_outputs, target_policies)
+            policy_loss = policy_criterion(policy_outputs, policy_classes)
             policy_loss.backward()
             policy_optimizer.step()
             policy_loss_total += policy_loss.item()

@@ -1,0 +1,38 @@
+# Large model files that slow down Cursor indexing
+training_data_cache.json
+ml_ai_weights*.json
+test_ml_weights*.json
+debug_ml_weights.json
+public/ml-weights.json
+ml_ai_weights*.json.gz
+test_ml_weights*.json.gz
+public/ml-weights.json.gz
+
+# Rust build artifacts (large and not needed for development)
+worker/rust_ai_core/target/
+worker/rust_ai_core/pkg/
+worker/ml_ai_core/target/
+worker/ml_ai_core/pkg/
+worker/target/
+
+# Large build outputs
+.next/
+out/
+dist/
+build/
+worker/build/
+worker/dist/
+
+# Test results and coverage (large and not needed for development)
+coverage/
+test-results/
+playwright-report/
+
+# Local database
+local.db
+
+# Environment and cache
+.venv/
+.wrangler/
+.vercel/
+.open-next/
