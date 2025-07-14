@@ -39,17 +39,17 @@ fn convert_game_state_to_ml(rust_state: &GameState) -> MLGameState {
 }
 
 fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
-    let content = std::fs::read_to_string("../../ml_ai_weights.json")?;
+    let content = std::fs::read_to_string("../../ml_ai_weights_fast.json")?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
-    let value_weights: Vec<f32> = weights["value_weights"]
+    let value_weights: Vec<f32> = weights["valueWeights"]
         .as_array()
         .unwrap()
         .iter()
         .map(|v| v.as_f64().unwrap() as f32)
         .collect();
 
-    let policy_weights: Vec<f32> = weights["policy_weights"]
+    let policy_weights: Vec<f32> = weights["policyWeights"]
         .as_array()
         .unwrap()
         .iter()

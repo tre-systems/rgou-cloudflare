@@ -4,7 +4,7 @@ use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
 const DETERMINISTIC_SEARCH_DEPTH: u8 = 4;
 const NUM_GAMES: usize = 100;
-const ML_WEIGHTS_FILE: &str = "../../ml_ai_weights.json";
+const ML_WEIGHTS_FILE: &str = "../../ml_ai_weights_fast.json";
 
 #[derive(Debug, Clone)]
 struct GameResult {
@@ -67,14 +67,14 @@ fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>
     let content = std::fs::read_to_string(ML_WEIGHTS_FILE)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
-    let value_weights: Vec<f32> = weights["value_weights"]
+    let value_weights: Vec<f32> = weights["valueWeights"]
         .as_array()
         .unwrap()
         .iter()
         .map(|v| v.as_f64().unwrap() as f32)
         .collect();
 
-    let policy_weights: Vec<f32> = weights["policy_weights"]
+    let policy_weights: Vec<f32> = weights["policyWeights"]
         .as_array()
         .unwrap()
         .iter()
@@ -267,7 +267,7 @@ fn test_ml_vs_deterministic_ai() {
             } else {
                 0.0
             };
-            
+
             println!(
                 "Game {}: {} moves, ML {} (playing {}), P1: {}/7, P2: {}/7, ML: {:.1}ms/move, Det: {:.1}ms/move",
                 i + 1,
@@ -315,9 +315,18 @@ fn test_ml_vs_deterministic_ai() {
         "Average pieces finished - Deterministic AI: {:.1}/7",
         avg_deterministic_finished
     );
-    println!("Average time per move - ML AI: {:.1}ms", avg_ml_time_per_move);
-    println!("Average time per move - Deterministic AI: {:.1}ms", avg_deterministic_time_per_move);
-    println!("Total moves made - ML AI: {}, Deterministic AI: {}", total_ml_ai_moves, total_deterministic_ai_moves);
+    println!(
+        "Average time per move - ML AI: {:.1}ms",
+        avg_ml_time_per_move
+    );
+    println!(
+        "Average time per move - Deterministic AI: {:.1}ms",
+        avg_deterministic_time_per_move
+    );
+    println!(
+        "Total moves made - ML AI: {}, Deterministic AI: {}",
+        total_ml_ai_moves, total_deterministic_ai_moves
+    );
     println!(
         "ML AI wins playing first: {} / {}",
         ml_first_wins,
