@@ -1,4 +1,4 @@
-name = "rgou-main"
+name = "rgou-ml"
 main = ".open-next/worker.js"
 compatibility_date = "2025-06-14"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
@@ -10,7 +10,7 @@ binding = "ASSETS"
 
 [vars]
 ENVIRONMENT = "production"
-NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-minmax.tre.systems"
+NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-ml-worker.tre.systems"
 AI_WORKER_SECRET = "production-secret-2024"
 
 [observability]
@@ -18,7 +18,7 @@ enabled = true
 head_sampling_rate = 1
 
 [[routes]]
-pattern = "rgou.tre.systems/*"
+pattern = "rgou-ml.tre.systems/*"
 zone_name = "tre.systems"
 
 [env.development.vars]

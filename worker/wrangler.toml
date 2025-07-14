@@ -1,4 +1,4 @@
-name = "rgou-ai-worker"
+name = "rgou-ml-worker"
 main = "build/worker/shim.mjs"
 compatibility_date = "2024-12-01"
 account_id = "571f130502618993d848f58d27ae288d"
@@ -8,3 +8,7 @@ command = "worker-build --release"
 
 [env.production.vars]
 ENVIRONMENT = "production"
+
+[[routes]]
+pattern = "rgou-ml-worker.tre.systems/*"
+zone_name = "tre.systems"
