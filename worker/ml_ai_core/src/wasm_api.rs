@@ -21,8 +21,8 @@ pub struct JsonPiece {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct MLWeights {
-    pub value_weights: Vec<f32>,
-    pub policy_weights: Vec<f32>,
+    pub valueWeights: Vec<f32>,
+    pub policyWeights: Vec<f32>,
 }
 
 static mut ML_AI: Option<MLAI> = None;
@@ -85,7 +85,7 @@ pub fn load_ml_weights(weights_js: JsValue) -> Result<(), JsValue> {
 
     unsafe {
         if let Some(ref mut ai) = ML_AI {
-            ai.load_pretrained(&weights.value_weights, &weights.policy_weights);
+            ai.load_pretrained(&weights.valueWeights, &weights.policyWeights);
         } else {
             return Err(JsValue::from_str("ML AI not initialized"));
         }
