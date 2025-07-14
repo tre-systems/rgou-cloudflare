@@ -10,6 +10,10 @@ This project is a Progressive Web App (PWA) with offline capabilities and a nati
   <img src="docs/screenshot.png" alt="Royal Game of Ur Screenshot" width="600" />
 </div>
 
+<div align="center">
+  <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+</div>
+
 ## Start Here
 
 - **New to the project?**
