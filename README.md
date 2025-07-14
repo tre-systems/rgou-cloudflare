@@ -153,8 +153,7 @@ Open source. See [LICENSE](LICENSE).
 
 ### 🧠 Game AI and Algorithms
 
-- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Backgammon#Computer_play) – Core algorithm used for decision-making under uncertainty in games with chance elements.
-- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/) – In-depth article explaining how AI researchers computed optimal play.
+- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Expectiminimax) – Core algorithm used for decision-making under uncertainty in games with chance elements.
 
 ### ⚙️ Technical References
 
@@ -163,6 +162,5 @@ Open source. See [LICENSE](LICENSE).
 
 ### 🛠️ Related Projects
 
-- [RoyalUr.net GitHub](https://github.com/curtastic/royalur) – Full-featured open-source implementation with AI and strategy guides.
 - [Nicholas Harris' Game of Ur with Monte Carlo AI](https://github.com/nicholasharris/Game-of-Ur-with-Monte-Carlo-AI) – Another excellent implementation using a different AI strategy.
 - [Tkinter Royal Game of Ur](https://github.com/ahemmetter/royal-game-of-ur) – Desktop app version in Python with GUI.
