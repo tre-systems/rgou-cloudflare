@@ -107,7 +107,7 @@ Both the value and policy networks are deep, fully connected feedforward neural 
 - **Neural Networks for Board Games:**
   - [Deep Reinforcement Learning and Search for Board Games (blog)](https://sebastianraschka.com/blog/2022/alphazero.html)
 - **Royal Game of Ur:**
-  - [British Museum: The Royal Game of Ur](https://www.britishmuseum.org/collection/object/W_1928-1009-378)
+  - [British Museum: The Royal Game of Ur (archived)](https://web.archive.org/web/20190330094815/https://www.britishmuseum.org/collection/object/W_1928-1009-378)
   - [Irving Finkel, On the Rules for the Royal Game of Ur](https://www.britishmuseum.org/blog/real-rules-royal-game-ur)
 
 ---

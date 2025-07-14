@@ -285,9 +285,9 @@ The game teaches:
 
 ### Online Resources
 
-- [British Museum Collection](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
-- [Metropolitan Museum of Art](https://www.metmuseum.org/art/collection/search/329190)
-- [University of Pennsylvania Museum](https://www.penn.museum/collections/object/142)
+- [British Museum Collection (archived)](https://web.archive.org/web/20190330094815/https://www.britishmuseum.org/collection/object/W_1928-1010-378)
+- [Metropolitan Museum of Art](https://www.metmuseum.org/art/collection/search/329072)
+- [University of Pennsylvania Museum](https://www.penn.museum/collections/object/30-12-702)
 
 ### Game Theory Analysis
 
