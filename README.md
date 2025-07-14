@@ -143,8 +143,26 @@ Open source. See [LICENSE](LICENSE).
 - Update docs as needed
 - See [Documentation Index](./docs/README.md) for standards
 
-## Resources
+## 📚 Further Reading & References
 
-- [Royal Game of Ur at the British Museum (object ME 120834)](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
-- [Gameboard and Gaming Pieces (Senet and Twenty Squares) at The Metropolitan Museum of Art](https://www.metmuseum.org/art/collection/search/544775)
-- [Expedition Magazine: Ur and Its Treasures (Penn Museum)](https://www.penn.museum/sites/expedition/ur-and-its-treasures/)
+### 🎮 Game History & Rules
+
+- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) – Overview of the ancient board game's history, mechanics, and cultural significance.
+- [Tom Scott vs Irving Finkel (YouTube)](https://www.youtube.com/watch?v=WZskjLq040I) – British Museum curator teaches the game in an entertaining and accessible way.
+- [RoyalUr.net](https://royalur.net/) – Play the game online, explore AI insights, and learn about the "solved" game strategy.
+
+### 🧠 Game AI and Algorithms
+
+- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Backgammon#Computer_play) – Core algorithm used for decision-making under uncertainty in games with chance elements.
+- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/) – In-depth article explaining how AI researchers computed optimal play.
+
+### ⚙️ Technical References
+
+- [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/) – Serverless compute platform used to deploy the app globally.
+- [Progressive Web App (PWA) Overview](https://web.dev/progressive-web-apps/) – How service workers enable offline support and app-like UX.
+
+### 🛠️ Related Projects
+
+- [RoyalUr.net GitHub](https://github.com/curtastic/royalur) – Full-featured open-source implementation with AI and strategy guides.
+- [Nicholas Harris' Game of Ur with Monte Carlo AI](https://github.com/nicholasharris/Game-of-Ur-with-Monte-Carlo-AI) – Another excellent implementation using a different AI strategy.
+- [Tkinter Royal Game of Ur](https://github.com/ahemmetter/royal-game-of-ur) – Desktop app version in Python with GUI.

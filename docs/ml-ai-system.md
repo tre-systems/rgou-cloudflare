@@ -55,18 +55,18 @@ The input vector encodes:
 
 ## References
 
-- Silver et al., AlphaZero/AlphaGo ([Nature 2017](https://www.nature.com/articles/nature24270), [Nature 2016](https://www.nature.com/articles/nature16961))
-- [Wikipedia: Expectiminimax](https://en.wikipedia.org/wiki/Expectiminimax)
-- [Russell & Norvig, AIMA](https://aima.cs.berkeley.edu/)
-- [Neural network](https://en.wikipedia.org/wiki/Neural_network)
-- [Irving Finkel, "On the Rules for the Royal Game of Ur" (PDF)](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur)
-- [RoyalUr.net: Rules and History](https://royalur.net/learn)
+- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) – Overview of the ancient board game's history and mechanics.
+- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Backgammon#Computer_play) – Core algorithm used for decision-making under uncertainty in games with chance elements.
+- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/) – In-depth article explaining how AI researchers computed optimal play.
+- Silver et al., AlphaZero/AlphaGo ([Nature 2017](https://www.nature.com/articles/nature24270), [Nature 2016](https://www.nature.com/articles/nature16961)) – Foundational papers on neural network game AI.
+- Russell & Norvig, "Artificial Intelligence: A Modern Approach" – Comprehensive AI textbook covering game theory and search algorithms.
 
 ## Further Reading
 
-- [Neural Networks and Deep Learning (Michael Nielsen, free online book)](http://neuralnetworksanddeeplearning.com/)
-- [PyTorch Tutorials](https://pytorch.org/tutorials/)
-- [Google ML Crash Course](https://developers.google.com/machine-learning/crash-course)
+- [Neural Networks and Deep Learning (Michael Nielsen, free online book)](http://neuralnetworksanddeeplearning.com/) – Excellent introduction to neural networks.
+- [PyTorch Tutorials](https://pytorch.org/tutorials/) – Official tutorials for the PyTorch framework used in training.
+- [Google ML Crash Course](https://developers.google.com/machine-learning/crash-course) – Free machine learning fundamentals course.
+- [RoyalUr.net](https://royalur.net/) – Play the game online, explore AI insights, and learn about the "solved" game strategy.
 
 ## FAQ
 

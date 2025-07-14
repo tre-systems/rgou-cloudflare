@@ -74,9 +74,10 @@ The AI evaluates positions using:
 
 ## References
 
-- Russell & Norvig, "Artificial Intelligence: A Modern Approach"
-- Ballard, B. W. (1983). The \*-minimax search procedure
-- Finkel, I. L. (2007). On the rules for the Royal Game of Ur
+- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) – Overview of the ancient board game's history and mechanics.
+- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Backgammon#Computer_play) – Core algorithm used for decision-making under uncertainty in games with chance elements.
+- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/) – In-depth article explaining how AI researchers computed optimal play.
+- Russell & Norvig, "Artificial Intelligence: A Modern Approach" – Comprehensive AI textbook covering game theory and search algorithms.
 
 ## Implementation
 

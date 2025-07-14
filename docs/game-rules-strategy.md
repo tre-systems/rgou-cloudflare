@@ -91,7 +91,8 @@ A race game for two players. Each tries to move all seven pieces around the boar
 
 ## References and Further Reading
 
-- Finkel, I. L. (2007). "On the rules for the Royal Game of Ur." [PDF](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur)
-- [RoyalUr.net: Rules and History](https://royalur.net/learn)
-- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur)
+- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) – Comprehensive overview of the ancient board game's history, mechanics, and cultural significance.
+- [Tom Scott vs Irving Finkel (YouTube)](https://www.youtube.com/watch?v=WZskjLq040I) – British Museum curator teaches the game in an entertaining and accessible way.
+- [RoyalUr.net: Rules and History](https://royalur.net/learn) – Detailed rules, strategy guides, and historical context.
+- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/) – In-depth article explaining how AI researchers computed optimal play.
 - [AI System Documentation](./ai-system.md) for technical/game theory analysis
