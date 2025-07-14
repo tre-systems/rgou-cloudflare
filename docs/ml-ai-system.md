@@ -64,7 +64,7 @@ The input vector encodes:
 
 ## Further Reading
 
-- [A Beginner’s Guide to Neural Networks and Deep Learning](https://skymind.ai/wiki/neural-network)
+- [Neural Networks and Deep Learning (Michael Nielsen, free online book)](http://neuralnetworksanddeeplearning.com/)
 - [PyTorch Tutorials](https://pytorch.org/tutorials/)
 - [Google ML Crash Course](https://developers.google.com/machine-learning/crash-course)
 
