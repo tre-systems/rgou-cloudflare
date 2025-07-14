@@ -1,172 +1,81 @@
 # Documentation Index
 
-Welcome to the Royal Game of Ur documentation! This guide will help you find the information you need.
+Welcome to the Royal Game of Ur documentation. Use this guide to find everything you need.
 
-## 📖 Documentation Overview
+## Start Here
 
-The Royal Game of Ur is a modern implementation of the ancient Mesopotamian board game, featuring a sophisticated dual-AI engine and comprehensive documentation.
+- **New to the project?**
+  1. Read the [Main README](../README.md) for a quick overview and setup.
+  2. See [Game Rules and Strategy](./game-rules-strategy.md) for how to play.
+  3. For technical setup, see [Technical Implementation Guide](./technical-implementation.md).
 
-## 🎯 For Players
+## Documentation Overview
 
-### Getting Started
+- [Architecture Overview](./architecture-overview.md): System design and component interactions
+- [AI System Documentation](./ai-system.md): Classic AI algorithm and implementation
+- [ML AI System](./ml-ai-system.md): Neural network-based AI, training, and optimization
+- [Technical Implementation Guide](./technical-implementation.md): Development setup and build process
+- [Game Rules and Strategy](./game-rules-strategy.md): Complete rules and strategy
+- [Game Statistics](./game-statistics.md): Statistics tracking system
+- [Testing Strategy](./testing-strategy.md): Testing approach and guidelines
+- [Mac Optimization Guide](./mac-optimization-guide.md): ML training on Mac
 
-- **[Main README](../README.md)**: Overview, features, and quick start guide
-- **[Game Rules and Strategy](./game-rules-strategy.md)**: Complete rules and strategic guidance
+## Quick Reference
 
-### Understanding the AI
+- **Players:**
+  - [Main README](../README.md): Overview, features, and quick start
+  - [Game Rules and Strategy](./game-rules-strategy.md): Complete rules
+- **Developers:**
+  - [Architecture Overview](./architecture-overview.md): System design
+  - [Technical Implementation Guide](./technical-implementation.md): Setup
+  - [AI System Documentation](./ai-system.md): Classic AI details
+  - [ML AI System](./ml-ai-system.md): Neural network AI
+  - [Testing Strategy](./testing-strategy.md): Testing guidelines
+- **AI Researchers:**
+  - [AI System Documentation](./ai-system.md): Classic algorithm
+  - [ML AI System](./ml-ai-system.md): Neural network architecture
+  - [Architecture Overview](./architecture-overview.md): System context
 
-- **[AI System Documentation](./ai-system.md)**: How the classic AI works, algorithms, and technical details
-- **[ML AI System](./ml-ai-system.md)**: Neural network-based AI, training pipeline, and optimization
-- **AI Diagnostics Panel**: Available in development mode for real-time AI analysis
+## Game Features
 
-## 🛠️ For Developers
+- Authentic rules and gameplay
+- Dual AI engine (WASM and Worker)
+- PWA support and offline play
+- Modern UI
+- Database integration (SQLite/D1)
 
-### Architecture & Implementation
+## Related Resources
 
-- **[Architecture Overview](./architecture-overview.md)**: System design and component interactions
-- **[Technical Implementation Guide](./technical-implementation.md)**: Development setup and build process
+- [Irving Finkel, "On the Rules for the Royal Game of Ur" (PDF)](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur)
+- [RoyalUr.net: Rules and History](https://royalur.net/learn)
+- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur)
+- [Russell & Norvig, "Artificial Intelligence: A Modern Approach"](https://aima.cs.berkeley.edu/)
 
-### AI Development
+## Contributing
 
-- **[AI System Documentation](./ai-system.md)**: Classic algorithm details, evaluation function, and optimization techniques
-- **[ML AI System](./ml-ai-system.md)**: Neural network architecture, training, and evaluation
-- **Rust AI Core**: `worker/rust_ai_core/src/lib.rs` - Core AI logic
-- **WebAssembly API**: `worker/rust_ai_core/src/wasm_api.rs` - WASM interface
-- **Worker Implementation**: `worker/src/lib.rs` - Cloudflare Worker
-
-### Database & State Management
-
-- **[Game Statistics](./game-statistics.md)**: Statistics tracking system implementation
-- **Database Schema**: `src/lib/db/schema.ts` - Drizzle ORM schema
-- **State Management**: `src/lib/game-store.ts` - Zustand store with Immer
-
-## 📚 Documentation Structure
-
-```
-docs/
-├── README.md                    # This index file
-├── architecture-overview.md     # System architecture
-├── ai-system.md                # AI algorithm and implementation
-├── technical-implementation.md  # Development guide
-├── game-rules-strategy.md      # Game rules and strategy
-├── game-statistics.md          # Statistics system
-└── testing-strategy.md         # Testing strategy and guidelines
-```
-
-## 🔍 Quick Reference
-
-### For New Players
-
-1. Read the **[Main README](../README.md)** for an overview
-2. Check **[Game Rules and Strategy](./game-rules-strategy.md)** for complete rules
-3. Start playing and explore the AI behavior
-
-### For Developers
-
-1. Review **[Architecture Overview](./architecture-overview.md)** for system design
-2. Read **[Technical Implementation Guide](./technical-implementation.md)** for setup
-3. Study **[AI System Documentation](./ai-system.md)** for classic AI implementation details
-4. Study **[ML AI System](./ml-ai-system.md)** for neural network AI details
-5. Follow **[Testing Strategy](./testing-strategy.md)** for testing guidelines
-
-### For AI Researchers
-
-1. Focus on **[AI System Documentation](./ai-system.md)** for classic algorithm details
-2. Review **[ML AI System](./ml-ai-system.md)** for neural network architecture and training
-3. Review the academic references and mathematical foundations
-4. Examine the Rust implementation in `worker/rust_ai_core/`
-
-## 🎮 Game Features
-
-### Core Gameplay
-
-- **Authentic Rules**: Faithful recreation of the 4,500-year-old game
-- **Dual AI Engine**: Client-side WASM AI (default) and server-side Worker AI
-- **PWA Support**: Installable Progressive Web App with offline capability
-- **Modern UI**: Beautiful, responsive interface with animations
-
-### AI Capabilities
-
-- **Expectiminimax Algorithm**: Advanced game theory for stochastic games
-- **6-Ply Search Depth**: Deep strategic analysis for client AI
-- **Position Evaluation**: Sophisticated scoring system
-- **Transposition Tables**: Efficient position caching
-- **Quiescence Search**: Horizon effect prevention
-
-### Technical Features
-
-- **Rust Implementation**: High-performance AI engine
-- **WebAssembly**: Near-native performance in browsers
-- **Cloudflare Workers**: Serverless AI deployment
-- **TypeScript**: Type-safe frontend development
-- **Zustand + Immer**: Efficient state management
-- **Database Integration**: SQLite (local) / D1 (production)
-
-## 🔗 Related Resources
-
-### Academic References
-
-- **Game Theory**: Russell & Norvig (2021) - AI: A Modern Approach
-- **Expectiminimax**: Ballard (1983) - \*-minimax search procedure
-- **Historical Context**: Finkel (2007) - Rules for the Royal Game of Ur
-
-### Online Resources
-
-- Irving Finkel, "On the Rules for the Royal Game of Ur" ([PDF, Academia.edu](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur))
-- RoyalUr.net: [Rules and History](https://royalur.net/learn)
-- Wikipedia: [Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur)
-- Russell & Norvig, "Artificial Intelligence: A Modern Approach" ([AIMA](https://aima.cs.berkeley.edu/))
-
-### Code Repositories
-
-- **Frontend**: Next.js application in `src/`
-- **AI Engine**: Rust implementation in `worker/`
-- **Database**: Drizzle ORM with D1/SQLite support
-
-## 🤝 Contributing
-
-### Documentation Improvements
-
-- Add missing technical details
-- Improve code examples
-- Update academic references
-- Enhance diagrams and visualizations
-
-### Code Contributions
-
-- Follow the technical implementation guide
+- Improve technical details
+- Update code examples
+- Add or update references
+- Enhance diagrams
+- Follow the [Technical Implementation Guide](./technical-implementation.md)
 - Run all tests before submitting
 - Update relevant documentation
-- Maintain code quality standards
 
-## 📝 Documentation Standards
+## Documentation Standards
 
-### Writing Guidelines
+- Clear structure and headings
+- Code examples where relevant
+- Cross-references between docs
+- Cite sources and provide references
+- Keep docs up to date with code
 
-- **Clear Structure**: Use consistent headings and organization
-- **Code Examples**: Include relevant code snippets
-- **Cross-References**: Link between related documents
-- **Academic Rigor**: Cite sources and provide references
+## Getting Help
 
-### Maintenance
-
-- **Keep Updated**: Documentation should reflect current implementation
-- **Version Control**: Track documentation changes with code
-- **Review Process**: Regular documentation reviews
-- **User Feedback**: Incorporate user suggestions and questions
-
-## 🆘 Getting Help
-
-### Common Issues
-
-- **WASM Loading**: Check CORS headers and file paths
-- **AI Performance**: Monitor search depth and memory usage
-- **Database Issues**: Verify environment variables and migrations
-- **Build Problems**: Ensure all prerequisites are installed
-
-### Support Channels
-
-- **GitHub Issues**: Report bugs and request features
-- **Documentation**: Check relevant documentation sections
-- **Code Comments**: Review inline code documentation
-- **Community**: Engage with other developers and players
+- **WASM Loading:** Check CORS headers and file paths
+- **AI Performance:** Monitor search depth and memory usage
+- **Database Issues:** Verify environment variables and migrations
+- **Build Problems:** Ensure all prerequisites are installed
+- **Support:**
+  - GitHub Issues
+  - This documentation
+  - Community

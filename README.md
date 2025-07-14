@@ -1,8 +1,8 @@
 # 🏺 Royal Game of Ur - Cloudflare Edition
 
-A modern implementation of the ancient Mesopotamian board game, "The Royal Game of Ur," built with Next.js and TypeScript, and powered by a unique dual AI engine written in Rust.
+A modern implementation of the ancient Mesopotamian board game, "The Royal Game of Ur," built with Next.js, TypeScript, and a dual AI engine in Rust.
 
-This project is a Progressive Web App (PWA), allowing for installation on your device for a native-like experience with offline capabilities.
+This project is a Progressive Web App (PWA) with offline capabilities and a native-like experience.
 
 [![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
 
@@ -10,219 +10,137 @@ This project is a Progressive Web App (PWA), allowing for installation on your d
   <img src="docs/screenshot.png" alt="Royal Game of Ur Screenshot" width="600" />
 </div>
 
-<div align="center">
-  <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
-</div>
+## Start Here
 
-## 🌟 Features
+- **New to the project?**
+  1. Read this README for a quick overview and setup.
+  2. See the [Documentation Index](./docs/README.md) for a full guide to all docs.
+  3. For rules and strategy, see [Game Rules and Strategy](./docs/game-rules-strategy.md).
+  4. For technical setup, see [Technical Implementation Guide](./docs/technical-implementation.md).
 
-- **Authentic Gameplay**: A faithful recreation of the 4,500-year-old Royal Game of Ur
-- **Triple AI Engine**:
-  - **Client AI (Default)**: Rust AI compiled to WebAssembly, running in browser for instant responses and offline play
-  - **Server AI (Fallback)**: Same core Rust AI on Cloudflare Workers
-  - **ML AI (Experimental)**: Neural network-based AI trained with PyTorch and MPS acceleration
-- **PWA & Offline Ready**: Installable Progressive Web App with full offline gameplay
-- **Modern UI/UX**: Beautiful, responsive interface with smooth animations and sound effects
-- **Game Statistics**: Track wins, losses, and win rate across all games
-- **Database Integration**: Games are automatically saved to local SQLite (dev) or Cloudflare D1 (production)
+## Features
 
-## 🎯 Game Rules
+- Authentic gameplay: Faithful recreation of the 4,500-year-old Royal Game of Ur
+- Triple AI engine: Client AI (WASM), Server AI (Cloudflare Worker), ML AI (experimental)
+- PWA & offline ready
+- Modern UI/UX
+- Game statistics and database integration
 
-The Royal Game of Ur is a 4,500-year-old race game where each player tries to move all 7 pieces around the board and off the finish before their opponent.
+## Game Rules (Summary)
 
-**Quick Rules:**
+- Roll 4 binary dice (0-4)
+- Move pieces along your track
+- Land on opponent to capture (except on rosettes)
+- Rosettes are safe and grant extra turns
+- First to finish all 7 pieces wins
 
-- **Dice**: Roll 4 tetrahedral dice (binary dice). Count marked corners facing up (0-4)
-- **Movement**: Move pieces along your designated track from start to finish
-- **Combat**: Landing on an opponent's piece sends it back to start (except on rosette squares)
-- **Rosettes**: Starred squares are safe zones and grant an extra turn
-- **Winning**: First player to move all 7 pieces off the board wins
+See [Game Rules and Strategy](./docs/game-rules-strategy.md) for details.
 
-For complete rules and strategy, see [Game Rules and Strategy](./docs/game-rules-strategy.md).
+## Architecture
 
-## 🏗️ Architecture
+- Client AI (WASM, 6-ply, default)
+- Server AI (Cloudflare Worker, 4-ply)
+- Shared Rust AI core (`worker/rust_ai_core`)
+- Expectiminimax algorithm for stochastic games
 
-This project uses a unique dual-AI architecture with shared Rust AI core:
+See [AI System Documentation](./docs/ai-system.md) and [Architecture Overview](./docs/architecture-overview.md).
 
-- **Client AI (Default)**: Rust AI compiled to **WebAssembly** runs in browser with 6-ply search depth
-- **Server AI (Fallback)**: Same Rust AI on **Cloudflare Workers** with 4-ply search depth
-- **Shared Core**: Both AIs use identical logic from `worker/rust_ai_core` for consistent behavior
+## Tech Stack
 
-The AI uses the **Expectiminimax** algorithm for games with chance elements (dice rolls), combining minimax search with expectation nodes for probabilistic outcomes.
+- Next.js, React, TypeScript, Tailwind CSS
+- Rust (AI engine, Cloudflare Worker, WASM)
+- SQLite (local) / Cloudflare D1 (production)
+- Zustand + Immer for state
 
-For detailed technical information, see [AI System Documentation](./docs/ai-system.md) and [Architecture Overview](./docs/architecture-overview.md).
+## Documentation
 
-## 🛠️ Tech Stack
+- [Documentation Index](./docs/README.md)
+- [Architecture Overview](./docs/architecture-overview.md)
+- [AI System Documentation](./docs/ai-system.md)
+- [ML AI System](./docs/ml-ai-system.md)
+- [Mac Optimization Guide](./docs/mac-optimization-guide.md)
+- [Technical Implementation Guide](./docs/technical-implementation.md)
+- [Game Rules and Strategy](./docs/game-rules-strategy.md)
+- [Testing Strategy](./docs/testing-strategy.md)
 
-- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
-- **PWA**: Service Worker, Web App Manifest
-- **AI Engine**: Rust (Cloudflare Worker) & Rust compiled to WebAssembly (Client) & PyTorch ML (MPS acceleration)
-- **Database**: SQLite (local) / Cloudflare D1 (production)
-- **State Management**: Zustand with Immer
-- **Deployment**: Cloudflare Workers & Pages
-
-## 📚 Documentation
-
-- **[Documentation Index](./docs/README.md)**: Complete guide to all documentation
-- **[Architecture Overview](./docs/architecture-overview.md)**: System design and component interactions
-- **[AI System Documentation](./docs/ai-system.md)**: AI algorithm, evaluation function, and technical implementation
-- **[ML AI System](./docs/ml-ai-system.md)**: Neural network training and optimization
-- **[Mac Optimization Guide](./docs/mac-optimization-guide.md)**: Maximal resource utilization for Mac
-- **[Technical Implementation Guide](./docs/technical-implementation.md)**: Development setup and build process
-- **[Game Rules and Strategy](./docs/game-rules-strategy.md)**: Complete rules and strategic guidance
-- **[Testing Strategy](./docs/testing-strategy.md)**: Testing approach and guidelines
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Git** – [Download Git](https://git-scm.com/downloads)
-- **Node.js (v18+)** – [Download Node.js](https://nodejs.org/)
-- **Rust & Cargo** – [Install Rust](https://www.rust-lang.org/tools/install)
-- **wasm-pack** – `cargo install wasm-pack`
-- **worker-build** – `cargo install worker-build`
-- **Python (3.8+)** – [Download Python](https://www.python.org/downloads/) (for ML training)
-- **PyTorch** – `pip install torch torchvision` (for ML training)
+- [Git](https://git-scm.com/downloads)
+- [Node.js (v18+)](https://nodejs.org/)
+- [Rust & Cargo](https://www.rust-lang.org/tools/install)
+- `cargo install wasm-pack`
+- `cargo install worker-build`
+- [Python 3.8+](https://www.python.org/downloads/) (for ML training)
+- `pip install torch torchvision` (for ML training)
 
 ### Local Development
 
-1. **Clone and install dependencies**
+```bash
+git clone <repository-url>
+cd rgou-cloudflare
+npm install
+npm run migrate:local
+npm run dev
+```
 
-   ```bash
-   git clone <repository-url>
-   cd rgou-cloudflare
-   npm install
-   ```
-
-2. **Set up local database**
-
-   ```bash
-   npm run migrate:local
-   ```
-
-3. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-The game will open at http://localhost:3000 with full database functionality.
+Game opens at http://localhost:3000.
 
 ### ML AI Training (Optional)
 
-For optimal Mac performance, the ML AI system is specifically optimized:
-
 ```bash
-# Quick start with optimized settings
 ./scripts/train_ml_ai_optimized.sh
-
-# Or run with custom parameters
-python scripts/train_ml_ai.py \
-    --num-games 10000 \
-    --epochs 300 \
-    --use-rust-ai \
-    --output ml_ai_weights.json
+# Or
+python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai --output ml_ai_weights.json
 ```
 
-See [Mac Optimization Guide](./docs/mac-optimization-guide.md) for detailed performance tuning.
+See [Mac Optimization Guide](./docs/mac-optimization-guide.md) for tuning.
 
-## Royal Game of Ur ML AI Training
+### Preventing Mac Sleep During Training
 
-## Preventing Mac Sleep During Training
-
-The training script (`scripts/train_ml_ai_optimized.sh`) now uses `caffeinate` to prevent your Mac from sleeping during long training runs. This ensures that your training will not pause or stop if you lock your screen or leave your Mac unattended.
-
-**If you run training manually:**
-
-- You can use `caffeinate -i python3 scripts/train_ml_ai.py ...` to keep your Mac awake for the duration of the training.
-- Alternatively, open a new Terminal and run `caffeinate` in the background while your training is running.
-
-This is especially important for long runs (10,000+ games, 300+ epochs) to avoid wasted time and interrupted jobs.
+The training script uses `caffeinate` to prevent sleep. If running manually, prefix with `caffeinate -i`.
 
 ### Deploy to Cloudflare
 
-1. **Install Wrangler CLI**
-
-   ```bash
-   npm install -g wrangler
-   wrangler login
-   ```
-
-2. **Create D1 Database**
-   - Go to Cloudflare dashboard → "Workers & Pages" → "D1"
-   - Create database named `rgou-db`
-   - Copy database ID
-
-3. **Configure environment**
-
-   ```bash
-   # Create .env.local
-   CLOUDFLARE_ACCOUNT_ID=your_account_id
-   D1_DATABASE_ID=your_database_id
-   ```
-
-4. **Update wrangler.toml** with your account and database IDs
-
-5. **Deploy**
-   ```bash
-   npm run migrate:d1
-   npm run build
-   npx wrangler deploy
-   ```
+1. `npm install -g wrangler && wrangler login`
+2. Create D1 database in Cloudflare dashboard
+3. Configure `.env.local` and `wrangler.toml`
+4. `npm run migrate:d1 && npm run build && npx wrangler deploy`
 
 ### GitHub Actions Deployment
 
-1. **Create Cloudflare API Token** with Pages and Workers permissions
-2. **Add GitHub Secrets**:
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
-3. **Push to main branch** - automatic deployment will trigger
+- Add Cloudflare API token and account ID as GitHub secrets
+- Push to main branch for auto-deploy
 
-## 🧪 Testing
+## Testing
 
 ```bash
-# Run all tests (including Rust)
-npm run check
-
-# Unit tests only
-npm run test
-
-# E2E tests
-npm run test:e2e
-
-# ML AI vs Deterministic AI comparison
-./scripts/test_ml_vs_deterministic.sh
+npm run check      # All tests (including Rust)
+npm run test       # Unit tests
+npm run test:e2e   # E2E tests
+./scripts/test_ml_vs_deterministic.sh # ML vs deterministic AI
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
-### Database Issues
+- **DB errors**: Check migrations and wrangler config
+- **Invalid game data**: See browser console
+- **WASM issues**: Check CORS headers in `public/_headers`
 
-If you encounter "Failed to save game" errors:
+## License
 
-1. **Check migrations**: `npx wrangler d1 migrations list rgou-db --remote`
-2. **Apply pending migrations**: `npx wrangler d1 migrations apply rgou-db --remote`
-3. **Verify tables**: `npx wrangler d1 execute rgou-db --remote --command="SELECT name FROM sqlite_master WHERE type='table';"`
+Open source. See [LICENSE](LICENSE).
 
-### Common Issues
+## Contributing
 
-- **"DB binding is not available"**: Check `wrangler.toml` configuration
-- **"Invalid game data"**: Check browser console for validation errors
-- **WASM loading issues**: Verify CORS headers in `public/_headers`
+- Fork, branch, and make changes
+- Run `npm run check` before submitting
+- Update docs as needed
+- See [Documentation Index](./docs/README.md) for standards
 
-## 📄 License
+## Resources
 
-This project is open source. See [LICENSE](LICENSE) for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run `npm run check` to ensure all tests pass
-5. Submit a pull request
-
-## 🔗 Resources
-
-- **British Museum**: [Original game artifacts](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
-- **Metropolitan Museum**: [Historical game pieces](https://www.metmuseum.org/art/collection/search/329072)
-- **University of Pennsylvania**: [Archaeological findings](https://www.penn.museum/collections/object/30-12-702)
+- [British Museum: Original game artifacts](https://www.britishmuseum.org/collection/object/W_1928-1010-378)
+- [Metropolitan Museum: Historical game pieces](https://www.metmuseum.org/art/collection/search/329072)
+- [University of Pennsylvania: Archaeological findings](https://www.penn.museum/collections/object/30-12-702)
