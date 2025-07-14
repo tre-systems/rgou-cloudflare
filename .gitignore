@@ -90,4 +90,3 @@ test_ml_weights*.json
 !test_ml_weights*.json.gz
 debug_ml_weights.json
 public/ml-weights.json
-!public/ml-weights.json.gz
