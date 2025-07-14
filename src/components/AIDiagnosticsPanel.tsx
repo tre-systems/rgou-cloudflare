@@ -185,6 +185,7 @@ export default function AIDiagnosticsPanel({
                 <p className="font-semibold text-white/80">
                   Move Evaluations (Depth: {lastAIDiagnostics.diagnostics.searchDepth})
                 </p>
+                <p className="text-xs text-white/50 italic">(Scores shown ×1000 for display)</p>
                 <div className="max-h-48 overflow-y-auto pr-1">
                   {lastAIDiagnostics.diagnostics.moveEvaluations?.map(
                     (move: MoveEvaluation, index: number) => (
@@ -220,7 +221,7 @@ export default function AIDiagnosticsPanel({
                                 : 'text-white/80'
                           }`}
                         >
-                          {move.score.toFixed(1)}
+                          {(move.score * 1000).toFixed(1)}
                         </p>
                       </div>
                     )
