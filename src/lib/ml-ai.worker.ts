@@ -35,17 +35,17 @@ const loadMLWasm = (): Promise<void> => {
       console.log('ML AI Worker: Current origin:', self.location.origin);
 
       try {
-        console.log('ML AI Worker: Attempting to import rgou_ml_ai_worker.js...');
-        mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ml_ai_worker.js');
-        console.log('ML AI Worker: rgou_ml_ai_worker.js loaded successfully.');
+        console.log('ML AI Worker: Attempting to import ml_ai_core.js...');
+        mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/ml_ai_core.js');
+        console.log('ML AI Worker: ml_ai_core.js loaded successfully.');
         console.log('ML AI Worker: Module keys:', Object.keys(mlWasmModule));
       } catch (error) {
-        console.error('ML AI Worker: Failed to load rgou_ml_ai_worker.js:', error);
+        console.error('ML AI Worker: Failed to load ml_ai_core.js:', error);
         throw new Error(`Failed to load ML WASM JS module: ${error}`);
       }
 
       try {
-        const wasmUrl = `${self.location.origin}/wasm/rgou_ml_ai_worker_bg.wasm`;
+        const wasmUrl = `${self.location.origin}/wasm/ml_ai_core_bg.wasm`;
         console.log(`ML AI Worker: Initializing ML WASM with URL: ${wasmUrl}`);
 
         await mlWasmModule.default(wasmUrl);

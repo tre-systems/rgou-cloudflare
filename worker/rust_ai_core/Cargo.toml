@@ -7,6 +7,9 @@ description = "Royal Game of Ur AI core logic"
 license = "MIT"
 repository = "https://github.com/robertgilks/rgou-cloudflare"
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

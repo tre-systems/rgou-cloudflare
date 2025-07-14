@@ -1,4 +1,4 @@
-use super::{GameState, MLResponse, Player, MLAI};
+use super::{GameState, Player, MLAI};
 use js_sys;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
