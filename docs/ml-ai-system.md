@@ -105,10 +105,14 @@ Both the value and policy networks are deep, fully connected feedforward neural 
   - [Wikipedia: Expectiminimax](https://en.wikipedia.org/wiki/Expectiminimax)
   - [Russell & Norvig, Artificial Intelligence: A Modern Approach (4th ed.), Ch. 6](https://aima.cs.berkeley.edu/)
 - **Neural Networks for Board Games:**
-  - [Deep Reinforcement Learning and Search for Board Games (blog)](https://sebastianraschka.com/blog/2022/alphazero.html)
+  - Russell & Norvig, "Artificial Intelligence: A Modern Approach" ([AIMA](https://aima.cs.berkeley.edu/))
+  - Wikipedia: [Neural network](https://en.wikipedia.org/wiki/Neural_network)
+- **Adversarial Search and Game AI:**
+  - Wikipedia: [Expectiminimax](https://en.wikipedia.org/wiki/Expectiminimax)
+  - Russell & Norvig, "Artificial Intelligence: A Modern Approach" ([AIMA](https://aima.cs.berkeley.edu/))
 - **Royal Game of Ur:**
-  - [British Museum: The Royal Game of Ur (archived)](https://web.archive.org/web/20190330094815/https://www.britishmuseum.org/collection/object/W_1928-1009-378)
-  - [Irving Finkel, On the Rules for the Royal Game of Ur](https://www.britishmuseum.org/blog/real-rules-royal-game-ur)
+  - Irving Finkel, "On the Rules for the Royal Game of Ur" ([PDF, Academia.edu](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur))
+  - RoyalUr.net: [Rules and History](https://royalur.net/learn)
 
 ---
 

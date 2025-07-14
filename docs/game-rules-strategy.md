@@ -292,3 +292,9 @@ The game teaches:
 ### Game Theory Analysis
 
 For mathematical analysis of the game's strategic elements, see the [AI System Documentation](./ai-system.md) for technical details on the expectiminimax algorithm and evaluation function.
+
+### References
+
+- Irving Finkel, "On the Rules for the Royal Game of Ur" ([PDF, Academia.edu](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur))
+- RoyalUr.net: [Rules and History](https://royalur.net/learn)
+- Wikipedia: [Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur)

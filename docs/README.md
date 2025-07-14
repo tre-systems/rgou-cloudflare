@@ -112,7 +112,10 @@ docs/
 
 ### Online Resources
 
-- **University of Pennsylvania**: [Archaeological findings](https://www.penn.museum/collections/object/30-12-702)
+- Irving Finkel, "On the Rules for the Royal Game of Ur" ([PDF, Academia.edu](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur))
+- RoyalUr.net: [Rules and History](https://royalur.net/learn)
+- Wikipedia: [Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur)
+- Russell & Norvig, "Artificial Intelligence: A Modern Approach" ([AIMA](https://aima.cs.berkeley.edu/))
 
 ### Code Repositories
 
