@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isLocalDevelopment } from '@/lib/utils';
 import { ROSETTE_SQUARES } from '@/lib/types';
 import GamePiece from './GamePiece';
 
@@ -57,6 +57,13 @@ export default function GameSquare({
         >
           <Star className="w-6 h-6 text-amber-400 drop-shadow-lg" />
         </motion.div>
+      )}
+
+      {/* Board cell number in development mode */}
+      {isLocalDevelopment() && (
+        <span className="absolute top-1 left-1 text-xs text-white/60 font-mono select-none pointer-events-none z-10">
+          {squareIndex}
+        </span>
       )}
 
       <AnimatePresence mode="wait">
