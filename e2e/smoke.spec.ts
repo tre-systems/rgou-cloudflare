@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import Database from 'better-sqlite3';
 
 // Utility functions for repeated actions
 async function startGame(page: Page, mode: 'classic' | 'ml' | 'watch' = 'classic') {
@@ -78,6 +79,36 @@ test.describe('Game Completion and Stats', () => {
       await expect(page.getByTestId('wins-count')).toHaveText('1');
       await page.getByTestId('reset-game-button').click();
       await expect(page.getByTestId('ai-model-selection')).toBeVisible();
+    }
+  });
+});
+
+test.describe('Game Save (DB Verification)', () => {
+  test('simulate win and verify game is saved in local.db', async ({ page }) => {
+    if (process.env.NODE_ENV === 'development') {
+      await page.goto('/');
+      await page.getByTestId('mode-select-classic').click();
+      await page.getByTestId('create-near-winning-state').click();
+      await page.evaluate(() => {
+        const store = (window as any).useGameStore.getState();
+        store.actions.processDiceRoll(2);
+      });
+      const squares = page.locator('[data-testid^="square-"]');
+      await squares.nth(12).click();
+      await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
+      // Query local.db to verify the game was saved
+      const db = new Database('local.db');
+      try {
+        const row = db
+          .prepare('SELECT * FROM games WHERE winner = ? ORDER BY completedAt DESC LIMIT 1')
+          .get('player1');
+        expect(row).toBeTruthy();
+        if (row) {
+          expect((row as { winner: string }).winner).toBe('player1');
+        }
+      } finally {
+        db.close();
+      }
     }
   });
 });
