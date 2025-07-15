@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { GameState, Player } from '@/lib/types';
+import { GameState, Player, GameMode } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/lib/game-store';
 import CaptureExplosion from './animations/CaptureExplosion';
@@ -25,6 +25,9 @@ interface GameBoardProps {
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
   onCreateNearWinningState: () => void;
+  watchMode?: boolean;
+  aiSourceP1?: 'client' | 'ml' | null;
+  aiSourceP2?: 'client' | 'ml';
 }
 
 export default function GameBoard({
@@ -38,6 +41,9 @@ export default function GameBoard({
   onToggleSound,
   onShowHowToPlay,
   onCreateNearWinningState,
+  watchMode = false,
+  aiSourceP1 = null,
+  aiSourceP2 = 'ml',
 }: GameBoardProps) {
   const [screenShake, setScreenShake] = useState(false);
   const [explosions, setExplosions] = useState<
@@ -53,6 +59,7 @@ export default function GameBoard({
   const { actions } = useGameStore();
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
+  const gameMode: GameMode = watchMode ? 'watch' : 'play';
 
   React.useEffect(() => {
     if (gameState.gameStatus === 'finished' && gameState.winner) {
@@ -181,7 +188,11 @@ export default function GameBoard({
       </AnimatePresence>
       <AnimatePresence>
         {gameState.gameStatus === 'finished' && (
-          <GameCompletionOverlay gameState={gameState} onResetGame={onResetGame} />
+          <GameCompletionOverlay
+            gameState={gameState}
+            onResetGame={onResetGame}
+            gameMode={gameMode}
+          />
         )}
       </AnimatePresence>
       <motion.div
@@ -195,7 +206,8 @@ export default function GameBoard({
             player="player2"
             pieces={gameState.player2Pieces}
             isCurrentPlayer={gameState.currentPlayer === 'player2'}
-            isAI={true}
+            isAI={watchMode || true}
+            aiType={watchMode ? aiSourceP2 : undefined}
             isStartMoveValid={false}
             validMoves={gameState.validMoves}
             onPieceClick={onPieceClick}
@@ -209,7 +221,13 @@ export default function GameBoard({
           transition={{ duration: 0.5 }}
         >
           <div className="text-center mb-3">
-            <GameStatus gameState={gameState} aiThinking={aiThinking} />
+            <GameStatus
+              gameState={gameState}
+              aiThinking={aiThinking}
+              watchMode={watchMode}
+              aiSourceP1={aiSourceP1}
+              aiSourceP2={aiSourceP2}
+            />
           </div>
           <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
             {boardLayout
@@ -263,7 +281,8 @@ export default function GameBoard({
             player="player1"
             pieces={gameState.player1Pieces}
             isCurrentPlayer={gameState.currentPlayer === 'player1'}
-            isAI={false}
+            isAI={watchMode}
+            aiType={watchMode ? aiSourceP1 : undefined}
             isStartMoveValid={
               gameState.currentPlayer === 'player1' &&
               gameState.validMoves.some(

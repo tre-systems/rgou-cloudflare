@@ -1,14 +1,16 @@
 # ML AI System Documentation
 
-See also: [AI System Documentation (Classic Expectiminimax)](./ai-system.md), [Architecture Overview](./architecture-overview.md)
+See also: [AI System Documentation (Classic Expectiminimax)](./ai-system.md)
 
 ## Overview
 
-This document explains the machine learning (ML) system powering the Royal Game of Ur AI. It is written for experienced programmers new to ML, covering architecture, training, features, model structure, and references.
+This document explains the machine learning (ML) system powering one of the two AI opponents in the Royal Game of Ur. It is written for experienced programmers new to ML, covering architecture, training, features, and model structure.
+
+The ML AI can be played against directly or watched as it competes against the Classic AI.
 
 ## What is the ML AI?
 
-The ML AI is a neural network agent that learns to play by imitating a strong expectiminimax AI (classic search-based AI) and, optionally, through self-play. The goal is to match or exceed traditional search-based AI performance, but with much faster move selection.
+The ML AI is a neural network agent that learns to play by imitating a strong expectiminimax AI (the "Classic AI") and, optionally, through self-play. The goal is to create a strong opponent with a distinct, learned playstyle.
 
 ## Architecture
 
@@ -49,9 +51,15 @@ The input vector encodes:
 
 ## Why Use ML Instead of Search?
 
-- Speed: ML AI selects moves in milliseconds
-- Generalization: Learns subtle strategies from data
-- Deployment: Runs efficiently on web, mobile, or server
+- **Speed**: The ML AI selects moves in milliseconds, without a deep search.
+- **Unique Playstyle**: Its strategies are learned from data, not hand-coded, resulting in a different kind of opponent.
+- **Efficiency**: The model runs efficiently in the browser via WebAssembly.
+
+## See Also
+
+- [AI System Documentation](./ai-system.md)
+- [Architecture Overview](./architecture-overview.md)
+- [Game Rules and Strategy](./game-rules-strategy.md)
 
 ## References
 

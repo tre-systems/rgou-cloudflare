@@ -39,7 +39,8 @@ Welcome to the Royal Game of Ur documentation. Use this guide to find everything
 ## Game Features
 
 - Authentic rules and gameplay
-- Dual AI engine (WASM and Worker)
+- Dual AI opponents (Classic and ML)
+- AI vs. AI watch mode
 - PWA support and offline play
 - Modern UI
 - Database integration (SQLite/D1)

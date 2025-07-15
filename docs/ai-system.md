@@ -1,43 +1,29 @@
 # AI System Documentation
 
-See also: [ML AI System (Neural Network)](./ml-ai-system.md)
+This document describes the two primary AI opponents available in the Royal Game of Ur.
 
 ## Overview
 
-The Royal Game of Ur features a dual-AI engine built in Rust, providing both server-side and client-side gameplay. The AI uses advanced game theory algorithms for challenging, fast gameplay.
+The game features two distinct AI opponents, each with a unique playstyle and architecture:
 
-## Core AI Architecture
+- **Classic AI (Expectiminimax)**: A traditional, deterministic game-playing AI that uses the expectiminimax algorithm.
+- **ML AI (Neural Network)**: A modern, experimental AI powered by a neural network trained through self-play.
 
-### Dual-AI System
+At the start of each game, players can choose which AI to play against, or they can watch the two AIs play against each other.
 
-- **Client AI (Default)**: Rust compiled to WebAssembly, runs in browser (6-ply, strong, offline)
-- **Server AI (Fallback)**: Rust on Cloudflare Workers (4-ply, fast, network-based)
-- **ML AI (Experimental)**: See [ML AI System](./ml-ai-system.md)
+## Classic AI: Expectiminimax
 
-Both AIs share the same Rust core (`worker/rust_ai_core/src/lib.rs`).
+The Classic AI is the default and most robust opponent. It uses the expectiminimax algorithm, an extension of minimax designed for two-player games with an element of chance, like dice rolls.
 
-## AI Algorithm: Expectiminimax
+### Core Algorithm
 
-The AI uses the expectiminimax algorithm, an extension of minimax for games with chance (dice rolls).
+- **Minimax**: For deterministic game states where players make choices.
+- **Expectation Nodes**: For chance-based events (dice rolls), where the AI calculates the expected value of a move based on the probability of each outcome.
+- **Alpha-Beta Pruning**: A powerful optimization that prunes large portions of the search tree that cannot influence the final decision.
 
-### Algorithm
+### Dice Probabilities
 
-- **Minimax**: For non-chance states
-- **Expectation nodes**: For dice rolls
-- **Alpha-beta pruning**: For optimization
-
-#### Formula
-
-```
-EMM(node) = {
-  max(EMM(child)) if max node
-  min(EMM(child)) if min node
-  Σ P(child) × EMM(child) if chance node
-  evaluation(node) if leaf
-}
-```
-
-#### Dice Probabilities
+The AI uses the following probabilities for the four tetrahedral dice:
 
 | Roll | Probability |
 | ---- | ----------- |
@@ -47,45 +33,41 @@ EMM(node) = {
 | 3    | 4/16        |
 | 4    | 1/16        |
 
-## Position Evaluation
+### Position Evaluation
 
-The AI evaluates positions using:
+The evaluation function is hand-crafted to assess the strategic value of a board state. Key factors include:
 
-- Win detection
-- Finished pieces
-- Board control
-- Position weight
-- Safety (rosettes)
-- Advancement
-- Center lane bonus
+- **Piece Advantage**: Number of pieces on the board vs. the opponent.
+- **Piece Advancement**: How far pieces have moved along their track.
+- **Rosette Control**: Occupying safe squares that grant extra turns.
+- **Threats**: Potential captures on the next turn.
 
-## Search Optimization
+## ML AI: Neural Network
 
-- **Alpha-beta pruning**: Reduces search space
-- **Transposition table**: Caches evaluated positions
-- **Quiescence search**: Extends tactical sequences at leaf nodes
+The ML AI offers a different kind of challenge, with a playstyle developed from observing thousands of games.
+
+See the [ML AI System Documentation](./ml-ai-system.md) for a detailed breakdown of its architecture, training process, and performance.
+
+## AI vs. AI Mode
+
+In this mode, the Classic AI (Player 1) plays against the ML AI (Player 2). This provides an opportunity to observe the strategic differences between the two AI systems. The game proceeds automatically, with each AI taking its turn until a winner is decided.
 
 ## Performance
 
-| AI Type   | Search Depth | Nodes Evaluated | Response Time |
-| --------- | ------------ | --------------- | ------------- |
-| Client AI | 6 plies      | ~10k-50k        | <100ms        |
-| Server AI | 4 plies      | ~1k-10k         | <50ms         |
+| AI Type    | Search Depth | Notes                                       |
+| ---------- | ------------ | ------------------------------------------- |
+| Classic AI | 6-ply        | Runs locally in the browser via WebAssembly |
+| ML AI      | N/A          | Relies on a neural network for evaluation   |
 
-## References
+## Implementation Details
 
-- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) – Overview of the ancient board game's history and mechanics.
-- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Backgammon#Computer_play) – Core algorithm used for decision-making under uncertainty in games with chance elements.
-- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/) – In-depth article explaining how AI researchers computed optimal play.
-- Russell & Norvig, "Artificial Intelligence: A Modern Approach" – Comprehensive AI textbook covering game theory and search algorithms.
-
-## Implementation
-
-- **Rust core**: `worker/rust_ai_core/src/lib.rs`
-- **WASM interface**: `worker/rust_ai_core/src/wasm_api.rs`
-- **Frontend integration**: `src/lib/wasm-ai-service.ts`
+- **Classic AI Core**: `worker/rust_ai_core/src/lib.rs`
+- **WASM Interface**: `worker/rust_ai_core/src/wasm_api.rs`
+- **Frontend Integration**: `src/lib/wasm-ai-service.ts`
+- **ML AI Service**: `src/lib/ml-ai-service.ts`
 
 ## See Also
 
 - [ML AI System](./ml-ai-system.md)
 - [Architecture Overview](./architecture-overview.md)
+- [Game Rules and Strategy](./game-rules-strategy.md)

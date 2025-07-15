@@ -25,7 +25,8 @@ This project is a Progressive Web App (PWA) with offline capabilities and a nati
 ## Features
 
 - Authentic gameplay: Faithful recreation of the 4,500-year-old Royal Game of Ur
-- Triple AI engine: Client AI (WASM), Server AI (Cloudflare Worker), ML AI (experimental)
+- Dual AI Opponents: Play against a classic Expectiminimax AI or a modern Machine Learning-based AI.
+- AI vs. AI Mode: Watch the two AI models battle against each other.
 - PWA & offline ready
 - Modern UI/UX
 - Game statistics and database integration
@@ -46,6 +47,7 @@ See [Game Rules and Strategy](./docs/game-rules-strategy.md) for details.
 - Server AI (Cloudflare Worker, 4-ply)
 - Shared Rust AI core (`worker/rust_ai_core`)
 - Expectiminimax algorithm for stochastic games
+- ML-based AI trained via self-play
 
 See [AI System Documentation](./docs/ai-system.md) and [Architecture Overview](./docs/architecture-overview.md).
 
@@ -90,6 +92,14 @@ npm run dev
 ```
 
 Game opens at http://localhost:3000.
+
+### AI Model Selection Overlay
+
+At the start of each game, an overlay allows you to choose your game mode:
+
+- **Play vs. Classic AI**: Challenge the deterministic Expectiminimax AI.
+- **Play vs. ML AI**: Face the neural network-based opponent.
+- **Watch AI vs. AI**: Observe a match between the Classic and ML AIs.
 
 ### ML AI Training (Optional)
 

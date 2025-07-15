@@ -15,6 +15,7 @@ interface PlayerAreaProps {
   isStartMoveValid: boolean;
   validMoves: number[];
   onPieceClick: (pieceIndex: number) => void;
+  aiType?: 'client' | 'ml' | null;
 }
 
 export default function PlayerArea({
@@ -25,6 +26,7 @@ export default function PlayerArea({
   isStartMoveValid,
   validMoves,
   onPieceClick,
+  aiType = null,
 }: PlayerAreaProps) {
   const finishedPieces = pieces.filter(p => p.square === 20);
 
@@ -55,7 +57,13 @@ export default function PlayerArea({
               isCurrentPlayer && 'animate-pulse'
             )}
           >
-            {isAI ? 'AI Player' : 'You'}
+            {isAI
+              ? aiType === 'ml'
+                ? 'ML AI'
+                : aiType === 'client'
+                  ? 'Expectiminimax AI'
+                  : 'AI Player'
+              : 'You'}
           </h3>
         </div>
 

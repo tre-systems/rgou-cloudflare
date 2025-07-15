@@ -4,14 +4,23 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { GameState } from '@/lib/types';
-import { Dice6, Crown, Zap, Trophy, XCircle } from 'lucide-react';
+import { Dice6, Crown, Zap, Trophy, XCircle, Brain, Cpu } from 'lucide-react';
 
 interface GameStatusProps {
   gameState: GameState;
   aiThinking: boolean;
+  watchMode?: boolean;
+  aiSourceP1?: 'client' | 'ml' | null;
+  aiSourceP2?: 'client' | 'ml';
 }
 
-export default function GameStatus({ gameState, aiThinking }: GameStatusProps) {
+export default function GameStatus({
+  gameState,
+  aiThinking,
+  watchMode = false,
+  aiSourceP1 = null,
+  aiSourceP2 = 'ml',
+}: GameStatusProps) {
   const getStatusMessage = () => {
     if (gameState.gameStatus === 'finished') {
       return {
@@ -19,6 +28,22 @@ export default function GameStatus({ gameState, aiThinking }: GameStatusProps) {
         icon: gameState.winner === 'player1' ? Trophy : Zap,
         color: gameState.winner === 'player1' ? 'text-green-400' : 'text-pink-400',
       };
+    }
+
+    if (watchMode) {
+      if (gameState.currentPlayer === 'player1') {
+        return {
+          text: aiSourceP1 === 'ml' ? 'ML AI turn' : 'Expectiminimax AI turn',
+          icon: aiSourceP1 === 'ml' ? Brain : Cpu,
+          color: aiSourceP1 === 'ml' ? 'text-purple-400' : 'text-blue-400',
+        };
+      } else {
+        return {
+          text: aiSourceP2 === 'ml' ? 'ML AI turn' : 'Expectiminimax AI turn',
+          icon: aiSourceP2 === 'ml' ? Brain : Cpu,
+          color: aiSourceP2 === 'ml' ? 'text-purple-400' : 'text-blue-400',
+        };
+      }
     }
 
     if (gameState.currentPlayer === 'player1') {

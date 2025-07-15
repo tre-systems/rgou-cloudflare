@@ -4,20 +4,39 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { GameState } from '@/lib/types';
+import { GameState, GameMode } from '@/lib/types';
 import { useGameStats } from '@/lib/stats-store';
 
 interface GameCompletionOverlayProps {
   gameState: GameState;
   onResetGame: () => void;
+  gameMode: GameMode;
 }
 
 export default function GameCompletionOverlay({
   gameState,
   onResetGame,
+  gameMode,
 }: GameCompletionOverlayProps) {
   const gameStats = useGameStats();
   const isPlayer1Winner = gameState.winner === 'player1';
+  const isWatchMode = gameMode === 'watch';
+
+  const title = isWatchMode
+    ? isPlayer1Winner
+      ? 'Expectiminimax Wins!'
+      : 'ML AI Wins!'
+    : isPlayer1Winner
+      ? 'Victory!'
+      : 'AI Wins!';
+
+  const message = isWatchMode
+    ? isPlayer1Winner
+      ? 'The classic AI proved its strength!'
+      : 'The ML AI has triumphed!'
+    : isPlayer1Winner
+      ? '🎉 Victory is yours! 🎉'
+      : '💫 The AI mastered the game! 💫';
 
   return (
     <motion.div
@@ -227,7 +246,7 @@ export default function GameCompletionOverlay({
               delay: 0.8,
             }}
           >
-            {isPlayer1Winner ? 'Victory!' : 'AI Wins!'}
+            {title}
           </motion.h2>
 
           <motion.div
@@ -241,45 +260,45 @@ export default function GameCompletionOverlay({
               delay: 1.0,
             }}
           >
-            <p className="text-lg mb-3">
-              {isPlayer1Winner ? '🎉 Victory is yours! 🎉' : '💫 The AI mastered the game! 💫'}
-            </p>
+            <p className="text-lg mb-3">{message}</p>
 
-            <motion.div
-              className="bg-white/10 rounded-lg p-4 backdrop-blur-sm"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                type: 'spring',
-                stiffness: 200,
-                damping: 15,
-                delay: 1.3,
-              }}
-              data-testid="stats-panel"
-            >
-              <div className="text-center">
-                <h3 className="text-sm font-semibold text-white/90 mb-2">Your Record</h3>
-                <div className="flex justify-center space-x-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400" data-testid="wins-count">
-                      {gameStats.wins}
+            {!isWatchMode && (
+              <motion.div
+                className="bg-white/10 rounded-lg p-4 backdrop-blur-sm"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 1.3,
+                }}
+                data-testid="stats-panel"
+              >
+                <div className="text-center">
+                  <h3 className="text-sm font-semibold text-white/90 mb-2">Your Record</h3>
+                  <div className="flex justify-center space-x-6">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400" data-testid="wins-count">
+                        {gameStats.wins}
+                      </div>
+                      <div className="text-xs text-white/70">Wins</div>
                     </div>
-                    <div className="text-xs text-white/70">Wins</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-pink-400" data-testid="losses-count">
-                      {gameStats.losses}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-pink-400" data-testid="losses-count">
+                        {gameStats.losses}
+                      </div>
+                      <div className="text-xs text-white/70">Losses</div>
                     </div>
-                    <div className="text-xs text-white/70">Losses</div>
                   </div>
+                  {gameStats.gamesPlayed > 0 && (
+                    <div className="mt-2 text-xs text-white/60" data-testid="games-played">
+                      Win Rate: {Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)}%
+                    </div>
+                  )}
                 </div>
-                {gameStats.gamesPlayed > 0 && (
-                  <div className="mt-2 text-xs text-white/60" data-testid="games-played">
-                    Win Rate: {Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)}%
-                  </div>
-                )}
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
           </motion.div>
 
           <motion.button

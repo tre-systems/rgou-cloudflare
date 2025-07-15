@@ -60,6 +60,9 @@ export const GameStatsSchema = z.object({
 });
 export type GameStats = z.infer<typeof GameStatsSchema>;
 
+export const GameModeSchema = z.enum(['play', 'watch']);
+export type GameMode = z.infer<typeof GameModeSchema>;
+
 export const GameActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ROLL_DICE') }),
   z.object({ type: z.literal('MAKE_MOVE'), move: MoveSchema }),

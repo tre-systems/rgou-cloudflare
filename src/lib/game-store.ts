@@ -24,7 +24,7 @@ type GameStore = {
     processDiceRoll: (roll?: number) => void;
     switchPlayerAfterZeroRoll: () => void;
     makeMove: (pieceIndex: number) => void;
-    makeAIMove: (aiSource: 'server' | 'client' | 'ml') => Promise<void>;
+    makeAIMove: (aiSource: 'server' | 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
     postGameToServer: () => Promise<void>;
     createNearWinningState: () => void;
@@ -92,9 +92,14 @@ export const useGameStore = create<GameStore>()(
             });
           }
         },
-        makeAIMove: async (aiSource: 'server' | 'client' | 'ml') => {
+        makeAIMove: async (aiSource: 'server' | 'client' | 'ml', isPlayer1AI = false) => {
           const { gameState, actions } = get();
-          if (gameState.currentPlayer !== 'player2' || !gameState.canMove) return;
+
+          if (!gameState.canMove) return;
+
+          if (!isPlayer1AI && gameState.currentPlayer !== 'player2') {
+            return;
+          }
 
           console.log('GameStore: Starting AI move with source:', aiSource);
           console.log('GameStore: Current game state:', {

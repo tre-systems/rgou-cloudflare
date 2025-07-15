@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Brain, Cpu, Eye } from 'lucide-react';
 import Image from 'next/image';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { isLocalDevelopment } from '@/lib/utils';
@@ -12,6 +12,34 @@ import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 import HowToPlayPanel from './HowToPlayPanel';
 import AnimatedBackground from './AnimatedBackground';
 import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
+import ModeSelectionCard from './ModeSelectionCard';
+
+const MODE_OPTIONS = [
+  {
+    key: 'classic',
+    label: 'Classic AI',
+    description: 'A strategic, calculating opponent that plays by traditional rules.',
+    icon: Cpu,
+    colorClass: 'text-blue-400',
+    borderColorClass: 'border-blue-400/30 hover:border-blue-400/60',
+  },
+  {
+    key: 'ml',
+    label: 'Machine Learning AI',
+    description: 'A modern opponent that learned by observing thousands of games.',
+    icon: Brain,
+    colorClass: 'text-purple-400',
+    borderColorClass: 'border-purple-400/30 hover:border-purple-400/60',
+  },
+  {
+    key: 'watch',
+    label: 'Watch a Match',
+    description: 'Sit back and watch the Classic AI challenge the ML AI.',
+    icon: Eye,
+    colorClass: 'text-green-400',
+    borderColorClass: 'border-green-400/30 hover:border-green-400/60',
+  },
+];
 
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
@@ -23,49 +51,65 @@ export default function RoyalGameOfUr() {
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
+  const [showModelOverlay, setShowModelOverlay] = useState(true);
+  const [selectedMode, setSelectedMode] = useState<'classic' | 'ml' | 'watch' | null>(null);
   const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('ml');
+  const [aiSourceP1, setAiSourceP1] = useState<'client' | 'ml' | null>(null);
+  const [aiSourceP2, setAiSourceP2] = useState<'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
-  const zeroRollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (gameState.diceRoll === 0 && !gameState.canMove && gameState.gameStatus === 'playing') {
-      zeroRollTimeout.current = setTimeout(() => {
-        switchPlayerAfterZeroRoll();
-      }, 2000);
+    if (showModelOverlay || gameState.gameStatus !== 'playing') {
+      return;
     }
-    return () => {
-      if (zeroRollTimeout.current) {
-        clearTimeout(zeroRollTimeout.current);
-        zeroRollTimeout.current = null;
+
+    const isWatchMode = selectedMode === 'watch';
+    const canCurrentPlayerMove = gameState.canMove;
+    const currentPlayer = gameState.currentPlayer;
+
+    const handlePlayerTurn = () => {
+      if (!canCurrentPlayerMove) {
+        if (gameState.diceRoll === null) {
+          const timer = setTimeout(() => processDiceRoll(), 500);
+          return () => clearTimeout(timer);
+        } else if (gameState.diceRoll === 0) {
+          const timer = setTimeout(() => switchPlayerAfterZeroRoll(), 1500);
+          return () => clearTimeout(timer);
+        }
+      } else {
+        // Player has rolled and can move
+        if (isWatchMode) {
+          const moveDelay = 750;
+          const timer = setTimeout(() => {
+            const aiSource = currentPlayer === 'player1' ? aiSourceP1 : aiSourceP2;
+            if (aiSource) {
+              makeAIMove(aiSource, true);
+            }
+          }, moveDelay);
+          return () => clearTimeout(timer);
+        } else if (currentPlayer === 'player2') {
+          // It's the AI's turn in "play" mode
+          soundEffects.aiThinking();
+          makeAIMove(aiSource, false);
+        }
       }
+      return undefined;
     };
-  }, [gameState.diceRoll, gameState.canMove, gameState.gameStatus, switchPlayerAfterZeroRoll]);
 
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player2' &&
-      !gameState.canMove &&
-      gameState.gameStatus === 'playing' &&
-      gameState.diceRoll !== 0
-    ) {
-      setTimeout(() => processDiceRoll(), 500);
-    }
+    return handlePlayerTurn();
   }, [
-    gameState.currentPlayer,
-    gameState.canMove,
-    gameState.gameStatus,
-    gameState.diceRoll,
+    gameState,
+    showModelOverlay,
+    selectedMode,
+    aiSource,
+    aiSourceP1,
+    aiSourceP2,
     processDiceRoll,
+    switchPlayerAfterZeroRoll,
+    makeAIMove,
   ]);
-
-  useEffect(() => {
-    if (gameState.currentPlayer === 'player2' && gameState.canMove) {
-      soundEffects.aiThinking();
-      makeAIMove(aiSource);
-    }
-  }, [gameState, makeAIMove, aiSource]);
 
   useEffect(() => {
     if (gameState.gameStatus === 'finished') {
@@ -98,80 +142,27 @@ export default function RoyalGameOfUr() {
     }
   }, [lastMoveType, lastMovePlayer]);
 
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player1' &&
-      !gameState.canMove &&
-      gameState.diceRoll === null &&
-      gameState.gameStatus === 'playing'
-    ) {
-      setTimeout(() => processDiceRoll(), 500);
-    }
-  }, [
-    gameState.currentPlayer,
-    gameState.canMove,
-    gameState.diceRoll,
-    gameState.gameStatus,
-    processDiceRoll,
-  ]);
-
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player1' &&
-      !gameState.canMove &&
-      gameState.diceRoll !== null &&
-      gameState.gameStatus === 'playing'
-    ) {
-      setTimeout(() => processDiceRoll(), 1000);
-    }
-  }, [
-    gameState.currentPlayer,
-    gameState.canMove,
-    gameState.diceRoll,
-    gameState.gameStatus,
-    processDiceRoll,
-  ]);
-
-  useEffect(() => {
-    if (
-      gameState.currentPlayer === 'player2' &&
-      gameState.diceRoll === 0 &&
-      !gameState.canMove &&
-      gameState.gameStatus === 'playing'
-    ) {
-      zeroRollTimeout.current = setTimeout(() => {
-        switchPlayerAfterZeroRoll();
-      }, 2000);
-    }
-    return () => {
-      if (zeroRollTimeout.current) {
-        clearTimeout(zeroRollTimeout.current);
-        zeroRollTimeout.current = null;
-      }
-    };
-  }, [
-    gameState.currentPlayer,
-    gameState.diceRoll,
-    gameState.canMove,
-    gameState.gameStatus,
-    switchPlayerAfterZeroRoll,
-  ]);
-
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
       if (
         gameState.canMove &&
         gameState.validMoves.includes(pieceIndex) &&
-        gameState.currentPlayer === 'player1'
+        gameState.currentPlayer === 'player1' &&
+        selectedMode !== 'watch'
       ) {
         makeMove(pieceIndex);
       }
     },
-    [gameState.canMove, gameState.validMoves, gameState.currentPlayer, makeMove]
+    [gameState.canMove, gameState.validMoves, gameState.currentPlayer, makeMove, selectedMode]
   );
 
   const handleReset = () => {
     reset();
+    setShowModelOverlay(true);
+    setSelectedMode(null);
+    setAiSource('ml');
+    setAiSourceP1(null);
+    setAiSourceP2('ml');
   };
 
   const toggleSound = () => {
@@ -191,6 +182,29 @@ export default function RoyalGameOfUr() {
   const handleAiSourceChange = (source: 'server' | 'client' | 'ml') => {
     setAiSource(source);
     reset();
+  };
+
+  const handleOverlaySelect = (mode: 'classic' | 'ml' | 'watch') => {
+    setSelectedMode(mode);
+    if (mode === 'classic') {
+      setAiSource('client');
+      setAiSourceP1(null);
+      setAiSourceP2('client');
+    } else if (mode === 'ml') {
+      setAiSource('ml');
+      setAiSourceP1(null);
+      setAiSourceP2('ml');
+    } else if (mode === 'watch') {
+      setAiSourceP1('client');
+      setAiSourceP2('ml');
+    }
+
+    setShowModelOverlay(false);
+    reset();
+
+    setTimeout(() => {
+      processDiceRoll();
+    }, 0);
   };
 
   const diagnosticsPanelOrPlaceholder = isLocalDevelopment() ? (
@@ -321,19 +335,55 @@ export default function RoyalGameOfUr() {
             </motion.div>
           </motion.div>
 
-          <GameBoard
-            gameState={gameState}
-            onPieceClick={handlePieceClick}
-            aiThinking={aiThinking}
-            onResetGame={handleReset}
-            aiSource={aiSource}
-            onAiSourceChange={handleAiSourceChange}
-            soundEnabled={soundEnabled}
-            onToggleSound={toggleSound}
-            onShowHowToPlay={showHowToPlay}
-            onCreateNearWinningState={createNearWinningState}
-            data-testid="game-board-component"
-          />
+          {showModelOverlay ? (
+            <motion.div
+              className="mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
+              <div
+                className="glass-dark rounded-2xl p-6 md:p-8 w-full text-center space-y-4"
+                data-testid="ai-model-selection"
+              >
+                <h2 className="text-xl font-bold text-white">Select Your Opponent</h2>
+                <p className="text-gray-300 text-sm">
+                  Choose an AI to challenge, or watch them battle.
+                </p>
+                <div className="space-y-3 pt-2">
+                  {MODE_OPTIONS.map(mode => (
+                    <ModeSelectionCard
+                      key={mode.key}
+                      icon={mode.icon}
+                      title={mode.label}
+                      description={mode.description}
+                      onClick={() => handleOverlaySelect(mode.key as 'classic' | 'ml' | 'watch')}
+                      colorClass={mode.colorClass}
+                      borderColorClass={mode.borderColorClass}
+                      data-testid={`mode-select-${mode.key}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <GameBoard
+              gameState={gameState}
+              onPieceClick={handlePieceClick}
+              aiThinking={aiThinking}
+              onResetGame={handleReset}
+              aiSource={aiSource}
+              onAiSourceChange={handleAiSourceChange}
+              soundEnabled={soundEnabled}
+              onToggleSound={toggleSound}
+              onShowHowToPlay={showHowToPlay}
+              onCreateNearWinningState={createNearWinningState}
+              watchMode={selectedMode === 'watch'}
+              aiSourceP1={aiSourceP1}
+              aiSourceP2={aiSourceP2}
+              data-testid="game-board-component"
+            />
+          )}
 
           {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanelOrPlaceholder}</div>}
 
