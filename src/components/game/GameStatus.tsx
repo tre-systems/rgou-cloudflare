@@ -88,8 +88,15 @@ export default function GameStatus({
           animate={{ scale: aiThinking ? [1, 1.05, 1] : 1 }}
           transition={{ repeat: aiThinking ? Infinity : 0, duration: 1 }}
         >
-          {isValidIcon ? <StatusIcon className={cn('w-4 h-4', status.color)} /> : null}
-          <span className={cn('font-bold text-sm', status.color, 'neon-text')}>{status.text}</span>
+          {isValidIcon ? (
+            <StatusIcon className={cn('w-4 h-4', status.color)} data-testid="game-status-icon" />
+          ) : null}
+          <span
+            className={cn('font-bold text-sm', status.color, 'neon-text')}
+            data-testid="game-status-text"
+          >
+            {status.text}
+          </span>
         </motion.div>
 
         <AnimatePresence>

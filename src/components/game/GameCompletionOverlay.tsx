@@ -44,6 +44,7 @@ export default function GameCompletionOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      data-testid="game-completion-overlay"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 50 }).map((_, i) => (
@@ -245,6 +246,7 @@ export default function GameCompletionOverlay({
               damping: 15,
               delay: 0.8,
             }}
+            data-testid="game-completion-title"
           >
             {title}
           </motion.h2>
@@ -260,7 +262,9 @@ export default function GameCompletionOverlay({
               delay: 1.0,
             }}
           >
-            <p className="text-lg mb-3">{message}</p>
+            <p className="text-lg mb-3" data-testid="game-completion-message">
+              {message}
+            </p>
 
             {!isWatchMode && (
               <motion.div
@@ -312,6 +316,7 @@ export default function GameCompletionOverlay({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
+            data-testid="reset-game-button"
           >
             <motion.div
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"

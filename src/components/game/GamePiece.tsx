@@ -64,6 +64,7 @@ const GamePiece = React.memo(function GamePiece({
             ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
             : { type: 'spring', stiffness: 400, damping: 25 }
       }
+      data-testid={`game-piece-${player}-${isClickable ? 'clickable' : 'static'}`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-tl from-black/20 to-transparent" />

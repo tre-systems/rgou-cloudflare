@@ -80,6 +80,7 @@ export default function PlayerArea({
               'rounded-md p-1 transition-all duration-300',
               isStartMoveValid && 'ring-2 ring-green-400 animate-pulse'
             )}
+            data-testid={player === 'player1' ? 'player1-start-area' : 'player2-start-area'}
           >
             <p className={cn('text-xs text-white/70 font-semibold mb-1 text-center')}>START</p>
             <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
@@ -92,6 +93,7 @@ export default function PlayerArea({
                     onClick={() =>
                       validMoves.includes(i) && player === 'player1' && onPieceClick(i)
                     }
+                    data-testid={`${player}-start-piece-${i}`}
                   >
                     <GamePiece
                       player={player}
@@ -112,6 +114,7 @@ export default function PlayerArea({
             <div
               id={player === 'player1' ? 'player1-finish-area' : 'player2-finish-area'}
               className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1"
+              data-testid={player === 'player1' ? 'player1-finish-area' : 'player2-finish-area'}
             >
               {Array(7)
                 .fill(0)
@@ -129,6 +132,9 @@ export default function PlayerArea({
                       boxShadow:
                         i < finishedPieces.length ? '0 0 10px rgba(34, 197, 94, 0.3)' : 'none',
                     }}
+                    data-testid={
+                      i < finishedPieces.length ? `${player}-finish-piece-${i}` : undefined
+                    }
                   >
                     {i < finishedPieces.length && (
                       <motion.div
