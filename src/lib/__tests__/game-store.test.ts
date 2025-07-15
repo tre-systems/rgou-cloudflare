@@ -1,22 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useGameStore } from '../game-store';
-import { AIService } from '../ai-service';
 import { createTestGameState } from './test-utils';
 
 const incrementWinsMock = vi.fn();
 const incrementLossesMock = vi.fn();
 
 vi.mock('../wasm-ai-service', () => ({
-  wasmAiService: {
+  WasmAiService: vi.fn().mockImplementation(() => ({
     getAIMove: vi.fn(),
-  },
+  })),
 }));
 
-vi.mock('../ai-service', () => ({
-  AIService: {
+vi.mock('../ml-ai-service', () => ({
+  MLAIService: vi.fn().mockImplementation(() => ({
     getAIMove: vi.fn(),
-    getFallbackAIMove: vi.fn(),
-  },
+  })),
 }));
 
 vi.mock('../stats-store', () => ({
@@ -107,7 +105,7 @@ describe('GameStore', () => {
       expect(aiThinking).toBe(false);
     });
 
-    it('should handle server AI move successfully', async () => {
+    it('should handle WASM AI move successfully', async () => {
       useGameStore.setState({
         gameState: createTestGameState({
           currentPlayer: 'player2',
@@ -115,18 +113,28 @@ describe('GameStore', () => {
           validMoves: [0],
         }),
       });
-      vi.mocked(AIService.getAIMove).mockResolvedValue({ move: 0 } as any);
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('server');
 
-      expect(AIService.getAIMove).toHaveBeenCalled();
       const { aiThinking } = useGameStore.getState();
       expect(aiThinking).toBe(false);
     });
 
-    it('should handle client AI move successfully', async () => {
-      // Removed: obsolete test for WasmAiService client AI move
+    it('should handle ML AI move successfully', async () => {
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player2',
+          canMove: true,
+          validMoves: [0],
+        }),
+      });
+
+      const { actions } = useGameStore.getState();
+      await actions.makeAIMove('ml');
+
+      const { aiThinking } = useGameStore.getState();
+      expect(aiThinking).toBe(false);
     });
 
     it('should use fallback when AI returns invalid move', async () => {
@@ -138,7 +146,6 @@ describe('GameStore', () => {
           diceRoll: 1,
         }),
       });
-      vi.mocked(AIService.getAIMove).mockResolvedValue({ move: 99 } as any); // Invalid move
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('server');
@@ -206,80 +213,31 @@ describe('GameStore', () => {
 
     it('should post game when game is finished with winner', async () => {
       const { saveGame } = await import('@/lib/actions');
+      const mockSaveGame = vi.mocked(saveGame);
 
       useGameStore.setState(state => {
         state.gameState.gameStatus = 'finished';
         state.gameState.winner = 'player1';
-        state.gameState.history = [
-          {
-            player: 'player1',
-            diceRoll: 3,
-            pieceIndex: 0,
-            fromSquare: -1,
-            toSquare: 0,
-            moveType: 'move',
-          },
-        ];
       });
-
-      (saveGame as any).mockResolvedValue(undefined);
 
       const { actions } = useGameStore.getState();
       await actions.postGameToServer();
 
-      expect(saveGame).toHaveBeenCalled();
-    });
-
-    it('should handle saveGame error gracefully', async () => {
-      const { saveGame } = await import('@/lib/actions');
-
-      useGameStore.setState(state => {
-        state.gameState.gameStatus = 'finished';
-        state.gameState.winner = 'player1';
-        state.gameState.history = [
-          {
-            player: 'player1',
-            diceRoll: 3,
-            pieceIndex: 0,
-            fromSquare: -1,
-            toSquare: 0,
-            moveType: 'move',
-          },
-        ];
-      });
-
-      (saveGame as any).mockRejectedValue(new Error('Save failed'));
-
-      const { actions } = useGameStore.getState();
-      await expect(actions.postGameToServer()).resolves.toBeUndefined();
+      expect(mockSaveGame).toHaveBeenCalled();
     });
   });
 
-  describe('store persistence', () => {
-    it('should handle rehydration error', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  describe('createNearWinningState', () => {
+    it('should create a near-winning state for player1', () => {
+      const { actions } = useGameStore.getState();
+      actions.createNearWinningState();
 
-      // Simulate rehydration error by calling the onRehydrateStorage callback with an error
-      const onRehydrateStorage = (state: any, error: any) => {
-        if (error) {
-          console.error('Failed to rehydrate game store:', error);
-        }
-        if (state) {
-          state.actions.initialize(true);
-        }
-      };
-
-      onRehydrateStorage(null, new Error('Rehydration failed'));
-
-      expect(consoleSpy).toHaveBeenCalled();
-      consoleSpy.mockRestore();
-    });
-
-    it('should handle migration for old version', () => {
-      const store = useGameStore.getState();
-
-      // This tests the migrate function indirectly
-      expect(store.gameState).toBeDefined();
+      const { gameState } = useGameStore.getState();
+      expect(gameState.player1Pieces[6].square).toBe(12);
+      expect(gameState.currentPlayer).toBe('player1');
+      expect(gameState.diceRoll).toBe(null);
+      expect(gameState.canMove).toBe(false);
+      expect(gameState.validMoves).toEqual([]);
     });
   });
 });

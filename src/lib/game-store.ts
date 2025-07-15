@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { initializeGame, processDiceRoll, makeMove as makeMoveLogic } from './game-logic';
-import { AIService } from './ai-service';
+import { WasmAiService } from './wasm-ai-service';
+import { MLAIService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
@@ -11,6 +12,10 @@ import { getGitCommitHash } from './utils/getGitCommitHash';
 import { getFileHash } from './utils/getFileHash';
 
 const LATEST_VERSION = 1;
+
+// Initialize AI services as singletons
+const wasmAiService = new WasmAiService();
+const mlAiService = new MLAIService();
 
 type GameStore = {
   gameState: GameState;
@@ -127,13 +132,13 @@ export const useGameStore = create<GameStore>()(
           const startTime = performance.now();
 
           try {
-            let aiResponseFromServer;
+            let aiResponse;
 
             if (aiSource === 'ml') {
               console.log('GameStore: Using ML AI service');
-              const mlResponse = await AIService.getAIMove(gameState);
+              const mlResponse = await mlAiService.getAIMove(gameState);
               console.log('GameStore: ML AI response received:', mlResponse);
-              aiResponseFromServer = {
+              aiResponse = {
                 move: mlResponse.move,
                 evaluation: Math.round(mlResponse.evaluation * 1000),
                 thinking: mlResponse.thinking,
@@ -143,30 +148,28 @@ export const useGameStore = create<GameStore>()(
                 },
                 diagnostics: {
                   searchDepth: 0,
-                  validMoves: mlResponse.diagnostics.validMoves,
-                  moveEvaluations: mlResponse.diagnostics.moveEvaluations.map(e => ({
-                    pieceIndex: e.pieceIndex,
+                  validMoves: mlResponse.diagnostics.valid_moves,
+                  moveEvaluations: mlResponse.diagnostics.move_evaluations.map(e => ({
+                    pieceIndex: e.piece_index,
                     score: e.score,
-                    moveType: e.moveType,
-                    fromSquare: e.fromSquare,
-                    toSquare: e.toSquare ?? null,
+                    moveType: e.move_type,
+                    fromSquare: e.from_square,
+                    toSquare: e.to_square ?? null,
                   })),
                   transpositionHits: 0,
                   nodesEvaluated: 1,
                 },
-                aiType: 'ml',
+                aiType: 'ml' as const,
               };
-              console.log('GameStore: Processed ML AI response:', aiResponseFromServer);
+              console.log('GameStore: Processed ML AI response:', aiResponse);
             } else {
-              console.log('GameStore: Using', aiSource, 'AI service');
-              aiResponseFromServer =
-                aiSource === 'server'
-                  ? await AIService.getAIMove(gameState)
-                  : await AIService.getAIMove(gameState);
-              aiResponseFromServer = { ...aiResponseFromServer, aiType: aiSource };
+              // Use WASM AI service for both 'server' and 'client' sources
+              console.log('GameStore: Using WASM AI service for', aiSource);
+              const wasmResponse = await wasmAiService.getAIMove(gameState);
+              console.log('GameStore: WASM AI response received:', wasmResponse);
+              aiResponse = { ...wasmResponse, aiType: aiSource as 'client' | 'server' };
             }
 
-            const aiResponse = { ...aiResponseFromServer, aiType: aiSource };
             const duration = performance.now() - startTime;
 
             console.log('GameStore: Setting AI diagnostics:', aiResponse);
@@ -188,8 +191,13 @@ export const useGameStore = create<GameStore>()(
             }
           } catch (error) {
             console.error('GameStore: AI move failed:', error);
-            const fallbackMove = AIService.getFallbackAIMove(gameState);
-            actions.makeMove(fallbackMove);
+            // Fallback to random move
+            if (gameState.validMoves.length > 0) {
+              const fallbackMove =
+                gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
+              console.warn('GameStore: Using fallback random move:', fallbackMove);
+              actions.makeMove(fallbackMove);
+            }
           } finally {
             set(state => {
               state.aiThinking = false;
