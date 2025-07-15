@@ -240,9 +240,9 @@ export const useGameStore = create<GameStore>()(
             const ai2Type: 'ml' | 'rust' = 'ml'; // TODO: Detect actual AI type used
             let ai2Version: string = 'unknown';
             if (ai2Type === 'ml') {
-              ai2Version = getFileHash('public/ml-weights.json.gz');
+              ai2Version = await getFileHash('public/ml-weights.json.gz');
             } else {
-              ai2Version = getGitCommitHash();
+              ai2Version = await getGitCommitHash();
             }
 
             const payload = {
@@ -252,14 +252,15 @@ export const useGameStore = create<GameStore>()(
               moveCount: gameState.history.length,
               duration: undefined, // TODO: set actual duration if available
               clientHeader: undefined, // TODO: set if available
-              gameType: ai2Type === 'ml' ? 'ml-vs-human' : 'rust-vs-human',
+              gameType: 'standard',
               ai1Version: undefined, // Player 1 is human
               ai2Version,
-              gameVersion: getGitCommitHash(),
+              gameVersion: await getGitCommitHash(),
             };
+
             await saveGame(payload);
           } catch (error) {
-            console.error('Failed to save game to server:', error);
+            console.error('Failed to save game result:', error);
           }
         },
       },
