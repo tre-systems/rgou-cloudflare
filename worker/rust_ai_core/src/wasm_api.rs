@@ -1,5 +1,5 @@
 use super::{GameState, PiecePosition, Player, AI};
-use crate::MoveEvaluation;
+use crate::{ml_ai::MLAI, MoveEvaluation};
 use js_sys;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -162,7 +162,78 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
 }
 
 #[wasm_bindgen]
+pub fn get_ml_ai_info() -> Result<JsValue, JsValue> {
+    let info = serde_json::to_string(&"ML AI Neural Network - Trained on Royal Game of Ur")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+    Ok(JsValue::from_str(&info))
+}
+
+#[wasm_bindgen]
+pub fn roll_dice_ml() -> u8 {
+    let mut rng = rand::thread_rng();
+    (0..4).map(|_| rng.gen_range(0..=1)).sum()
+}
+
+#[wasm_bindgen]
 pub fn roll_dice_wasm() -> u8 {
     let mut rng = rand::thread_rng();
     (0..4).map(|_| rng.gen_range(0..=1)).sum()
+}
+
+#[wasm_bindgen]
+pub fn init_ml_ai() -> Result<JsValue, JsValue> {
+    let _ml_ai = MLAI::new();
+    let response = serde_json::to_string(&"ML AI initialized")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+    Ok(JsValue::from_str(&response))
+}
+
+#[wasm_bindgen]
+pub fn load_ml_weights(
+    value_weights_js: JsValue,
+    policy_weights_js: JsValue,
+) -> Result<JsValue, JsValue> {
+    let value_weights: Vec<f32> = serde_wasm_bindgen::from_value(value_weights_js)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let policy_weights: Vec<f32> = serde_wasm_bindgen::from_value(policy_weights_js)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+
+    let response = serde_json::to_string(&"ML weights loaded")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+    Ok(JsValue::from_str(&response))
+}
+
+#[wasm_bindgen]
+pub fn get_ml_ai_move(game_state_request_js: JsValue) -> Result<JsValue, JsValue> {
+    let game_state_request: GameStateRequest =
+        serde_wasm_bindgen::from_value(game_state_request_js)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let game_state = convert_request_to_game_state(&game_state_request);
+    let mut ml_ai = MLAI::new();
+    let ml_response = ml_ai.get_best_move(&game_state);
+
+    let response_json = serde_json::to_string(&ml_response)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+
+    Ok(JsValue::from_str(&response_json))
+}
+
+#[wasm_bindgen]
+pub fn evaluate_ml_position(game_state_request_js: JsValue) -> Result<JsValue, JsValue> {
+    let game_state_request: GameStateRequest =
+        serde_wasm_bindgen::from_value(game_state_request_js)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let game_state = convert_request_to_game_state(&game_state_request);
+    let ml_ai = MLAI::new();
+    let evaluation = ml_ai.evaluate_position(&game_state);
+
+    let response_json = serde_json::to_string(&evaluation)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+
+    Ok(JsValue::from_str(&response_json))
 }

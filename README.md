@@ -1,211 +1,47 @@
-# 🏺 Royal Game of Ur - Cloudflare Edition
+# Royal Game of Ur - Cloudflare
 
-A modern implementation of the ancient Mesopotamian board game, "The Royal Game of Ur," built with Next.js, TypeScript, and a dual AI engine in Rust.
+## ML AI WASM Integration
 
-This project is a Progressive Web App (PWA) with offline capabilities and a native-like experience.
+The ML AI is now fully integrated into the unified Rust AI core. The WASM build exposes the following interface for use in TypeScript:
 
-[![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
-
-<div align="center">
-  <img src="docs/screenshot.png" alt="Royal Game of Ur Screenshot" width="600" />
-</div>
-
-<div align="center">
-  <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
-</div>
-
-## Start Here
-
-- **New to the project?**
-  1. Read this README for a quick overview and setup.
-  2. See the [Documentation Index](./docs/README.md) for a full guide to all docs.
-  3. For rules and strategy, see [Game Rules and Strategy](./docs/game-rules-strategy.md).
-  4. For technical setup, see [Technical Implementation Guide](./docs/technical-implementation.md).
-
-## Features
-
-- Authentic gameplay: Faithful recreation of the 4,500-year-old Royal Game of Ur
-- Dual AI Opponents: Play against a classic Expectiminimax AI or a modern Machine Learning-based AI.
-- AI vs. AI Mode: Watch the two AI models battle against each other.
-- PWA & offline ready
-- Modern UI/UX
-- Game statistics and database integration
-
-## Game Results Database & Automatic Versioning
-
-Game results are stored in a Cloudflare D1 database with a clean, future-proof schema. Each result includes:
-
-- `winner`: The winner of the game
-- `history`: Full move history
-- `playerId`: Unique player identifier
-- `moveCount`: Number of moves
-- `duration`: (optional) Game duration
-- `clientHeader`: (optional) Client info
-- `gameType`: Type of game (e.g., `ml-vs-human`, `rust-vs-human`)
-- `ai1Version`: Version/hash of AI 1 (if used)
-- `ai2Version`: Version/hash of AI 2 (if used)
-- `gameVersion`: Git commit hash of the game logic
-
-### Automatic Versioning
-
-- **ML AI**: The version is the SHA256 hash of the ML weights file (`public/ml-weights.json.gz`).
-- **Rust/Expectiminimax AI**: The version is the current git commit hash at build time.
-- **Game Logic**: The version is the current git commit hash at build time.
-- **No manual steps required**: Versioning is fully automatic and always up to date with the deployed code and models.
-
-This ensures every game result is traceable to the exact code and AI model used, supporting robust analytics and reproducibility.
-
-## Game Rules (Summary)
-
-- Roll 4 binary dice (0-4)
-- Move pieces along your track
-- Land on opponent to capture (except on rosettes)
-- Rosettes are safe and grant extra turns
-- First to finish all 7 pieces wins
-
-See [Game Rules and Strategy](./docs/game-rules-strategy.md) for details.
-
-## Architecture
-
-- Client AI (WASM, 6-ply, default)
-- Server AI (Cloudflare Worker, 4-ply)
-- Shared Rust AI core (`worker/rust_ai_core`)
-- Expectiminimax algorithm for stochastic games
-- ML-based AI trained via self-play
-
-See [AI System Documentation](./docs/ai-system.md) and [Architecture Overview](./docs/architecture-overview.md).
-
-## Tech Stack
-
-- Next.js, React, TypeScript, Tailwind CSS
-- Rust (AI engine, Cloudflare Worker, WASM)
-- SQLite (local) / Cloudflare D1 (production)
-- Zustand + Immer for state
-
-## Documentation
-
-- [Documentation Index](./docs/README.md)
-- [Architecture Overview](./docs/architecture-overview.md)
-- [AI System Documentation](./docs/ai-system.md)
-- [ML AI System](./docs/ml-ai-system.md)
-- [Mac Optimization Guide](./docs/mac-optimization-guide.md)
-- [Technical Implementation Guide](./docs/technical-implementation.md)
-- [Game Rules and Strategy](./docs/game-rules-strategy.md)
-- [Testing Strategy](./docs/testing-strategy.md)
-
-## Getting Started
-
-### Prerequisites
-
-- [Git](https://git-scm.com/downloads)
-- [Node.js (v18+)](https://nodejs.org/)
-- [Rust & Cargo](https://www.rust-lang.org/tools/install)
-- `cargo install wasm-pack`
-- `cargo install worker-build`
-- [Python 3.8+](https://www.python.org/downloads/) (for ML training)
-- `pip install torch torchvision` (for ML training)
-
-### Local Development
-
-```bash
-git clone <repository-url>
-cd rgou-cloudflare
-npm install
-npm run migrate:local
-npm run dev
+```
+interface MLWasmModule {
+  default: (input?: string | URL) => Promise<unknown>;
+  init_ml_ai: () => void;
+  load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
+  get_ml_ai_move: (gameState: unknown) => string;
+  evaluate_ml_position: (gameState: unknown) => string;
+  get_ml_ai_info: () => string;
+  roll_dice_ml: () => number;
+}
 ```
 
-Game opens at http://localhost:3000.
+### WASM Asset Files
 
-### AI Model Selection Overlay
+- `public/wasm/rgou_ai_core.js`
+- `public/wasm/rgou_ai_core_bg.wasm`
 
-At the start of each game, an overlay allows you to choose your game mode:
+### Loading Weights
 
-- **Play vs. Classic AI**: Challenge the deterministic Expectiminimax AI.
-- **Play vs. ML AI**: Face the neural network-based opponent.
-- **Watch AI vs. AI**: Observe a match between the Classic and ML AIs.
+To load weights into the ML AI, call:
 
-### ML AI Training (Optional)
-
-```bash
-./scripts/train_ml_ai_optimized.sh
-# Or
-python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai --output ml_ai_weights.json
+```
+mlWasmModule.load_ml_weights(valueWeights, policyWeights);
 ```
 
-See [Mac Optimization Guide](./docs/mac-optimization-guide.md) for tuning.
+where `valueWeights` and `policyWeights` are arrays of numbers (float32) representing the neural network weights.
 
-### Preventing Mac Sleep During Training
+### Usage
 
-The training script uses `caffeinate` to prevent sleep. If running manually, prefix with `caffeinate -i`.
+- The ML AI worker loads the WASM module and initializes the ML AI with `init_ml_ai()`.
+- Weights must be loaded before requesting moves or evaluations.
+- Use `get_ml_ai_move(gameState)` to get the best move for a given game state.
+- Use `evaluate_ml_position(gameState)` to get a value network evaluation for a game state.
 
-### Deploy to Cloudflare
+### Migration Notes
 
-1. `npm install -g wrangler && wrangler login`
-2. Create D1 database in Cloudflare dashboard
-3. Configure `.env.local` and `wrangler.toml`
-4. `npm run migrate:d1 && npm run build && npx wrangler deploy`
+- The ML AI Rust code is now merged into the main Rust AI core crate.
+- All WASM assets are unified under `public/wasm/rgou_ai_core.*`.
+- Old references to `ml_ai_core` or Python-only training are obsolete.
 
-### GitHub Actions Deployment
-
-- Add Cloudflare API token and account ID as GitHub secrets
-- Push to main branch for auto-deploy
-
-## Testing
-
-```bash
-npm run check      # All tests (including Rust)
-npm run test       # Unit tests
-npm run test:e2e   # E2E tests
-./scripts/test_ml_vs_expectiminimax.sh # ML vs expectiminimax AI
-```
-
-## Test Coverage
-
-Some files are excluded from coverage because they depend on browser/worker APIs and cannot be reliably tested in Node environments:
-
-- `src/lib/wasm-ai-service.ts`
-- `src/lib/ml-ai-service.ts`
-- `src/lib/__tests__/wasm-ai-service.test.ts`
-- `src/lib/__tests__/ml-ai-service.test.ts`
-
-All other logic is covered by automated tests.
-
-## Troubleshooting
-
-- **DB errors**: Check migrations and wrangler config
-- **Invalid game data**: See browser console
-- **WASM issues**: Check CORS headers in `public/_headers`
-
-## License
-
-Open source. See [LICENSE](LICENSE).
-
-## Contributing
-
-- Fork, branch, and make changes
-- Run `npm run check` before submitting
-- Update docs as needed
-- See [Documentation Index](./docs/README.md) for standards
-
-## 📚 Further Reading & References
-
-### 🎮 Game History & Rules
-
-- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) – Overview of the ancient board game's history, mechanics, and cultural significance.
-- [Tom Scott vs Irving Finkel (YouTube)](https://www.youtube.com/watch?v=WZskjLq040I) – British Museum curator teaches the game in an entertaining and accessible way.
-- [RoyalUr.net](https://royalur.net/) – Play the game online, explore AI insights, and learn about the "solved" game strategy.
-
-### 🧠 Game AI and Algorithms
-
-- [Expectiminimax Algorithm Explained](https://en.wikipedia.org/wiki/Expectiminimax) – Core algorithm used for decision-making under uncertainty in games with chance elements.
-
-### ⚙️ Technical References
-
-- [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/) – Serverless compute platform used to deploy the app globally.
-- [Progressive Web App (PWA) Overview](https://web.dev/progressive-web-apps/) – How service workers enable offline support and app-like UX.
-
-### 🛠️ Related Projects
-
-- [Nicholas Harris' Game of Ur with Monte Carlo AI](https://github.com/nicholasharris/Game-of-Ur-with-Monte-Carlo-AI) – Another excellent implementation using a different AI strategy.
-- [Tkinter Royal Game of Ur](https://github.com/ahemmetter/royal-game-of-ur) – Desktop app version in Python with GUI.
+For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.

@@ -5,6 +5,11 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
 
+// Import ML AI functionality
+pub mod features;
+pub mod ml_ai;
+pub mod neural_network;
+
 pub const PIECES_PER_PLAYER: usize = 7;
 pub const BOARD_SIZE: usize = 21;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];

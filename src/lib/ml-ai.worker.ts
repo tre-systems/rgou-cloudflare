@@ -7,7 +7,7 @@ import type { GameState } from './types';
 interface MLWasmModule {
   default: (input?: string | URL) => Promise<unknown>;
   init_ml_ai: () => void;
-  load_ml_weights: (weights: unknown) => void;
+  load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
   get_ml_ai_move: (gameState: unknown) => string;
   evaluate_ml_position: (gameState: unknown) => string;
   get_ml_ai_info: () => string;
@@ -35,17 +35,17 @@ const loadMLWasm = (): Promise<void> => {
       console.log('ML AI Worker: Current origin:', self.location.origin);
 
       try {
-        console.log('ML AI Worker: Attempting to import ml_ai_core.js...');
-        mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/ml_ai_core.js');
-        console.log('ML AI Worker: ml_ai_core.js loaded successfully.');
+        console.log('ML AI Worker: Attempting to import rgou_ai_core.js...');
+        mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
+        console.log('ML AI Worker: rgou_ai_core.js loaded successfully.');
         console.log('ML AI Worker: Module keys:', Object.keys(mlWasmModule));
       } catch (error) {
-        console.error('ML AI Worker: Failed to load ml_ai_core.js:', error);
+        console.error('ML AI Worker: Failed to load rgou_ai_worker.js:', error);
         throw new Error(`Failed to load ML WASM JS module: ${error}`);
       }
 
       try {
-        const wasmUrl = `${self.location.origin}/wasm/ml_ai_core_bg.wasm`;
+        const wasmUrl = `${self.location.origin}/wasm/rgou_ai_core_bg.wasm`;
         console.log(`ML AI Worker: Initializing ML WASM with URL: ${wasmUrl}`);
 
         await mlWasmModule.default(wasmUrl);
@@ -190,7 +190,7 @@ self.addEventListener(
               console.log('ML AI Worker: Policy network config:', weights.policyNetworkConfig);
             }
 
-            mlWasmModule.load_ml_weights(event.data.weights);
+            mlWasmModule.load_ml_weights(weights.valueWeights, weights.policyWeights);
             weightsLoaded = true;
             console.log('ML AI Worker: Weights loaded successfully into WASM');
             self.postMessage({ type: 'success', id, response: { status: 'weights_loaded' } });

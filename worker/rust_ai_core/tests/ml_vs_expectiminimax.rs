@@ -1,5 +1,5 @@
-use ml_ai_core::{GameState as MLGameState, Player as MLPlayer, MLAI};
 use rand::Rng;
+use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
 const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 4;
@@ -21,8 +21,8 @@ struct GameResult {
 
 fn convert_piece_position_to_ml(
     rust_piece: &rgou_ai_core::PiecePosition,
-) -> ml_ai_core::PiecePosition {
-    ml_ai_core::PiecePosition {
+) -> rgou_ai_core::PiecePosition {
+    rgou_ai_core::PiecePosition {
         square: rust_piece.square,
         player: match rust_piece.player {
             Player::Player1 => MLPlayer::Player1,

@@ -1,10 +1,12 @@
-use ml_ai_core::{GameState as MLGameState, Player as MLPlayer, MLAI};
+use rgou_ai_core::{
+    features::GameFeatures, ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer,
+};
 use rgou_ai_core::{GameState, Player};
 
 fn convert_piece_position_to_ml(
     rust_piece: &rgou_ai_core::PiecePosition,
-) -> ml_ai_core::PiecePosition {
-    ml_ai_core::PiecePosition {
+) -> rgou_ai_core::PiecePosition {
+    rgou_ai_core::PiecePosition {
         square: rust_piece.square,
         player: match rust_piece.player {
             Player::Player1 => MLPlayer::Player1,
@@ -140,7 +142,7 @@ fn test_ml_ai_diagnostic() {
 
     // Test 3: Check if neural networks are actually computing
     println!("\n--- Test 3: Neural Network Computation ---");
-    let features = ml_ai_core::features::GameFeatures::from_game_state(&ml_state);
+    let features = GameFeatures::from_game_state(&ml_state);
     println!(
         "Feature vector (first 10 values): {:?}",
         &features.features[..10]
