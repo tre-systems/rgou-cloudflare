@@ -236,12 +236,21 @@ class RustAIClient:
 
     def get_ai_move(self, game_state: Dict[str, Any]) -> Dict[str, Any]:
         try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(game_state, f)
+                temp_file = f.name
+
             result = subprocess.run(
-                [self.rust_ai_path, "--game-state", json.dumps(game_state)],
+                [self.rust_ai_path, "get_move", temp_file],
                 capture_output=True,
                 text=True,
                 timeout=10,
             )
+
+            os.unlink(temp_file)
+
             if result.returncode == 0:
                 return json.loads(result.stdout)
             else:
@@ -253,12 +262,21 @@ class RustAIClient:
 
     def evaluate_position(self, game_state: Dict[str, Any]) -> float:
         try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(game_state, f)
+                temp_file = f.name
+
             result = subprocess.run(
-                [self.rust_ai_path, "--evaluate", json.dumps(game_state)],
+                [self.rust_ai_path, "evaluate", temp_file],
                 capture_output=True,
                 text=True,
                 timeout=10,
             )
+
+            os.unlink(temp_file)
+
             if result.returncode == 0:
                 return float(result.stdout.strip())
             else:
@@ -518,15 +536,19 @@ def simulate_game_worker(args):
 
 def simulate_games_parallel(num_games, rust_ai_path):
     print(f"Simulating {num_games} games using {get_optimal_workers()} workers...")
-    
-    with concurrent.futures.ProcessPoolExecutor(max_workers=get_optimal_workers()) as executor:
+
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=get_optimal_workers()
+    ) as executor:
         args = [(rust_ai_path, i) for i in range(num_games)]
-        results = list(tqdm(
-            executor.map(simulate_game_worker, args),
-            total=num_games,
-            desc="Simulating games"
-        ))
-    
+        results = list(
+            tqdm(
+                executor.map(simulate_game_worker, args),
+                total=num_games,
+                desc="Simulating games",
+            )
+        )
+
     return results
 
 
@@ -551,10 +573,11 @@ def generate_training_data(
                 ["cargo", "build", "--release"], cwd="worker/rust_ai_core", check=True
             )
 
-        # Use parallel processing for game simulation
         game_results = simulate_games_parallel(num_games, rust_ai_path)
+
+        simulator = GameSimulator(None)
+
         training_data = []
-        
         for game_result in game_results:
             for move_data in game_result["moves"]:
                 game_state = move_data["game_state"]
@@ -583,10 +606,9 @@ def generate_training_data(
                     }
                 )
     else:
-        # Fallback to single-threaded for non-Rust AI
         simulator = GameSimulator(None)
         training_data = []
-        
+
         for i in tqdm(range(num_games), desc="Generating games"):
             game_result = simulator.simulate_game()
 
@@ -632,18 +654,18 @@ def train_networks(
     device = get_device()
     if batch_size is None:
         batch_size = get_optimal_batch_size(device)
-    
+
     print(f"Training on device: {device}")
     print(f"Batch size: {batch_size}")
     print(f"DataLoader workers: {get_optimal_workers()}")
 
     dataset = GameDataset(training_data)
     dataloader = DataLoader(
-        dataset, 
-        batch_size=batch_size, 
+        dataset,
+        batch_size=batch_size,
         shuffle=True,
         num_workers=get_optimal_workers(),
-        pin_memory=device.type == "cuda"
+        pin_memory=device.type == "cuda",
     )
 
     value_network = ValueNetwork().to(device)
@@ -658,6 +680,7 @@ def train_networks(
     print(f"Training for {epochs} epochs with {len(training_data)} samples...")
 
     for epoch in range(epochs):
+
         value_losses = []
         policy_losses = []
 
@@ -742,13 +765,16 @@ def save_weights_optimized(
 def main():
     parser = argparse.ArgumentParser(description="Train ML AI for Royal Game of Ur")
     parser.add_argument(
-        "--num-games", type=int, default=1000, help="Number of games to simulate"
+        "--num-games", type=int, default=100, help="Number of games to simulate"
     )
     parser.add_argument(
         "--epochs", type=int, default=100, help="Number of training epochs"
     )
     parser.add_argument(
-        "--batch-size", type=int, default=None, help="Training batch size (auto-detect if not specified)"
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Training batch size (auto-detect if not specified)",
     )
     parser.add_argument(
         "--learning-rate", type=float, default=0.001, help="Learning rate"
