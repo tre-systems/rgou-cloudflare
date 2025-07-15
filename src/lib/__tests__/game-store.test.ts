@@ -99,7 +99,7 @@ describe('GameStore', () => {
       });
 
       const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
+      await actions.makeAIMove('client');
 
       const { aiThinking } = useGameStore.getState();
       expect(aiThinking).toBe(false);
@@ -115,7 +115,7 @@ describe('GameStore', () => {
       });
 
       const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
+      await actions.makeAIMove('client');
 
       const { aiThinking } = useGameStore.getState();
       expect(aiThinking).toBe(false);
@@ -148,7 +148,7 @@ describe('GameStore', () => {
       });
 
       const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
+      await actions.makeAIMove('client');
 
       const { gameState } = useGameStore.getState();
       // fallback is to take first valid move, which is piece 1

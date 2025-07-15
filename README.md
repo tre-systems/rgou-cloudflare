@@ -7,6 +7,7 @@ A modern, web-based implementation of the ancient Royal Game of Ur, featuring a 
 - Faithful recreation of the Royal Game of Ur
 - Play against Classic (Expectiminimax) or ML (Neural Network) AI
 - AI vs. AI mode
+- All AI runs locally in your browser via WebAssembly
 - PWA: works offline, installable
 - Game statistics and database integration
 - Modern, responsive UI

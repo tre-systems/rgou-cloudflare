@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Brain, Cpu, Zap } from 'lucide-react';
+import { Cpu, Brain } from 'lucide-react';
 
 interface AISelectorProps {
-  aiSource: 'server' | 'client' | 'ml';
-  onAiSourceChange: (source: 'server' | 'client' | 'ml') => void;
+  aiSource: 'client' | 'ml';
+  onAiSourceChange: (aiSource: 'client' | 'ml') => void;
   disabled?: boolean;
 }
 
@@ -19,15 +19,6 @@ const aiOptions = [
     color: 'text-blue-400',
     bgColor: 'bg-blue-400/10',
     borderColor: 'border-blue-400/20',
-  },
-  {
-    value: 'server' as const,
-    label: 'Server AI',
-    description: 'Cloudflare Worker (4-ply search)',
-    icon: Zap,
-    color: 'text-green-400',
-    bgColor: 'bg-green-400/10',
-    borderColor: 'border-green-400/20',
   },
   {
     value: 'ml' as const,
@@ -46,65 +37,42 @@ export default function AISelector({
   disabled = false,
 }: AISelectorProps) {
   return (
-    <div className="mb-4">
-      <h3 className="text-sm font-semibold text-gray-300 mb-2">AI Opponent</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        {aiOptions.map(option => {
-          const Icon = option.icon;
-          const isSelected = aiSource === option.value;
-
-          return (
-            <motion.button
-              key={option.value}
-              onClick={() => !disabled && onAiSourceChange(option.value)}
-              disabled={disabled}
-              className={`
-                relative p-3 rounded-lg border-2 transition-all duration-200
-                ${
-                  isSelected
-                    ? `${option.bgColor} ${option.borderColor} ${option.color}`
-                    : 'bg-gray-800/50 border-gray-700 text-gray-400 hover:bg-gray-700/50'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105'}
-              `}
-              whileHover={!disabled ? { scale: 1.02 } : {}}
-              whileTap={!disabled ? { scale: 0.98 } : {}}
-            >
-              <div className="flex items-center space-x-2">
-                <Icon className={`w-4 h-4 ${isSelected ? option.color : 'text-gray-400'}`} />
-                <div className="text-left">
-                  <div
-                    className={`text-xs font-medium ${isSelected ? option.color : 'text-gray-300'}`}
-                  >
-                    {option.label}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5">{option.description}</div>
-                </div>
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-white/90">Choose AI Opponent</h3>
+      <div className="grid gap-3">
+        {aiOptions.map(option => (
+          <motion.button
+            key={option.value}
+            onClick={() => onAiSourceChange(option.value)}
+            disabled={disabled}
+            className={`relative p-4 rounded-lg border-2 transition-all ${
+              aiSource === option.value
+                ? `${option.borderColor} ${option.bgColor}`
+                : 'border-white/10 bg-white/5 hover:bg-white/10'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            whileHover={!disabled ? { scale: 1.02 } : {}}
+            whileTap={!disabled ? { scale: 0.98 } : {}}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-lg ${option.bgColor}`}>
+                <option.icon className={`w-5 h-5 ${option.color}`} />
               </div>
-
-              {isSelected && (
-                <motion.div
-                  className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${option.bgColor} border-2 border-white`}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              )}
-            </motion.button>
-          );
-        })}
+              <div className="flex-1 text-left">
+                <div className={`font-medium ${option.color}`}>{option.label}</div>
+                <div className="text-xs text-white/70">{option.description}</div>
+              </div>
+            </div>
+            {aiSource === option.value && (
+              <motion.div
+                layoutId="activeAI"
+                className={`absolute inset-0 rounded-lg border-2 ${option.borderColor}`}
+                initial={false}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            )}
+          </motion.button>
+        ))}
       </div>
-
-      {aiSource === 'ml' && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-2 p-2 bg-purple-400/10 border border-purple-400/20 rounded text-xs text-purple-300"
-        >
-          <Brain className="inline w-3 h-3 mr-1" />
-          ML AI uses neural networks trained on expert gameplay. May take a moment to load.
-        </motion.div>
-      )}
     </div>
   );
 }

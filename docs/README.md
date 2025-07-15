@@ -39,7 +39,7 @@ Welcome to the Royal Game of Ur documentation. Use this guide to find everything
 ## Game Features
 
 - Authentic rules and gameplay
-- Dual AI opponents (Classic and ML)
+- Two AI opponents (Classic and ML, both run locally in browser)
 - AI vs. AI watch mode
 - PWA support and offline play
 - Modern UI

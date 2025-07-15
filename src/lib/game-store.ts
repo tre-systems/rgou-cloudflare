@@ -29,7 +29,7 @@ type GameStore = {
     processDiceRoll: (roll?: number) => void;
     endTurn: () => void;
     makeMove: (pieceIndex: number) => void;
-    makeAIMove: (aiSource: 'server' | 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
+    makeAIMove: (aiSource: 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
     postGameToServer: () => Promise<void>;
     createNearWinningState: () => void;
@@ -93,7 +93,7 @@ export const useGameStore = create<GameStore>()(
             });
           }
         },
-        makeAIMove: async (aiSource: 'server' | 'client' | 'ml', isPlayer1AI = false) => {
+        makeAIMove: async (aiSource: 'client' | 'ml', isPlayer1AI = false) => {
           const { gameState, actions } = get();
 
           if (!gameState.canMove) return;
@@ -163,11 +163,11 @@ export const useGameStore = create<GameStore>()(
               };
               console.log('GameStore: Processed ML AI response:', aiResponse);
             } else {
-              // Use WASM AI service for both 'server' and 'client' sources
+              // Use WASM AI service for 'client' source only
               console.log('GameStore: Using WASM AI service for', aiSource);
               const wasmResponse = await wasmAiService.getAIMove(gameState);
               console.log('GameStore: WASM AI response received:', wasmResponse);
-              aiResponse = { ...wasmResponse, aiType: aiSource as 'client' | 'server' };
+              aiResponse = { ...wasmResponse, aiType: 'client' as const };
             }
 
             const duration = performance.now() - startTime;

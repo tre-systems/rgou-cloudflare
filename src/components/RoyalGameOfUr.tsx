@@ -52,7 +52,7 @@ export default function RoyalGameOfUr() {
 
   const [showModelOverlay, setShowModelOverlay] = useState(true);
   const [selectedMode, setSelectedMode] = useState<'classic' | 'ml' | 'watch' | null>(null);
-  const [aiSource, setAiSource] = useState<'server' | 'client' | 'ml'>('ml');
+  const [aiSource, setAiSource] = useState<'client' | 'ml'>('ml');
   const [aiSourceP1, setAiSourceP1] = useState<'client' | 'ml' | null>(null);
   const [aiSourceP2, setAiSourceP2] = useState<'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -179,7 +179,7 @@ export default function RoyalGameOfUr() {
     actions.createNearWinningState();
   };
 
-  const handleAiSourceChange = (source: 'server' | 'client' | 'ml') => {
+  const handleAiSourceChange = (source: 'client' | 'ml') => {
     setAiSource(source);
     reset();
   };

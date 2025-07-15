@@ -50,7 +50,7 @@ See the [ML AI System Documentation](./ml-ai-system.md) for a detailed breakdown
 
 ## AI vs. AI Mode
 
-In this mode, the Classic AI (Player 1) plays against the ML AI (Player 2). This provides an opportunity to observe the strategic differences between the two AI systems. The game proceeds automatically, with each AI taking its turn until a winner is decided.
+In this mode, the Classic AI (Player 1) plays against the ML AI (Player 2). This provides an opportunity to observe the strategic differences between the two AI systems. The game proceeds automatically, with each AI taking its turn until a winner is decided. **Both AIs run locally in the browser via WebAssembly.**
 
 ## Performance
 

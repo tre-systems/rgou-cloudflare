@@ -19,8 +19,8 @@ interface GameBoardProps {
   onPieceClick: (pieceIndex: number) => void;
   aiThinking?: boolean;
   onResetGame: () => void;
-  aiSource: 'server' | 'client' | 'ml';
-  onAiSourceChange: (source: 'server' | 'client' | 'ml') => void;
+  aiSource: 'client' | 'ml';
+  onAiSourceChange: (source: 'client' | 'ml') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onShowHowToPlay: () => void;

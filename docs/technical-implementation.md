@@ -7,7 +7,6 @@
 - Node.js 18+
 - Rust 1.70+
 - wasm-pack
-- worker-build
 - SQLite
 
 ### Installation
@@ -19,9 +18,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # Install wasm-pack
 cargo install wasm-pack
 
-# Install worker-build
-cargo install worker-build
-
 # Install Node.js dependencies
 npm install
 ```
@@ -29,7 +25,7 @@ npm install
 ## Project Structure
 
 - `src/`: Next.js frontend
-- `worker/`: Rust backend and AI
+- `worker/rust_ai_core/`: Rust AI core (compiled to WASM)
 - `docs/`: Documentation
 - `migrations/`: Database schema
 - `public/`: Static assets
@@ -45,20 +41,11 @@ npm run dev      # Development
 npm run build    # Production
 ```
 
-### AI Build
-
-#### WebAssembly (Client AI)
+### AI Build (WebAssembly)
 
 ```bash
 cd worker/rust_ai_core
 wasm-pack build --target web --out-dir ../../public/wasm
-```
-
-#### Cloudflare Worker (Server AI)
-
-```bash
-cd worker
-worker-build --release
 ```
 
 ### Database Migrations
@@ -72,7 +59,7 @@ npm run migrate:d1      # Production (D1)
 
 - Rust core: `worker/rust_ai_core/src/lib.rs`
 - WASM API: `worker/rust_ai_core/src/wasm_api.rs`
-- Frontend: `src/lib/wasm-ai-service.ts`
+- Frontend: `src/lib/wasm-ai-service.ts`, `src/lib/ml-ai-service.ts`
 
 ## Testing
 
@@ -86,7 +73,6 @@ npm run check                                # All tests (including Rust)
 ## Deployment
 
 - Cloudflare Pages (Next.js frontend)
-- Cloudflare Worker (AI)
 - Cloudflare D1 (database)
 - GitHub Actions for CI/CD
 
@@ -104,11 +90,3 @@ Set in `public/_headers`:
 ## Development vs Production
 
 - Dev: AI diagnostics, toggle, reset/test buttons (localhost only)
-- Prod: Clean UI, client AI default
-
-## See Also
-
-- [AI System Documentation](./ai-system.md)
-- [ML AI System](./ml-ai-system.md)
-- [Architecture Overview](./architecture-overview.md)
-- [Testing Strategy](./testing-strategy.md)
