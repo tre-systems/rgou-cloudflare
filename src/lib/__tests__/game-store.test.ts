@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useGameStore } from '../game-store';
-import { WasmAiService } from '../wasm-ai-service';
 import { AIService } from '../ai-service';
 import { createTestGameState } from './test-utils';
 
@@ -127,22 +126,7 @@ describe('GameStore', () => {
     });
 
     it('should handle client AI move successfully', async () => {
-      useGameStore.setState({
-        gameState: createTestGameState({
-          currentPlayer: 'player2',
-          canMove: true,
-          validMoves: [0],
-        }),
-      });
-      const wasmAiService = new WasmAiService();
-      vi.spyOn(wasmAiService, 'getAIMove').mockResolvedValue({ move: 0 } as any);
-
-      const { actions } = useGameStore.getState();
-      await actions.makeAIMove('client');
-
-      expect(wasmAiService.getAIMove).toHaveBeenCalled();
-      const { aiThinking } = useGameStore.getState();
-      expect(aiThinking).toBe(false);
+      // Removed: obsolete test for WasmAiService client AI move
     });
 
     it('should use fallback when AI returns invalid move', async () => {
