@@ -174,6 +174,10 @@ impl NeuralNetwork {
         std::fs::write(filename, content)?;
         Ok(())
     }
+
+    pub fn num_layers(&self) -> usize {
+        self.layers.len()
+    }
 }
 
 #[cfg(test)]

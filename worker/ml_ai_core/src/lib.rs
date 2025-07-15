@@ -444,6 +444,7 @@ mod tests {
     #[test]
     fn test_ml_ai_new() {
         let ai = MLAI::new();
-        assert!(ai.transposition_table.is_empty());
+        assert!(ai.value_network.num_layers() > 0);
+        assert!(ai.policy_network.num_layers() > 0);
     }
 }
