@@ -109,7 +109,7 @@ const transformMLResponse = (responseJson: string) => {
     evaluation: parsed.evaluation,
     thinking: parsed.thinking,
     diagnostics: parsed.diagnostics,
-    timings: parsed.timings,
+    timings: parsed.timings || {},
   };
 
   console.log('ML AI Worker: Final transformed response:', response);
@@ -247,16 +247,20 @@ self.addEventListener(
             );
             console.log(
               'ML AI Worker: - WASM calculation time:',
-              typeof response.timings.aiMoveCalculation === 'number'
-                ? response.timings.aiMoveCalculation.toFixed(2)
-                : response.timings.aiMoveCalculation,
+              response.timings?.aiMoveCalculation !== undefined
+                ? typeof response.timings.aiMoveCalculation === 'number'
+                  ? response.timings.aiMoveCalculation.toFixed(2)
+                  : response.timings.aiMoveCalculation
+                : 'N/A',
               'ms'
             );
             console.log(
               'ML AI Worker: - Total handler time:',
-              typeof response.timings.totalHandlerTime === 'number'
-                ? response.timings.totalHandlerTime.toFixed(2)
-                : response.timings.totalHandlerTime,
+              response.timings?.totalHandlerTime !== undefined
+                ? typeof response.timings.totalHandlerTime === 'number'
+                  ? response.timings.totalHandlerTime.toFixed(2)
+                  : response.timings.totalHandlerTime
+                : 'N/A',
               'ms'
             );
 
