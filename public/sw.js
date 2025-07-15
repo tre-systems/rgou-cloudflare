@@ -2,12 +2,7 @@ const CACHE_VERSION = '1752618352896-local';
 const CACHE_NAME = `royal-game-of-ur-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
-const STATIC_ASSETS = [
-  '/',
-  '/offline',
-  '/manifest.json',
-  '/favicon.ico',
-];
+const STATIC_ASSETS = ['/', '/offline', '/manifest.json', '/favicon.ico'];
 
 self.addEventListener('install', event => {
   console.log('[SW] Install event');
@@ -60,15 +55,19 @@ self.addEventListener('fetch', event => {
   }
 
   const url = new URL(event.request.url);
-  
+
   // Static assets (JS, CSS, images) - cache first
-  if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/') || url.pathname.startsWith('/wasm/')) {
+  if (
+    url.pathname.startsWith('/_next/') ||
+    url.pathname.startsWith('/static/') ||
+    url.pathname.startsWith('/wasm/')
+  ) {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        
+
         return fetch(event.request).then(response => {
           if (response && response.status === 200) {
             const responseToCache = response.clone();
@@ -104,16 +103,16 @@ self.addEventListener('fetch', event => {
       })
       .catch(error => {
         console.log('[SW] Fetch failed, trying cache:', error);
-        
+
         return caches.match(event.request).then(cachedResponse => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          
+
           if (event.request.destination === 'document') {
             return caches.match(OFFLINE_URL);
           }
-          
+
           throw error;
         });
       })
@@ -173,7 +172,7 @@ self.addEventListener('notificationclick', event => {
 
 self.addEventListener('message', event => {
   console.log('[SW] Message received:', event.data);
-  
+
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
