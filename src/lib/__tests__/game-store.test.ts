@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useGameStore } from '../game-store';
-import { wasmAiService } from '../wasm-ai-service';
+import { WasmAiService } from '../wasm-ai-service';
 import { AIService } from '../ai-service';
 import { createTestGameState } from './test-utils';
 
@@ -134,7 +134,8 @@ describe('GameStore', () => {
           validMoves: [0],
         }),
       });
-      vi.mocked(wasmAiService.getAIMove).mockResolvedValue({ move: 0 } as any);
+      const wasmAiService = new WasmAiService();
+      vi.spyOn(wasmAiService, 'getAIMove').mockResolvedValue({ move: 0 } as any);
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('client');

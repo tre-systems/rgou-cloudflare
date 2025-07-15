@@ -49,7 +49,7 @@ type PendingRequestType =
   | { type: 'getInfo'; resolve: (value: unknown) => void; reject: (reason?: unknown) => void }
   | { type: 'rollDice'; resolve: (value: number) => void; reject: (reason?: unknown) => void };
 
-class MLAIService {
+export class MLAIService {
   private worker: Worker | null = null;
   private initPromise: Promise<void> | null = null;
   private messageCounter = 0;
@@ -330,5 +330,3 @@ class MLAIService {
     }
   }
 }
-
-export const mlAiService = new MLAIService();

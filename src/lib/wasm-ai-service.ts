@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { GameState, ServerAIResponse } from './schemas';
 
-class WasmAiService {
+export class WasmAiService {
   private worker: Worker | null = null;
   private initPromise: Promise<void> | null = null;
   private messageCounter = 0;
@@ -141,5 +141,3 @@ class WasmAiService {
     return response;
   }
 }
-
-export const wasmAiService = new WasmAiService();

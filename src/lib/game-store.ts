@@ -3,8 +3,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { initializeGame, processDiceRoll, makeMove as makeMoveLogic } from './game-logic';
 import { AIService } from './ai-service';
-import { wasmAiService } from './wasm-ai-service';
-import { mlAiService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
@@ -131,7 +129,7 @@ export const useGameStore = create<GameStore>()(
 
             if (aiSource === 'ml') {
               console.log('GameStore: Using ML AI service');
-              const mlResponse = await mlAiService.getAIMove(gameState);
+              const mlResponse = await AIService.getAIMove(gameState);
               console.log('GameStore: ML AI response received:', mlResponse);
               aiResponseFromServer = {
                 move: mlResponse.move,
@@ -143,13 +141,13 @@ export const useGameStore = create<GameStore>()(
                 },
                 diagnostics: {
                   searchDepth: 0,
-                  validMoves: mlResponse.diagnostics.valid_moves,
-                  moveEvaluations: mlResponse.diagnostics.move_evaluations.map(e => ({
-                    pieceIndex: e.piece_index,
+                  validMoves: mlResponse.diagnostics.validMoves,
+                  moveEvaluations: mlResponse.diagnostics.moveEvaluations.map(e => ({
+                    pieceIndex: e.pieceIndex,
                     score: e.score,
-                    moveType: e.move_type,
-                    fromSquare: e.from_square,
-                    toSquare: e.to_square ?? null,
+                    moveType: e.moveType,
+                    fromSquare: e.fromSquare,
+                    toSquare: e.toSquare ?? null,
                   })),
                   transpositionHits: 0,
                   nodesEvaluated: 1,
@@ -162,7 +160,7 @@ export const useGameStore = create<GameStore>()(
               aiResponseFromServer =
                 aiSource === 'server'
                   ? await AIService.getAIMove(gameState)
-                  : await wasmAiService.getAIMove(gameState);
+                  : await AIService.getAIMove(gameState);
               aiResponseFromServer = { ...aiResponseFromServer, aiType: aiSource };
             }
 

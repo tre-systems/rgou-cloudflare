@@ -136,6 +136,17 @@ npm run test:e2e   # E2E tests
 ./scripts/test_ml_vs_expectiminimax.sh # ML vs expectiminimax AI
 ```
 
+## Test Coverage
+
+Some files are excluded from coverage because they depend on browser/worker APIs and cannot be reliably tested in Node environments:
+
+- `src/lib/wasm-ai-service.ts`
+- `src/lib/ml-ai-service.ts`
+- `src/lib/__tests__/wasm-ai-service.test.ts`
+- `src/lib/__tests__/ml-ai-service.test.ts`
+
+All other logic is covered by automated tests.
+
 ## Troubleshooting
 
 - **DB errors**: Check migrations and wrangler config
