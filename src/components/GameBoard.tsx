@@ -19,8 +19,6 @@ interface GameBoardProps {
   onPieceClick: (pieceIndex: number) => void;
   aiThinking?: boolean;
   onResetGame: () => void;
-  aiSource: 'client' | 'ml';
-  onAiSourceChange: (source: 'client' | 'ml') => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
@@ -35,8 +33,6 @@ export default function GameBoard({
   onPieceClick,
   aiThinking = false,
   onResetGame,
-  aiSource,
-  onAiSourceChange,
   soundEnabled,
   onToggleSound,
   onShowHowToPlay,
@@ -266,8 +262,6 @@ export default function GameBoard({
               )}
           </div>
           <GameControls
-            aiSource={aiSource}
-            onAiSourceChange={onAiSourceChange}
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
             onShowHowToPlay={onShowHowToPlay}

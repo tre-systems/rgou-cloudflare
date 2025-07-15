@@ -52,7 +52,6 @@ export default function RoyalGameOfUr() {
 
   const [showModelOverlay, setShowModelOverlay] = useState(true);
   const [selectedMode, setSelectedMode] = useState<'classic' | 'ml' | 'watch' | null>(null);
-  const [aiSource, setAiSource] = useState<'client' | 'ml'>('ml');
   const [aiSourceP1, setAiSourceP1] = useState<'client' | 'ml' | null>(null);
   const [aiSourceP2, setAiSourceP2] = useState<'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -70,18 +69,15 @@ export default function RoyalGameOfUr() {
       (gameState.currentPlayer === 'player2' &&
         (selectedMode === 'classic' || selectedMode === 'ml'));
 
-    // If it's the human's turn to move, do nothing and wait for UI interaction.
     if (!isAIsTurn && gameState.canMove) {
       return;
     }
 
-    // Time to roll the dice (start of any turn)
     if (gameState.diceRoll === null) {
       const timer = setTimeout(() => processDiceRoll(), 500);
       return () => clearTimeout(timer);
     }
 
-    // AI's turn to make a move
     if (isAIsTurn && gameState.canMove) {
       const moveDelay = selectedMode === 'watch' ? 750 : 250;
       const timer = setTimeout(() => {
@@ -94,7 +90,6 @@ export default function RoyalGameOfUr() {
       return () => clearTimeout(timer);
     }
 
-    // Turn is over (no valid moves, or dice roll was 0)
     if (gameState.diceRoll !== null && !gameState.canMove) {
       const timer = setTimeout(() => endTurn(), 1500);
       return () => clearTimeout(timer);
@@ -142,6 +137,10 @@ export default function RoyalGameOfUr() {
     }
   }, [lastMoveType, lastMovePlayer]);
 
+  useEffect(() => {
+    soundEffects.setEnabled(soundEnabled);
+  }, [soundEnabled]);
+
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
       if (
@@ -160,7 +159,6 @@ export default function RoyalGameOfUr() {
     reset();
     setShowModelOverlay(true);
     setSelectedMode(null);
-    setAiSource('ml');
     setAiSourceP1(null);
     setAiSourceP2('ml');
   };
@@ -179,19 +177,12 @@ export default function RoyalGameOfUr() {
     actions.createNearWinningState();
   };
 
-  const handleAiSourceChange = (source: 'client' | 'ml') => {
-    setAiSource(source);
-    reset();
-  };
-
   const handleOverlaySelect = (mode: 'classic' | 'ml' | 'watch') => {
     setSelectedMode(mode);
     if (mode === 'classic') {
-      setAiSource('client');
       setAiSourceP1(null);
       setAiSourceP2('client');
     } else if (mode === 'ml') {
-      setAiSource('ml');
       setAiSourceP1(null);
       setAiSourceP2('ml');
     } else if (mode === 'watch') {
@@ -237,7 +228,7 @@ export default function RoyalGameOfUr() {
           <div className="mt-3 text-xs text-white/70">
             <p>No AI diagnostics available yet. Make a move to see AI analysis.</p>
             <p className="mt-2">
-              Current AI source: {selectedMode === 'watch' ? 'N/A' : getAIName(aiSource)}
+              Current AI source: {selectedMode === 'watch' ? 'N/A' : getAIName('ml')}
             </p>
           </div>
         )}
@@ -335,6 +326,7 @@ export default function RoyalGameOfUr() {
                 />
               </svg>
             </motion.div>
+            <div className="h-4"></div>
           </motion.div>
 
           {showModelOverlay ? (
@@ -374,8 +366,6 @@ export default function RoyalGameOfUr() {
               onPieceClick={handlePieceClick}
               aiThinking={aiThinking}
               onResetGame={handleReset}
-              aiSource={aiSource}
-              onAiSourceChange={handleAiSourceChange}
               soundEnabled={soundEnabled}
               onToggleSound={toggleSound}
               onShowHowToPlay={showHowToPlay}
@@ -391,13 +381,14 @@ export default function RoyalGameOfUr() {
 
           <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
 
+          <div className="h-4"></div>
           <motion.div
             className="text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1, duration: 0.6 }}
           >
-            <p className="mt-4 text-center">
+            <p className="text-center">
               <a href="https://ko-fi.com/N4N31DPNUS" target="_blank" rel="noopener noreferrer">
                 <Image
                   width={145}

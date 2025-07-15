@@ -205,7 +205,6 @@ export class MLAIService {
     } catch (error) {
       console.error('ML AI Service: Error getting AI move:', error);
 
-      // Fallback to simple random move if ML AI fails
       if (gameState.validMoves.length > 0) {
         const fallbackMove =
           gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];

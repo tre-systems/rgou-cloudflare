@@ -136,6 +136,10 @@ class SoundEffects {
     return this.enabled;
   }
 
+  setEnabled(enabled: boolean) {
+    this.enabled = enabled;
+  }
+
   get isEnabled() {
     return this.enabled;
   }

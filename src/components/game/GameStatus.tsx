@@ -92,7 +92,7 @@ export default function GameStatus({
             <StatusIcon className={cn('w-4 h-4', status.color)} data-testid="game-status-icon" />
           ) : null}
           <span
-            className={cn('font-bold text-sm', status.color, 'neon-text')}
+            className={cn('font-bold text-lg', status.color, 'neon-text')}
             data-testid="game-status-text"
           >
             {status.text}

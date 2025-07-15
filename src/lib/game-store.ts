@@ -13,7 +13,6 @@ import { getFileHash } from './utils/getFileHash';
 
 const LATEST_VERSION = 1;
 
-// Initialize AI services as singletons
 const wasmAiService = new WasmAiService();
 const mlAiService = new MLAIService();
 
@@ -163,7 +162,6 @@ export const useGameStore = create<GameStore>()(
               };
               console.log('GameStore: Processed ML AI response:', aiResponse);
             } else {
-              // Use WASM AI service for 'client' source only
               console.log('GameStore: Using WASM AI service for', aiSource);
               const wasmResponse = await wasmAiService.getAIMove(gameState);
               console.log('GameStore: WASM AI response received:', wasmResponse);
@@ -191,7 +189,6 @@ export const useGameStore = create<GameStore>()(
             }
           } catch (error) {
             console.error('GameStore: AI move failed:', error);
-            // Fallback to random move
             if (gameState.validMoves.length > 0) {
               const fallbackMove =
                 gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
@@ -243,9 +240,7 @@ export const useGameStore = create<GameStore>()(
           }
 
           try {
-            // Determine AI type for player2 (for now, assume 'ml' or 'rust')
-            // In a real implementation, this should be tracked in game state
-            const ai2Type: 'ml' | 'rust' = 'ml'; // TODO: Detect actual AI type used
+            const ai2Type: 'ml' | 'rust' = 'ml';
             let ai2Version: string = 'unknown';
             if (ai2Type === 'ml') {
               ai2Version = await getFileHash('public/ml-weights.json.gz');
@@ -258,10 +253,10 @@ export const useGameStore = create<GameStore>()(
               history: gameState.history,
               playerId: getPlayerId(),
               moveCount: gameState.history.length,
-              duration: undefined, // TODO: set actual duration if available
-              clientHeader: undefined, // TODO: set if available
+              duration: undefined,
+              clientHeader: undefined,
               gameType: 'standard',
-              ai1Version: undefined, // Player 1 is human
+              ai1Version: undefined,
               ai2Version,
               gameVersion: await getGitCommitHash(),
             };

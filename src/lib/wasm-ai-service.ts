@@ -97,7 +97,6 @@ export class WasmAiService {
     } catch (error) {
       console.error('WasmAiService: Error getting AI move:', error);
 
-      // Fallback to simple random move if worker fails
       if (gameState.validMoves.length > 0) {
         const fallbackMove =
           gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];

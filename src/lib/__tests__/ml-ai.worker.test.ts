@@ -1,77 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the worker environment
-const mockSelf = {
-  addEventListener: vi.fn(),
-  postMessage: vi.fn(),
-};
-
-// Mock the WASM module
-const mockMLWasmModule = {
-  init_ml_ai: vi.fn(),
-  load_ml_weights: vi.fn(),
-  get_ml_ai_move: vi.fn(),
-  evaluate_ml_position: vi.fn(),
-  get_ml_ai_info: vi.fn(),
-  roll_dice_ml: vi.fn(),
-};
-
 // Mock the WASM loading
 vi.mock('./ml-ai.worker', () => ({
   default: vi.fn(),
 }));
-
-// Mock the worker script
-const mockWorkerScript = `
-  // Mock the transformMLResponse function
-  const transformMLResponse = (responseJson) => {
-    const parsed = JSON.parse(responseJson);
-    return {
-      move: parsed.move,
-      evaluation: parsed.evaluation,
-      thinking: parsed.thinking,
-      diagnostics: parsed.diagnostics,
-      timings: parsed.timings || {},
-    };
-  };
-
-  // Mock the logging function
-  const logGameStateAnalysis = () => {};
-
-  // Mock the WASM module
-  let mlWasmModule = ${JSON.stringify(mockMLWasmModule)};
-  let weightsLoaded = false;
-
-  // Mock the message handler
-  self.addEventListener('message', (event) => {
-    if (event.data.type === 'getAIMove') {
-      const responseJson = JSON.stringify({
-        move: 0,
-        evaluation: 0.5,
-        thinking: 'Test move',
-        diagnostics: {
-          valid_moves: [0, 1],
-          move_evaluations: [],
-          value_network_output: 0.5,
-          policy_network_outputs: [0.5, 0.5],
-        },
-        // Note: no timings field
-      });
-
-      const response = transformMLResponse(responseJson);
-      
-      // This should not throw an error even without timings
-      console.log('Response timings:', response.timings);
-      console.log('AI calculation time:', response.timings?.aiMoveCalculation);
-      
-      self.postMessage({ 
-        type: 'success', 
-        id: event.data.id, 
-        response 
-      });
-    }
-  });
-`;
 
 describe('ML AI Worker', () => {
   beforeEach(() => {
