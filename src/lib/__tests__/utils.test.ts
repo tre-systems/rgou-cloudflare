@@ -84,6 +84,7 @@ describe('utils', () => {
     });
 
     it('should return false for production hostname', () => {
+      vi.stubEnv('NODE_ENV', 'production');
       const location = new URL('https://rgou.tre.systems');
       vi.stubGlobal('location', location);
       expect(isDevelopment()).toBe(false);

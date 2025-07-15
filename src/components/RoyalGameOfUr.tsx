@@ -389,11 +389,7 @@ export default function RoyalGameOfUr() {
 
           {isDevelopment() && <div className="xl:hidden">{diagnosticsPanelOrPlaceholder}</div>}
 
-          <HowToPlayPanel
-            isOpen={howToPlayOpen}
-            onClose={() => setHowToPlayOpen(false)}
-            data-testid="help-panel"
-          />
+          <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
 
           <motion.div
             className="text-center"

@@ -53,7 +53,9 @@ export const isDevelopment = () => {
   }
 
   const hostname = window.location.hostname;
-  return hostname === 'localhost' || hostname === '127.0.0.1';
+  return (
+    hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development'
+  );
 };
 
 export function batch<T>(array: T[], size: number): T[][] {

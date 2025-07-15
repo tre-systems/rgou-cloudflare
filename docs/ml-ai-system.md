@@ -1,9 +1,5 @@
 # ML AI System Documentation
 
-See also: [AI System Documentation (Classic Expectiminimax)](./ai-system.md)
-
-## Overview
-
 This document explains the machine learning (ML) system powering one of the two AI opponents in the Royal Game of Ur. It is written for experienced programmers new to ML, covering architecture, training, features, and model structure.
 
 The ML AI can be played against directly or watched as it competes against the Classic AI.
@@ -54,6 +50,12 @@ The input vector encodes:
 - **Speed**: The ML AI selects moves in milliseconds, without a deep search.
 - **Unique Playstyle**: Its strategies are learned from data, not hand-coded, resulting in a different kind of opponent.
 - **Efficiency**: The model runs efficiently in the browser via WebAssembly.
+
+## How to Use or Retrain the ML AI
+
+- You can play against the ML AI in the app, or watch it play against the Classic AI.
+- To retrain the model, generate new games, adjust features, or change the architecture and retrain using the provided Python scripts.
+- To make the AI stronger, use more data, deeper networks, self-play, or new features.
 
 ## See Also
 

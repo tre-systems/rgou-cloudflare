@@ -19,6 +19,7 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
+          data-testid="help-panel"
         >
           <motion.div
             className="glass mystical-glow rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"

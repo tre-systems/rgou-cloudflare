@@ -101,6 +101,17 @@ export default function RootLayout({
             `,
           }}
         />
+        {process.env.NODE_ENV === 'development' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.exposeGameStore = function(store) {
+                  window.useGameStore = store;
+                };
+              `,
+            }}
+          />
+        )}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>{children}</div>

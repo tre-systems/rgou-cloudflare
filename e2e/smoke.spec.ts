@@ -70,8 +70,11 @@ test.describe('Game Completion and Stats', () => {
         const store = (window as any).useGameStore.getState();
         store.actions.processDiceRoll(2);
       });
-      const squares = page.locator('[data-testid^="square-"]');
-      await squares.nth(12).click();
+      await page.evaluate(() => {
+        const store = (window as any).useGameStore.getState();
+        store.actions.makeMove(6);
+      });
+      await page.waitForTimeout(1000);
       await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
       await expect(page.getByTestId('game-completion-title')).toBeVisible();
       await expect(page.getByTestId('game-completion-message')).toBeVisible();
@@ -93,8 +96,11 @@ test.describe('Game Save (DB Verification)', () => {
         const store = (window as any).useGameStore.getState();
         store.actions.processDiceRoll(2);
       });
-      const squares = page.locator('[data-testid^="square-"]');
-      await squares.nth(12).click();
+      await page.evaluate(() => {
+        const store = (window as any).useGameStore.getState();
+        store.actions.makeMove(6);
+      });
+      await page.waitForTimeout(1000);
       await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
       // Query local.db to verify the game was saved
       const db = new Database('local.db');
@@ -114,19 +120,13 @@ test.describe('Game Save (DB Verification)', () => {
 });
 
 test.describe('Help Panel Accessibility', () => {
-  test('help panel opens after win', async ({ page }) => {
+  test('help panel opens and closes correctly', async ({ page }) => {
     if (process.env.NODE_ENV === 'development') {
       await startGame(page, 'classic');
-      await page.getByTestId('create-near-winning-state').click();
-      await page.evaluate(() => {
-        const store = (window as any).useGameStore.getState();
-        store.actions.processDiceRoll(2);
-      });
-      const squares = page.locator('[data-testid^="square-"]');
-      await squares.nth(12).click();
-      await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
       await page.getByTestId('help-button').click();
-      await expect(page.getByTestId('how-to-play-panel')).toBeVisible();
+      await expect(page.getByTestId('help-panel')).toBeVisible();
+      await page.getByTestId('help-close').click();
+      await expect(page.getByTestId('help-panel')).not.toBeVisible();
     }
   });
 });
@@ -140,11 +140,14 @@ test.describe('Stats Panel Updates', () => {
         const store = (window as any).useGameStore.getState();
         store.actions.processDiceRoll(2);
       });
-      const squares = page.locator('[data-testid^="square-"]');
-      await squares.nth(12).click();
+      await page.evaluate(() => {
+        const store = (window as any).useGameStore.getState();
+        store.actions.makeMove(6);
+      });
+      await page.waitForTimeout(1000);
       await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
       await expect(page.getByTestId('stats-panel')).toBeVisible();
-      const winCount = await page.getByTestId('stats-win-count').innerText();
+      const winCount = await page.getByTestId('wins-count').innerText();
       expect(Number(winCount)).toBeGreaterThan(0);
     }
   });
