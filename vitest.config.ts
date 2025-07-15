@@ -147,6 +147,14 @@ export default defineConfig({
         'src/lib/ml-ai-service.ts',
         'src/lib/__tests__/wasm-ai-service.test.ts',
         'src/lib/__tests__/ml-ai-service.test.ts',
+        // Utility files that depend on Node.js APIs and file system operations
+        'src/lib/utils/getFileHash.ts',
+        'src/lib/utils/getGitCommitHash.ts',
+        // Type definition files
+        'src/lib/ai-types.ts',
+        // Worker files that cannot be tested in Node environment
+        'src/lib/ai.worker.ts',
+        'src/lib/ml-ai.worker.ts',
       ],
       include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
     },
