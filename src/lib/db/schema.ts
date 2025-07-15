@@ -6,7 +6,6 @@ export const games = sqliteTable('games', {
     .primaryKey()
     .$defaultFn(() => nanoid()),
   playerId: text('playerId').notNull(),
-  clientVersion: text('clientVersion').notNull().default('unknown'),
   winner: text('winner', { enum: ['player1', 'player2'] }),
   completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
   status: text('status', { enum: ['in_progress', 'completed', 'abandoned'] })
@@ -14,9 +13,12 @@ export const games = sqliteTable('games', {
     .default('in_progress'),
   moveCount: integer('moveCount'),
   duration: integer('duration'),
-  version: text('version').notNull().default('1.0.0'),
   clientHeader: text('clientHeader'),
   history: text('history', { mode: 'json' }),
+  gameType: text('gameType').notNull().default('standard'),
+  ai1Version: text('ai1Version'),
+  ai2Version: text('ai2Version'),
+  gameVersion: text('gameVersion'),
 });
 
 export const dbTables = { games };

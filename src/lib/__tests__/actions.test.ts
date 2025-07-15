@@ -45,12 +45,14 @@ describe('actions', () => {
     const validPayload: SaveGamePayload = {
       winner: 'player1',
       history: [validMoveRecord],
-      clientVersion: '1.0.0',
       playerId: 'test-player',
       moveCount: 10,
       duration: 5000,
-      version: '1.0.0',
       clientHeader: 'test-header',
+      gameType: 'standard',
+      ai1Version: undefined,
+      ai2Version: undefined,
+      gameVersion: undefined,
     };
 
     it('should successfully save a game in production', async () => {
@@ -71,12 +73,14 @@ describe('actions', () => {
         playerId: 'test-player',
         status: 'completed',
         completedAt: expect.any(Date),
-        clientVersion: '1.0.0',
         moveCount: 10,
         duration: 5000,
-        version: '1.0.0',
         clientHeader: 'test-header',
         history: validPayload.history,
+        gameType: 'standard',
+        ai1Version: undefined,
+        ai2Version: undefined,
+        gameVersion: undefined,
       });
     });
 
@@ -98,12 +102,14 @@ describe('actions', () => {
         playerId: 'test-player',
         status: 'completed',
         completedAt: expect.any(Date),
-        clientVersion: '1.0.0',
         moveCount: 10,
         duration: 5000,
-        version: '1.0.0',
         clientHeader: 'test-header',
         history: validPayload.history,
+        gameType: 'standard',
+        ai1Version: undefined,
+        ai2Version: undefined,
+        gameVersion: undefined,
       });
     });
 

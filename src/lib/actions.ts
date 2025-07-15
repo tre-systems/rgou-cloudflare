@@ -15,8 +15,18 @@ export async function saveGame(payload: SaveGamePayload) {
       return { error: 'Invalid game data' };
     }
 
-    const { winner, history, clientVersion, playerId, moveCount, duration, version, clientHeader } =
-      validation.data;
+    const {
+      winner,
+      history,
+      playerId,
+      moveCount,
+      duration,
+      clientHeader,
+      gameType,
+      ai1Version,
+      ai2Version,
+      gameVersion,
+    } = validation.data;
 
     let gameId: string | undefined;
 
@@ -29,12 +39,14 @@ export async function saveGame(payload: SaveGamePayload) {
             playerId,
             status: 'completed',
             completedAt: new Date(),
-            clientVersion,
             moveCount,
             duration,
-            version,
             clientHeader,
             history: history,
+            gameType,
+            ai1Version,
+            ai2Version,
+            gameVersion,
           })
           .returning();
         gameId = newGame?.id;
@@ -50,12 +62,14 @@ export async function saveGame(payload: SaveGamePayload) {
           playerId,
           status: 'completed',
           completedAt: new Date(),
-          clientVersion,
           moveCount,
           duration,
-          version,
           clientHeader,
           history: history,
+          gameType,
+          ai1Version,
+          ai2Version,
+          gameVersion,
         })
         .returning({ id: games.id })
         .get();

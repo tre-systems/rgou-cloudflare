@@ -7,6 +7,8 @@ import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
 import { getPlayerId } from './utils';
+import { getGitCommitHash } from './utils/getGitCommitHash';
+import { getFileHash } from './utils/getFileHash';
 
 const LATEST_VERSION = 1;
 
@@ -233,15 +235,32 @@ export const useGameStore = create<GameStore>()(
           }
 
           try {
+            // Determine AI type for player2 (for now, assume 'ml' or 'rust')
+            // In a real implementation, this should be tracked in game state
+            const ai2Type: 'ml' | 'rust' = 'ml'; // TODO: Detect actual AI type used
+            let ai2Version: string = 'unknown';
+            if (ai2Type === 'ml') {
+              ai2Version = getFileHash('public/ml-weights.json.gz');
+            } else {
+              ai2Version = getGitCommitHash();
+            }
+
             const payload = {
               winner: gameState.winner,
               history: gameState.history,
-              clientVersion: '1.0.0',
               playerId: getPlayerId(),
-              version: '1.0.0',
+              moveCount: gameState.history.length,
+              duration: undefined, // TODO: set actual duration if available
+              clientHeader: undefined, // TODO: set if available
+              gameType: ai2Type === 'ml' ? 'ml-vs-human' : 'rust-vs-human',
+              ai1Version: undefined, // Player 1 is human
+              ai2Version,
+              gameVersion: getGitCommitHash(),
             };
             await saveGame(payload);
-          } catch {}
+          } catch (error) {
+            console.error('Failed to save game to server:', error);
+          }
         },
       },
     })),

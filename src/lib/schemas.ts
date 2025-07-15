@@ -112,11 +112,13 @@ export const SaveGamePayloadSchema = z.object({
   winner: PlayerSchema,
   history: z.array(MoveRecordSchema),
   playerId: z.string(),
-  clientVersion: z.string().optional().default('unknown'),
   moveCount: z.number().optional(),
   duration: z.number().optional(),
-  version: z.string().optional().default('1.0.0'),
   clientHeader: z.string().optional(),
+  gameType: z.string().default('standard'),
+  ai1Version: z.string().optional(),
+  ai2Version: z.string().optional(),
+  gameVersion: z.string().optional(),
 });
 export type SaveGamePayload = z.infer<typeof SaveGamePayloadSchema>;
 

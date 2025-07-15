@@ -31,6 +31,30 @@ This project is a Progressive Web App (PWA) with offline capabilities and a nati
 - Modern UI/UX
 - Game statistics and database integration
 
+## Game Results Database & Automatic Versioning
+
+Game results are stored in a Cloudflare D1 database with a clean, future-proof schema. Each result includes:
+
+- `winner`: The winner of the game
+- `history`: Full move history
+- `playerId`: Unique player identifier
+- `moveCount`: Number of moves
+- `duration`: (optional) Game duration
+- `clientHeader`: (optional) Client info
+- `gameType`: Type of game (e.g., `ml-vs-human`, `rust-vs-human`)
+- `ai1Version`: Version/hash of AI 1 (if used)
+- `ai2Version`: Version/hash of AI 2 (if used)
+- `gameVersion`: Git commit hash of the game logic
+
+### Automatic Versioning
+
+- **ML AI**: The version is the SHA256 hash of the ML weights file (`public/ml-weights.json.gz`).
+- **Rust/Expectiminimax AI**: The version is the current git commit hash at build time.
+- **Game Logic**: The version is the current git commit hash at build time.
+- **No manual steps required**: Versioning is fully automatic and always up to date with the deployed code and models.
+
+This ensures every game result is traceable to the exact code and AI model used, supporting robust analytics and reproducibility.
+
 ## Game Rules (Summary)
 
 - Roll 4 binary dice (0-4)
