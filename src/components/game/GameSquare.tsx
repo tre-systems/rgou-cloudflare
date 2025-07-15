@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star } from 'lucide-react';
-import { cn, isLocalDevelopment } from '@/lib/utils';
+import { cn, isDevelopment } from '@/lib/utils';
 import { ROSETTE_SQUARES } from '@/lib/types';
 import GamePiece from './GamePiece';
 
@@ -60,7 +60,7 @@ export default function GameSquare({
       )}
 
       {/* Board cell number in development mode */}
-      {isLocalDevelopment() && (
+      {isDevelopment() && (
         <span className="absolute top-1 left-1 text-xs text-white/60 font-mono select-none pointer-events-none z-10">
           {squareIndex}
         </span>

@@ -1,17 +1,23 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useStatsStore } from '../stats-store';
 
+const resetStatsStore = () => {
+  useStatsStore.setState({
+    stats: {
+      wins: 0,
+      losses: 0,
+      gamesPlayed: 0,
+    },
+    // The actions are not part of the persisted state, so we don't need to reset them
+    // as they are defined on creation. However, to be safe in tests, we can re-link them.
+    actions: useStatsStore.getState().actions,
+  });
+};
+
 describe('StatsStore', () => {
   beforeEach(() => {
     localStorage.clear();
-    useStatsStore.setState({
-      stats: {
-        wins: 0,
-        losses: 0,
-        gamesPlayed: 0,
-      },
-      actions: useStatsStore.getState().actions,
-    });
+    resetStatsStore();
   });
 
   afterEach(() => {

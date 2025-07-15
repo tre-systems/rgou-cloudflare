@@ -15,13 +15,13 @@ vi.mock('@/lib/schemas', () => ({
 }));
 
 describe('actions', () => {
-  const mockDb: any = {
+  const mockDb = {
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockReturnThis(),
+    returning: vi.fn(),
   };
 
-  const mockSqliteDb: any = {
+  const mockSqliteDb = {
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
     returning: vi.fn().mockReturnThis(),
@@ -30,7 +30,6 @@ describe('actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getDb).mockResolvedValue(mockDb);
   });
 
   describe('saveGame', () => {
@@ -55,14 +54,12 @@ describe('actions', () => {
     };
 
     it('should successfully save a game in production', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      (process.env as any).NODE_ENV = 'production';
-
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
       vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
         success: true,
         data: validPayload,
       });
-
       mockDb.returning.mockResolvedValue([{ id: 'test-game-id' }]);
 
       const result = await saveGame(validPayload);
@@ -81,20 +78,15 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
       });
-
-      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should successfully save a game in development', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      (process.env as any).NODE_ENV = 'development';
-
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.mocked(getDb).mockResolvedValue(mockSqliteDb as any);
       vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
         success: true,
         data: validPayload,
       });
-
-      vi.mocked(getDb).mockResolvedValue(mockSqliteDb);
       mockSqliteDb.get.mockReturnValue({ id: 'test-game-id' });
 
       const result = await saveGame(validPayload);
@@ -113,8 +105,6 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
       });
-
-      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should return error for invalid payload', async () => {
@@ -129,14 +119,12 @@ describe('actions', () => {
     });
 
     it('should handle database errors in production', async () => {
-      const originalEnv = process.env.NODE_ENV;
-      (process.env as any).NODE_ENV = 'production';
-
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
       vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
         success: true,
         data: validPayload,
       });
-
       const dbError = new Error('Database connection failed');
       mockDb.returning.mockRejectedValue(dbError);
 
@@ -146,11 +134,13 @@ describe('actions', () => {
         error: 'Failed to save game',
         details: 'Database connection failed',
       });
-
-      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('should handle general errors', async () => {
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: validPayload,
+      });
       vi.mocked(getDb).mockRejectedValue(new Error('General error'));
 
       const result = await saveGame(validPayload);

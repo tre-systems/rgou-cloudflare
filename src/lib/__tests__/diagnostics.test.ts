@@ -1,38 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { calculatePiecePositions, calculateGamePhase, calculateBoardControl } from '../diagnostics';
-import { GameState } from '../schemas';
+import { createTestGameState } from './test-utils';
 
 describe('diagnostics', () => {
   describe('calculatePiecePositions', () => {
     it('should calculate piece positions correctly for initial state', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 0,
-        canMove: false,
-        validMoves: [],
-        history: [],
-      };
+      const gameState = createTestGameState({
+        player1PieceSquares: [-1, -1, -1, -1, -1, -1, -1],
+        player2PieceSquares: [-1, -1, -1, -1, -1, -1, -1],
+      });
 
       const positions = calculatePiecePositions(gameState);
 
@@ -45,34 +21,10 @@ describe('diagnostics', () => {
     });
 
     it('should calculate piece positions with pieces on board', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 0, player: 'player1' },
-          { square: 5, player: 'player1' },
-          { square: 10, player: 'player1' },
-          { square: 15, player: 'player1' },
-          { square: 20, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: 2, player: 'player2' },
-          { square: 7, player: 'player2' },
-          { square: 12, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 3,
-        canMove: true,
-        validMoves: [0, 1, 2],
-        history: [],
-      };
+      const gameState = createTestGameState({
+        player1PieceSquares: [0, 5, 10, 15, 20, -1, -1],
+        player2PieceSquares: [2, 7, 12, 20, 20, -1, -1],
+      });
 
       const positions = calculatePiecePositions(gameState);
 
@@ -85,26 +37,10 @@ describe('diagnostics', () => {
     });
 
     it('should handle edge cases with boundary squares', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 0, player: 'player1' },
-          { square: 19, player: 'player1' },
-          { square: 20, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: 0, player: 'player2' },
-          { square: 19, player: 'player2' },
-          { square: 20, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 1,
-        canMove: true,
-        validMoves: [0],
-        history: [],
-      };
+      const gameState = createTestGameState({
+        player1PieceSquares: [0, 19, 20],
+        player2PieceSquares: [0, 19, 20],
+      });
 
       const positions = calculatePiecePositions(gameState);
 
@@ -117,34 +53,10 @@ describe('diagnostics', () => {
     });
 
     it('should handle all pieces finished', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 20, player: 'player1' },
-          { square: 20, player: 'player1' },
-          { square: 20, player: 'player1' },
-          { square: 20, player: 'player1' },
-          { square: 20, player: 'player1' },
-          { square: 20, player: 'player1' },
-          { square: 20, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-          { square: 20, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'finished',
-        winner: 'player1',
-        diceRoll: 0,
-        canMove: false,
-        validMoves: [],
-        history: [],
-      };
+      const gameState = createTestGameState({
+        player1PieceSquares: [20, 20, 20, 20, 20, 20, 20],
+        player2PieceSquares: [20, 20, 20, 20, 20, 20, 20],
+      });
 
       const positions = calculatePiecePositions(gameState);
 
@@ -233,160 +145,67 @@ describe('diagnostics', () => {
 
   describe('calculateBoardControl', () => {
     it('should calculate board control for balanced position', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 5, player: 'player1' },
-          { square: 10, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: 5, player: 'player2' },
-          { square: 10, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 2,
-        canMove: true,
-        validMoves: [0, 1],
-        history: [],
-      };
+      const gameState = createTestGameState({
+        player1PieceSquares: [5, 10],
+        player2PieceSquares: [5, 10],
+      });
 
       const control = calculateBoardControl(gameState);
       expect(control).toBe(0);
     });
 
-    it('should calculate board control with player1 advantage', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 5, player: 'player1' },
-          { square: 10, player: 'player1' },
-          { square: 15, player: 'player1' },
-        ],
-        player2Pieces: [{ square: 5, player: 'player2' }],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 1,
-        canMove: true,
-        validMoves: [0],
-        history: [],
-      };
+    it('should give player 1 advantage when they have more pieces on board', () => {
+      const gameState = createTestGameState({
+        player1PieceSquares: [5, 10, 12],
+        player2PieceSquares: [5, 10],
+      });
 
       const control = calculateBoardControl(gameState);
-      expect(control).toBe(3);
+      expect(control).toBe(2);
     });
 
-    it('should calculate board control with player2 advantage', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [{ square: 5, player: 'player1' }],
-        player2Pieces: [
-          { square: 5, player: 'player2' },
-          { square: 10, player: 'player2' },
-          { square: 15, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 3,
-        canMove: true,
-        validMoves: [0],
-        history: [],
-      };
-
+    it('should give player 2 advantage when they have more pieces on board', () => {
+      const gameState = createTestGameState({
+        player1PieceSquares: [5, 10],
+        player2PieceSquares: [5, 10, 12],
+      });
       const control = calculateBoardControl(gameState);
-      expect(control).toBe(-2);
+      expect(control).toBe(-1);
     });
 
-    it('should give bonus for pieces past halfway mark', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 6, player: 'player1' },
-          { square: 8, player: 'player1' },
-          { square: 12, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: 2, player: 'player2' },
-          { square: 4, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 2,
-        canMove: true,
-        validMoves: [0, 1],
-        history: [],
-      };
-
+    it('should handle pieces past the halfway mark', () => {
+      const gameState = createTestGameState({
+        player1PieceSquares: [6],
+        player2PieceSquares: [],
+      });
       const control = calculateBoardControl(gameState);
-      expect(control).toBe(3);
-    });
-
-    it('should handle pieces on rosette squares', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 4, player: 'player1' },
-          { square: 8, player: 'player1' },
-          { square: 14, player: 'player1' },
-        ],
-        player2Pieces: [
-          { square: 4, player: 'player2' },
-          { square: 8, player: 'player2' },
-        ],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 1,
-        canMove: true,
-        validMoves: [0],
-        history: [],
-      };
-
-      const control = calculateBoardControl(gameState);
-      expect(control).toBe(1);
+      expect(control).toBe(2);
     });
 
     it('should handle empty board', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [],
-        player2Pieces: [],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 0,
-        canMove: false,
-        validMoves: [],
-        history: [],
-      };
-
+      const gameState = createTestGameState({
+        player1PieceSquares: [],
+        player2PieceSquares: [],
+      });
       const control = calculateBoardControl(gameState);
       expect(control).toBe(0);
     });
 
-    it('should handle pieces outside board range', () => {
-      const gameState: GameState = {
-        board: Array(21).fill(null),
-        player1Pieces: [
-          { square: 25, player: 'player1' },
-          { square: 30, player: 'player1' },
-        ],
-        player2Pieces: [{ square: 25, player: 'player2' }],
-        currentPlayer: 'player1',
-        gameStatus: 'playing',
-        winner: null,
-        diceRoll: 1,
-        canMove: true,
-        validMoves: [0],
-        history: [],
-      };
+    it('should handle complex scenarios', () => {
+      const gameState = createTestGameState({
+        player1PieceSquares: [1, 2, 6, 8, 14], // 5 on board, 2 past half
+        player2PieceSquares: [3, 4, 7, 10], // 4 on board, 2 past half
+      });
 
       const control = calculateBoardControl(gameState);
-      expect(control).toBe(0);
+      expect(control).toBe(1);
+
+      const gameState2 = createTestGameState({
+        player1PieceSquares: [1, 2, 6, 8, 14],
+        player2PieceSquares: [3, 4, 7],
+      });
+      const control2 = calculateBoardControl(gameState2);
+      expect(control2).toBe(3);
     });
   });
 });

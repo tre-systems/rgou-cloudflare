@@ -12,6 +12,7 @@ Always try and improve the type checking.
 Try and avoid duplication between types.
 Use immer where possible to avoid mutation.
 Use Zustand to manage state.
+Try to keep the state machine simple and easy to understand.
 Don't add a logging facility, the console is fine.
 Code should be as simple and concise as possible.
 REMOVE ALL COMMENTS! unless they are really important.

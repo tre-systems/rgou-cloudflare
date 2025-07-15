@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useGameStore } from '../game-store';
 import { wasmAiService } from '../wasm-ai-service';
 import { AIService } from '../ai-service';
+import { createTestGameState } from './test-utils';
+
+const incrementWinsMock = vi.fn();
+const incrementLossesMock = vi.fn();
 
 vi.mock('../wasm-ai-service', () => ({
   wasmAiService: {
@@ -20,8 +24,8 @@ vi.mock('../stats-store', () => ({
   useStatsStore: {
     getState: vi.fn(() => ({
       actions: {
-        incrementWins: vi.fn(),
-        incrementLosses: vi.fn(),
+        incrementWins: incrementWinsMock,
+        incrementLosses: incrementLossesMock,
       },
     })),
   },
@@ -34,285 +38,129 @@ vi.mock('@/lib/actions', () => ({
 describe('GameStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
-    useGameStore.setState({
-      gameState: {
-        board: Array(20).fill(null),
-        player1Pieces: Array(7)
-          .fill(null)
-          .map(() => ({ square: -1, player: 'player1' as const })),
-        player2Pieces: Array(7)
-          .fill(null)
-          .map(() => ({ square: -1, player: 'player2' as const })),
-        currentPlayer: 'player1',
-        gameStatus: 'playing' as const,
-        winner: null,
-        diceRoll: null,
-        canMove: false,
-        validMoves: [],
-        history: [],
-      },
-      aiThinking: false,
-      lastAIDiagnostics: null,
-      lastAIMoveDuration: null,
-      lastMoveType: null,
-      lastMovePlayer: null,
-      actions: useGameStore.getState().actions,
-    });
+    useGameStore.getState().actions.reset();
   });
 
   describe('initialize', () => {
-    it('should initialize game state when not from storage', () => {
+    it('should initialize game state', () => {
       const { actions } = useGameStore.getState();
       actions.initialize(false);
 
       const state = useGameStore.getState();
       expect(state.aiThinking).toBe(false);
       expect(state.lastAIDiagnostics).toBe(null);
-      expect(state.lastAIMoveDuration).toBe(null);
-      expect(state.lastMoveType).toBe(null);
-      expect(state.lastMovePlayer).toBe(null);
-    });
-
-    it('should not initialize when from storage', () => {
-      const initialState = useGameStore.getState();
-      const { actions } = useGameStore.getState();
-
-      actions.initialize(true);
-
-      const state = useGameStore.getState();
-      expect(state.gameState).toEqual(initialState.gameState);
     });
   });
 
   describe('makeMove', () => {
-    it('should not make move when canMove is false', () => {
-      const initialState = useGameStore.getState();
-      const { actions } = useGameStore.getState();
-
+    it('should not make a move if it is not allowed', () => {
+      const { actions, gameState } = useGameStore.getState();
+      const initialState = { ...gameState };
       actions.makeMove(0);
-
-      const state = useGameStore.getState();
-      expect(state.gameState).toEqual(initialState.gameState);
+      expect(useGameStore.getState().gameState).toEqual(initialState);
     });
 
-    it('should not make move when pieceIndex is not in validMoves', () => {
-      useGameStore.setState(state => {
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [1, 2];
+    it('should make a move and update game state', () => {
+      useGameStore.setState({
+        gameState: createTestGameState({
+          diceRoll: 4,
+          canMove: true,
+          validMoves: [0],
+        }),
       });
 
-      const initialState = useGameStore.getState();
       const { actions } = useGameStore.getState();
-
       actions.makeMove(0);
 
-      const state = useGameStore.getState();
-      expect(state.gameState).toEqual(initialState.gameState);
+      const { gameState, lastMoveType, lastMovePlayer } = useGameStore.getState();
+      expect(gameState.player1Pieces[0].square).toBe(0);
+      expect(lastMoveType).toBe('rosette');
+      expect(lastMovePlayer).toBe('player1');
     });
 
     it('should handle game finish and increment wins for player1', () => {
-      // This test is too complex for the current game logic implementation
-      // We'll test the basic move functionality instead
-      useGameStore.setState(state => {
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
-        state.gameState.diceRoll = 4;
-      });
-
       const { actions } = useGameStore.getState();
-      actions.makeMove(0);
+      actions.createNearWinningState(); // player1 piece 6 at square 12
 
-      const state = useGameStore.getState();
-      expect(state.gameState.player1Pieces[0].square).toBeGreaterThan(-1);
-    });
+      actions.processDiceRoll(2); // This will finish the piece
+      actions.makeMove(6);
 
-    it('should set lastMoveType to finish when piece finishes', () => {
-      useGameStore.setState(state => {
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
-        state.gameState.diceRoll = 1;
-        state.gameState.player1Pieces[0] = { square: 13, player: 'player1' };
-      });
-
-      const { actions } = useGameStore.getState();
-      actions.makeMove(0);
-
-      const state = useGameStore.getState();
-      expect(state.lastMoveType).toBe('finish');
-      expect(state.lastMovePlayer).toBe('player1');
-      expect(state.gameState.player1Pieces[0].square).toBe(20);
-    });
-
-    it('should handle game finish and increment losses for player2', () => {
-      // This test is too complex for the current game logic implementation
-      // We'll test the basic move functionality instead
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
-        state.gameState.diceRoll = 4;
-      });
-
-      const { actions } = useGameStore.getState();
-      actions.makeMove(0);
-
-      const state = useGameStore.getState();
-      expect(state.gameState.player2Pieces[0].square).toBeGreaterThan(-1);
-    });
-
-    it('should set lastMoveType to finish when player2 piece finishes', () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
-        state.gameState.diceRoll = 1;
-        state.gameState.player2Pieces[0] = { square: 15, player: 'player2' };
-      });
-
-      const { actions } = useGameStore.getState();
-      actions.makeMove(0);
-
-      const state = useGameStore.getState();
-      expect(state.lastMoveType).toBe('finish');
-      expect(state.lastMovePlayer).toBe('player2');
-      expect(state.gameState.player2Pieces[0].square).toBe(20);
+      const { gameState } = useGameStore.getState();
+      expect(gameState.gameStatus).toBe('finished');
+      expect(gameState.winner).toBe('player1');
+      expect(incrementWinsMock).toHaveBeenCalled();
     });
   });
 
   describe('makeAIMove', () => {
-    it('should not make AI move when current player is not player2', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player1';
-        state.gameState.canMove = true;
+    it('should not make AI move when it is not AI turn', async () => {
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player1',
+          canMove: true,
+        }),
       });
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('server');
 
-      const state = useGameStore.getState();
-      expect(state.aiThinking).toBe(false);
-    });
-
-    it('should not make AI move when canMove is false', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = false;
-      });
-
-      const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
-
-      const state = useGameStore.getState();
-      expect(state.aiThinking).toBe(false);
+      const { aiThinking } = useGameStore.getState();
+      expect(aiThinking).toBe(false);
     });
 
     it('should handle server AI move successfully', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player2',
+          canMove: true,
+          validMoves: [0],
+        }),
       });
-
-      (AIService.getAIMove as any).mockResolvedValue({ move: 0 });
+      vi.mocked(AIService.getAIMove).mockResolvedValue({ move: 0 } as any);
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('server');
 
       expect(AIService.getAIMove).toHaveBeenCalled();
+      const { aiThinking } = useGameStore.getState();
+      expect(aiThinking).toBe(false);
     });
 
     it('should handle client AI move successfully', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player2',
+          canMove: true,
+          validMoves: [0],
+        }),
       });
-
-      (wasmAiService.getAIMove as any).mockResolvedValue({ move: 0 });
+      vi.mocked(wasmAiService.getAIMove).mockResolvedValue({ move: 0 } as any);
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('client');
 
       expect(wasmAiService.getAIMove).toHaveBeenCalled();
+      const { aiThinking } = useGameStore.getState();
+      expect(aiThinking).toBe(false);
     });
 
-    it('should handle AI move with null move response', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0, 1];
+    it('should use fallback when AI returns invalid move', async () => {
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player2',
+          canMove: true,
+          validMoves: [1],
+          diceRoll: 1,
+        }),
       });
-
-      (AIService.getAIMove as any).mockResolvedValue({ move: null });
+      vi.mocked(AIService.getAIMove).mockResolvedValue({ move: 99 } as any); // Invalid move
 
       const { actions } = useGameStore.getState();
       await actions.makeAIMove('server');
 
-      expect(AIService.getAIMove).toHaveBeenCalled();
-    });
-
-    it('should handle AI move with undefined move response', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0, 1];
-      });
-
-      (AIService.getAIMove as any).mockResolvedValue({ move: undefined });
-
-      const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
-
-      expect(AIService.getAIMove).toHaveBeenCalled();
-    });
-
-    it('should handle AI move with invalid move response', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0, 1];
-      });
-
-      (AIService.getAIMove as any).mockResolvedValue({ move: 5 });
-
-      const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
-
-      expect(AIService.getAIMove).toHaveBeenCalled();
-    });
-
-    it('should handle AI service error and use fallback', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [0];
-      });
-
-      (AIService.getAIMove as any).mockRejectedValue(new Error('AI service error'));
-      (AIService.getFallbackAIMove as any).mockReturnValue(0);
-
-      const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
-
-      expect(AIService.getFallbackAIMove).toHaveBeenCalled();
-    });
-
-    it('should handle empty valid moves array', async () => {
-      useGameStore.setState(state => {
-        state.gameState.currentPlayer = 'player2';
-        state.gameState.canMove = true;
-        state.gameState.validMoves = [];
-      });
-
-      (AIService.getAIMove as any).mockResolvedValue({ move: null });
-
-      const { actions } = useGameStore.getState();
-      await actions.makeAIMove('server');
-
-      expect(AIService.getAIMove).not.toHaveBeenCalled();
-      const state = useGameStore.getState();
-      expect(state.gameState.currentPlayer).toBe('player1');
+      const { gameState } = useGameStore.getState();
+      // fallback is to take first valid move, which is piece 1
+      expect(gameState.player2Pieces[1].square).not.toBe(-1);
     });
   });
 

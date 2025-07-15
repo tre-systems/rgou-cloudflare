@@ -39,7 +39,14 @@ fn convert_game_state_to_ml(rust_state: &GameState) -> MLGameState {
 }
 
 fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
-    let content = std::fs::read_to_string("../../ml_ai_weights_fast.json")?;
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let weights_path = std::path::Path::new(manifest_dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ml_ai_weights_fast.json");
+    let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
     let value_weights: Vec<f32> = weights["valueWeights"]

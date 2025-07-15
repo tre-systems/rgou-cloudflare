@@ -196,6 +196,10 @@ describe('AIService', () => {
   });
 
   describe('getFallbackAIMove', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it('should return 0 when no valid moves', () => {
       const gameStateNoMoves = { ...mockGameState, canMove: false, validMoves: [] };
       const result = AIService.getFallbackAIMove(gameStateNoMoves);
@@ -208,10 +212,25 @@ describe('AIService', () => {
       expect(result).toBe(0);
     });
 
-    it('should return a random valid move', () => {
+    it('should return the first move when Math.random returns a low value', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.1);
       const gameStateWithMoves = { ...mockGameState, validMoves: [1, 2, 3] };
       const result = AIService.getFallbackAIMove(gameStateWithMoves);
-      expect([1, 2, 3]).toContain(result);
+      expect(result).toBe(1);
+    });
+
+    it('should return a middle move when Math.random returns a mid-range value', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const gameStateWithMoves = { ...mockGameState, validMoves: [1, 2, 3] };
+      const result = AIService.getFallbackAIMove(gameStateWithMoves);
+      expect(result).toBe(2);
+    });
+
+    it('should return the last move when Math.random returns a high value', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      const gameStateWithMoves = { ...mockGameState, validMoves: [1, 2, 3] };
+      const result = AIService.getFallbackAIMove(gameStateWithMoves);
+      expect(result).toBe(3);
     });
 
     it('should return a valid move when only one move available', () => {

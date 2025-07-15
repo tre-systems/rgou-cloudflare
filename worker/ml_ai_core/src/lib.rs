@@ -1,6 +1,4 @@
-
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 pub mod features;
 pub mod neural_network;
@@ -265,7 +263,6 @@ pub struct MLDiagnostics {
 pub struct MLAI {
     value_network: NeuralNetwork,
     policy_network: NeuralNetwork,
-    transposition_table: HashMap<u64, f32>,
 }
 
 impl MLAI {
@@ -285,7 +282,6 @@ impl MLAI {
         MLAI {
             value_network: NeuralNetwork::new(value_config),
             policy_network: NeuralNetwork::new(policy_config),
-            transposition_table: HashMap::new(),
         }
     }
 

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ExternalLink, Brain, Cpu, Eye } from 'lucide-react';
 import Image from 'next/image';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
-import { isLocalDevelopment, getAIName } from '@/lib/utils';
+import { isDevelopment, getAIName } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
@@ -207,7 +207,7 @@ export default function RoyalGameOfUr() {
     }, 0);
   };
 
-  const diagnosticsPanelOrPlaceholder = isLocalDevelopment() ? (
+  const diagnosticsPanelOrPlaceholder = isDevelopment() ? (
     lastAIDiagnostics ? (
       <AIDiagnosticsPanel
         lastAIDiagnostics={lastAIDiagnostics}
@@ -265,7 +265,7 @@ export default function RoyalGameOfUr() {
             <span>Pop Out Game</span>
           </button>
         </div>
-        {isLocalDevelopment() && (
+        {isDevelopment() && (
           <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
             {diagnosticsPanelOrPlaceholder}
           </div>
@@ -387,7 +387,7 @@ export default function RoyalGameOfUr() {
             />
           )}
 
-          {isLocalDevelopment() && <div className="xl:hidden">{diagnosticsPanelOrPlaceholder}</div>}
+          {isDevelopment() && <div className="xl:hidden">{diagnosticsPanelOrPlaceholder}</div>}
 
           <HowToPlayPanel
             isOpen={howToPlayOpen}

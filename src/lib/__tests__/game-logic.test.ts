@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initializeGame, rollDice, getValidMoves, makeMove, processDiceRoll } from '../game-logic';
 import { GameState } from '../schemas';
+import { createTestGameState } from './test-utils';
 
 describe('game-logic', () => {
   describe('initializeGame', () => {
@@ -70,63 +71,37 @@ describe('game-logic', () => {
 
   describe('getValidMoves', () => {
     it('should return empty array when diceRoll is null', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
-        diceRoll: null,
-      };
-
+      const gameState = createTestGameState({ diceRoll: null });
       const validMoves = getValidMoves(gameState);
       expect(validMoves).toEqual([]);
     });
 
     it('should return empty array when diceRoll is 0', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
-        diceRoll: 0,
-      };
-
+      const gameState = createTestGameState({ diceRoll: 0 });
       const validMoves = getValidMoves(gameState);
       expect(validMoves).toEqual([]);
     });
 
     it('should return valid moves for pieces starting from home', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
-        diceRoll: 4,
-        currentPlayer: 'player1',
-      };
-
+      const gameState = createTestGameState({ diceRoll: 4 });
       const validMoves = getValidMoves(gameState);
       expect(validMoves).toEqual([0, 1, 2, 3, 4, 5, 6]);
     });
 
     it('should not return moves for finished pieces', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
+      const gameState = createTestGameState({
         diceRoll: 4,
-        currentPlayer: 'player1',
-        player1Pieces: [
-          { square: 20, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-        ],
-      };
-
+        player1PieceSquares: [20, -1, -1, -1, -1, -1, -1],
+      });
       const validMoves = getValidMoves(gameState);
       expect(validMoves).toEqual([1, 2, 3, 4, 5, 6]);
     });
 
     it('should handle player2 moves correctly', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
+      const gameState = createTestGameState({
         diceRoll: 4,
         currentPlayer: 'player2',
-      };
-
+      });
       const validMoves = getValidMoves(gameState);
       expect(validMoves).toEqual([0, 1, 2, 3, 4, 5, 6]);
     });
@@ -135,38 +110,31 @@ describe('game-logic', () => {
   describe('makeMove', () => {
     it('should return unchanged state for invalid move', () => {
       const gameState = initializeGame();
-      const [newState, moveType, movePlayer] = makeMove(gameState, 0);
-
+      const [newState, moveType, movePlayer] = makeMove(gameState, 99); // Invalid piece index
       expect(newState).toEqual(gameState);
       expect(moveType).toBeNull();
       expect(movePlayer).toBe('player1');
     });
 
     it('should return unchanged state when diceRoll is null', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
+      const gameState = createTestGameState({
         diceRoll: null,
         canMove: true,
         validMoves: [0],
-      };
-
+      });
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
-
       expect(newState).toEqual(gameState);
       expect(moveType).toBeNull();
       expect(movePlayer).toBe('player1');
     });
 
     it('should make a basic move from home', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
+      const gameState = createTestGameState({
         diceRoll: 4,
         canMove: true,
         validMoves: [0],
-      };
-
+      });
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
-
       expect(newState.player1Pieces[0].square).toBe(0);
       expect(newState.board[0]).toEqual(newState.player1Pieces[0]);
       expect(moveType).toBe('rosette');
@@ -178,43 +146,12 @@ describe('game-logic', () => {
     });
 
     it('should handle capture move', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
+      const gameState = createTestGameState({
         diceRoll: 4,
         canMove: true,
         validMoves: [0],
-        player2Pieces: [
-          { square: 0, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-          { square: -1, player: 'player2' },
-        ],
-        board: [
-          { square: 0, player: 'player2' },
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-        ],
-      };
+        player2PieceSquares: [0], // square 0 is where piece 0 will land
+      });
 
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
 
@@ -223,24 +160,16 @@ describe('game-logic', () => {
       expect(newState.board[0]).toEqual(newState.player1Pieces[0]);
       expect(moveType).toBe('capture');
       expect(movePlayer).toBe('player1');
+      expect(newState.currentPlayer).toBe('player1');
     });
 
     it('should handle finish move', () => {
-      const gameState: GameState = {
-        ...initializeGame(),
+      const gameState = createTestGameState({
         diceRoll: 1,
         canMove: true,
         validMoves: [0],
-        player1Pieces: [
-          { square: 13, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-          { square: -1, player: 'player1' },
-        ],
-      };
+        player1PieceSquares: [13],
+      });
 
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
 
