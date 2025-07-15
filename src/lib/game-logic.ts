@@ -190,43 +190,18 @@ export function makeMove(
 
 export function processDiceRoll(gameState: GameState, providedRoll?: number): GameState {
   const diceRoll = providedRoll !== undefined ? providedRoll : rollDice();
-  const newState = {
-    ...gameState,
-    diceRoll,
-    canMove: diceRoll > 0,
-    validMoves: diceRoll > 0 ? getValidMoves({ ...gameState, diceRoll }) : [],
-  };
+  const validMoves = getValidMoves({ ...gameState, diceRoll });
 
   if (diceRoll === 0) {
-    console.log('Zero roll detected - keeping dice visible for UI delay');
-    return {
-      ...newState,
-      canMove: false,
-      validMoves: [],
-    };
+    console.log('Zero roll detected.');
+  } else if (validMoves.length === 0) {
+    console.log(`No valid moves for roll ${diceRoll}.`);
   }
 
-  if (diceRoll > 0 && newState.validMoves.length === 0) {
-    console.log('No valid moves for roll', diceRoll, '- switching player');
-    return {
-      ...newState,
-      currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
-      diceRoll: null,
-      canMove: false,
-      validMoves: [],
-    };
-  }
-
-  return newState;
-}
-
-export function switchPlayerAfterZeroRoll(gameState: GameState): GameState {
-  console.log('Switching player after zero roll delay');
   return {
     ...gameState,
-    currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
-    diceRoll: null,
-    canMove: false,
-    validMoves: [],
+    diceRoll,
+    validMoves,
+    canMove: diceRoll > 0 && validMoves.length > 0,
   };
 }

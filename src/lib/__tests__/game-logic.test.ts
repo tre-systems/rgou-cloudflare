@@ -374,10 +374,10 @@ describe('game-logic', () => {
 
       const newState = processDiceRoll(gameState, 4);
 
-      expect(newState.diceRoll).toBeNull();
+      expect(newState.diceRoll).toBe(4);
       expect(newState.canMove).toBe(false);
       expect(newState.validMoves).toEqual([]);
-      expect(newState.currentPlayer).toBe('player2');
+      expect(newState.currentPlayer).toBe('player1');
     });
 
     it('should calculate valid moves for roll greater than 0', () => {

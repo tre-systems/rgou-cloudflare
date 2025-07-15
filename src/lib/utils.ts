@@ -22,6 +22,22 @@ export function getPlayerId(): string {
   return playerId;
 }
 
+export function getAIName(aiSource: 'server' | 'client' | 'ml' | 'fallback' | null): string {
+  if (!aiSource) return 'Unknown';
+  switch (aiSource) {
+    case 'client':
+      return 'Expectiminimax';
+    case 'ml':
+      return 'ML AI';
+    case 'server':
+      return 'Server AI';
+    case 'fallback':
+      return 'Fallback';
+    default:
+      return 'Unknown';
+  }
+}
+
 export const isProduction = () => {
   if (typeof window === 'undefined') {
     return process.env.NODE_ENV === 'production';
@@ -40,14 +56,14 @@ export const isDevelopment = () => {
   return hostname === 'localhost' || hostname === '127.0.0.1';
 };
 
-export const isLocalDevelopment = () => {
+export function isLocalDevelopment() {
   if (typeof window === 'undefined') {
     return process.env.NODE_ENV === 'development';
   }
 
   const hostname = window.location.hostname;
   return hostname === 'localhost' || hostname === '127.0.0.1';
-};
+}
 
 export function batch<T>(array: T[], size: number): T[][] {
   const batched: T[][] = [];

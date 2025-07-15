@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, getAIName } from '@/lib/utils';
 import { GameState } from '@/lib/types';
 import { Dice6, Crown, Zap, Trophy, XCircle, Brain, Cpu } from 'lucide-react';
 
@@ -31,19 +31,12 @@ export default function GameStatus({
     }
 
     if (watchMode) {
-      if (gameState.currentPlayer === 'player1') {
-        return {
-          text: aiSourceP1 === 'ml' ? 'ML AI turn' : 'Expectiminimax AI turn',
-          icon: aiSourceP1 === 'ml' ? Brain : Cpu,
-          color: aiSourceP1 === 'ml' ? 'text-purple-400' : 'text-blue-400',
-        };
-      } else {
-        return {
-          text: aiSourceP2 === 'ml' ? 'ML AI turn' : 'Expectiminimax AI turn',
-          icon: aiSourceP2 === 'ml' ? Brain : Cpu,
-          color: aiSourceP2 === 'ml' ? 'text-purple-400' : 'text-blue-400',
-        };
-      }
+      const currentAISource = gameState.currentPlayer === 'player1' ? aiSourceP1 : aiSourceP2;
+      return {
+        text: `${getAIName(currentAISource)}'s turn`,
+        icon: currentAISource === 'ml' ? Brain : Cpu,
+        color: currentAISource === 'ml' ? 'text-purple-400' : 'text-blue-400',
+      };
     }
 
     if (gameState.currentPlayer === 'player1') {

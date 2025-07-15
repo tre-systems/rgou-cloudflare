@@ -10,6 +10,7 @@ import {
   calculateGamePhase,
   calculatePiecePositions,
 } from '@/lib/diagnostics';
+import { getAIName } from '@/lib/utils';
 
 interface AIDiagnosticsPanelProps {
   lastAIDiagnostics: AIResponse;
@@ -52,7 +53,7 @@ export default function AIDiagnosticsPanel({
           <Bug className="w-4 h-4 text-green-400" />
           <span className="font-semibold text-sm text-white/90">AI Diagnostics</span>
           {lastAIDiagnostics.aiType && (
-            <span className="text-xs text-white/60 capitalize">({lastAIDiagnostics.aiType})</span>
+            <span className="text-xs text-white/60">({getAIName(lastAIDiagnostics.aiType)})</span>
           )}
         </div>
         {isOpen ? (

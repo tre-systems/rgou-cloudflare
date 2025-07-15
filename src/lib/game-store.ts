@@ -22,7 +22,7 @@ type GameStore = {
   actions: {
     initialize: (fromStorage?: boolean) => void;
     processDiceRoll: (roll?: number) => void;
-    switchPlayerAfterZeroRoll: () => void;
+    endTurn: () => void;
     makeMove: (pieceIndex: number) => void;
     makeAIMove: (aiSource: 'server' | 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
@@ -60,17 +60,13 @@ export const useGameStore = create<GameStore>()(
             state.gameState = newState;
           });
         },
-        switchPlayerAfterZeroRoll: () => {
-          const { gameState } = get();
-          const newState = processDiceRoll({
-            ...gameState,
-            currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
-            diceRoll: null,
-            canMove: false,
-            validMoves: [],
-          });
+        endTurn: () => {
           set(state => {
-            state.gameState = newState;
+            state.gameState.currentPlayer =
+              state.gameState.currentPlayer === 'player1' ? 'player2' : 'player1';
+            state.gameState.diceRoll = null;
+            state.gameState.canMove = false;
+            state.gameState.validMoves = [];
           });
         },
         makeMove: (pieceIndex: number) => {

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ExternalLink, Brain, Cpu, Eye } from 'lucide-react';
 import Image from 'next/image';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
-import { isLocalDevelopment } from '@/lib/utils';
+import { isLocalDevelopment, getAIName } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
 import AIDiagnosticsPanel from './AIDiagnosticsPanel';
@@ -43,8 +43,7 @@ const MODE_OPTIONS = [
 
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
-  const { processDiceRoll, switchPlayerAfterZeroRoll, makeMove, makeAIMove, reset } =
-    useGameActions();
+  const { processDiceRoll, endTurn, makeMove, makeAIMove, reset } = useGameActions();
   const aiThinking = useGameStore(state => state.aiThinking);
   const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
   const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
@@ -66,48 +65,49 @@ export default function RoyalGameOfUr() {
     }
 
     const isWatchMode = selectedMode === 'watch';
-    const canCurrentPlayerMove = gameState.canMove;
-    const currentPlayer = gameState.currentPlayer;
+    const isAIsTurn =
+      isWatchMode ||
+      (gameState.currentPlayer === 'player2' &&
+        (selectedMode === 'classic' || selectedMode === 'ml'));
 
-    const handlePlayerTurn = () => {
-      if (!canCurrentPlayerMove) {
-        if (gameState.diceRoll === null) {
-          const timer = setTimeout(() => processDiceRoll(), 500);
-          return () => clearTimeout(timer);
-        } else if (gameState.diceRoll === 0) {
-          const timer = setTimeout(() => switchPlayerAfterZeroRoll(), 1500);
-          return () => clearTimeout(timer);
-        }
-      } else {
-        // Player has rolled and can move
-        if (isWatchMode) {
-          const moveDelay = 750;
-          const timer = setTimeout(() => {
-            const aiSource = currentPlayer === 'player1' ? aiSourceP1 : aiSourceP2;
-            if (aiSource) {
-              makeAIMove(aiSource, true);
-            }
-          }, moveDelay);
-          return () => clearTimeout(timer);
-        } else if (currentPlayer === 'player2') {
-          // It's the AI's turn in "play" mode
-          soundEffects.aiThinking();
-          makeAIMove(aiSource, false);
-        }
-      }
-      return undefined;
-    };
+    // If it's the human's turn to move, do nothing and wait for UI interaction.
+    if (!isAIsTurn && gameState.canMove) {
+      return;
+    }
 
-    return handlePlayerTurn();
+    // Time to roll the dice (start of any turn)
+    if (gameState.diceRoll === null) {
+      const timer = setTimeout(() => processDiceRoll(), 500);
+      return () => clearTimeout(timer);
+    }
+
+    // AI's turn to make a move
+    if (isAIsTurn && gameState.canMove) {
+      const moveDelay = selectedMode === 'watch' ? 750 : 250;
+      const timer = setTimeout(() => {
+        const aiSource = gameState.currentPlayer === 'player1' ? aiSourceP1 : aiSourceP2;
+        if (aiSource) {
+          if (!isWatchMode) soundEffects.aiThinking();
+          makeAIMove(aiSource, isWatchMode);
+        }
+      }, moveDelay);
+      return () => clearTimeout(timer);
+    }
+
+    // Turn is over (no valid moves, or dice roll was 0)
+    if (gameState.diceRoll !== null && !gameState.canMove) {
+      const timer = setTimeout(() => endTurn(), 1500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
   }, [
     gameState,
     showModelOverlay,
     selectedMode,
-    aiSource,
     aiSourceP1,
     aiSourceP2,
     processDiceRoll,
-    switchPlayerAfterZeroRoll,
+    endTurn,
     makeAIMove,
   ]);
 
@@ -236,7 +236,9 @@ export default function RoyalGameOfUr() {
         {diagnosticsPanelOpen && (
           <div className="mt-3 text-xs text-white/70">
             <p>No AI diagnostics available yet. Make a move to see AI analysis.</p>
-            <p className="mt-2">Current AI source: {aiSource}</p>
+            <p className="mt-2">
+              Current AI source: {selectedMode === 'watch' ? 'N/A' : getAIName(aiSource)}
+            </p>
           </div>
         )}
       </div>
