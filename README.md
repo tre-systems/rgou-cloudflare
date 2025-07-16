@@ -2,12 +2,20 @@
 
 A modern, web-based implementation of the ancient Royal Game of Ur, featuring a beautiful UI, offline support, and two powerful AI opponents (Classic and Machine Learning-based). Built with Next.js, TypeScript, Rust, and WebAssembly.
 
+## What is the Royal Game of Ur?
+
+The Royal Game of Ur is one of the oldest known board games, dating to around 2500 BCE in ancient Mesopotamia. It's a strategic race game where two players compete to move all seven pieces around a unique board and off the finish line first. The game combines luck (from dice rolls) with strategic decision-making, featuring special "rosette" squares that grant extra turns and safe havens.
+
+This implementation brings this ancient game to life with modern technology, allowing you to play against sophisticated AI opponents that run entirely in your browser.
+
 ## Features
 
 - Faithful recreation of the Royal Game of Ur
-- Play against Classic (Expectiminimax) or ML (Neural Network) AI
-- AI vs. AI mode
-- All AI runs locally in your browser via WebAssembly
+- Two AI opponents:
+  - **Classic AI**: Uses expectiminimax algorithm for strategic depth (6-ply search)
+  - **ML AI**: Neural network trained through self-play for a different playstyle
+- AI vs. AI mode to watch the two AIs compete
+- All AI runs locally in your browser via WebAssembly (no server calls)
 - PWA: works offline, installable
 - Game statistics and database integration
 - Modern, responsive UI
@@ -42,6 +50,12 @@ This will update:
 - **classicAI**: Classic AI version (increment when expectiminimax logic changes)
 - **mlAI**: ML AI version (increment when neural network changes)
 - **game**: Game version (increment when game rules change)
+
+## Quick Start
+
+Want to play right away? The game is available online and works in any modern browser. Just visit the deployed version to start playing against the AI.
+
+For developers who want to run locally or contribute:
 
 ## Getting Started
 

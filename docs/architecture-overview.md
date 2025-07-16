@@ -2,6 +2,16 @@
 
 This document details the architecture of the Royal Game of Ur project, focusing on its AI engine, frontend, and deployment.
 
+## What Makes This Special?
+
+This implementation stands out for several reasons:
+
+- **Ancient Game, Modern Tech**: Brings a 4500-year-old game to life with cutting-edge web technologies
+- **Dual AI System**: Features both a classic expectiminimax AI and a neural network AI, each with distinct playstyles
+- **Browser-Native AI**: All AI runs locally in your browser via WebAssembly - no server calls needed
+- **Offline-First**: Works completely offline once loaded, perfect for mobile or unreliable connections
+- **Performance**: Rust-compiled AI provides desktop-level performance in the browser
+
 ## Principles
 
 - High performance: Rust and WebAssembly for AI

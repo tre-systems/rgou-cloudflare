@@ -8,6 +8,10 @@ The ML AI can be played against directly or watched as it competes against the C
 
 The ML AI is a neural network agent that learns to play by imitating a strong Classic AI (using the expectiminimax algorithm) and, optionally, through self-play. The goal is to create a strong opponent with a distinct, learned playstyle.
 
+## Why This Matters
+
+This ML AI represents a fascinating intersection of ancient games and modern AI. While the Classic AI uses traditional game theory (expectiminimax search), the ML AI learns patterns from data - much like how humans learn to play games. This creates two fundamentally different approaches to the same strategic challenge, offering players unique experiences and researchers insights into AI development.
+
 ## Architecture
 
 - **Input:** 150-dimensional feature vector representing the game state

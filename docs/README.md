@@ -1,6 +1,6 @@
 # Documentation Index
 
-Welcome to the Royal Game of Ur documentation. Use this guide to find everything you need.
+Welcome to the Royal Game of Ur documentation! This guide helps you find everything you need, whether you're a player, developer, or AI researcher.
 
 ## Start Here
 
@@ -8,6 +8,8 @@ Welcome to the Royal Game of Ur documentation. Use this guide to find everything
   1. Read the [Main README](../README.md) for a quick overview and setup.
   2. See [Game Rules and Strategy](./game-rules-strategy.md) for how to play.
   3. For technical setup, see [Technical Implementation Guide](./technical-implementation.md).
+
+- **Just want to play?** The game is available online and works in any modern browser - no installation needed!
 
 ## Documentation Overview
 

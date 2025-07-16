@@ -2,11 +2,13 @@
 
 ## Historical Context
 
-The Royal Game of Ur is one of the oldest known board games, dating to around 2500 BCE in Mesopotamia. Discovered in the Royal Cemetery of Ur, it was played for over 3000 years. Rules were reconstructed from archaeological finds and cuneiform texts.
+The Royal Game of Ur is one of the oldest known board games, dating to around 2500 BCE in Mesopotamia. Discovered in the Royal Cemetery of Ur, it was played for over 3000 years across the ancient world. The rules were reconstructed from archaeological finds and cuneiform texts by scholars like Irving Finkel of the British Museum.
 
 ## Game Overview
 
-A race game for two players. Each tries to move all seven pieces around the board and off the finish before the opponent. Combines luck (dice) and strategy.
+The Royal Game of Ur is a strategic race game for two players. Each player tries to move all seven pieces around a unique board and off the finish line before their opponent. The game masterfully combines luck (from dice rolls) with strategic decision-making, featuring special "rosette" squares that grant extra turns and serve as safe havens.
+
+Think of it as a cross between backgammon and chess - with the tactical depth of chess but the accessibility of backgammon.
 
 ## Board Layout
 
