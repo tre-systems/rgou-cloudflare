@@ -6,12 +6,12 @@ This document describes the two primary AI opponents available in the Royal Game
 
 The game features two distinct AI opponents, each with a unique playstyle and architecture:
 
-- **Classic AI (Expectiminimax)**: A traditional, deterministic game-playing AI that uses the expectiminimax algorithm.
-- **ML AI (Neural Network)**: A modern, experimental AI powered by a neural network trained through self-play.
+- **Classic AI** (Expectiminimax algorithm): A strategic opponent using a classic game AI algorithm (expectiminimax).
+- **ML AI** (Neural network model): A modern, experimental AI powered by a neural network trained through self-play.
 
 At the start of each game, players can choose which AI to play against, or they can watch the two AIs play against each other.
 
-## Classic AI: Expectiminimax
+## Classic AI (Expectiminimax algorithm)
 
 The Classic AI is the default and most robust opponent. It uses the expectiminimax algorithm, an extension of minimax designed for two-player games with an element of chance, like dice rolls.
 
@@ -42,7 +42,7 @@ The evaluation function is hand-crafted to assess the strategic value of a board
 - **Rosette Control**: Occupying safe squares that grant extra turns.
 - **Threats**: Potential captures on the next turn.
 
-## ML AI: Neural Network
+## ML AI (Neural network model)
 
 The ML AI offers a different kind of challenge, with a playstyle developed from observing thousands of games.
 

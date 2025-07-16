@@ -2,11 +2,11 @@
 
 This document explains the machine learning (ML) system powering one of the two AI opponents in the Royal Game of Ur. It is written for experienced programmers new to ML, covering architecture, training, features, and model structure.
 
-The ML AI can be played against directly or watched as it competes against the Classic AI.
+The ML AI can be played against directly or watched as it competes against the Classic AI (Expectiminimax algorithm).
 
 ## What is the ML AI?
 
-The ML AI is a neural network agent that learns to play by imitating a strong expectiminimax AI (the "Classic AI") and, optionally, through self-play. The goal is to create a strong opponent with a distinct, learned playstyle.
+The ML AI is a neural network agent that learns to play by imitating a strong Classic AI (using the expectiminimax algorithm) and, optionally, through self-play. The goal is to create a strong opponent with a distinct, learned playstyle.
 
 ## Architecture
 
@@ -35,9 +35,9 @@ The input vector encodes:
 
 ## Training Pipeline
 
-1. **Data Generation:** Play games using expectiminimax AI, extract features, expert move, and outcome
+1. **Data Generation:** Play games using Classic AI (Expectiminimax algorithm), extract features, expert move, and outcome
 2. **Training:** Train networks (value: MSE loss, policy: cross-entropy, AdamW optimizer)
-3. **Evaluation:** Test ML model vs expectiminimax AI (win rate, move quality, speed)
+3. **Evaluation:** Test ML model vs Classic AI (Expectiminimax algorithm) (win rate, move quality, speed)
 
 ## Move Selection
 
@@ -53,7 +53,7 @@ The input vector encodes:
 
 ## How to Use or Retrain the ML AI
 
-- You can play against the ML AI in the app, or watch it play against the Classic AI.
+- You can play against the ML AI in the app, or watch it play against the Classic AI (Expectiminimax algorithm).
 - To retrain the model, generate new games, adjust features, or change the architecture and retrain using the provided Python scripts.
 - To make the AI stronger, use more data, deeper networks, self-play, or new features.
 

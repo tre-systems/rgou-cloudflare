@@ -12,10 +12,10 @@ This document details the architecture of the Royal Game of Ur project, focusing
 ## Core Components
 
 1. **Next.js Frontend**: React app for UI and game state
-2. **AI (WebAssembly)**: Rust AI logic compiled to Wasm for browser (Classic and ML AI)
+2. **AI (WebAssembly)**: Rust AI logic compiled to Wasm for browser (**Classic AI (Expectiminimax algorithm)** and **ML AI (Neural network model)**)
 3. **Database**: Cloudflare D1, Drizzle ORM
 
-The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both classic (expectiminimax) and ML AIs use this for identical strategy, running locally in the browser.
+The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both Classic AI (Expectiminimax algorithm) and ML AI (Neural network model) use this for identical strategy, running locally in the browser.
 
 For AI algorithm details, see [AI System Documentation](./ai-system.md). For ML AI, see [ML AI System](./ml-ai-system.md).
 
@@ -24,21 +24,21 @@ For AI algorithm details, see [AI System Documentation](./ai-system.md). For ML 
 - **UI Components**: `src/components/` (React, Tailwind, Framer Motion)
 - **State Management**: `src/lib/game-store.ts` (Zustand + Immer)
 - **Game Logic**: `src/lib/game-logic.ts` (pure functions)
-- **AI Services**: `src/lib/wasm-ai-service.ts` (Classic), `src/lib/ml-ai-service.ts` (ML)
+- **AI Services**: `src/lib/wasm-ai-service.ts` (Classic AI), `src/lib/ml-ai-service.ts` (ML AI)
 - **Database**: `src/lib/actions.ts` (save games)
 - **Statistics**: `src/lib/stats-store.ts`
 
 ### AI Engine
 
-- **Classic AI**: Rust, expectiminimax, compiled to WebAssembly
-- **ML AI**: Rust, neural network, compiled to WebAssembly
+- **Classic AI (Expectiminimax algorithm)**: Rust, expectiminimax, compiled to WebAssembly
+- **ML AI (Neural network model)**: Rust, neural network, compiled to WebAssembly
 - **Performance**: All AI runs locally in the browser (no server calls)
 
 ### Data Flow: AI Turn
 
 1. `RoyalGameOfUr.tsx` detects AI turn
 2. Calls `makeAIMove` in `game-store.ts`
-3. Calls appropriate AI service (Classic/ML)
+3. Calls appropriate AI service (Classic AI/ML AI)
 4. Chosen move processed by `makeMoveLogic`
 5. UI updates
 
@@ -76,7 +76,7 @@ Set in `public/_headers`:
 ## Development vs Production UI
 
 - **Dev-only tools**: AI diagnostics, AI toggle, reset/test buttons (only on localhost)
-- **Production**: Clean UI, Classic AI default
+- **Production**: Clean UI, Classic AI (Expectiminimax algorithm) default
 
 ## Summary
 

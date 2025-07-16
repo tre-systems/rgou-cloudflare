@@ -30,7 +30,7 @@ npm install
 - `migrations/`: Database schema
 - `public/`: Static assets
 
-See [AI System Documentation](./ai-system.md) and [ML AI System](./ml-ai-system.md) for AI details.
+See [AI System Documentation](./ai-system.md) for Classic AI (Expectiminimax algorithm) and [ML AI System](./ml-ai-system.md) for ML AI (Neural network model) details.
 
 ## Build Process
 
@@ -59,7 +59,7 @@ npm run migrate:d1      # Production (D1)
 
 - Rust core: `worker/rust_ai_core/src/lib.rs`
 - WASM API: `worker/rust_ai_core/src/wasm_api.rs`
-- Frontend: `src/lib/wasm-ai-service.ts`, `src/lib/ml-ai-service.ts`
+- Frontend: `src/lib/wasm-ai-service.ts` (Classic AI), `src/lib/ml-ai-service.ts` (ML AI)
 
 ## Testing
 

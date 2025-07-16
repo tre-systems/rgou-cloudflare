@@ -78,10 +78,8 @@ A race game for two players. Each tries to move all seven pieces around the boar
 
 ## AI Behavior
 
-- Deep calculation (6-ply)
-- Strong positional play
-- Focuses on rosettes and safe moves
-- Can be cautious—aggressive play may exploit this
+- The default AI is the **Classic AI (Expectiminimax algorithm)**, which performs deep calculation (6-ply), strong positional play, and focuses on rosettes and safe moves. It can be cautious—aggressive play may exploit this.
+- An alternative **ML AI (Neural network model)** is also available, offering a different playstyle learned from data.
 
 ## Historical Significance
 

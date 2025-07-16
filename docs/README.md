@@ -12,7 +12,7 @@ Welcome to the Royal Game of Ur documentation. Use this guide to find everything
 ## Documentation Overview
 
 - [Architecture Overview](./architecture-overview.md): System design and component interactions
-- [AI System Documentation](./ai-system.md): Classic AI algorithm and implementation
+- [AI System Documentation](./ai-system.md): Classic AI (Expectiminimax algorithm) and implementation
 - [ML AI System](./ml-ai-system.md): Neural network-based AI, training, and optimization
 - [Technical Implementation Guide](./technical-implementation.md): Development setup and build process
 - [Game Rules and Strategy](./game-rules-strategy.md): Complete rules and strategy
@@ -28,18 +28,21 @@ Welcome to the Royal Game of Ur documentation. Use this guide to find everything
 - **Developers:**
   - [Architecture Overview](./architecture-overview.md): System design
   - [Technical Implementation Guide](./technical-implementation.md): Setup
-  - [AI System Documentation](./ai-system.md): Classic AI details
+  - [AI System Documentation](./ai-system.md): Classic AI (Expectiminimax algorithm) details
   - [ML AI System](./ml-ai-system.md): Neural network AI
   - [Testing Strategy](./testing-strategy.md): Testing guidelines
 - **AI Researchers:**
-  - [AI System Documentation](./ai-system.md): Classic algorithm
+  - [AI System Documentation](./ai-system.md): Classic AI (Expectiminimax algorithm)
   - [ML AI System](./ml-ai-system.md): Neural network architecture
   - [Architecture Overview](./architecture-overview.md): System context
 
 ## Game Features
 
 - Authentic rules and gameplay
-- Two AI opponents (Classic and ML, both run locally in browser)
+- Two AI opponents:
+  - **Classic AI** (Expectiminimax algorithm)
+  - **ML AI** (Neural network model)
+  - Both run locally in browser
 - AI vs. AI watch mode
 - PWA support and offline play
 - Modern UI
