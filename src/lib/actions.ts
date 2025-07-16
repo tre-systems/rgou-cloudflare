@@ -5,6 +5,8 @@ import { games } from '@/lib/db/schema';
 import { SaveGamePayload, SaveGamePayloadSchema } from '@/lib/schemas';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '@/lib/db/schema';
+import { getGitCommitHash } from '@/lib/utils/getGitCommitHash';
+import { getFileHash } from '@/lib/utils/getFileHash';
 
 export async function saveGame(payload: SaveGamePayload) {
   try {
@@ -15,18 +17,13 @@ export async function saveGame(payload: SaveGamePayload) {
       return { error: 'Invalid game data' };
     }
 
-    const {
-      winner,
-      history,
-      playerId,
-      moveCount,
-      duration,
-      clientHeader,
-      gameType,
-      ai1Version,
-      ai2Version,
-      gameVersion,
-    } = validation.data;
+    const { winner, history, playerId, moveCount, duration, clientHeader, gameType } =
+      validation.data;
+
+    // Determine versions server-side
+    const gameVersion = await getGitCommitHash();
+    const ai1Version = await getGitCommitHash(); // For classic AI, use git commit hash
+    const ai2Version = await getFileHash('public/ml-weights.json.gz'); // For ML AI, use weights file hash
 
     let gameId: string | undefined;
 

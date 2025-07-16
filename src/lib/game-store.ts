@@ -8,8 +8,6 @@ import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
 import { getPlayerId } from './utils';
-import { getGitCommitHash } from './utils/getGitCommitHash';
-import { getFileHash } from './utils/getFileHash';
 
 const LATEST_VERSION = 1;
 
@@ -240,11 +238,6 @@ export const useGameStore = create<GameStore>()(
           }
 
           try {
-            // Determine AI types and versions
-            // For now, ai2Version is always the ML model hash
-            // TODO: If dynamic AI assignment is implemented, update this logic
-            const ai2Version = await getFileHash('public/ml-weights.json.gz');
-
             // Compute duration
             const duration = gameState.startTime ? Date.now() - gameState.startTime : undefined;
 
@@ -262,9 +255,6 @@ export const useGameStore = create<GameStore>()(
               duration,
               clientHeader,
               gameType: 'standard',
-              ai1Version: await getGitCommitHash(),
-              ai2Version,
-              gameVersion: await getGitCommitHash(),
             };
 
             await saveGame(payload);

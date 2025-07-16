@@ -67,10 +67,11 @@ At the end of each game, the following fields are saved to the database:
 
 ### Versioning Details
 
-- **ai1Version** and **ai2Version**:
-  - If the AI is the classic/rust AI, the version is the current git commit hash.
-  - If the AI is the ML AI, the version is the SHA-256 hash of the `public/ml-weights.json.gz` file.
+- **ai1Version**: Always the current git commit hash (for classic AI).
+- **ai2Version**: Always the SHA-256 hash of the `public/ml-weights.json.gz` file (for ML AI).
 - **gameVersion**: Always the current git commit hash.
+
+**Note**: Version information is determined server-side during game save to ensure accurate tracking.
 
 ### Player Tracking
 

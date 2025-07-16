@@ -14,6 +14,14 @@ vi.mock('@/lib/schemas', () => ({
   },
 }));
 
+vi.mock('@/lib/utils/getGitCommitHash', () => ({
+  getGitCommitHash: vi.fn().mockResolvedValue('test-git-hash'),
+}));
+
+vi.mock('@/lib/utils/getFileHash', () => ({
+  getFileHash: vi.fn().mockResolvedValue('test-file-hash'),
+}));
+
 describe('actions', () => {
   const mockDb = {
     insert: vi.fn().mockReturnThis(),
@@ -78,9 +86,9 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: 'ai1-version-test',
-        ai2Version: 'ai2-version-test',
-        gameVersion: 'game-version-test',
+        ai1Version: 'test-git-hash',
+        ai2Version: 'test-file-hash',
+        gameVersion: 'test-git-hash',
       });
       // Ensure all required fields are present and not undefined/null
       const callArgs = mockDb.values.mock.calls[0][0];
@@ -115,9 +123,9 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: 'ai1-version-test',
-        ai2Version: 'ai2-version-test',
-        gameVersion: 'game-version-test',
+        ai1Version: 'test-git-hash',
+        ai2Version: 'test-file-hash',
+        gameVersion: 'test-git-hash',
       });
       // Ensure all required fields are present and not undefined/null
       const callArgs = mockSqliteDb.values.mock.calls[0][0];
