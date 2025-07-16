@@ -1,4 +1,4 @@
-name = "rgou-ml"
+name = "rgou-main"
 main = ".open-next/worker.js"
 compatibility_date = "2025-06-14"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
@@ -18,7 +18,7 @@ enabled = true
 head_sampling_rate = 1
 
 [[routes]]
-pattern = "rgou-ml.tre.systems/*"
+pattern = "rgou.tre.systems/*"
 zone_name = "tre.systems"
 
 [env.development.vars]
