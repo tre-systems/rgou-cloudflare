@@ -14,13 +14,12 @@ vi.mock('@/lib/schemas', () => ({
   },
 }));
 
-vi.mock('@/lib/utils/getGitCommitHash', () => ({
-  getGitCommitHash: vi.fn().mockResolvedValue('test-git-hash'),
-}));
-
-vi.mock('@/lib/utils/getAIVersion', () => ({
-  getClassicAIVersion: vi.fn().mockResolvedValue('test-classic-ai-version'),
-  getMLAIVersion: vi.fn().mockResolvedValue('test-ml-ai-version'),
+vi.mock('@/lib/versions', () => ({
+  getVersionsForDB: vi.fn().mockReturnValue({
+    gameVersion: '1.0.0',
+    ai1Version: '1.0.0',
+    ai2Version: '1.0.0',
+  }),
 }));
 
 describe('actions', () => {
@@ -87,9 +86,9 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: 'test-classic-ai-version',
-        ai2Version: 'test-ml-ai-version',
-        gameVersion: 'test-git-hash',
+        ai1Version: '1.0.0',
+        ai2Version: '1.0.0',
+        gameVersion: '1.0.0',
       });
       // Ensure all required fields are present and not undefined/null
       const callArgs = mockDb.values.mock.calls[0][0];
@@ -124,9 +123,9 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: 'test-classic-ai-version',
-        ai2Version: 'test-ml-ai-version',
-        gameVersion: 'test-git-hash',
+        ai1Version: '1.0.0',
+        ai2Version: '1.0.0',
+        gameVersion: '1.0.0',
       });
       // Ensure all required fields are present and not undefined/null
       const callArgs = mockSqliteDb.values.mock.calls[0][0];

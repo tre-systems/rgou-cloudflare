@@ -12,6 +12,37 @@ A modern, web-based implementation of the ancient Royal Game of Ur, featuring a 
 - Game statistics and database integration
 - Modern, responsive UI
 
+## Version Management
+
+This project uses a simplified semantic versioning system. All version information is centralized in `src/lib/versions.ts`.
+
+### Updating Versions
+
+To update all version numbers across the project:
+
+```bash
+npm run version:update <new-version>
+```
+
+Example:
+
+```bash
+npm run version:update 1.1.0
+```
+
+This will update:
+
+- `src/lib/versions.ts` - All version constants
+- `package.json` - Node.js package version
+- `worker/rust_ai_core/Cargo.toml` - Rust crate version
+
+### Version Components
+
+- **app**: Main application version (increment for any significant changes)
+- **classicAI**: Classic AI version (increment when expectiminimax logic changes)
+- **mlAI**: ML AI version (increment when neural network changes)
+- **game**: Game version (increment when game rules change)
+
 ## Getting Started
 
 ### Prerequisites

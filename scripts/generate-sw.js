@@ -3,7 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const CACHE_VERSION = `${Date.now()}-${process.env.GITHUB_SHA?.slice(0, 7) || 'local'}`;
+const CACHE_VERSION = `${Date.now()}-${process.env.GITHUB_SHA?.slice(0, 7) || 'local'}-v1.0.0`;
 
 const serviceWorkerTemplate = `const CACHE_VERSION = '${CACHE_VERSION}';
 const CACHE_NAME = \`royal-game-of-ur-\${CACHE_VERSION}\`;

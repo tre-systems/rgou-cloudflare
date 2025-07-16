@@ -5,9 +5,7 @@ import { games } from '@/lib/db/schema';
 import { SaveGamePayload, SaveGamePayloadSchema } from '@/lib/schemas';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '@/lib/db/schema';
-import { getGitCommitHash } from '@/lib/utils/getGitCommitHash';
-import { getClassicAIVersion } from '@/lib/utils/getAIVersion';
-import { getMLAIVersion } from '@/lib/utils/getAIVersion';
+import { getVersionsForDB } from '@/lib/versions';
 
 export async function saveGame(payload: SaveGamePayload) {
   try {
@@ -21,10 +19,8 @@ export async function saveGame(payload: SaveGamePayload) {
     const { winner, history, playerId, moveCount, duration, clientHeader, gameType } =
       validation.data;
 
-    // Determine versions server-side
-    const gameVersion = await getGitCommitHash();
-    const ai1Version = await getClassicAIVersion(); // Classic AI version (crate version + AI code hash)
-    const ai2Version = await getMLAIVersion(); // ML AI version (weights file hash)
+    // Get versions from centralized version management
+    const { gameVersion, ai1Version, ai2Version } = getVersionsForDB();
 
     let gameId: string | undefined;
 

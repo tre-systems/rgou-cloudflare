@@ -1,6 +1,6 @@
 {
   "name": "rgou-cloudflare",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Royal Game of Ur - Ancient Mesopotamian board game with AI opponent",
   "license": "MIT",
   "private": true,
@@ -38,7 +38,8 @@
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "tsx scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts",
-    "db:exec": "npx wrangler d1 execute rgou-db --remote --file"
+    "db:exec": "npx wrangler d1 execute rgou-db --remote --file",
+    "version:update": "node scripts/update-versions.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
