@@ -52,12 +52,6 @@ jobs:
       - name: Run all tests
         run: npm run check
 
-      - name: Run database migrations
-        run: npm run migrate:d1
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
       - name: Build
         run: npm run build:cf
 
