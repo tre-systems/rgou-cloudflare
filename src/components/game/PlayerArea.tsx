@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Crown, Zap, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAIName, getAISubtitle } from '@/lib/utils';
 import { Player, PiecePosition } from '@/lib/types';
 import GamePiece from './GamePiece';
 
@@ -57,15 +58,10 @@ export default function PlayerArea({
               isCurrentPlayer && 'animate-pulse'
             )}
           >
-            {isAI
-              ? aiType === 'ml'
-                ? 'ML AI'
-                : aiType === 'client'
-                  ? 'Expectiminimax AI'
-                  : 'AI Player'
-              : 'You'}
+            {isAI ? getAIName(aiType) : 'You'}
           </h3>
         </div>
+        {isAI && <div className="text-xs text-gray-400 -mt-1 mb-1">{getAISubtitle(aiType)}</div>}
 
         <div className="flex items-center space-x-1">
           <Sparkles className="w-3 h-3 text-amber-400" />

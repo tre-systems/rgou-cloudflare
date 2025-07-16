@@ -18,7 +18,8 @@ const MODE_OPTIONS = [
   {
     key: 'classic',
     label: 'Classic AI',
-    description: 'A strategic, calculating opponent that plays by traditional rules.',
+    description: 'A strategic opponent using a classic game AI algorithm.',
+    subtitle: 'Expectiminimax algorithm',
     icon: Cpu,
     colorClass: 'text-blue-400',
     borderColorClass: 'border-blue-400/30 hover:border-blue-400/60',
@@ -27,6 +28,7 @@ const MODE_OPTIONS = [
     key: 'ml',
     label: 'Machine Learning AI',
     description: 'A modern opponent that learned by observing thousands of games.',
+    subtitle: 'Neural network model',
     icon: Brain,
     colorClass: 'text-purple-400',
     borderColorClass: 'border-purple-400/30 hover:border-purple-400/60',
@@ -35,6 +37,7 @@ const MODE_OPTIONS = [
     key: 'watch',
     label: 'Watch a Match',
     description: 'Sit back and watch the Classic AI challenge the ML AI.',
+    subtitle: '',
     icon: Eye,
     colorClass: 'text-green-400',
     borderColorClass: 'border-green-400/30 hover:border-green-400/60',
@@ -351,6 +354,7 @@ export default function RoyalGameOfUr() {
                       icon={mode.icon}
                       title={mode.label}
                       description={mode.description}
+                      subtitle={mode.subtitle}
                       onClick={() => handleOverlaySelect(mode.key as 'classic' | 'ml' | 'watch')}
                       colorClass={mode.colorClass}
                       borderColorClass={mode.borderColorClass}

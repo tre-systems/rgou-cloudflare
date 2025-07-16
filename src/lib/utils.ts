@@ -26,7 +26,7 @@ export function getAIName(aiSource: 'server' | 'client' | 'ml' | 'fallback' | nu
   if (!aiSource) return 'Unknown';
   switch (aiSource) {
     case 'client':
-      return 'Expectiminimax';
+      return 'Classic';
     case 'ml':
       return 'ML AI';
     case 'server':
@@ -35,6 +35,17 @@ export function getAIName(aiSource: 'server' | 'client' | 'ml' | 'fallback' | nu
       return 'Fallback';
     default:
       return 'Unknown';
+  }
+}
+
+export function getAISubtitle(aiSource: 'server' | 'client' | 'ml' | 'fallback' | null): string {
+  switch (aiSource) {
+    case 'client':
+      return 'Expectiminimax algorithm';
+    case 'ml':
+      return 'Neural network model';
+    default:
+      return '';
   }
 }
 

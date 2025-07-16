@@ -7,6 +7,7 @@ interface ModeSelectionCardProps {
   icon: React.ElementType;
   title: string;
   description: string;
+  subtitle?: string;
   onClick: () => void;
   colorClass: string;
   borderColorClass: string;
@@ -17,6 +18,7 @@ export default function ModeSelectionCard({
   icon: Icon,
   title,
   description,
+  subtitle,
   onClick,
   colorClass,
   borderColorClass,
@@ -40,6 +42,7 @@ export default function ModeSelectionCard({
         </div>
         <div>
           <h3 className={`text-lg font-bold ${colorClass}`}>{title}</h3>
+          {subtitle && <div className="text-xs text-gray-400 mt-0.5">{subtitle}</div>}
           <p className="text-sm text-gray-300 mt-1">{description}</p>
         </div>
       </div>

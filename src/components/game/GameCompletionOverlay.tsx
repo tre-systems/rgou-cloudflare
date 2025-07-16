@@ -6,6 +6,7 @@ import { Trophy, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GameState, GameMode } from '@/lib/types';
 import { useGameStats } from '@/lib/stats-store';
+import { getAISubtitle } from '@/lib/utils';
 
 interface GameCompletionOverlayProps {
   gameState: GameState;
@@ -24,7 +25,7 @@ export default function GameCompletionOverlay({
 
   const title = isWatchMode
     ? isPlayer1Winner
-      ? 'Expectiminimax Wins!'
+      ? 'Classic Wins!'
       : 'ML AI Wins!'
     : isPlayer1Winner
       ? 'Victory!'
@@ -168,6 +169,13 @@ export default function GameCompletionOverlay({
             delay: 0.2,
           }}
         >
+          <div className="mb-2">
+            {isWatchMode && (
+              <span className="text-xs text-gray-400">
+                {isPlayer1Winner ? getAISubtitle('client') : getAISubtitle('ml')}
+              </span>
+            )}
+          </div>
           <div className="absolute inset-0 pointer-events-none">
             {Array.from({ length: 20 }).map((_, i) => (
               <motion.div
