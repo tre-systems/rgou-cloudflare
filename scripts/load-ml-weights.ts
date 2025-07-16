@@ -29,13 +29,29 @@ async function loadWeightsFile(weightsPath: string): Promise<MLWeights> {
   return JSON.parse(content) as MLWeights;
 }
 
+function countNetworkWeights(
+  input_size: number,
+  hidden_sizes: number[],
+  output_size: number
+): number {
+  let total = 0;
+  let prev = input_size;
+  for (const h of hidden_sizes) {
+    total += (prev + 1) * h; // weights + biases
+    prev = h;
+  }
+  total += (prev + 1) * output_size; // final layer
+  return total;
+}
+
 function validateWeights(weights: MLWeights): void {
   // Validate value network
   const valueConfig = weights.value_network_config;
-  const expectedValueWeights =
-    (valueConfig.input_size + 1) * valueConfig.hidden_sizes[0] +
-    (valueConfig.hidden_sizes[0] + 1) * valueConfig.hidden_sizes[1] +
-    (valueConfig.hidden_sizes[1] + 1) * valueConfig.output_size;
+  const expectedValueWeights = countNetworkWeights(
+    valueConfig.input_size,
+    valueConfig.hidden_sizes,
+    valueConfig.output_size
+  );
 
   if (weights.value_weights.length !== expectedValueWeights) {
     throw new Error(
@@ -45,10 +61,11 @@ function validateWeights(weights: MLWeights): void {
 
   // Validate policy network
   const policyConfig = weights.policy_network_config;
-  const expectedPolicyWeights =
-    (policyConfig.input_size + 1) * policyConfig.hidden_sizes[0] +
-    (policyConfig.hidden_sizes[0] + 1) * policyConfig.hidden_sizes[1] +
-    (policyConfig.hidden_sizes[1] + 1) * policyConfig.output_size;
+  const expectedPolicyWeights = countNetworkWeights(
+    policyConfig.input_size,
+    policyConfig.hidden_sizes,
+    policyConfig.output_size
+  );
 
   if (weights.policy_weights.length !== expectedPolicyWeights) {
     throw new Error(
