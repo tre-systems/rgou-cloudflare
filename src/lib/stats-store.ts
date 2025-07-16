@@ -50,4 +50,3 @@ export const useStatsStore = create<StatsStore>()(
 );
 
 export const useGameStats = () => useStatsStore(state => state.stats);
-export const useStatsActions = () => useStatsStore(state => state.actions);

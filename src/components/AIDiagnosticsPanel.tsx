@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bug, ChevronDown, ChevronRight, Brain, Zap } from 'lucide-react';
-import { AIResponse, MoveEvaluation } from '@/lib/ai-types';
+import { AIResponse, MoveEvaluation } from '@/lib/types';
 import { GameState } from '@/lib/types';
 import {
   calculateBoardControl,

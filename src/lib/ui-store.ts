@@ -59,5 +59,3 @@ export const useUIState = () =>
     diagnosticsPanelOpen: state.diagnosticsPanelOpen,
     howToPlayOpen: state.howToPlayOpen,
   }));
-
-export const useUIActions = () => useUIStore(state => state.actions);

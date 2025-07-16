@@ -150,8 +150,6 @@ export default defineConfig({
         // Utility files that depend on Node.js APIs and file system operations
         'src/lib/utils/getFileHash.ts',
         'src/lib/utils/getGitCommitHash.ts',
-        // Type definition files
-        'src/lib/ai-types.ts',
         // Worker files that cannot be tested in Node environment
         'src/lib/ai.worker.ts',
         'src/lib/ml-ai.worker.ts',
