@@ -50,9 +50,9 @@ describe('actions', () => {
       duration: 5000,
       clientHeader: 'test-header',
       gameType: 'standard',
-      ai1Version: undefined,
-      ai2Version: undefined,
-      gameVersion: undefined,
+      ai1Version: 'ai1-version-test',
+      ai2Version: 'ai2-version-test',
+      gameVersion: 'game-version-test',
     };
 
     it('should successfully save a game in production', async () => {
@@ -78,10 +78,18 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: undefined,
-        ai2Version: undefined,
-        gameVersion: undefined,
+        ai1Version: 'ai1-version-test',
+        ai2Version: 'ai2-version-test',
+        gameVersion: 'game-version-test',
       });
+      // Ensure all required fields are present and not undefined/null
+      const callArgs = mockDb.values.mock.calls[0][0];
+      expect(callArgs.duration).not.toBeUndefined();
+      expect(callArgs.ai1Version).not.toBeUndefined();
+      expect(callArgs.ai2Version).not.toBeUndefined();
+      expect(callArgs.clientHeader).not.toBeUndefined();
+      expect(callArgs.gameVersion).not.toBeUndefined();
+      expect(callArgs.playerId).not.toBeUndefined();
     });
 
     it('should successfully save a game in development', async () => {
@@ -107,10 +115,18 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: undefined,
-        ai2Version: undefined,
-        gameVersion: undefined,
+        ai1Version: 'ai1-version-test',
+        ai2Version: 'ai2-version-test',
+        gameVersion: 'game-version-test',
       });
+      // Ensure all required fields are present and not undefined/null
+      const callArgs = mockSqliteDb.values.mock.calls[0][0];
+      expect(callArgs.duration).not.toBeUndefined();
+      expect(callArgs.ai1Version).not.toBeUndefined();
+      expect(callArgs.ai2Version).not.toBeUndefined();
+      expect(callArgs.clientHeader).not.toBeUndefined();
+      expect(callArgs.gameVersion).not.toBeUndefined();
+      expect(callArgs.playerId).not.toBeUndefined();
     });
 
     it('should return error for invalid payload', async () => {

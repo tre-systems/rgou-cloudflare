@@ -41,6 +41,7 @@ export const GameStateSchema = z.object({
   canMove: z.boolean(),
   validMoves: z.array(z.number()),
   history: z.array(MoveRecordSchema),
+  startTime: z.number().optional(),
 });
 export type GameState = z.infer<typeof GameStateSchema>;
 

@@ -48,6 +48,41 @@ Welcome to the Royal Game of Ur documentation. Use this guide to find everything
 - Modern UI
 - Database integration (SQLite/D1)
 
+## Game Result Saving and Versioning
+
+At the end of each game, the following fields are saved to the database:
+
+- **playerId**: A unique, persistent ID generated and stored in the browser/app localStorage. This allows tracking the same player across multiple games in the same browser/app, without requiring login. If localStorage is cleared, a new ID is generated.
+- **winner**: The winner of the game ('player1' or 'player2').
+- **completedAt**: Timestamp when the game finished.
+- **status**: Always 'completed' for finished games.
+- **moveCount**: Number of moves in the game.
+- **duration**: Total time (ms) from game start to finish.
+- **clientHeader**: The browser's user agent string (or 'unknown' if not available).
+- **history**: Full move history (as JSON).
+- **gameType**: Always 'standard' (for now).
+- **ai1Version**: Version of the AI used for player 1. For classic/rust AI, this is the git commit hash. For ML AI, this is the hash of the weights file.
+- **ai2Version**: Version of the AI used for player 2. Same logic as above.
+- **gameVersion**: The git commit hash of the codebase at the time of the game.
+
+### Versioning Details
+
+- **ai1Version** and **ai2Version**:
+  - If the AI is the classic/rust AI, the version is the current git commit hash.
+  - If the AI is the ML AI, the version is the SHA-256 hash of the `public/ml-weights.json.gz` file.
+- **gameVersion**: Always the current git commit hash.
+
+### Player Tracking
+
+- The `playerId` is generated and stored in localStorage as `rgou-player-id`.
+- This ID persists across games and browser sessions, unless localStorage is cleared.
+- No login or authentication is required.
+
+### Ensuring Data Completeness
+
+- All version and tracking fields are always set and saved for every game.
+- This enables robust analytics, diagnostics, and player tracking without user accounts.
+
 ## Related Resources
 
 - [Irving Finkel, "On the Rules for the Royal Game of Ur" (PDF)](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur)

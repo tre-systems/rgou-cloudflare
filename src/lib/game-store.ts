@@ -38,7 +38,7 @@ type GameStore = {
 export const useGameStore = create<GameStore>()(
   persist(
     immer((set, get) => ({
-      gameState: initializeGame(),
+      gameState: { ...initializeGame(), startTime: Date.now() },
       aiThinking: false,
       lastAIDiagnostics: null,
       lastAIMoveDuration: null,
@@ -48,7 +48,7 @@ export const useGameStore = create<GameStore>()(
         initialize: (fromStorage = false) => {
           if (!fromStorage) {
             set(state => {
-              state.gameState = initializeGame();
+              state.gameState = { ...initializeGame(), startTime: Date.now() };
               state.aiThinking = false;
               state.lastAIDiagnostics = null;
               state.lastAIMoveDuration = null;
@@ -203,7 +203,7 @@ export const useGameStore = create<GameStore>()(
         },
         reset: () => {
           set(state => {
-            state.gameState = initializeGame();
+            state.gameState = { ...initializeGame(), startTime: Date.now() };
             state.aiThinking = false;
             state.lastAIDiagnostics = null;
             state.lastAIMoveDuration = null;
@@ -240,12 +240,18 @@ export const useGameStore = create<GameStore>()(
           }
 
           try {
-            const ai2Type: 'ml' | 'rust' = 'ml';
-            let ai2Version: string = 'unknown';
-            if (ai2Type === 'ml') {
-              ai2Version = await getFileHash('public/ml-weights.json.gz');
-            } else {
-              ai2Version = await getGitCommitHash();
+            // Determine AI types and versions
+            // For now, ai2Version is always the ML model hash
+            // TODO: If dynamic AI assignment is implemented, update this logic
+            const ai2Version = await getFileHash('public/ml-weights.json.gz');
+
+            // Compute duration
+            const duration = gameState.startTime ? Date.now() - gameState.startTime : undefined;
+
+            // Get client header (user agent)
+            let clientHeader = 'unknown';
+            if (typeof window !== 'undefined' && window.navigator) {
+              clientHeader = window.navigator.userAgent;
             }
 
             const payload = {
@@ -253,10 +259,10 @@ export const useGameStore = create<GameStore>()(
               history: gameState.history,
               playerId: getPlayerId(),
               moveCount: gameState.history.length,
-              duration: undefined,
-              clientHeader: undefined,
+              duration,
+              clientHeader,
               gameType: 'standard',
-              ai1Version: undefined,
+              ai1Version: await getGitCommitHash(),
               ai2Version,
               gameVersion: await getGitCommitHash(),
             };
