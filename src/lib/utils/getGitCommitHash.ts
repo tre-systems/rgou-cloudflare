@@ -5,7 +5,7 @@ export async function getGitCommitHash(): Promise<string> {
     if (process.env.GITHUB_SHA) {
       return process.env.GITHUB_SHA;
     }
-    
+
     // Fallback to git command for local development
     try {
       const { execSync } = await import('child_process');

@@ -26,6 +26,19 @@ global.WebAssembly = {
   },
 } as any;
 
+global.Worker = class MockWorker {
+  postMessage = vi.fn();
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((error: ErrorEvent) => void) | null = null;
+  onmessageerror: ((event: MessageEvent) => void) | null = null;
+  terminate = vi.fn();
+  addEventListener = vi.fn();
+  removeEventListener = vi.fn();
+  dispatchEvent = vi.fn();
+
+  constructor() {}
+} as any;
+
 global.performance = {
   now: vi.fn(() => Date.now()),
   mark: vi.fn(),

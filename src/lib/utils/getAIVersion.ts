@@ -1,4 +1,3 @@
-import { getGitCommitHash } from './getGitCommitHash';
 import { getFileHash } from './getFileHash';
 
 export async function getClassicAIVersion(): Promise<string> {
