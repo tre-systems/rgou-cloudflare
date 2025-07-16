@@ -18,7 +18,7 @@ describe('game-logic', () => {
       expect(
         gameState.player2Pieces.every(piece => piece.square === -1 && piece.player === 'player2')
       ).toBe(true);
-      expect(gameState.currentPlayer).toBe('player1');
+      expect(['player1', 'player2']).toContain(gameState.currentPlayer);
       expect(gameState.gameStatus).toBe('playing');
       expect(gameState.winner).toBeNull();
       expect(gameState.diceRoll).toBeNull();
@@ -109,11 +109,11 @@ describe('game-logic', () => {
 
   describe('makeMove', () => {
     it('should return unchanged state for invalid move', () => {
-      const gameState = initializeGame();
+      const gameState: GameState = { ...initializeGame(), currentPlayer: 'player1' };
       const [newState, moveType, movePlayer] = makeMove(gameState, 99); // Invalid piece index
       expect(newState).toEqual(gameState);
       expect(moveType).toBeNull();
-      expect(movePlayer).toBe('player1');
+      expect(movePlayer).toBe(gameState.currentPlayer);
     });
 
     it('should return unchanged state when diceRoll is null', () => {
@@ -121,11 +121,12 @@ describe('game-logic', () => {
         diceRoll: null,
         canMove: true,
         validMoves: [0],
+        currentPlayer: 'player1',
       });
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
       expect(newState).toEqual(gameState);
       expect(moveType).toBeNull();
-      expect(movePlayer).toBe('player1');
+      expect(movePlayer).toBe(gameState.currentPlayer);
     });
 
     it('should make a basic move from home', () => {
@@ -133,13 +134,14 @@ describe('game-logic', () => {
         diceRoll: 4,
         canMove: true,
         validMoves: [0],
+        currentPlayer: 'player1',
       });
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
       expect(newState.player1Pieces[0].square).toBe(0);
       expect(newState.board[0]).toEqual(newState.player1Pieces[0]);
       expect(moveType).toBe('rosette');
-      expect(movePlayer).toBe('player1');
-      expect(newState.currentPlayer).toBe('player1');
+      expect(movePlayer).toBe(gameState.currentPlayer);
+      expect(newState.currentPlayer).toBe(gameState.currentPlayer);
       expect(newState.diceRoll).toBeNull();
       expect(newState.canMove).toBe(false);
       expect(newState.validMoves).toEqual([]);
@@ -193,6 +195,7 @@ describe('game-logic', () => {
           { square: 20, player: 'player1' },
           { square: 20, player: 'player1' },
         ],
+        currentPlayer: 'player1',
       };
 
       const [newState] = makeMove(gameState, 0);
@@ -202,9 +205,10 @@ describe('game-logic', () => {
     });
 
     it('should switch players when not landing on rosette', () => {
+      // Place the piece so that a move does NOT land on a rosette (e.g., from -1 to 1)
       const gameState: GameState = {
         ...initializeGame(),
-        diceRoll: 4,
+        diceRoll: 2,
         canMove: true,
         validMoves: [0],
         player1Pieces: [
@@ -216,11 +220,12 @@ describe('game-logic', () => {
           { square: -1, player: 'player1' },
           { square: -1, player: 'player1' },
         ],
+        currentPlayer: 'player1',
       };
 
       const [newState] = makeMove(gameState, 0);
 
-      expect(newState.currentPlayer).toBe('player1');
+      expect(newState.currentPlayer).not.toBe(gameState.currentPlayer);
     });
 
     it('should handle player2 moves', () => {
@@ -245,6 +250,7 @@ describe('game-logic', () => {
         canMove: true,
         validMoves: [0],
         history: [],
+        currentPlayer: 'player1',
       };
 
       const [newState] = makeMove(gameState, 0);
@@ -299,6 +305,7 @@ describe('game-logic', () => {
           { square: 20, player: 'player1' },
           { square: 20, player: 'player1' },
         ],
+        currentPlayer: 'player1',
       };
 
       const newState = processDiceRoll(gameState, 4);

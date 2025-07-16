@@ -18,11 +18,13 @@ export function initializeGame(): GameState {
       player: 'player2' as Player,
     }));
 
+  const startingPlayer: Player = Math.random() < 0.5 ? 'player1' : 'player2';
+
   return {
     board: Array(BOARD_ARRAY_SIZE).fill(null),
     player1Pieces,
     player2Pieces,
-    currentPlayer: 'player1',
+    currentPlayer: startingPlayer,
     gameStatus: 'playing',
     winner: null,
     diceRoll: null,
