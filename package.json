@@ -15,7 +15,7 @@
     "type-check": "tsc --noEmit",
     "pretty": "prettier --write '**/*.*'",
     "deploy:worker": "cd worker && wrangler deploy",
-    "generate:sw": "node scripts/generate-sw.js",
+    "generate:sw": "GITHUB_SHA=$GITHUB_SHA node scripts/generate-sw.js",
     "build:wasm": "cd worker/rust_ai_core && wasm-pack build --target web --out-name rgou_ai_worker -- --features wasm",
     "build:wasm-assets": "npm run build:wasm && rm -rf public/wasm && mkdir -p public/wasm && cp worker/rust_ai_core/pkg/rgou_ai_worker_bg.wasm public/wasm/rgou_ai_core_bg.wasm && cp worker/rust_ai_core/pkg/rgou_ai_worker.js public/wasm/rgou_ai_core.js",
     "nuke": "rm -rf .next .open-next .wrangler node_modules package-lock.json && npm install && npm run dev",

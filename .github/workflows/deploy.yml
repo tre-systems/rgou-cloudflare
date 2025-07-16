@@ -54,6 +54,8 @@ jobs:
 
       - name: Build
         run: npm run build:cf
+        env:
+          GITHUB_SHA: ${{ github.sha }}
 
       - name: Deploy Frontend
         uses: cloudflare/wrangler-action@v3

@@ -67,11 +67,15 @@ At the end of each game, the following fields are saved to the database:
 
 ### Versioning Details
 
-- **ai1Version**: Always the current git commit hash (for classic AI).
-- **ai2Version**: Always the SHA-256 hash of the `public/ml-weights.json.gz` file (for ML AI).
-- **gameVersion**: Always the current git commit hash.
+- **ai1Version**: Classic AI version in format `{crate-version}-{ai-code-hash}` (e.g., `0.1.0-b1e1960f`)
+  - Changes only when the Rust AI code changes
+  - Combines the crate version from `Cargo.toml` with a hash of AI-specific source files
+- **ai2Version**: ML AI version as SHA-256 hash of `public/ml-weights.json.gz` file
+  - Changes only when the ML weights file changes
+- **gameVersion**: Git commit hash of the codebase
+  - Changes with every deployment
 
-**Note**: Version information is determined server-side during game save to ensure accurate tracking.
+**Note**: Version information is determined server-side during game save to ensure accurate tracking. AI versions only change when the actual AI logic changes, not on every deployment.
 
 ### Player Tracking
 

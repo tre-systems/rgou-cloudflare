@@ -18,8 +18,9 @@ vi.mock('@/lib/utils/getGitCommitHash', () => ({
   getGitCommitHash: vi.fn().mockResolvedValue('test-git-hash'),
 }));
 
-vi.mock('@/lib/utils/getFileHash', () => ({
-  getFileHash: vi.fn().mockResolvedValue('test-file-hash'),
+vi.mock('@/lib/utils/getAIVersion', () => ({
+  getClassicAIVersion: vi.fn().mockResolvedValue('test-classic-ai-version'),
+  getMLAIVersion: vi.fn().mockResolvedValue('test-ml-ai-version'),
 }));
 
 describe('actions', () => {
@@ -86,8 +87,8 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: 'test-git-hash',
-        ai2Version: 'test-file-hash',
+        ai1Version: 'test-classic-ai-version',
+        ai2Version: 'test-ml-ai-version',
         gameVersion: 'test-git-hash',
       });
       // Ensure all required fields are present and not undefined/null
@@ -123,8 +124,8 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'standard',
-        ai1Version: 'test-git-hash',
-        ai2Version: 'test-file-hash',
+        ai1Version: 'test-classic-ai-version',
+        ai2Version: 'test-ml-ai-version',
         gameVersion: 'test-git-hash',
       });
       // Ensure all required fields are present and not undefined/null
