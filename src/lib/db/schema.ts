@@ -15,7 +15,9 @@ export const games = sqliteTable('games', {
   duration: integer('duration'),
   clientHeader: text('clientHeader'),
   history: text('history', { mode: 'json' }),
-  gameType: text('gameType').notNull().default('standard'),
+  gameType: text('gameType', { enum: ['classic', 'ml', 'watch'] })
+    .notNull()
+    .default('classic'),
   ai1Version: text('ai1Version'),
   ai2Version: text('ai2Version'),
   gameVersion: text('gameVersion'),

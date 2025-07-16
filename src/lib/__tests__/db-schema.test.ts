@@ -63,7 +63,7 @@ describe('Database Schema', () => {
       const gameTypeColumn = games.gameType;
       expect(gameTypeColumn).toBeDefined();
       expect(gameTypeColumn.notNull).toBeDefined();
-      expect(gameTypeColumn.default).toBe('standard');
+      expect(gameTypeColumn.default).toBe('classic');
     });
 
     it('should have ai1Version column', () => {

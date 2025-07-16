@@ -8,6 +8,7 @@ import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
 import { getPlayerId } from './utils';
+import { useUIStore } from './ui-store';
 
 const LATEST_VERSION = 1;
 
@@ -247,6 +248,10 @@ export const useGameStore = create<GameStore>()(
               clientHeader = window.navigator.userAgent;
             }
 
+            // Get the current game mode from UI store
+            const uiStore = useUIStore.getState();
+            const gameMode = uiStore.selectedMode || 'classic';
+
             const payload = {
               winner: gameState.winner,
               history: gameState.history,
@@ -254,7 +259,7 @@ export const useGameStore = create<GameStore>()(
               moveCount: gameState.history.length,
               duration,
               clientHeader,
-              gameType: 'standard',
+              gameType: gameMode,
             };
 
             await saveGame(payload);
