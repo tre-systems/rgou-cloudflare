@@ -87,34 +87,92 @@ test.describe('Game Completion and Stats', () => {
 });
 
 test.describe('Game Save (DB Verification)', () => {
-  test('simulate win and verify game is saved in local.db', async ({ page }) => {
-    if (process.env.NODE_ENV === 'development') {
-      await page.goto('/');
-      await page.getByTestId('mode-select-classic').click();
-      await page.getByTestId('create-near-winning-state').click();
-      await page.evaluate(() => {
-        const store = (window as any).useGameStore.getState();
-        store.actions.processDiceRoll(2);
-      });
-      await page.evaluate(() => {
-        const store = (window as any).useGameStore.getState();
-        store.actions.makeMove(6);
-      });
-      await page.waitForTimeout(1000);
-      await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
-      // Query local.db to verify the game was saved
-      const db = new Database('local.db');
-      try {
-        const row = db
-          .prepare('SELECT * FROM games WHERE winner = ? ORDER BY completedAt DESC LIMIT 1')
-          .get('player1');
-        expect(row).toBeTruthy();
-        if (row) {
-          expect((row as { winner: string }).winner).toBe('player1');
-        }
-      } finally {
-        db.close();
+  async function verifySavedGame(
+    {
+      mode,
+      expected,
+    }: {
+      mode: 'classic' | 'ml' | 'watch';
+      expected: { gameType: string; ai1Version: string; ai2Version: string };
+    },
+    page: Page
+  ) {
+    await page.goto('/');
+    await page.getByTestId(`mode-select-${mode}`).click();
+    await page.getByTestId('create-near-winning-state').click();
+    await page.evaluate(() => {
+      const store = (window as any).useGameStore.getState();
+      store.actions.processDiceRoll(2);
+    });
+    await page.evaluate(() => {
+      const store = (window as any).useGameStore.getState();
+      store.actions.makeMove(6);
+    });
+    await page.waitForTimeout(1000);
+    await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
+    const db = new Database('local.db');
+    try {
+      const row = db
+        .prepare(
+          'SELECT * FROM games WHERE winner = ? AND gameType = ? ORDER BY completedAt DESC LIMIT 1'
+        )
+        .get('player1', expected.gameType);
+      expect(row).toBeTruthy();
+      if (row) {
+        expect(row.gameType).toBe(expected.gameType);
+        expect(row.ai1Version).toBe(expected.ai1Version);
+        expect(row.ai2Version).toBe(expected.ai2Version);
       }
+    } finally {
+      db.close();
+    }
+  }
+
+  test('simulate win and verify game is saved in local.db for classic', async ({ page }) => {
+    if (process.env.NODE_ENV === 'development') {
+      await verifySavedGame(
+        {
+          mode: 'classic',
+          expected: {
+            gameType: 'classic',
+            ai1Version: expect.any(String),
+            ai2Version: expect.any(String),
+          },
+        },
+        page
+      );
+    }
+  });
+
+  test('simulate win and verify game is saved in local.db for ml', async ({ page }) => {
+    if (process.env.NODE_ENV === 'development') {
+      await verifySavedGame(
+        {
+          mode: 'ml',
+          expected: {
+            gameType: 'ml',
+            ai1Version: expect.any(String),
+            ai2Version: expect.any(String),
+          },
+        },
+        page
+      );
+    }
+  });
+
+  test('simulate win and verify game is saved in local.db for watch', async ({ page }) => {
+    if (process.env.NODE_ENV === 'development') {
+      await verifySavedGame(
+        {
+          mode: 'watch',
+          expected: {
+            gameType: 'watch',
+            ai1Version: expect.any(String),
+            ai2Version: expect.any(String),
+          },
+        },
+        page
+      );
     }
   });
 });

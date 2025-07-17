@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ExternalLink, Brain, Cpu, Eye } from 'lucide-react';
 import Image from 'next/image';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
+import { useUIStore } from '@/lib/ui-store';
 import { isDevelopment, getAIName } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
@@ -53,10 +54,12 @@ export default function RoyalGameOfUr() {
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
+  const uiStore = useUIStore();
+  const { setSelectedMode, setAiSourceP1, setAiSourceP2 } = uiStore.actions;
+  const selectedMode = uiStore.selectedMode;
+  const aiSourceP1 = uiStore.aiSourceP1;
+  const aiSourceP2 = uiStore.aiSourceP2;
   const [showModelOverlay, setShowModelOverlay] = useState(true);
-  const [selectedMode, setSelectedMode] = useState<'classic' | 'ml' | 'watch' | null>(null);
-  const [aiSourceP1, setAiSourceP1] = useState<'client' | 'ml' | null>(null);
-  const [aiSourceP2, setAiSourceP2] = useState<'client' | 'ml'>('ml');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);

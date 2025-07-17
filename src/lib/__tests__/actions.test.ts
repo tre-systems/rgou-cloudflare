@@ -255,5 +255,80 @@ describe('actions', () => {
         })
       );
     });
+
+    it('should save correct gameType and AI versions for watch mode with only ai2Version set', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: { ...validPayload, gameType: 'watch', ai1Version: '', ai2Version: '1.0.0' },
+      });
+      mockDb.returning.mockResolvedValue([{ id: 'watch-id' }]);
+
+      const result = await saveGame({
+        ...validPayload,
+        gameType: 'watch',
+        ai1Version: '',
+        ai2Version: '1.0.0',
+      });
+      expect(result).toEqual({ success: true, gameId: 'watch-id' });
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameType: 'watch',
+          ai1Version: '',
+          ai2Version: '1.0.0',
+        })
+      );
+    });
+
+    it('should save correct gameType and AI versions for watch mode with only ai1Version set', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: { ...validPayload, gameType: 'watch', ai1Version: '1.0.0', ai2Version: '' },
+      });
+      mockDb.returning.mockResolvedValue([{ id: 'watch-id' }]);
+
+      const result = await saveGame({
+        ...validPayload,
+        gameType: 'watch',
+        ai1Version: '1.0.0',
+        ai2Version: '',
+      });
+      expect(result).toEqual({ success: true, gameId: 'watch-id' });
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameType: 'watch',
+          ai1Version: '1.0.0',
+          ai2Version: '',
+        })
+      );
+    });
+
+    it('should save correct gameType and AI versions for watch mode with both versions missing', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: { ...validPayload, gameType: 'watch', ai1Version: '', ai2Version: '' },
+      });
+      mockDb.returning.mockResolvedValue([{ id: 'watch-id' }]);
+
+      const result = await saveGame({
+        ...validPayload,
+        gameType: 'watch',
+        ai1Version: '',
+        ai2Version: '',
+      });
+      expect(result).toEqual({ success: true, gameId: 'watch-id' });
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameType: 'watch',
+          ai1Version: '',
+          ai2Version: '',
+        })
+      );
+    });
   });
 });
