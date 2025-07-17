@@ -97,7 +97,9 @@ async function main() {
 
   if (args.length === 0) {
     console.log('Usage: tsx scripts/load-ml-weights.ts <weights-file> [output-path]');
-    console.log('Example: tsx scripts/load-ml-weights.ts ml_ai_weights.json ml-weights.json');
+    console.log(
+      'Example: tsx scripts/load-ml-weights.ts ml/data/weights/ml_ai_weights.json ml-weights.json'
+    );
     process.exit(1);
   }
 

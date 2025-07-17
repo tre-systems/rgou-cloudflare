@@ -80,6 +80,57 @@ npm run dev
 
 Game opens at http://localhost:3000.
 
+## Machine Learning (ML) Folder Structure
+
+All files and scripts related to ML model training, weights, and utilities are now organized under the `ml/` directory:
+
+- `ml/data/weights/` — Trained neural network weights (value and policy networks)
+- `ml/data/cache/` — Training cache and intermediate data
+- `ml/data/training/` — Training datasets and logs
+- `ml/scripts/` — All scripts for training, testing, and managing ML models:
+  - `train_ml_ai.py` — Main training script (Python)
+  - `train_ml_ai.sh` — Shell wrapper for training
+  - `test_ml_vs_expectiminimax.sh` — Test ML AI vs. classic AI
+  - `check_training_status.sh` — Check training progress
+  - `load-ml-weights.ts` — Load weights into the app (TypeScript)
+  - `build_rust_ai.sh` — Build Rust AI core
+
+## How to Train and Use the ML AI
+
+### Prerequisites
+
+- [Python 3.8+](https://www.python.org/downloads/)
+- `pip install torch torchvision`
+- [Rust & Cargo](https://www.rust-lang.org/tools/install)
+- `cargo install wasm-pack`
+
+### Training
+
+To train the ML AI from scratch or with synthetic data:
+
+```bash
+npm run train:ml           # Standard training
+npm run train:ml:synthetic # Training with synthetic data
+```
+
+These scripts now use the new path: `ml/scripts/train_ml_ai.py`.
+
+### Loading Weights
+
+After training, load the weights into the app:
+
+```bash
+npm run load:ml-weights
+```
+
+This uses `ml/scripts/load-ml-weights.ts`.
+
+### Testing and Utilities
+
+- Run ML vs. Classic AI: `ml/scripts/test_ml_vs_expectiminimax.sh`
+- Check training status: `ml/scripts/check_training_status.sh`
+- Build Rust AI core: `ml/scripts/build_rust_ai.sh`
+
 ## How to Use the ML AI (WASM)
 
 The ML AI is a neural network-based opponent that runs efficiently in your browser via WebAssembly. You can play against it, or watch it compete against the Classic AI.

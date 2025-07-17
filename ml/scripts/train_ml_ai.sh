@@ -25,10 +25,10 @@ caffeinate -i python3 scripts/train_ml_ai.py \
     --epochs 150 \
     --learning-rate 0.001 \
     --use-rust-ai \
-    --output ml_ai_weights.json
+    --output ml/data/weights/ml_ai_weights.json
 
 echo ""
-echo "Training completed! New weights saved to ml_ai_weights.json"
+echo "Training completed! New weights saved to ml/data/weights/ml_ai_weights.json"
 echo "Training data cached for future use in training_data_cache.json"
 echo ""
 

@@ -4,7 +4,7 @@
 # Safe to run while training is ongoing
 
 TRAIN_SCRIPT="scripts/train_ml_ai.py"
-OUTPUT_WEIGHTS="ml_ai_weights_overnight.json"
+OUTPUT_WEIGHTS="ml/data/weights/ml_ai_weights_overnight.json"
 CACHE_FILE="training_data_cache.json"
 
 # 1. Check for running training process

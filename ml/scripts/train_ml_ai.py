@@ -787,7 +787,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="ml_ai_weights.json",
+        default="ml/data/weights/ml_ai_weights.json",
         help="Output weights filename",
     )
     parser.add_argument(

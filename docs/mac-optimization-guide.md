@@ -72,7 +72,7 @@ export VECLIB_MAXIMUM_THREADS=$(sysctl -n hw.ncpu)
 ```bash
 ./scripts/train_ml_ai_optimized.sh
 # Or
-python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai --output ml_ai_weights.json
+python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai --output ml/data/weights/ml_ai_weights.json
 ```
 
 ### Build Optimized Rust Core
