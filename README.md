@@ -20,40 +20,11 @@ This implementation brings this ancient game to life with modern technology, all
 - Game statistics and database integration
 - Modern, responsive UI
 
-## Version Management
-
-This project uses a simplified semantic versioning system. All version information is centralized in `src/lib/versions.ts`.
-
-### Updating Versions
-
-To update all version numbers across the project:
-
-```bash
-npm run version:update <new-version>
-```
-
-Example:
-
-```bash
-npm run version:update 1.1.0
-```
-
-This will update:
-
-- `src/lib/versions.ts` - All version constants
-- `package.json` - Node.js package version
-- `worker/rust_ai_core/Cargo.toml` - Rust crate version
-
-### Version Components
-
-- **app**: Main application version (increment for any significant changes)
-- **classicAI**: Classic AI version (increment when expectiminimax logic changes)
-- **mlAI**: ML AI version (increment when neural network changes)
-- **game**: Game version (increment when game rules change)
-
 ## Quick Start
 
 Want to play right away? The game is available online and works in any modern browser. Just visit the deployed version to start playing against the AI.
+
+https://rgou.tre.systems/
 
 For developers who want to run locally or contribute:
 
@@ -174,6 +145,37 @@ where `valueWeights` and `policyWeights` are arrays of numbers (float32) represe
 - Use `evaluate_ml_position(gameState)` to get a value network evaluation for a game state.
 
 For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
+
+## Version Management
+
+This project uses a simplified semantic versioning system. All version information is centralized in `src/lib/versions.ts`.
+
+### Updating Versions
+
+To update all version numbers across the project:
+
+```bash
+npm run version:update <new-version>
+```
+
+Example:
+
+```bash
+npm run version:update 1.1.0
+```
+
+This will update:
+
+- `src/lib/versions.ts` - All version constants
+- `package.json` - Node.js package version
+- `worker/rust_ai_core/Cargo.toml` - Rust crate version
+
+### Version Components
+
+- **app**: Main application version (increment for any significant changes)
+- **classicAI**: Classic AI version (increment when expectiminimax logic changes)
+- **mlAI**: ML AI version (increment when neural network changes)
+- **game**: Game version (increment when game rules change)
 
 ## Documentation
 
