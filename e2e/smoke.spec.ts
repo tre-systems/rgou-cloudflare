@@ -87,14 +87,15 @@ test.describe('Game Completion and Stats', () => {
 });
 
 test.describe('Game Save (DB Verification)', () => {
+  type GameRow = {
+    gameType: string;
+    ai1Version: string;
+    ai2Version: string;
+    winner: string;
+  };
+
   async function verifySavedGame(
-    {
-      mode,
-      expected,
-    }: {
-      mode: 'classic' | 'ml' | 'watch';
-      expected: { gameType: string; ai1Version: string; ai2Version: string };
-    },
+    { mode, expectedGameType }: { mode: 'classic' | 'ml' | 'watch'; expectedGameType: string },
     page: Page
   ) {
     await page.goto('/');
@@ -116,12 +117,14 @@ test.describe('Game Save (DB Verification)', () => {
         .prepare(
           'SELECT * FROM games WHERE winner = ? AND gameType = ? ORDER BY completedAt DESC LIMIT 1'
         )
-        .get('player1', expected.gameType);
+        .get('player1', expectedGameType) as GameRow | undefined;
       expect(row).toBeTruthy();
       if (row) {
-        expect(row.gameType).toBe(expected.gameType);
-        expect(row.ai1Version).toBe(expected.ai1Version);
-        expect(row.ai2Version).toBe(expected.ai2Version);
+        expect(row.gameType).toBe(expectedGameType);
+        expect(typeof row.ai1Version).toBe('string');
+        expect(typeof row.ai2Version).toBe('string');
+        expect(row.ai1Version.length).toBeGreaterThan(0);
+        expect(row.ai2Version.length).toBeGreaterThan(0);
       }
     } finally {
       db.close();
@@ -130,49 +133,19 @@ test.describe('Game Save (DB Verification)', () => {
 
   test('simulate win and verify game is saved in local.db for classic', async ({ page }) => {
     if (process.env.NODE_ENV === 'development') {
-      await verifySavedGame(
-        {
-          mode: 'classic',
-          expected: {
-            gameType: 'classic',
-            ai1Version: expect.any(String),
-            ai2Version: expect.any(String),
-          },
-        },
-        page
-      );
+      await verifySavedGame({ mode: 'classic', expectedGameType: 'classic' }, page);
     }
   });
 
   test('simulate win and verify game is saved in local.db for ml', async ({ page }) => {
     if (process.env.NODE_ENV === 'development') {
-      await verifySavedGame(
-        {
-          mode: 'ml',
-          expected: {
-            gameType: 'ml',
-            ai1Version: expect.any(String),
-            ai2Version: expect.any(String),
-          },
-        },
-        page
-      );
+      await verifySavedGame({ mode: 'ml', expectedGameType: 'ml' }, page);
     }
   });
 
   test('simulate win and verify game is saved in local.db for watch', async ({ page }) => {
     if (process.env.NODE_ENV === 'development') {
-      await verifySavedGame(
-        {
-          mode: 'watch',
-          expected: {
-            gameType: 'watch',
-            ai1Version: expect.any(String),
-            ai2Version: expect.any(String),
-          },
-        },
-        page
-      );
+      await verifySavedGame({ mode: 'watch', expectedGameType: 'watch' }, page);
     }
   });
 });
