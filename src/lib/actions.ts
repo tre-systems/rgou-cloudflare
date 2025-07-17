@@ -16,11 +16,27 @@ export async function saveGame(payload: SaveGamePayload) {
       return { error: 'Invalid game data' };
     }
 
-    const { winner, history, playerId, moveCount, duration, clientHeader, gameType } =
-      validation.data;
+    const {
+      winner,
+      history,
+      playerId,
+      moveCount,
+      duration,
+      clientHeader,
+      gameType,
+      ai1Version: payloadAi1Version,
+      ai2Version: payloadAi2Version,
+    } = validation.data;
 
     // Get versions from centralized version management
-    const { gameVersion, ai1Version, ai2Version } = getVersionsForDB();
+    const {
+      gameVersion,
+      ai1Version: defaultAi1Version,
+      ai2Version: defaultAi2Version,
+    } = getVersionsForDB();
+
+    const ai1Version = payloadAi1Version !== undefined ? payloadAi1Version : defaultAi1Version;
+    const ai2Version = payloadAi2Version !== undefined ? payloadAi2Version : defaultAi2Version;
 
     let gameId: string | undefined;
 

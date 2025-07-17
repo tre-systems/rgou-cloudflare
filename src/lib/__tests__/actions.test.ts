@@ -86,8 +86,8 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'classic',
-        ai1Version: '1.0.0',
-        ai2Version: '1.0.0',
+        ai1Version: 'ai1-version-test',
+        ai2Version: 'ai2-version-test',
         gameVersion: '1.0.0',
       });
       // Ensure all required fields are present and not undefined/null
@@ -123,8 +123,8 @@ describe('actions', () => {
         clientHeader: 'test-header',
         history: validPayload.history,
         gameType: 'classic',
-        ai1Version: '1.0.0',
-        ai2Version: '1.0.0',
+        ai1Version: 'ai1-version-test',
+        ai2Version: 'ai2-version-test',
         gameVersion: '1.0.0',
       });
       // Ensure all required fields are present and not undefined/null
@@ -179,6 +179,81 @@ describe('actions', () => {
         error: 'Failed to save game',
         details: 'General error',
       });
+    });
+
+    it('should save correct gameType and AI versions for classic mode', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: { ...validPayload, gameType: 'classic', ai1Version: '1.0.0', ai2Version: '' },
+      });
+      mockDb.returning.mockResolvedValue([{ id: 'classic-id' }]);
+
+      const result = await saveGame({
+        ...validPayload,
+        gameType: 'classic',
+        ai1Version: '1.0.0',
+        ai2Version: '',
+      });
+      expect(result).toEqual({ success: true, gameId: 'classic-id' });
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameType: 'classic',
+          ai1Version: '1.0.0',
+          ai2Version: '',
+        })
+      );
+    });
+
+    it('should save correct gameType and AI versions for ml mode', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: { ...validPayload, gameType: 'ml', ai1Version: '1.0.0', ai2Version: '1.0.0' },
+      });
+      mockDb.returning.mockResolvedValue([{ id: 'ml-id' }]);
+
+      const result = await saveGame({
+        ...validPayload,
+        gameType: 'ml',
+        ai1Version: '1.0.0',
+        ai2Version: '1.0.0',
+      });
+      expect(result).toEqual({ success: true, gameId: 'ml-id' });
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameType: 'ml',
+          ai1Version: '1.0.0',
+          ai2Version: '1.0.0',
+        })
+      );
+    });
+
+    it('should save correct gameType and AI versions for watch mode', async () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      vi.mocked(getDb).mockResolvedValue(mockDb as any);
+      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+        success: true,
+        data: { ...validPayload, gameType: 'watch', ai1Version: '1.0.0', ai2Version: '1.0.0' },
+      });
+      mockDb.returning.mockResolvedValue([{ id: 'watch-id' }]);
+
+      const result = await saveGame({
+        ...validPayload,
+        gameType: 'watch',
+        ai1Version: '1.0.0',
+        ai2Version: '1.0.0',
+      });
+      expect(result).toEqual({ success: true, gameId: 'watch-id' });
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          gameType: 'watch',
+          ai1Version: '1.0.0',
+          ai2Version: '1.0.0',
+        })
+      );
     });
   });
 });
