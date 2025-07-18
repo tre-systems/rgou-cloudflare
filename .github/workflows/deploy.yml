@@ -21,11 +21,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust tools
+        run: |
+          cargo install wasm-pack --version 0.12.1 --locked || true
+          cargo install worker-build --version 0.1.0 --locked || true
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -36,12 +38,22 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             worker/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/deploy.yml') }}
 
-      - name: Install Rust tools
-        run: |
-          cargo install wasm-pack --force
-          cargo install worker-build --force
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -63,9 +75,3 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config wrangler.toml --env=""
-
-      - name: Deploy AI Worker
-        run: npm run deploy:worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
