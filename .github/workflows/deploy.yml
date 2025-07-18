@@ -57,6 +57,9 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Build wasm assets
+        run: npm run build:wasm-assets
+
       - name: Run all tests
         run: npm run check
 
