@@ -1,9 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 node_modules/
 worker/node_modules/
-/.pnp
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -11,76 +9,68 @@ worker/node_modules/
 !.yarn/releases
 !.yarn/versions
 
-# testing
-coverage/
-test-results/
-playwright-report/
-
-# next.js
+# build and dist
 .next/
 out/
 dist/
-
-# production
 build/
 worker/build/
 worker/dist/
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel/
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# Cloudflare
-.wrangler/
-wrangler.toml.backup
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-Thumbs.db
-
-# Zig build artifacts
 worker/zig-out/
 worker/zig-cache/
 worker/*.o
 worker/*.a
 worker/.zig-cache/
-
-# Rust and wasm-pack
 worker/rust_ai_core/pkg/
 worker/rust_ai_core/target/
 worker/ml_ai_core/pkg/
 worker/ml_ai_core/target/
 worker/target/
+.open-next/
+
+# test and coverage
+coverage/
+test-results/
+playwright-report/
+
+# misc
+.DS_Store
+Thumbs.db
+*.pem
+*.swp
+*.swo
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# env files
+.env*
+.env.local
+
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+
+# Local DB and cache
+local.db
+*.sqlite
+*.db
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+
+# Rust and wasm-pack
 src/lib/wasm/
 public/wasm/
 Cargo.lock
-
-# OpenNext
-.open-next/
-
-# Local
-local.db
 
 # Large model files (ignore uncompressed versions, keep .gz versions)
 training_data_cache.json
@@ -89,4 +79,5 @@ ml_ai_weights*.json
 test_ml_weights*.json
 !test_ml_weights*.json.gz
 debug_ml_weights.json
+# public/ml-weights.json is generated, do not version
 public/ml-weights.json
