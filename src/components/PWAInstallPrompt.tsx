@@ -14,7 +14,6 @@ export default function PWAInstallPrompt() {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if app is already installed
     const checkInstalled = () => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
@@ -23,12 +22,10 @@ export default function PWAInstallPrompt() {
 
     checkInstalled();
 
-    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setDeferredPrompt(e);
 
-      // Show prompt after a delay if not dismissed before
       setTimeout(() => {
         if (!localStorage.getItem('pwa-install-dismissed')) {
           setShowPrompt(true);
@@ -36,7 +33,6 @@ export default function PWAInstallPrompt() {
       }, 5000);
     };
 
-    // Listen for appinstalled event
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setShowPrompt(false);
@@ -77,7 +73,6 @@ export default function PWAInstallPrompt() {
     localStorage.setItem('pwa-install-dismissed', 'true');
   };
 
-  // Don't show if already installed or no prompt available
   if (isInstalled || !showPrompt || !deferredPrompt) {
     return null;
   }

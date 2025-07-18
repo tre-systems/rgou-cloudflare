@@ -45,6 +45,12 @@ const MODE_OPTIONS = [
   },
 ];
 
+function isStandalonePWA() {
+  if (typeof window === 'undefined') return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true;
+}
+
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
   const { processDiceRoll, endTurn, makeMove, makeAIMove, reset } = useGameActions();
@@ -63,6 +69,11 @@ export default function RoyalGameOfUr() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    setIsStandalone(isStandalonePWA());
+  }, []);
 
   useEffect(() => {
     if (showModelOverlay || gameState.gameStatus !== 'playing') {
@@ -246,22 +257,25 @@ export default function RoyalGameOfUr() {
     <>
       <AnimatedBackground />
       <div className="relative min-h-screen w-full flex items-center justify-center p-4">
-        <div className="hidden md:block absolute top-4 right-4 z-50">
-          <button
-            onClick={() => {
-              window.open(
-                '/',
-                'GamePopout',
-                'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no'
-              );
-            }}
-            className="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2 text-white/80 hover:text-white font-semibold shadow-lg backdrop-blur-md border border-white/10 transition-colors"
-            title="Pop Out Game"
-          >
-            <ExternalLink className="w-4 h-4 mr-1" />
-            <span>Pop Out Game</span>
-          </button>
-        </div>
+        {/* Only show Pop Out Game button if not in standalone PWA mode */}
+        {!isStandalone && (
+          <div className="hidden md:block absolute top-4 right-4 z-50">
+            <button
+              onClick={() => {
+                window.open(
+                  '/',
+                  'GamePopout',
+                  'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no'
+                );
+              }}
+              className="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2 text-white/80 hover:text-white font-semibold shadow-lg backdrop-blur-md border border-white/10 transition-colors"
+              title="Pop Out Game"
+            >
+              <ExternalLink className="w-4 h-4 mr-1" />
+              <span>Pop Out Game</span>
+            </button>
+          </div>
+        )}
         {isDevelopment() && (
           <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
             {diagnosticsPanelOrPlaceholder}

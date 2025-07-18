@@ -72,12 +72,4 @@ src/lib/wasm/
 public/wasm/
 Cargo.lock
 
-# Large model files (ignore uncompressed versions, keep .gz versions)
-training_data_cache.json
-ml_ai_weights*.json
-!ml_ai_weights*.json.gz
-test_ml_weights*.json
-!test_ml_weights*.json.gz
-debug_ml_weights.json
-# public/ml-weights.json is generated, do not version
 public/ml-weights.json

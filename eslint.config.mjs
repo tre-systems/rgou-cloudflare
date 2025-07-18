@@ -22,6 +22,7 @@ const eslintConfig = [
       'dist/**/*',
       // Ignore node_modules
       'node_modules/**/*',
+      '.venv/',
     ],
   },
   {
