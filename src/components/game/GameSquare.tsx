@@ -59,7 +59,6 @@ export default function GameSquare({
         </motion.div>
       )}
 
-      {/* Board cell number in development mode */}
       {isDevelopment() && (
         <span className="absolute top-1 left-1 text-xs text-white/60 font-mono select-none pointer-events-none z-10">
           {squareIndex}

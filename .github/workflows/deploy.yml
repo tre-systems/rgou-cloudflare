@@ -27,7 +27,6 @@ jobs:
       - name: Install Rust tools
         run: |
           cargo install wasm-pack --version 0.12.1 --locked || true
-          cargo install worker-build --version 0.1.0 --locked || true
 
       - name: Cache Rust dependencies
         uses: actions/cache@v4
@@ -57,9 +56,6 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-
-      - name: Build WASM assets
-        run: npm run build:wasm-assets
 
       - name: Run all tests
         run: npm run check

@@ -43,7 +43,6 @@ export const createTestGameState = (
       }));
   }
 
-  // Update board based on pieces
   state.board = Array(21).fill(null);
   for (const piece of [...state.player1Pieces, ...state.player2Pieces]) {
     if (piece.square >= 0 && piece.square < 20) {

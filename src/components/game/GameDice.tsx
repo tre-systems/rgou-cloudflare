@@ -15,7 +15,6 @@ export default function GameDice({ gameState }: GameDiceProps) {
   const [burst, setBurst] = useState(false);
   const [numberPulse, setNumberPulse] = useState(false);
 
-  // Helper to generate a random pattern of 4 dice for a given total
   function getDicePattern(total: number): boolean[] {
     const arr = [false, false, false, false];
     let count = 0;
