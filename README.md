@@ -111,6 +111,8 @@ This uses `ml/scripts/load-ml-weights.ts`.
 - Run ML vs. Classic AI: `ml/scripts/test_ml_vs_expectiminimax.sh`
 - Check training status: `ml/scripts/check_training_status.sh`
 - Build Rust AI core: `ml/scripts/build_rust_ai.sh`
+- **Run E2E tests (headless):** `npm run test:e2e`
+- **Run E2E tests (UI):** `npm run test:e2e:ui`
 
 ## How to Use the ML AI (WASM)
 

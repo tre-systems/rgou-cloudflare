@@ -47,6 +47,7 @@ export default function GameControls({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title="Create Near-Winning State (Dev)"
+              data-testid="create-near-winning-state"
             >
               <Dice1 className="w-4 h-4" />
             </motion.button>
