@@ -5,7 +5,6 @@ import { games } from '@/lib/db/schema';
 import { SaveGamePayload, SaveGamePayloadSchema } from '@/lib/schemas';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '@/lib/db/schema';
-import { getVersionsForDB } from '@/lib/versions';
 
 export async function saveGame(payload: SaveGamePayload) {
   try {
@@ -16,27 +15,8 @@ export async function saveGame(payload: SaveGamePayload) {
       return { error: 'Invalid game data' };
     }
 
-    const {
-      winner,
-      history,
-      playerId,
-      moveCount,
-      duration,
-      clientHeader,
-      gameType,
-      ai1Version: payloadAi1Version,
-      ai2Version: payloadAi2Version,
-    } = validation.data;
-
-    // Get versions from centralized version management
-    const {
-      gameVersion,
-      ai1Version: defaultAi1Version,
-      ai2Version: defaultAi2Version,
-    } = getVersionsForDB();
-
-    const ai1Version = payloadAi1Version !== undefined ? payloadAi1Version : defaultAi1Version;
-    const ai2Version = payloadAi2Version !== undefined ? payloadAi2Version : defaultAi2Version;
+    const { winner, history, playerId, moveCount, duration, clientHeader, gameType } =
+      validation.data;
 
     let gameId: string | undefined;
 
@@ -47,16 +27,12 @@ export async function saveGame(payload: SaveGamePayload) {
           .values({
             winner,
             playerId,
-            status: 'completed',
             completedAt: new Date(),
             moveCount,
             duration,
             clientHeader,
             history: history,
             gameType,
-            ai1Version,
-            ai2Version,
-            gameVersion,
           })
           .returning();
         gameId = newGame?.id;
@@ -70,16 +46,12 @@ export async function saveGame(payload: SaveGamePayload) {
         .values({
           winner,
           playerId,
-          status: 'completed',
           completedAt: new Date(),
           moveCount,
           duration,
           clientHeader,
           history: history,
           gameType,
-          ai1Version,
-          ai2Version,
-          gameVersion,
         })
         .returning({ id: games.id })
         .get();

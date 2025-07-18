@@ -247,22 +247,6 @@ export const useGameStore = create<GameStore>()(
 
             const uiStore = useUIStore.getState();
             const gameMode = uiStore.selectedMode || 'classic';
-            const aiSourceP1 = uiStore.aiSourceP1;
-            const aiSourceP2 = uiStore.aiSourceP2;
-            const { VERSIONS } = await import('./versions');
-
-            const ai1Version =
-              aiSourceP1 === 'client'
-                ? VERSIONS.classicAI
-                : aiSourceP1 === 'ml'
-                  ? VERSIONS.mlAI
-                  : '';
-            const ai2Version =
-              aiSourceP2 === 'client'
-                ? VERSIONS.classicAI
-                : aiSourceP2 === 'ml'
-                  ? VERSIONS.mlAI
-                  : '';
 
             const payload = {
               winner: gameState.winner,
@@ -272,8 +256,6 @@ export const useGameStore = create<GameStore>()(
               duration,
               clientHeader,
               gameType: gameMode,
-              ai1Version,
-              ai2Version,
             };
 
             await saveGame(payload);

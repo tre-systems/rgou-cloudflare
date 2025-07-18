@@ -117,9 +117,6 @@ export const SaveGamePayloadSchema = z.object({
   duration: z.number().optional(),
   clientHeader: z.string().optional(),
   gameType: z.enum(['classic', 'ml', 'watch']).default('classic'),
-  ai1Version: z.string().optional(),
-  ai2Version: z.string().optional(),
-  gameVersion: z.string().optional(),
 });
 export type SaveGamePayload = z.infer<typeof SaveGamePayloadSchema>;
 

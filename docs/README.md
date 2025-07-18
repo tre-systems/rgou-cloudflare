@@ -50,45 +50,24 @@ Welcome to the Royal Game of Ur documentation! This guide helps you find everyth
 - Modern UI
 - Database integration (SQLite/D1)
 
-## Game Result Saving and Versioning
+## Game Result Saving
 
 At the end of each game, the following fields are saved to the database:
 
 - **playerId**: A unique, persistent ID generated and stored in the browser/app localStorage. This allows tracking the same player across multiple games in the same browser/app, without requiring login. If localStorage is cleared, a new ID is generated.
 - **winner**: The winner of the game ('player1' or 'player2').
 - **completedAt**: Timestamp when the game finished.
-- **status**: Always 'completed' for finished games.
 - **moveCount**: Number of moves in the game.
 - **duration**: Total time (ms) from game start to finish.
 - **clientHeader**: The browser's user agent string (or 'unknown' if not available).
 - **history**: Full move history (as JSON).
 - **gameType**: Always 'standard' (for now).
-- **ai1Version**: Version of the AI used for player 1. For classic/rust AI, this is the git commit hash. For ML AI, this is the hash of the weights file.
-- **ai2Version**: Version of the AI used for player 2. Same logic as above.
-- **gameVersion**: The git commit hash of the codebase at the time of the game.
-
-### Versioning Details
-
-- **ai1Version**: Classic AI version in format `{crate-version}-{ai-code-hash}` (e.g., `0.1.0-b1e1960f`)
-  - Changes only when the Rust AI code changes
-  - Combines the crate version from `Cargo.toml` with a hash of AI-specific source files
-- **ai2Version**: ML AI version as SHA-256 hash of `public/ml-weights.json.gz` file
-  - Changes only when the ML weights file changes
-- **gameVersion**: Git commit hash of the codebase
-  - Changes with every deployment
-
-**Note**: Version information is determined server-side during game save to ensure accurate tracking. AI versions only change when the actual AI logic changes, not on every deployment.
 
 ### Player Tracking
 
 - The `playerId` is generated and stored in localStorage as `rgou-player-id`.
 - This ID persists across games and browser sessions, unless localStorage is cleared.
 - No login or authentication is required.
-
-### Ensuring Data Completeness
-
-- All version and tracking fields are always set and saved for every game.
-- This enables robust analytics, diagnostics, and player tracking without user accounts.
 
 ## Related Resources
 

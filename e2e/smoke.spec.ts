@@ -69,8 +69,6 @@ test.describe('Game Board Interactivity', () => {
 test.describe('Game Completion, Stats, and Save', () => {
   type GameRow = {
     gameType: string;
-    ai1Version: string;
-    ai2Version: string;
     winner: string;
   };
 
@@ -104,10 +102,6 @@ test.describe('Game Completion, Stats, and Save', () => {
       expect(row).toBeTruthy();
       if (row) {
         expect(row.gameType).toBe(expectedGameType);
-        expect(typeof row.ai1Version).toBe('string');
-        expect(typeof row.ai2Version).toBe('string');
-        expect(row.ai1Version.length).toBeGreaterThan(0);
-        expect(row.ai2Version.length).toBeGreaterThan(0);
       }
     } finally {
       db.close();

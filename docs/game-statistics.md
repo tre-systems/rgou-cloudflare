@@ -58,10 +58,10 @@ export const games = sqliteTable('games', {
   playerId: text('playerId').notNull(),
   winner: text('winner', { enum: ['player1', 'player2'] }),
   completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
-  status: text('status', { enum: ['in_progress', 'completed', 'abandoned'] }),
   moveCount: integer('moveCount'),
   duration: integer('duration'),
   history: text('history', { mode: 'json' }),
+  gameType: text('gameType', { enum: ['classic', 'ml', 'watch'] }),
 });
 ```
 

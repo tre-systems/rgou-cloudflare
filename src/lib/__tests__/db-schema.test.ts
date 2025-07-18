@@ -32,12 +32,6 @@ describe('Database Schema', () => {
       expect(completedAtColumn.dataType).toBe('date');
     });
 
-    it('should have status column with enum and default', () => {
-      const statusColumn = games.status;
-      expect(statusColumn).toBeDefined();
-      expect(statusColumn.name).toBe('status');
-    });
-
     it('should have moveCount column', () => {
       const moveCountColumn = games.moveCount;
       expect(moveCountColumn).toBeDefined();
@@ -64,21 +58,6 @@ describe('Database Schema', () => {
       expect(gameTypeColumn).toBeDefined();
       expect(gameTypeColumn.notNull).toBeDefined();
       expect(gameTypeColumn.default).toBe('classic');
-    });
-
-    it('should have ai1Version column', () => {
-      const ai1VersionColumn = games.ai1Version;
-      expect(ai1VersionColumn).toBeDefined();
-    });
-
-    it('should have ai2Version column', () => {
-      const ai2VersionColumn = games.ai2Version;
-      expect(ai2VersionColumn).toBeDefined();
-    });
-
-    it('should have gameVersion column', () => {
-      const gameVersionColumn = games.gameVersion;
-      expect(gameVersionColumn).toBeDefined();
     });
   });
 
