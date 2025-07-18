@@ -3,7 +3,14 @@ use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
 const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 4;
-const NUM_GAMES: usize = 100;
+/// Returns the number of games to run for ML vs Expectiminimax tests.
+/// Defaults to 10 for fast checks, but can be overridden by setting the NUM_GAMES environment variable.
+fn num_games() -> usize {
+    std::env::var("NUM_GAMES")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(10)
+}
 const ML_WEIGHTS_FILE: &str = "../../ml_ai_weights_fast.json";
 
 #[derive(Debug, Clone)]
@@ -212,9 +219,9 @@ fn test_ml_vs_expectiminimax_ai() {
     let mut total_ml_ai_moves = 0;
     let mut total_expectiminimax_ai_moves = 0;
 
-    println!("Starting {} games: ML AI vs Expectiminimax AI", NUM_GAMES);
+    println!("Starting {} games: ML AI vs Expectiminimax AI", num_games());
 
-    for i in 0..NUM_GAMES {
+    for i in 0..num_games() {
         let mut ml_ai = MLAI::new();
         ml_ai.load_pretrained(&value_weights, &policy_weights);
 
@@ -287,11 +294,11 @@ fn test_ml_vs_expectiminimax_ai() {
         }
     }
 
-    let ml_win_rate = (ml_wins as f64 / NUM_GAMES as f64) * 100.0;
-    let avg_moves = total_moves as f64 / NUM_GAMES as f64;
-    let avg_ml_finished = total_ml_finished_pieces as f64 / NUM_GAMES as f64;
+    let ml_win_rate = (ml_wins as f64 / num_games() as f64) * 100.0;
+    let avg_moves = total_moves as f64 / num_games() as f64;
+    let avg_ml_finished = total_ml_finished_pieces as f64 / num_games() as f64;
     let avg_expectiminimax_finished =
-        total_expectiminimax_finished_pieces as f64 / NUM_GAMES as f64;
+        total_expectiminimax_finished_pieces as f64 / num_games() as f64;
     let avg_ml_time_per_move = if total_ml_ai_moves > 0 {
         total_ml_ai_time_ms as f64 / total_ml_ai_moves as f64
     } else {
@@ -304,7 +311,7 @@ fn test_ml_vs_expectiminimax_ai() {
     };
 
     println!("\n=== ML AI vs Expectiminimax AI Results ===");
-    println!("Total games: {}", NUM_GAMES);
+    println!("Total games: {}", num_games());
     println!("ML AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
     println!(
         "Expectiminimax AI wins: {} ({:.1}%)",
@@ -332,12 +339,12 @@ fn test_ml_vs_expectiminimax_ai() {
     println!(
         "ML AI wins playing first: {} / {}",
         ml_first_wins,
-        NUM_GAMES / 2
+        num_games() / 2
     );
     println!(
         "ML AI wins playing second: {} / {}",
         ml_second_wins,
-        NUM_GAMES / 2
+        num_games() / 2
     );
 
     if ml_win_rate > 45.0 {
@@ -362,17 +369,29 @@ fn test_ml_ai_consistency() {
         }
     };
 
+    println!("Loaded ML weights. Initializing MLAI...");
     let mut ml_ai = MLAI::new();
     ml_ai.load_pretrained(&value_weights, &policy_weights);
 
+    println!("Setting up test game state...");
     let mut game_state = GameState::new();
     game_state.dice_roll = 2;
     game_state.player1_pieces[0].square = 4;
     game_state.board[4] = Some(game_state.player1_pieces[0]);
 
     let ml_state = convert_game_state_to_ml(&game_state);
+    println!("Calling get_best_move first time...");
     let response1 = ml_ai.get_best_move(&ml_state);
+    println!(
+        "First call: move={:?}, eval={}",
+        response1.r#move, response1.evaluation
+    );
+    println!("Calling get_best_move second time...");
     let response2 = ml_ai.get_best_move(&ml_state);
+    println!(
+        "Second call: move={:?}, eval={}",
+        response2.r#move, response2.evaluation
+    );
 
     assert_eq!(
         response1.r#move, response2.r#move,
