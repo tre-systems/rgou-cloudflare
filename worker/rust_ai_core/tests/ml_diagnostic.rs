@@ -47,7 +47,7 @@ fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>
         .unwrap()
         .parent()
         .unwrap()
-        .join("ml_ai_weights_fast.json");
+        .join("ml/data/weights/ml_ai_weights_fast.json");
     let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 

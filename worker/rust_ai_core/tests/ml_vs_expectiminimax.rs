@@ -11,7 +11,7 @@ fn num_games() -> usize {
         .and_then(|v| v.parse().ok())
         .unwrap_or(10)
 }
-const ML_WEIGHTS_FILE: &str = "../../ml_ai_weights_fast.json";
+const ML_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_fast.json";
 
 #[derive(Debug, Clone)]
 struct GameResult {
@@ -70,7 +70,7 @@ fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>
         .unwrap()
         .parent()
         .unwrap()
-        .join("ml_ai_weights_fast.json");
+        .join("ml/data/weights/ml_ai_weights_fast.json");
     let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 

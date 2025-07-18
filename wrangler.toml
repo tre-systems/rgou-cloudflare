@@ -10,8 +10,6 @@ binding = "ASSETS"
 
 [vars]
 ENVIRONMENT = "production"
-NEXT_PUBLIC_AI_WORKER_URL = "https://rgou-ml-worker.tre.systems"
-AI_WORKER_SECRET = "production-secret-2024"
 
 [observability]
 enabled = true
@@ -20,10 +18,6 @@ head_sampling_rate = 1
 [[routes]]
 pattern = "rgou.tre.systems/*"
 zone_name = "tre.systems"
-
-[env.development.vars]
-NEXT_PUBLIC_AI_WORKER_URL = "http://localhost:8787"
-AI_WORKER_SECRET = "dev-secret-key"
 
 [[d1_databases]]
 binding = "DB"
