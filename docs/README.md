@@ -61,7 +61,7 @@ At the end of each game, the following fields are saved to the database:
 - **duration**: Total time (ms) from game start to finish.
 - **clientHeader**: The browser's user agent string (or 'unknown' if not available).
 - **history**: Full move history (as JSON).
-- **gameType**: Always 'standard' (for now).
+- **gameType**: classic, ml, or watch.
 
 ### Player Tracking
 

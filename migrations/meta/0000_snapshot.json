@@ -1,92 +1,9 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "397df856-f9db-41d2-9847-bcab1cb2f6de",
+  "id": "3f1b790b-a81f-44b6-9f19-7f3ca748571b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "game_moves": {
-      "name": "game_moves",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "gameId": {
-          "name": "gameId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "moveIndex": {
-          "name": "moveIndex",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "player": {
-          "name": "player",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "diceRoll": {
-          "name": "diceRoll",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "pieceIndex": {
-          "name": "pieceIndex",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "fromSquare": {
-          "name": "fromSquare",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "toSquare": {
-          "name": "toSquare",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "moveType": {
-          "name": "moveType",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "game_moves_gameId_games_id_fk": {
-          "name": "game_moves_gameId_games_id_fk",
-          "tableFrom": "game_moves",
-          "tableTo": "games",
-          "columnsFrom": ["gameId"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
     "games": {
       "name": "games",
       "columns": {
@@ -104,14 +21,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "clientVersion": {
-          "name": "clientVersion",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'unknown'"
-        },
         "winner": {
           "name": "winner",
           "type": "text",
@@ -125,14 +34,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'in_progress'"
         },
         "moveCount": {
           "name": "moveCount",
@@ -148,20 +49,27 @@
           "notNull": false,
           "autoincrement": false
         },
-        "version": {
-          "name": "version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'1.0.0'"
-        },
         "clientHeader": {
           "name": "clientHeader",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "history": {
+          "name": "history",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "gameType": {
+          "name": "gameType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'classic'"
         }
       },
       "indexes": {},
