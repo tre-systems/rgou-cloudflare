@@ -87,11 +87,10 @@ All files and scripts related to ML model training, weights, and utilities are n
 
 ### Training
 
-To train the ML AI from scratch or with synthetic data:
+To train the ML AI from scratch:
 
 ```bash
-npm run train:ml           # Standard training
-npm run train:ml:synthetic # Training with synthetic data
+npm run train:ml
 ```
 
 These scripts now use the new path: `ml/scripts/train_ml_ai.py`.

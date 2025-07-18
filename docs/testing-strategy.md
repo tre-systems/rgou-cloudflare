@@ -68,3 +68,40 @@ npm run test            # CI/CD
 npm run test:coverage   # Coverage
 npm run check           # All checks (including Rust)
 ```
+
+# End-to-End (E2E) Testing Strategy
+
+Our E2E tests are implemented using Playwright and are located in the `e2e/` directory. The primary smoke test suite is `smoke.spec.ts`, which covers the following critical user flows:
+
+- Mobile layout and main controls
+- Landing page visibility and content
+- Mode selection (Classic, ML, Watch)
+- Game board interactivity (dice roll, piece movement, sound toggle, help panel)
+- Game completion, stats, and database save verification
+- Help panel accessibility
+
+These tests ensure that the most important features of the application are always working as expected.
+
+## Running E2E Tests
+
+To run the E2E tests, use:
+
+```
+npm run test:e2e
+```
+
+## Diagnosing E2E Failures
+
+For debugging and diagnosing issues when E2E tests fail, the following command is extremely helpful:
+
+```
+npm run test:e2e:ui
+```
+
+This launches the Playwright UI, allowing you to step through tests, inspect selectors, and view screenshots or traces of failures. Use this tool to quickly identify and resolve issues in the test suite or application.
+
+## Notes
+
+- E2E tests are designed to verify actual database saves (using local sqlite) rather than mocking database writes.
+- Use `data-testid` attributes for robust and maintainable selectors.
+- The smoke test suite is intended to cover the most critical flows; deeper or edge-case scenarios should be added to dedicated regression or feature-specific suites if needed.
