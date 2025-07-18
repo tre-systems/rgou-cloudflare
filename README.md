@@ -1,5 +1,13 @@
 # Royal Game of Ur - Cloudflare Edition
 
+[![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
+
+![rgou Screenshot](/docs/screenshot.png)
+
+<div align="center">
+  <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;margin-bottom: 20px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+</div>
+
 A modern, web-based implementation of the ancient Royal Game of Ur, featuring a beautiful UI, offline support, and two powerful AI opponents (Classic and Machine Learning-based). Built with Next.js, TypeScript, Rust, and WebAssembly.
 
 ## What is the Royal Game of Ur?
@@ -33,11 +41,12 @@ For developers who want to run locally or contribute:
 ### Prerequisites
 
 - [Git](https://git-scm.com/downloads)
-- [Node.js (v18+)](https://nodejs.org/)
+- [Node.js (v20+)](https://nodejs.org/)
 - [Rust & Cargo](https://www.rust-lang.org/tools/install)
 - `cargo install wasm-pack`
-- [Python 3.8+](https://www.python.org/downloads/) (for ML training, optional)
-- `pip install torch torchvision` (for ML training, optional)
+- [Python 3.10+](https://www.python.org/downloads/) (for ML training, optional)
+- Install ML dependencies (for training, optional):
+  - `pip install -r ml/requirements.txt`
 
 ### Local Development
 
@@ -49,7 +58,7 @@ npm run migrate:local
 npm run dev
 ```
 
-Game opens at http://localhost:3000.
+Game opens at http://localhost:3000
 
 ## Machine Learning (ML) Folder Structure
 
@@ -70,8 +79,9 @@ All files and scripts related to ML model training, weights, and utilities are n
 
 ### Prerequisites
 
-- [Python 3.8+](https://www.python.org/downloads/)
-- `pip install torch torchvision`
+- [Python 3.10+](https://www.python.org/downloads/)
+- Install ML dependencies:
+  - `pip install -r ml/requirements.txt`
 - [Rust & Cargo](https://www.rust-lang.org/tools/install)
 - `cargo install wasm-pack`
 
