@@ -160,19 +160,26 @@ For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
 
 ## Documentation
 
-- [AI Investigation & Optimization Summary](./docs/ai-investigation-summary.md)
-- [ML AI System](./docs/ml-ai-system.md)
-- [Expectiminimax AI Optimization](./docs/expectiminimax-ai-optimization.md)
-- [AI Performance Quick Reference](./docs/ai-performance-quick-reference.md)
-- [AI Improvement Roadmap](./docs/ai-improvement-roadmap.md)
-- [High Priority TODOs](./docs/high-priority-todos.md)
-- [AI System (Classic)](./docs/ai-system.md)
-- [Search Depth Optimization](./docs/search-depth-optimization.md)
-- [Architecture Overview](./docs/architecture-overview.md)
-- [Game Rules and Strategy](./docs/game-rules-strategy.md)
-- [Technical Implementation](./docs/technical-implementation.md)
-- [Testing Strategy](./docs/testing-strategy.md)
-- [Troubleshooting Guide](./docs/troubleshooting.md)
+- **[Documentation Index](./docs/README.md)** - **START HERE** - Complete documentation overview and organization
+- **[Latest Matrix Comparison Results](./docs/latest-matrix-comparison-results.md)** - **CURRENT** - Latest performance data (July 2025)
+- **[AI Performance Quick Reference](./docs/ai-performance-quick-reference.md)** - **CURRENT** - Quick reference for developers
+- **[Comprehensive AI Matrix Analysis](./docs/comprehensive-ai-matrix-analysis.md)** - **CURRENT** - Updated analysis and recommendations
+
+### Historical Investigations & Fixes
+
+- **[AI Investigation Summary](./docs/ai-investigation-summary.md)** - **HISTORICAL** - Overview of past investigations
+- **[Depth Performance Analysis](./docs/depth-1-vs-depth-3-analysis.md)** - **RESOLVED** - Transposition table interference fix
+- **[Depth 2 vs Depth 3 Analysis](./docs/why-depth2-beats-depth3.md)** - **INVESTIGATED** - Performance anomaly analysis
+
+### Reference & Technical Details
+
+- **[ML AI System](./docs/ml-ai-system.md)** - Machine learning AI implementation
+- **[AI System (Classic)](./docs/ai-system.md)** - Classic expectiminimax AI details
+- **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
+- **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
+- **[Technical Implementation](./docs/technical-implementation.md)** - Implementation details
+- **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
+- **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
 
 ## Troubleshooting
 

@@ -1,23 +1,43 @@
 # AI Investigation & Optimization Summary
 
+_This document is **HISTORICAL** - See [Latest Matrix Comparison Results](./latest-matrix-comparison-results.md) for current results_
+
 ## Executive Summary
 
 This document provides a high-level overview of the comprehensive investigation and optimization of the expectiminimax AI for the Royal Game of Ur. The investigation was conducted to ensure the AI is working as effectively and efficiently as possible.
 
-## Key Findings
+**⚠️ IMPORTANT**: This document reflects the state of the investigation as of 2024. For current results and recommendations, see the [Latest Matrix Comparison Results](./latest-matrix-comparison-results.md).
 
-### 🎯 Optimal Configuration
+## Current Status (July 2025)
 
-- **Recommended Depth**: 3 (best performance/strength balance)
+### ✅ **Issues Resolved**
+
+- **Heuristic AI Perspective Bug**: Fixed inconsistent player perspective
+- **Transposition Table Interference**: Fixed shared transposition table causing unfair comparisons
+- **Performance Anomalies**: Identified that tactical evaluation > deep search for this game
+
+### 🎯 **Current Recommendations**
+
+- **Production**: Use EMM-1 (Depth 1) - 53.6% win rate, instant speed
+- **Alternative**: Use EMM-2 (Depth 2) - 53.2% win rate, instant speed
+- **Educational**: Use Heuristic AI - 50.8% win rate, instant speed
+
+## Historical Key Findings (2024)
+
+### 🎯 Optimal Configuration (Historical)
+
+- **Recommended Depth**: 3 (best performance/strength balance) - **UPDATED**
 - **Performance**: 11.4ms average per game
 - **Win Rate**: 94% vs random, 49% vs ML AI
 - **Status**: Production-ready and optimized
 
-### 📊 Performance Analysis
+### 📊 Performance Analysis (Historical)
 
 - **Depth 2**: 0.6ms/game, 94% win rate vs random
 - **Depth 3**: 11.4ms/game, 94% win rate vs random
 - **Depth 4**: 308.8ms/game, 96% win rate vs random
+
+**⚠️ NOTE**: These results were from before the transposition table interference was fixed. Current results show different rankings.
 
 ### 🚀 Optimizations Implemented
 
@@ -65,11 +85,11 @@ This document provides a high-level overview of the comprehensive investigation 
 - **State Cloning**: Optimized copy operations
 - **Error Handling**: Robust move validation
 
-## Recommendations
+## Historical Recommendations
 
-### For Production Use
+### For Production Use (Historical)
 
-1. **Use Depth 3** for optimal balance of performance and strength
+1. **Use Depth 3** for optimal balance of performance and strength - **UPDATED**
 2. **Enable transposition table** for maximum speedup
 3. **Monitor performance** regularly
 4. **Test thoroughly** before deployment
@@ -124,7 +144,7 @@ This document provides a high-level overview of the comprehensive investigation 
 
 The expectiminimax AI has been thoroughly investigated and optimized to provide:
 
-- **Optimal Performance**: Depth 3 offers the best balance
+- **Optimal Performance**: Depth 3 offers the best balance - **UPDATED**
 - **Reliable Behavior**: Consistent and predictable move selection
 - **Efficient Implementation**: Optimized algorithms and data structures
 - **Comprehensive Testing**: Extensive test coverage and validation
@@ -133,9 +153,17 @@ The AI is now **production-ready** and provides a strong, fast, and reliable opp
 
 ## Next Steps
 
-1. **Deploy with Depth 3** for production use
+1. **Deploy with Depth 3** for production use - **UPDATED**
 2. **Monitor performance** in real-world usage
 3. **Consider adaptive depth** for future improvements
 4. **Maintain test coverage** for regression detection
 
 The AI investigation is complete and the system is ready for production deployment.
+
+---
+
+**⚠️ HISTORICAL DOCUMENT**: This document reflects the state of the investigation as of 2024. For current results and recommendations, see:
+
+- **[Latest Matrix Comparison Results](./latest-matrix-comparison-results.md)** - Current performance data
+- **[Comprehensive AI Matrix Analysis](./comprehensive-ai-matrix-analysis.md)** - Updated analysis
+- **[AI Performance Quick Reference](./ai-performance-quick-reference.md)** - Current recommendations

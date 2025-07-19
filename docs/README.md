@@ -1,106 +1,160 @@
-# Documentation Index
+# Royal Game of Ur - Documentation Index
 
-Welcome to the Royal Game of Ur documentation! This guide helps you find everything you need, whether you're a player, developer, or AI researcher.
+_Last updated: July 19, 2025_
 
-## Start Here
+## 📋 **Documentation Overview**
 
-- **New to the project?**
-  1. Read the [Main README](../README.md) for a quick overview and setup.
-  2. See [Game Rules and Strategy](./game-rules-strategy.md) for how to play.
-  3. For technical setup, see [Technical Implementation Guide](./technical-implementation.md).
+This documentation is organized into three main categories:
 
-- **Just want to play?** The game is available online and works in any modern browser - no installation needed!
+1. **🎯 Current Results & Recommendations** - Latest performance data and production guidance
+2. **🔧 Historical Investigations & Fixes** - Past problems that were identified and resolved
+3. **📚 Reference & Technical Details** - Implementation details and technical documentation
 
-## Documentation Overview
+---
 
-- [Architecture Overview](./architecture-overview.md): System design and component interactions
-- [AI System Documentation](./ai-system.md): Classic AI (Expectiminimax algorithm) and implementation
-- [ML AI System](./ml-ai-system.md): Neural network-based AI, training, and optimization
-- [Technical Implementation Guide](./technical-implementation.md): Development setup and build process
-- [Game Rules and Strategy](./game-rules-strategy.md): Complete rules and strategy
-- [Game Statistics](./game-statistics.md): Statistics tracking system
-- [Testing Strategy](./testing-strategy.md): Testing approach and guidelines
-- [Mac Optimization Guide](./mac-optimization-guide.md): ML training on Mac
+## 🎯 **Current Results & Recommendations**
 
-## Quick Reference
+### **Latest Performance Data (July 2025)**
 
-- **Players:**
-  - [Main README](../README.md): Overview, features, and quick start
-  - [Game Rules and Strategy](./game-rules-strategy.md): Complete rules
-- **Developers:**
-  - [Architecture Overview](./architecture-overview.md): System design
-  - [Technical Implementation Guide](./technical-implementation.md): Setup
-  - [AI System Documentation](./ai-system.md): Classic AI (Expectiminimax algorithm) details
-  - [ML AI System](./ml-ai-system.md): Neural network AI
-  - [Testing Strategy](./testing-strategy.md): Testing guidelines
-- **AI Researchers:**
-  - [AI System Documentation](./ai-system.md): Classic AI (Expectiminimax algorithm)
-  - [ML AI System](./ml-ai-system.md): Neural network architecture
-  - [Architecture Overview](./architecture-overview.md): System context
+- **[Latest Matrix Comparison Results](./latest-matrix-comparison-results.md)** - **CURRENT** - Complete performance matrix from latest tests
+- **[Comprehensive AI Matrix Analysis](./comprehensive-ai-matrix-analysis.md)** - **CURRENT** - Updated with latest results and recommendations
+- **[AI Performance Quick Reference](./ai-performance-quick-reference.md)** - **CURRENT** - Quick reference for developers and production use
 
-## Game Features
+### **Current AI Performance Ranking (July 2025)**
 
-- Authentic rules and gameplay
-- Two AI opponents:
-  - **Classic AI** (Expectiminimax algorithm)
-  - **ML AI** (Neural network model)
-  - Both run locally in browser
-- AI vs. AI watch mode
-- PWA support and offline play
-- Modern UI
-- Database integration (SQLite/D1)
+1. **EMM-1 (Depth 1)**: 53.6% win rate (0.0ms/move) - **Best overall**
+2. **EMM-2 (Depth 2)**: 53.2% win rate (0.0ms/move) - Very strong alternative
+3. **Heuristic**: 50.8% win rate (0.0ms/move) - Competitive baseline
+4. **Random**: 48.0% win rate (0.0ms/move) - Expected baseline
+5. **EMM-3 (Depth 3)**: 47.6% win rate (10.2ms/move) - Good but slower
+6. **ML**: 46.8% win rate (40.8ms/move) - Needs improvement
 
-## Game Result Saving
+### **Production Recommendations (Current)**
 
-At the end of each game, the following fields are saved to the database:
+- **Primary**: EMM-1 (Depth 1) - Best performance and speed
+- **Alternative**: EMM-2 (Depth 2) - Very good alternative
+- **Educational**: Heuristic AI - Good for understanding evaluation
+- **Testing**: Random AI - Baseline comparison
 
-- **playerId**: A unique, persistent ID generated and stored in the browser/app localStorage. This allows tracking the same player across multiple games in the same browser/app, without requiring login. If localStorage is cleared, a new ID is generated.
-- **winner**: The winner of the game ('player1' or 'player2').
-- **completedAt**: Timestamp when the game finished.
-- **moveCount**: Number of moves in the game.
-- **duration**: Total time (ms) from game start to finish.
-- **clientHeader**: The browser's user agent string (or 'unknown' if not available).
-- **history**: Full move history (as JSON).
-- **gameType**: classic, ml, or watch.
+---
 
-### Player Tracking
+## 🔧 **Historical Investigations & Fixes**
 
-- The `playerId` is generated and stored in localStorage as `rgou-player-id`.
-- This ID persists across games and browser sessions, unless localStorage is cleared.
-- No login or authentication is required.
+### **Major Issues Resolved**
 
-## Related Resources
+- **[Heuristic AI Perspective Bug Fix](./heuristic-ai-analysis.md)** - **RESOLVED** - Fixed inconsistent player perspective in heuristic AI
+- **[Transposition Table Interference](./depth-1-vs-depth-3-analysis.md)** - **RESOLVED** - Fixed shared transposition table causing unfair comparisons
+- **[Depth Performance Anomalies](./why-depth2-beats-depth3.md)** - **INVESTIGATED** - Analysis of why depth 2 performed better than depth 3
 
-- [Irving Finkel, "On the Rules for the Royal Game of Ur" (PDF)](https://www.academia.edu/15173145/On_the_Rules_for_the_Royal_Game_of_Ur)
-- [RoyalUr.net: Rules and History](https://royalur.net/learn)
-- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur)
-- [Russell & Norvig, "Artificial Intelligence: A Modern Approach"](https://aima.cs.berkeley.edu/)
+### **Investigation History**
 
-## Contributing
+- **[AI Investigation Summary](./ai-investigation-summary.md)** - **HISTORICAL** - Overview of comprehensive AI investigation
+- **[Expectiminimax AI Optimization](./expectiminimax-ai-optimization.md)** - **HISTORICAL** - Detailed optimization work
+- **[Search Depth Optimization](./search-depth-optimization.md)** - **HISTORICAL** - Depth analysis and optimization
 
-- Improve technical details
-- Update code examples
-- Add or update references
-- Enhance diagrams
-- Follow the [Technical Implementation Guide](./technical-implementation.md)
-- Run all tests before submitting
-- Update relevant documentation
+### **Key Fixes Applied**
 
-## Documentation Standards
+1. **Heuristic AI Perspective Bug** (2024)
+   - **Problem**: Player 1 and Player 2 both maximized, creating inconsistent behavior
+   - **Fix**: Player 1 minimizes, Player 2 maximizes (consistent with expectiminimax)
+   - **Result**: Heuristic AI now performs at expected baseline level
 
-- Clear structure and headings
-- Code examples where relevant
-- Cross-references between docs
-- Cite sources and provide references
-- Keep docs up to date with code
+2. **Transposition Table Interference** (2024)
+   - **Problem**: Shared transposition table gave unfair advantage to depth 1
+   - **Fix**: Separate AI instances for each depth comparison
+   - **Result**: Fair comparisons between different search depths
 
-## Getting Help
+3. **Performance Anomalies** (2024)
+   - **Problem**: Depth 2 performing better than depth 3
+   - **Investigation**: Identified evaluation function scaling issues
+   - **Result**: Confirmed that tactical evaluation > deep search for this game
 
-- **WASM Loading:** Check CORS headers and file paths
-- **AI Performance:** Monitor search depth and memory usage
-- **Database Issues:** Verify environment variables and migrations
-- **Build Problems:** Ensure all prerequisites are installed
-- **Support:**
-  - GitHub Issues
-  - This documentation
-  - Community
+---
+
+## 📚 **Reference & Technical Details**
+
+### **System Architecture**
+
+- **[Architecture Overview](./architecture-overview.md)** - System design and components
+- **[Technical Implementation](./technical-implementation.md)** - Implementation details
+- **[AI System (Classic)](./ai-system.md)** - Classic expectiminimax AI details
+- **[ML AI System](./ml-ai-system.md)** - Machine learning AI implementation
+
+### **Game & Rules**
+
+- **[Game Rules and Strategy](./game-rules-strategy.md)** - Game rules and strategic concepts
+- **[Game Statistics](./game-statistics.md)** - Statistical analysis of gameplay
+
+### **Development & Testing**
+
+- **[Testing Strategy](./testing-strategy.md)** - Testing approach and methodology
+- **[Test Configuration Guide](./test-configuration-guide.md)** - How to run different test configurations
+- **[Troubleshooting Guide](./troubleshooting.md)** - Common issues and solutions
+
+### **Future Development**
+
+- **[AI Improvement Roadmap](./ai-improvement-roadmap.md)** - Planned improvements and enhancements
+- **[High Priority TODOs](./high-priority-todos.md)** - Current development priorities
+
+### **Platform-Specific**
+
+- **[Mac Optimization Guide](./mac-optimization-guide.md)** - macOS-specific optimizations
+- **[Checking Training Status](./checking-training-status.md)** - ML training monitoring
+
+---
+
+## 🚀 **Quick Start for Developers**
+
+### **Current Best Practices (July 2025)**
+
+1. **Use EMM-1 (Depth 1) for production** - Best performance/speed ratio
+2. **Run matrix comparison tests** - `npm run test:rust:slow`
+3. **Reference latest results** - See "Current Results & Recommendations" above
+4. **Check historical fixes** - See "Historical Investigations & Fixes" for context
+
+### **Testing Commands**
+
+```bash
+# Run comprehensive matrix analysis (current results)
+npm run test:rust:slow
+
+# Run fast tests only
+npm run test:rust
+
+# Run all tests
+npm run check
+```
+
+### **Key Configuration**
+
+- **Production AI**: Depth 1 (EMM-1)
+- **Alternative**: Depth 2 (EMM-2)
+- **Educational**: Heuristic AI
+- **Testing**: Random AI
+
+---
+
+## 📊 **Performance Summary (Current)**
+
+### **Complete Performance Matrix (Win Rates %)**
+
+| AI Type       | Random | Heuristic | EMM-1 | EMM-2 | EMM-3 | ML   |
+| ------------- | ------ | --------- | ----- | ----- | ----- | ---- |
+| **Random**    | -      | 48.0      | 44.0  | 50.0  | 50.0  | 48.0 |
+| **Heuristic** | 48.0   | -         | 48.0  | 48.0  | 56.0  | 50.0 |
+| **EMM-1**     | 44.0   | 48.0      | -     | 48.0  | 48.0  | 64.0 |
+| **EMM-2**     | 50.0   | 48.0      | 48.0  | -     | 54.0  | 58.0 |
+| **EMM-3**     | 50.0   | 56.0      | 48.0  | 54.0  | -     | 46.0 |
+| **ML**        | 48.0   | 50.0      | 64.0  | 58.0  | 46.0  | -    |
+
+### **Key Insights (Current)**
+
+- **EMM-1 is optimal** for production use (53.6% win rate, instant speed)
+- **Tactical evaluation > Deep search** for Royal Game of Ur
+- **ML AI needs improvement** (46.8% win rate)
+- **Heuristic AI is competitive** after perspective bug fix
+- **High luck component** reduces benefits of deep search
+
+---
+
+_This documentation is actively maintained. For the most current results, always refer to the "Current Results & Recommendations" section._
