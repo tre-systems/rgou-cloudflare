@@ -158,9 +158,15 @@ def train_networks_with_progress(
     if batch_size is None:
         batch_size = get_optimal_batch_size(device)
 
+    print(f"=== TRAINING DEVICE CHECK ===")
     print(f"Training on device: {device}")
+    print(f"Device type: {device.type}")
+    if device.type == "cpu":
+        print("ERROR: CPU detected in training function! This should not happen.")
+        raise RuntimeError("CPU detected - GPU training required")
     print(f"Batch size: {batch_size}")
     print(f"DataLoader workers: {get_optimal_workers()}")
+    print("=============================")
     sys.stdout.flush()
 
     # Split data into training and validation
@@ -180,7 +186,7 @@ def train_networks_with_progress(
         batch_size=batch_size,
         shuffle=True,
         num_workers=get_optimal_workers(),
-        pin_memory=device.type == "cuda",
+        pin_memory=device.type in ["cuda", "mps"],
     )
     
     val_dataloader = DataLoader(
@@ -188,7 +194,7 @@ def train_networks_with_progress(
         batch_size=batch_size,
         shuffle=False,
         num_workers=get_optimal_workers(),
-        pin_memory=device.type == "cuda",
+        pin_memory=device.type in ["cuda", "mps"],
     )
 
     value_network = ValueNetwork().to(device)
@@ -206,25 +212,35 @@ def train_networks_with_progress(
     policy_criterion = nn.CrossEntropyLoss()
 
     print(f"Training for {epochs} epochs with {len(train_data)} samples...")
-    print("Progress updates every epoch...")
+    print(f"Estimated time per epoch: ~{len(train_data) // batch_size * 0.01:.1f} seconds")
+    print("Progress updates every epoch with detailed metrics...")
     sys.stdout.flush()
 
     best_val_loss = float('inf')
     patience_counter = 0
     patience = 20
+    start_time = time.time()
 
     # Create progress bar for epochs
     epoch_pbar = tqdm(range(epochs), desc="Training epochs", unit="epoch")
 
     for epoch in epoch_pbar:
+        epoch_start_time = time.time()
+        
         # Training phase
         value_network.train()
         policy_network.train()
         
         train_value_losses = []
         train_policy_losses = []
+        
+        # Create batch progress bar for first epoch only
+        if epoch == 0:
+            batch_pbar = tqdm(train_dataloader, desc=f"Epoch {epoch + 1} training", leave=False)
+        else:
+            batch_pbar = train_dataloader
 
-        for features, value_targets, policy_targets in train_dataloader:
+        for batch_idx, (features, value_targets, policy_targets) in enumerate(batch_pbar):
             features = features.to(device)
             value_targets = value_targets.to(device)
             policy_targets = policy_targets.to(device)
@@ -294,11 +310,15 @@ def train_networks_with_progress(
             'LR': f'{value_optimizer.param_groups[0]["lr"]:.6f}'
         })
 
+        epoch_time = time.time() - epoch_start_time
+        total_time = time.time() - start_time
+        
         # Also print detailed epoch progress
-        print(f"\nEpoch {epoch + 1}/{epochs} - "
+        print(f"\nEpoch {epoch + 1}/{epochs} ({epoch_time:.1f}s) - "
               f"Train V: {avg_train_value_loss:.4f}, P: {avg_train_policy_loss:.4f} - "
               f"Val V: {avg_val_value_loss:.4f}, P: {avg_val_policy_loss:.4f} - "
-              f"LR: {value_optimizer.param_groups[0]['lr']:.6f}")
+              f"LR: {value_optimizer.param_groups[0]['lr']:.6f} - "
+              f"Total: {total_time:.1f}s")
         sys.stdout.flush()
 
         if patience_counter >= patience:
@@ -312,6 +332,19 @@ def train_networks_with_progress(
 
 
 def main():
+    # Force device check at startup
+    print("=== DEVICE CHECK ===")
+    device = get_device()
+    print(f"Detected device: {device}")
+    print(f"Device type: {device.type}")
+    if device.type == "cpu":
+        print("ERROR: CPU detected! Training will be very slow.")
+        print("Please check PyTorch MPS installation.")
+        return
+    print("GPU detected - proceeding with training")
+    print("==================")
+    print()
+    
     parser = argparse.ArgumentParser(description="Train ML AI for Royal Game of Ur - Versioned")
     parser.add_argument(
         "--version", type=str, default="v3", help="ML version to train (e.g., v1, v2, v3, v4, v5)"
@@ -385,9 +418,11 @@ def main():
     output_filename = os.path.join(args.output_dir, f"ml_ai_weights_{args.version}.json")
 
     set_random_seeds(config["seed"])
+    # Get the actual device that will be used
+    device = get_device()
     print(f"Starting ML AI training for {args.version.upper()}...")
     print(f"Configuration: {config['num_games']:,} games, {config['epochs']:,} epochs, learning rate {config['learning_rate']}")
-    print(f"Device: {get_device()}")
+    print(f"Device: {device}")
     print(f"Parallel workers: {get_optimal_workers()}")
     print(f"Output: {output_filename}")
     if args.reuse_games:

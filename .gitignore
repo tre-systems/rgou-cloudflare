@@ -77,3 +77,6 @@ ml/scripts/target/
 ml/scripts/pkg/
 
 *.pyc
+
+training_data_cache.json
+

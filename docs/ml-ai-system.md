@@ -84,8 +84,17 @@ The ML AI is competitive with the Classic AI (Expectiminimax algorithm) it was t
 ## Training Pipeline
 
 1. **Data Generation:** Play games using Classic AI (Expectiminimax algorithm), extract features, expert move, and outcome
-2. **Training:** Train networks (value: MSE loss, policy: cross-entropy, AdamW optimizer)
+2. **Training:** Train networks (value: MSE loss, policy: cross-entropy, AdamW optimizer) with GPU acceleration (MPS/CUDA)
 3. **Evaluation:** Test ML model vs Classic AI (Expectiminimax algorithm) (win rate, move quality, speed)
+
+### GPU Training Support
+
+The training system now supports GPU acceleration:
+- **Apple Silicon (M1/M2/M3):** Uses Metal Performance Shaders (MPS) for 10-20x speedup
+- **NVIDIA GPUs:** Uses CUDA for acceleration
+- **Fallback:** CPU training if GPU unavailable
+
+Training includes enhanced progress logging with epoch timing and real-time metrics.
 
 ## Move Selection
 

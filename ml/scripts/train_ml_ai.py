@@ -50,7 +50,7 @@ def get_device():
 
 def get_optimal_batch_size(device):
     if device.type == "mps":
-        return 256
+        return 512  # Increased for better GPU utilization
     elif device.type == "cuda":
         return 512
     else:
@@ -762,7 +762,7 @@ def train_networks(
         batch_size=batch_size,
         shuffle=True,
         num_workers=get_optimal_workers(),
-        pin_memory=device.type == "cuda",
+        pin_memory=device.type in ["cuda", "mps"],
     )
     
     val_dataloader = DataLoader(
@@ -770,7 +770,7 @@ def train_networks(
         batch_size=batch_size,
         shuffle=False,
         num_workers=get_optimal_workers(),
-        pin_memory=device.type == "cuda",
+        pin_memory=device.type in ["cuda", "mps"],
     )
 
     value_network = ValueNetwork().to(device)

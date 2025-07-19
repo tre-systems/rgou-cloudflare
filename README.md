@@ -107,7 +107,7 @@ bash ml/scripts/train_ml_ai_version.sh --version v3 --skip-test --reuse-games
 
 ### Training Features
 
-- **Progress Updates**: Shows training progress every epoch
+- **Progress Updates**: Shows training progress every epoch with timing and loss metrics
 - **Game Reuse**: Option to reuse existing training games for faster iteration
 - **Early Stopping**: Automatic early stopping when validation loss plateaus
 - **Learning Rate Scheduling**: Adaptive learning rate based on validation performance
@@ -115,7 +115,8 @@ bash ml/scripts/train_ml_ai_version.sh --version v3 --skip-test --reuse-games
 - **Metadata Tracking**: Comprehensive training metadata and version history
 - **Parallel Processing**: Optimized parallel game processing for 3-8x faster data generation
 - **GPU Acceleration**: Automatic MPS (Apple Silicon) and CUDA (NVIDIA) GPU detection and usage
-- **Optimized Batch Sizes**: Larger batch sizes for GPU training (256 for MPS, 512 for CUDA)
+- **Optimized Batch Sizes**: Larger batch sizes for GPU training (512 for MPS/CUDA)
+- **Enhanced Logging**: Real-time epoch timing, batch progress, and detailed metrics
 
 ### Training Output
 
