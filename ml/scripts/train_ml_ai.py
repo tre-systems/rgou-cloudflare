@@ -614,7 +614,8 @@ def generate_training_data(
         rust_client = RustAIClient(rust_ai_path)
 
         training_data = []
-        for game_result in game_results:
+        print("Processing games into training samples...")
+        for game_result in tqdm(game_results, desc="Processing games"):
             for move_data in game_result["moves"]:
                 game_state = move_data["game_state"]
                 features = GameFeatures.from_game_state(game_state)
@@ -965,14 +966,15 @@ def main():
         "use_rust_ai": args.use_rust_ai,
         "training_time_seconds": training_time,
         "device": str(get_device()),
-        "model_version": "v2",  # Increment version for significant changes
+        "model_version": "v3",  # Increment version for significant changes
         "improvements": [
             "Fixed training loss function (removed softmax from policy network)",
             "Added batch normalization and dropout for regularization",
             "Enhanced value targets using Classic AI evaluation",
             "Added learning rate scheduling and early stopping",
             "Improved optimizer (AdamW with weight decay)",
-            "Added validation split and reproducibility controls"
+            "Added validation split and reproducibility controls",
+            "Extended training with more games and epochs for ML-v3"
         ]
     }
 

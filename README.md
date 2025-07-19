@@ -61,58 +61,79 @@ npm run dev
 
 Game opens at http://localhost:3000
 
-## Machine Learning (ML) Folder Structure
+## Machine Learning (ML) Training System
 
-All files and scripts related to ML model training, weights, and utilities are now organized under the `ml/` directory:
+The project uses a **parameterized training system** that supports multiple ML versions with scalable configurations. All training is now consolidated through a single, flexible system.
 
-- `ml/data/weights/` — Trained neural network weights (value and policy networks)
-- `ml/data/cache/` — Training cache and intermediate data
-- `ml/data/training/` — Training datasets and logs
-- `ml/scripts/` — All scripts for training, testing, and managing ML models:
-  - `train_ml_ai.py` — Main training script (Python)
-  - `train_ml_ai.sh` — Shell wrapper for training
-  - `test_ml_vs_expectiminimax.sh` — Test ML AI vs. classic AI
-  - `check_training_status.sh` — Check training progress
-  - `load-ml-weights.ts` — Load weights into the app (TypeScript)
-  - `build_rust_ai.sh` — Build Rust AI core
+### Training System Overview
 
-## How to Train and Use the ML AI
+- **Main Script**: `ml/scripts/train_ml_ai_version.py` - Parameterized training for any ML version
+- **Shell Wrapper**: `ml/scripts/train_ml_ai_version.sh` - Easy-to-use shell script with options
+- **Base Training**: `ml/scripts/train_ml_ai.py` - Core training infrastructure (imported by versioned script)
+- **Evaluation**: `ml/scripts/evaluate_ml_ai.py` - Model evaluation against Classic AI
 
-### Prerequisites
+### Available ML Versions
 
-- [Python 3.10+](https://www.python.org/downloads/)
-- Install ML dependencies:
-  - `pip install -r ml/requirements.txt`
-- [Rust & Cargo](https://www.rust-lang.org/tools/install)
-- `cargo install wasm-pack`
+The system supports multiple ML versions with automatically scaled parameters:
 
-### Training
+| Version | Games  | Epochs | Learning Rate | Purpose           |
+| ------- | ------ | ------ | ------------- | ----------------- |
+| v1      | 100    | 50     | 0.001         | Quick testing     |
+| v2      | 1,000  | 100    | 0.001         | Standard training |
+| v3      | 5,000  | 300    | 0.0005        | Extended training |
+| v4      | 10,000 | 500    | 0.0003        | Advanced training |
+| v5      | 20,000 | 1,000  | 0.0002        | Maximum training  |
 
-To train the ML AI from scratch:
+### Training Commands
 
 ```bash
-npm run train:ml
+# Train specific version (using parameterized command)
+npm run train:ml:version -- --version v2
+npm run train:ml:version -- --version v3
+npm run train:ml:version -- --version v4
+
+# Train with custom parameters
+python ml/scripts/train_ml_ai_version.py --version v3 --epochs 500 --num-games 2000
+
+# Reuse existing games (faster training)
+python ml/scripts/train_ml_ai_version.py --version v3 --reuse-games
+
+# List all version configurations
+python ml/scripts/train_ml_ai_version.py --list-versions
+
+# Shell script with options
+bash ml/scripts/train_ml_ai_version.sh --version v3 --skip-test --reuse-games
 ```
 
-These scripts now use the new path: `ml/scripts/train_ml_ai.py`.
+### Training Features
 
-### Loading Weights
+- **Progress Updates**: Shows training progress every epoch
+- **Game Reuse**: Option to reuse existing training games for faster iteration
+- **Early Stopping**: Automatic early stopping when validation loss plateaus
+- **Learning Rate Scheduling**: Adaptive learning rate based on validation performance
+- **Weight Compression**: Automatic compression and quantization of trained weights
+- **Metadata Tracking**: Comprehensive training metadata and version history
 
-After training, load the weights into the app:
+### Training Output
+
+After training, you get:
+
+- `ml/data/weights/ml_ai_weights_vX.json` - Main weights file
+- `ml/data/weights/ml_ai_weights_vX.json.gz` - Compressed weights
+- `training_data_cache.json` - Reusable training data (if generated)
+
+### Loading and Testing
 
 ```bash
-npm run load:ml-weights
+# Load weights into the app
+npm run load:ml-weights ml/data/weights/ml_ai_weights_v3.json
+
+# Test against Classic AI
+cd worker/rust_ai_core && cargo test test_ml_v3_vs_expectiminimax_ai -- --nocapture
+
+# Evaluate performance
+npm run evaluate:ml -- --model ml/data/weights/ml_ai_weights_v3.json --num-games 100
 ```
-
-This uses `ml/scripts/load-ml-weights.ts`.
-
-### Testing and Utilities
-
-- Run ML vs. Classic AI: `ml/scripts/test_ml_vs_expectiminimax.sh`
-- Check training status: `ml/scripts/check_training_status.sh`
-- Build Rust AI core: `ml/scripts/build_rust_ai.sh`
-- **Run E2E tests (headless):** `npm run test:e2e`
-- **Run E2E tests (UI):** `npm run test:e2e:ui`
 
 ## How to Use the ML AI (WASM)
 

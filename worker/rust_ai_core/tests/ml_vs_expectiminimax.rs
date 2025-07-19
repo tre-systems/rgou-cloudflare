@@ -12,6 +12,7 @@ fn num_games() -> usize {
 }
 const ML_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_fast.json";
 const ML_V2_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v2.json";
+const ML_V3_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v3.json";
 
 #[derive(Debug, Clone)]
 struct GameResult {
@@ -111,6 +112,34 @@ fn load_ml_v2_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Erro
         .collect();
 
     let policy_weights: Vec<f32> = weights["policyWeights"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap() as f32)
+        .collect();
+
+    Ok((value_weights, policy_weights))
+}
+
+fn load_ml_v3_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let weights_path = std::path::Path::new(manifest_dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ml/data/weights/ml_ai_weights_v3.json");
+    let content = std::fs::read_to_string(weights_path)?;
+    let weights: serde_json::Value = serde_json::from_str(&content)?;
+
+    let value_weights: Vec<f32> = weights["value_weights"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap() as f32)
+        .collect();
+
+    let policy_weights: Vec<f32> = weights["policy_weights"]
         .as_array()
         .unwrap()
         .iter()
@@ -1398,6 +1427,191 @@ fn test_ml_v2_vs_expectiminimax_ai() {
         println!("• Consider adding to the main test matrix");
     } else {
         println!("• Retrain ML-v2 AI with more games or epochs");
+        println!("• Experiment with different network architectures");
+        println!("• Try self-play training for further improvement");
+    }
+}
+
+#[test]
+fn test_ml_v3_vs_expectiminimax_ai() {
+    println!("Loading ML-v3 AI weights from {}", ML_V3_WEIGHTS_FILE);
+
+    let (value_weights, policy_weights) = match load_ml_v3_weights() {
+        Ok(weights) => weights,
+        Err(e) => {
+            eprintln!("Failed to load ML-v3 weights: {}", e);
+            eprintln!("Skipping ML-v3 vs Expectiminimax test");
+            return;
+        }
+    };
+
+    let mut ml_wins = 0;
+    let mut expectiminimax_wins = 0;
+    let mut total_moves = 0;
+    let mut ml_first_wins = 0;
+    let mut ml_second_wins = 0;
+    let mut total_ml_ai_time_ms = 0;
+    let mut total_expectiminimax_ai_time_ms = 0;
+    let mut total_ml_ai_moves = 0;
+    let mut total_expectiminimax_ai_moves = 0;
+
+    println!(
+        "Starting {} games: ML-v3 AI vs Expectiminimax AI",
+        num_games()
+    );
+
+    // Create persistent AI instances
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
+    for i in 0..num_games() {
+        let ml_plays_first = i % 2 == 0;
+        let result =
+            play_game_ml_vs_expectiminimax(&mut ml_ai, &mut expectiminimax_ai, ml_plays_first);
+
+        total_moves += result.moves_played;
+
+        let ml_won = if result.ml_ai_was_player1 {
+            result.winner == Player::Player1
+        } else {
+            result.winner == Player::Player2
+        };
+
+        if ml_won {
+            ml_wins += 1;
+            if result.ml_ai_was_player1 {
+                ml_first_wins += 1;
+            } else {
+                ml_second_wins += 1;
+            }
+        } else {
+            expectiminimax_wins += 1;
+        }
+
+        total_ml_ai_time_ms += result.ml_ai_total_time_ms;
+        total_expectiminimax_ai_time_ms += result.expectiminimax_ai_total_time_ms;
+        total_ml_ai_moves += result.ml_ai_moves;
+        total_expectiminimax_ai_moves += result.expectiminimax_ai_moves;
+
+        // Clear transposition table periodically to prevent memory bloat
+        if (i + 1) % 20 == 0 {
+            expectiminimax_ai.clear_transposition_table();
+        }
+
+        if (i + 1) % 10 == 0 {
+            println!(
+                "  Game {}: ML-v3 wins: {}, EMM wins: {}",
+                i + 1,
+                ml_wins,
+                expectiminimax_wins
+            );
+        }
+    }
+
+    let ml_win_rate = (ml_wins as f64 / num_games() as f64) * 100.0;
+    let expectiminimax_win_rate = (expectiminimax_wins as f64 / num_games() as f64) * 100.0;
+    let avg_moves = total_moves as f64 / num_games() as f64;
+    let avg_ml_time = if total_ml_ai_moves > 0 {
+        total_ml_ai_time_ms as f64 / total_ml_ai_moves as f64
+    } else {
+        0.0
+    };
+    let avg_expectiminimax_time = if total_expectiminimax_ai_moves > 0 {
+        total_expectiminimax_ai_time_ms as f64 / total_expectiminimax_ai_moves as f64
+    } else {
+        0.0
+    };
+
+    println!("\n{}", "=".repeat(70));
+    println!("📊 ML-v3 AI vs EXPECTIMINIMAX AI RESULTS");
+    println!("{}", "=".repeat(70));
+    println!("Total games: {}", num_games());
+    println!("ML-v3 AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
+    println!(
+        "Expectiminimax AI wins: {} ({:.1}%)",
+        expectiminimax_wins, expectiminimax_win_rate
+    );
+    println!("Average moves per game: {:.1}", avg_moves);
+    println!("Average time per move - ML-v3 AI: {:.1}ms", avg_ml_time);
+    println!(
+        "Average time per move - EMM: {:.1}ms",
+        avg_expectiminimax_time
+    );
+    println!(
+        "Total moves made - ML-v3 AI: {}, EMM: {}",
+        total_ml_ai_moves, total_expectiminimax_ai_moves
+    );
+    println!(
+        "ML-v3 AI wins playing first: {} / {}",
+        ml_first_wins,
+        num_games() / 2
+    );
+    println!(
+        "ML-v3 AI wins playing second: {} / {}",
+        ml_second_wins,
+        num_games() / 2
+    );
+
+    println!("\n📈 PERFORMANCE ANALYSIS:");
+    println!("{}", "-".repeat(30));
+    let speed_factor = avg_expectiminimax_time / avg_ml_time;
+    println!("EMM is {:.1}x slower than ML-v3 AI", speed_factor);
+
+    if ml_win_rate > 60.0 {
+        println!("✅ ML-v3 AI significantly outperforms Expectiminimax AI");
+    } else if ml_win_rate > 50.0 {
+        println!("✅ ML-v3 AI shows clear advantage over Expectiminimax AI");
+    } else if ml_win_rate > 45.0 {
+        println!("⚠️  ML-v3 AI shows moderate advantage over Expectiminimax AI");
+    } else if ml_win_rate > 35.0 {
+        println!("📊 ML-v3 AI and Expectiminimax AI are closely matched");
+    } else {
+        println!("❌ Expectiminimax AI outperforms ML-v3 AI");
+    }
+
+    println!("\n🎯 STRATEGIC INSIGHTS:");
+    println!("{}", "-".repeat(25));
+    if ml_first_wins > ml_second_wins {
+        println!("• ML-v3 AI performs better when playing first");
+    } else if ml_second_wins > ml_first_wins {
+        println!("• ML-v3 AI performs better when playing second");
+    } else {
+        println!("• ML-v3 AI performance is balanced regardless of turn order");
+    }
+
+    if avg_moves < 120.0 {
+        println!("• Games are relatively short, suggesting decisive play");
+    } else if avg_moves > 150.0 {
+        println!("• Games are long, suggesting defensive play");
+    } else {
+        println!("• Games have moderate length, balanced play");
+    }
+
+    println!("\n🔍 RECOMMENDATIONS:");
+    println!("{}", "-".repeat(20));
+    if ml_win_rate > 55.0 {
+        println!("✅ ML-v3 AI shows excellent performance");
+        println!("   Ready for production use");
+    } else if ml_win_rate > 45.0 {
+        println!("✅ ML-v3 AI shows strong performance");
+        println!("   Consider using for competitive play");
+    } else if ml_win_rate > 40.0 {
+        println!("⚠️  ML-v3 AI shows competitive performance");
+        println!("   May need further training for optimal results");
+    } else {
+        println!("❌ ML-v3 AI needs improvement");
+        println!("   Consider retraining with more data or better parameters");
+    }
+
+    println!("\n🚀 NEXT STEPS:");
+    println!("{}", "-".repeat(15));
+    if ml_win_rate > 50.0 {
+        println!("• ML-v3 AI is ready for production use");
+        println!("• Consider replacing previous ML versions");
+        println!("• Add to the main test matrix");
+    } else {
+        println!("• Retrain ML-v3 AI with more games or epochs");
         println!("• Experiment with different network architectures");
         println!("• Try self-play training for further improvement");
     }

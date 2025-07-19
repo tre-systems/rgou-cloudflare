@@ -75,3 +75,5 @@ Cargo.lock
 public/ml-weights.json
 ml/scripts/target/
 ml/scripts/pkg/
+
+*.pyc
