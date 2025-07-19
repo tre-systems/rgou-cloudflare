@@ -852,8 +852,6 @@ pub struct MoveEvaluation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
-    use std::path::Path;
     use std::time::Instant;
 
     // Test matrix documentation generator
@@ -924,12 +922,8 @@ mod tests {
         ));
         matrix_content.push_str("\n");
 
-        // Write to docs directory
-        let docs_path = Path::new("../../docs/test-matrix.md");
-        if let Some(parent) = docs_path.parent() {
-            let _ = fs::create_dir_all(parent);
-        }
-        let _ = fs::write(docs_path, matrix_content);
+        // Print to console instead of writing to file
+        println!("{}", matrix_content);
     }
 
     #[derive(Debug)]
