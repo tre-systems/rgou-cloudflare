@@ -161,6 +161,8 @@ For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
 ## Documentation
 
 - [ML AI System](./docs/ml-ai-system.md)
+- [AI Improvement Roadmap](./docs/ai-improvement-roadmap.md)
+- [High Priority TODOs](./docs/high-priority-todos.md)
 - [AI System (Classic)](./docs/ai-system.md)
 - [Architecture Overview](./docs/architecture-overview.md)
 - [Game Rules and Strategy](./docs/game-rules-strategy.md)

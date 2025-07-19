@@ -34,8 +34,52 @@ The input vector encodes:
 ## Model Structure
 
 - Input: 150 features
-- Hidden: 256 → 128 → 64 → 32 (ReLU, dropout)
+- Hidden: 256 → 128 → 64 → 32 (ReLU activation)
 - Output: Value (1 neuron, tanh), Policy (7 neurons, softmax)
+
+**Note:** The current implementation uses ReLU activations without dropout regularization. Dropout could be added in future versions to improve generalization if overfitting becomes an issue.
+
+## Current Performance
+
+The ML AI is competitive with the Classic AI (Expectiminimax algorithm) it was trained from, achieving approximately 50% win rate in head-to-head matches. This represents a strong baseline for a neural network trained through imitation learning.
+
+## Future Improvements
+
+Several directions could be explored to create a stronger AI:
+
+### High Priority (Critical Issues)
+
+- **Fix WASM Weight Persistence**: The current implementation creates a new `MLAI` instance on every call, which may cause the network to use uninitialized weights. This should be fixed by maintaining a global singleton in the Rust code.
+
+- **Correct Training Loss**: The policy network currently applies softmax in the network definition AND uses CrossEntropyLoss, which may yield incorrect training signals. Should use raw logits with CrossEntropyLoss instead.
+
+### Medium Priority (Performance & Architecture)
+
+- **Unified Network Architecture**: Consider refactoring to a single network with two outputs (value and policy) to reduce duplication and inference cost. This would halve the forward passes needed during move evaluation.
+
+- **Enhanced Training Data Generation**: Remove the overhead of per-move subprocess calls by enabling the Rust AI to output entire game trajectories in one call. This would allow scaling to more games efficiently.
+
+- **Better Value Targets**: Use the Classic AI's evaluation function as value targets instead of just piece count difference. This would more directly train the value network to mimic the Classic AI's evaluation.
+
+### Advanced Improvements (Research Directions)
+
+- **Self-Play Reinforcement Learning**: After initial imitation learning, allow the neural network to play against itself or the Classic AI, using outcomes to fine-tune the networks. This could help discover strategies not present in the initial dataset.
+
+- **Monte Carlo Tree Search (MCTS)**: Add lightweight search on top of the neural network. A 2-ply expectiminimax using the value network for terminal evaluations could catch simple tactics while remaining fast.
+
+- **Feature Engineering Review**: Examine the 150 features and identify any that don't provide signal. Features like "king safety" (now renamed to "rosette safety") are Ur-specific, but some generic features might not be relevant.
+
+### Code Quality & Maintainability
+
+- **Refactor Training Script**: Break down the monolithic `train_ml_ai.py` script into smaller modules (features.py, model.py, training.py) for better maintainability.
+
+- **Add Reproducibility**: Provide random seed control and save training metadata (hyperparameters, performance metrics) for consistent results.
+
+- **Continuous Evaluation**: Implement automated testing that pits the ML AI against the Classic AI and reports win rates to track progress.
+
+### Current Strengths
+
+The ML AI is competitive with the Classic AI (Expectiminimax algorithm) it was trained from, achieving approximately 50% win rate in head-to-head matches. This represents a strong baseline for a neural network trained through imitation learning.
 
 ## Training Pipeline
 
@@ -85,5 +129,6 @@ The input vector encodes:
 ## FAQ
 
 - **Can I retrain the model?** Yes, generate new games, adjust features, or change the architecture and retrain.
-- **How do I make the AI stronger?** Use more data, deeper networks, self-play, or new features.
+- **How do I make the AI stronger?** The current model is competitive with its training data. For improvements, try self-play training, larger networks, or better features.
 - **Where do I start with ML?** See "Further Reading" above.
+- **Is the current AI strong enough?** Yes, it's competitive with the Classic AI and provides a good foundation for further research.
