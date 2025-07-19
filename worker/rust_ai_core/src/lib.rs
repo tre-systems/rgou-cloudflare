@@ -325,6 +325,10 @@ pub struct AI {
     pub transposition_hits: u32,
 }
 
+pub struct HeuristicAI {
+    pub nodes_evaluated: u32,
+}
+
 impl AI {
     pub fn new() -> Self {
         AI {
@@ -651,6 +655,74 @@ impl AI {
         }
 
         move_scores.into_iter().map(|(m, _)| m).collect()
+    }
+}
+
+impl HeuristicAI {
+    pub fn new() -> Self {
+        HeuristicAI {
+            nodes_evaluated: 0,
+        }
+    }
+
+    pub fn get_best_move(&mut self, state: &GameState) -> (Option<u8>, Vec<MoveEvaluation>) {
+        self.nodes_evaluated = 0;
+        let valid_moves = state.get_valid_moves();
+        
+        if valid_moves.is_empty() {
+            return (None, vec![]);
+        }
+
+        let mut best_move = None;
+        let mut best_score = f32::MIN;
+        let mut move_evaluations = Vec::new();
+
+        for &piece_index in &valid_moves {
+            let mut test_state = state.clone();
+            if let Ok(()) = test_state.make_move(piece_index) {
+                let score = test_state.evaluate() as f32;
+                self.nodes_evaluated += 1;
+
+                let from_square = if state.get_pieces(state.current_player)[piece_index as usize].square == -1 {
+                    -1
+                } else {
+                    state.get_pieces(state.current_player)[piece_index as usize].square
+                };
+
+                let to_square = if test_state.get_pieces(state.current_player)[piece_index as usize].square == 20 {
+                    None
+                } else {
+                    Some(test_state.get_pieces(state.current_player)[piece_index as usize].square as u8)
+                };
+
+                let move_type = if from_square == -1 {
+                    "move".to_string()
+                } else if to_square.is_some() && test_state.board[to_square.unwrap() as usize].is_some() {
+                    "capture".to_string()
+                } else {
+                    "move".to_string()
+                };
+
+                move_evaluations.push(MoveEvaluation {
+                    piece_index,
+                    score,
+                    move_type,
+                    from_square,
+                    to_square,
+                });
+
+                if score > best_score {
+                    best_score = score;
+                    best_move = Some(piece_index);
+                }
+            }
+        }
+
+        (best_move, move_evaluations)
+    }
+
+    pub fn clear_nodes_evaluated(&mut self) {
+        self.nodes_evaluated = 0;
     }
 }
 
@@ -1019,5 +1091,37 @@ mod tests {
         let mut game_state3 = game_state1.clone();
         game_state3.current_player = Player::Player2;
         assert_ne!(game_state1.hash(), game_state3.hash());
+    }
+
+    #[test]
+    fn test_heuristic_ai_new() {
+        let ai = HeuristicAI::new();
+        assert_eq!(ai.nodes_evaluated, 0);
+    }
+
+    #[test]
+    fn test_heuristic_ai_gets_winning_move() {
+        let mut ai = HeuristicAI::new();
+        let mut state = GameState::new();
+        state.dice_roll = 4;
+        
+        let (best_move, evaluations) = ai.get_best_move(&state);
+        
+        assert!(best_move.is_some());
+        assert!(!evaluations.is_empty());
+        assert!(ai.nodes_evaluated > 0);
+    }
+
+    #[test]
+    fn test_heuristic_ai_no_valid_moves() {
+        let mut ai = HeuristicAI::new();
+        let mut state = GameState::new();
+        state.dice_roll = 0;
+        
+        let (best_move, evaluations) = ai.get_best_move(&state);
+        
+        assert!(best_move.is_none());
+        assert!(evaluations.is_empty());
+        assert_eq!(ai.nodes_evaluated, 0);
     }
 }

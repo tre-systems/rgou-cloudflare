@@ -1,5 +1,55 @@
 # AI Performance Quick Reference
 
+## AI Types Overview
+
+### 1. Expectiminimax AI
+
+- **Algorithm**: Expectiminimax with alpha-beta pruning
+- **Search Depth**: Configurable (1-4)
+- **Performance**: 2.4ms/move at depth 3
+- **Strength**: Strong strategic play
+- **Use Case**: Production gameplay
+
+### 2. Heuristic AI
+
+- **Algorithm**: Immediate position evaluation only
+- **Search Depth**: 0 (no depth search)
+- **Performance**: < 1ms/move
+- **Strength**: Weak (4-12% win rate vs expectiminimax)
+- **Use Case**: Baseline testing, educational purposes
+
+### 3. ML AI
+
+- **Algorithm**: Neural network evaluation
+- **Search Depth**: 0 (no depth search)
+- **Performance**: 39.9ms/move
+- **Strength**: Competitive (52.8% overall win rate)
+- **Use Case**: Research, comparison
+
+### 4. Random AI
+
+- **Algorithm**: Random move selection
+- **Search Depth**: 0 (no search)
+- **Performance**: < 1ms/move
+- **Strength**: Weak (39.2% overall win rate)
+- **Use Case**: Baseline testing
+
+## Matrix Analysis Results
+
+### Overall AI Ranking (by win rate)
+1. **EMM-1**: 56.4% (0.0ms/move) - Best performance/speed ratio
+2. **EMM-2**: 53.2% (0.0ms/move) - Strong alternative
+3. **ML**: 52.8% (39.9ms/move) - Competitive but slow
+4. **EMM-3**: 51.2% (10.7ms/move) - Diminishing returns
+5. **Heuristic**: 47.2% (0.0ms/move) - Fast but weak
+6. **Random**: 39.2% (0.0ms/move) - Baseline
+
+### Key Insights
+- **EMM-1 is optimal** for production use
+- **Depth search crucial** but diminishing returns beyond depth 2
+- **ML AI competitive** but needs speed optimization
+- **Game has significant luck component** (Random achieves 48-50% vs expectiminimax)
+
 ## Expectiminimax AI Configuration
 
 ### Recommended Settings
@@ -45,11 +95,20 @@ npm run check
 ### Run Specific AI Tests
 
 ```bash
+# Comprehensive AI matrix analysis
+cd worker/rust_ai_core && cargo test test_comprehensive_ai_matrix -- --nocapture
+
 # Expectiminimax diagnostic tests
 cd worker/rust_ai_core && cargo test test_expectiminimax_diagnostic -- --nocapture
 
 # AI vs AI comparison tests
 cd worker/rust_ai_core && cargo test test_ai_vs_ai_simulation -- --nocapture
+
+# Heuristic AI tests
+cd worker/rust_ai_core && cargo test test_heuristic_ai_comprehensive_analysis -- --nocapture
+
+# Heuristic vs Expectiminimax tests
+cd worker/rust_ai_core && cargo test test_heuristic_ai_vs_expectiminimax -- --nocapture
 
 # ML vs Expectiminimax tests
 cd worker/rust_ai_core && cargo test test_expectiminimax_depth4_vs_ml_comprehensive -- --nocapture

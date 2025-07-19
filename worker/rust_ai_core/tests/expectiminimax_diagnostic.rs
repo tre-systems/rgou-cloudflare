@@ -1,7 +1,7 @@
 use rand::Rng;
 use rgou_ai_core::Player;
 use rgou_ai_core::PIECES_PER_PLAYER;
-use rgou_ai_core::{GameState, AI};
+use rgou_ai_core::{GameState, HeuristicAI, AI};
 use std::time::Instant;
 
 #[test]
@@ -612,4 +612,230 @@ fn test_expectiminimax_vs_ml_comprehensive_analysis() {
     println!("• Expectiminimax shows good performance against random play");
     println!("• Transposition table provides significant speedup");
     println!("• Move ordering helps with alpha-beta pruning efficiency");
+}
+
+#[test]
+fn test_heuristic_ai_comprehensive_analysis() {
+    println!("🤖 Heuristic AI Comprehensive Analysis");
+    println!("{}", "=".repeat(60));
+
+    let mut heuristic_ai = HeuristicAI::new();
+    let mut expectiminimax_ai = AI::new();
+
+    println!("1. Testing Heuristic AI Basic Performance");
+    println!("{}", "-".repeat(40));
+
+    let mut test_state = GameState::new();
+    test_state.dice_roll = 2;
+
+    let start_time = Instant::now();
+    let (best_move, evaluations) = heuristic_ai.get_best_move(&test_state);
+    let end_time = Instant::now();
+    let duration = end_time.duration_since(start_time);
+
+    println!("Heuristic AI performance:");
+    println!("  Best move: {:?}", best_move);
+    println!("  Move evaluations: {}", evaluations.len());
+    println!("  Nodes evaluated: {}", heuristic_ai.nodes_evaluated);
+    println!("  Time taken: {:?}", duration);
+    println!(
+        "  Time per node: {:.3}ms",
+        duration.as_micros() as f64 / heuristic_ai.nodes_evaluated as f64 / 1000.0
+    );
+
+    println!("\n2. Comparing Heuristic vs Expectiminimax");
+    println!("{}", "-".repeat(40));
+
+    let comparison_games = 50;
+    let depths = if std::env::var("RUN_SLOW_TESTS").is_ok() {
+        vec![1, 2, 3, 4]
+    } else {
+        vec![1, 2, 3]
+    };
+
+    for &depth in &depths {
+        println!(
+            "\nTesting Heuristic vs Depth {} ({} games)",
+            depth, comparison_games
+        );
+
+        let mut heuristic_wins = 0;
+        let mut expectiminimax_wins = 0;
+        let mut total_moves = 0;
+        let mut heuristic_total_time = 0;
+        let mut expectiminimax_total_time = 0;
+
+        for i in 0..comparison_games {
+            let mut game_state = GameState::new();
+            let mut moves_played = 0;
+            let max_moves = 200;
+
+            while !game_state.is_game_over() && moves_played < max_moves {
+                let is_heuristic_turn =
+                    (game_state.current_player == Player::Player1) == (i % 2 == 0);
+
+                game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+
+                if game_state.dice_roll == 0 {
+                    game_state.current_player = game_state.current_player.opponent();
+                    continue;
+                }
+
+                let start_time = Instant::now();
+                let best_move = if is_heuristic_turn {
+                    let (move_option, _) = heuristic_ai.get_best_move(&game_state);
+                    move_option
+                } else {
+                    let (move_option, _) = expectiminimax_ai.get_best_move(&game_state, depth);
+                    move_option
+                };
+                let end_time = Instant::now();
+                let move_time = end_time.duration_since(start_time).as_millis() as u64;
+
+                if is_heuristic_turn {
+                    heuristic_total_time += move_time;
+                } else {
+                    expectiminimax_total_time += move_time;
+                }
+
+                if let Some(piece_index) = best_move {
+                    if game_state.get_valid_moves().contains(&piece_index) {
+                        game_state.make_move(piece_index).unwrap();
+                        moves_played += 1;
+
+                        if game_state.is_game_over() {
+                            let p1_finished = game_state
+                                .player1_pieces
+                                .iter()
+                                .filter(|p| p.square == 20)
+                                .count();
+                            let p2_finished = game_state
+                                .player2_pieces
+                                .iter()
+                                .filter(|p| p.square == 20)
+                                .count();
+
+                            let winner = if p1_finished == PIECES_PER_PLAYER {
+                                Player::Player1
+                            } else {
+                                Player::Player2
+                            };
+
+                            let heuristic_won = if i % 2 == 0 {
+                                winner == Player::Player1
+                            } else {
+                                winner == Player::Player2
+                            };
+
+                            if heuristic_won {
+                                heuristic_wins += 1;
+                            } else {
+                                expectiminimax_wins += 1;
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    game_state.current_player = game_state.current_player.opponent();
+                }
+            }
+
+            if moves_played >= max_moves {
+                let p1_finished = game_state
+                    .player1_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+                let p2_finished = game_state
+                    .player2_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+
+                let winner = if p1_finished > p2_finished {
+                    Player::Player1
+                } else if p2_finished > p1_finished {
+                    Player::Player2
+                } else {
+                    game_state.current_player
+                };
+
+                let heuristic_won = if i % 2 == 0 {
+                    winner == Player::Player1
+                } else {
+                    winner == Player::Player2
+                };
+
+                if heuristic_won {
+                    heuristic_wins += 1;
+                } else {
+                    expectiminimax_wins += 1;
+                }
+            }
+
+            total_moves += moves_played;
+
+            if (i + 1) % 10 == 0 {
+                println!(
+                    "  Game {}: Heuristic wins: {}, Depth {} wins: {}",
+                    i + 1,
+                    heuristic_wins,
+                    depth,
+                    expectiminimax_wins
+                );
+            }
+        }
+
+        let heuristic_win_rate = (heuristic_wins as f64 / comparison_games as f64) * 100.0;
+        let expectiminimax_win_rate =
+            (expectiminimax_wins as f64 / comparison_games as f64) * 100.0;
+        let avg_moves = total_moves as f64 / comparison_games as f64;
+        let avg_heuristic_time = heuristic_total_time as f64 / comparison_games as f64;
+        let avg_expectiminimax_time = expectiminimax_total_time as f64 / comparison_games as f64;
+
+        println!("  Results for Heuristic vs Depth {}:", depth);
+        println!(
+            "    Heuristic wins: {} ({:.1}%)",
+            heuristic_wins, heuristic_win_rate
+        );
+        println!(
+            "    Depth {} wins: {} ({:.1}%)",
+            depth, expectiminimax_wins, expectiminimax_win_rate
+        );
+        println!("    Average moves: {:.1}", avg_moves);
+        println!("    Avg Heuristic time: {:.1}ms", avg_heuristic_time);
+        println!(
+            "    Avg Depth {} time: {:.1}ms",
+            depth, avg_expectiminimax_time
+        );
+
+        let speed_factor = if avg_expectiminimax_time > 0.0 {
+            avg_expectiminimax_time / avg_heuristic_time
+        } else {
+            f64::INFINITY
+        };
+
+        println!("    Speed factor: {:.1}x faster", speed_factor);
+
+        if heuristic_win_rate > 60.0 {
+            println!(
+                "    ✅ Heuristic significantly stronger than Depth {}",
+                depth
+            );
+        } else if heuristic_win_rate > 45.0 {
+            println!("    ⚠️  Heuristic moderately stronger than Depth {}", depth);
+        } else if heuristic_win_rate > 35.0 {
+            println!("    📊 Heuristic competitive with Depth {}", depth);
+        } else {
+            println!("    ❌ Heuristic weaker than Depth {}", depth);
+        }
+    }
+
+    println!("\n3. Heuristic AI Analysis Summary");
+    println!("{}", "-".repeat(40));
+    println!("• Heuristic AI evaluates only current position (no depth search)");
+    println!("• Extremely fast execution (typically < 1ms per move)");
+    println!("• Uses same evaluation function as expectiminimax");
+    println!("• Good baseline for comparing against more sophisticated AIs");
+    println!("• Suitable for lightweight applications or quick gameplay");
 }
