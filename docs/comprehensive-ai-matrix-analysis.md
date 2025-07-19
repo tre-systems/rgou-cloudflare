@@ -34,12 +34,12 @@ This document presents a comprehensive analysis of all AI types playing against 
 
 | Rank | AI Type       | Win Rate | Avg Time/move | Performance                       |
 | ---- | ------------- | -------- | ------------- | --------------------------------- |
-| 1    | **EMM-1**     | 56.4%    | 0.0ms         | Moderate strength, Very Fast      |
-| 2    | **EMM-2**     | 53.2%    | 0.0ms         | Moderate strength, Very Fast      |
-| 3    | **ML**        | 52.8%    | 39.9ms        | Moderate strength, Moderate speed |
-| 4    | **EMM-3**     | 51.2%    | 10.7ms        | Moderate strength, Moderate speed |
-| 5    | **Heuristic** | 47.2%    | 0.0ms         | Moderate strength, Very Fast      |
-| 6    | **Random**    | 39.2%    | 0.0ms         | Weak strength, Very Fast          |
+| 1    | **EMM-2**     | 56.8%    | 0.1ms         | Strong strength, Very Fast        |
+| 2    | **EMM-3**     | 52.8%    | 10.7ms        | Strong strength, Moderate speed   |
+| 3    | **ML**        | 50.8%    | 39.8ms        | Moderate strength, Moderate speed |
+| 4    | **EMM-1**     | 50.4%    | 0.0ms         | Moderate strength, Very Fast      |
+| 5    | **Heuristic** | 46.4%    | 0.0ms         | Moderate strength, Very Fast      |
+| 6    | **Random**    | 42.8%    | 0.0ms         | Weak strength, Very Fast          |
 
 ## Detailed Matchup Analysis
 
@@ -193,10 +193,11 @@ Heuristic AI's poor performance against expectiminimax AIs validates the importa
 
 The comprehensive matrix analysis reveals that:
 
-1. **EMM-1 is the optimal choice** for production use, providing the best balance of strength and speed
-2. **Depth search is crucial** but diminishing returns set in quickly
+1. **EMM-2 is the optimal choice** for production use, providing the best balance of strength and speed
+2. **Depth search is crucial** with optimal performance at depth 2
 3. **ML AI shows promise** but needs speed optimization
 4. **Game has significant luck component** making it less deterministic than expected
 5. **Heuristic AI validates** the importance of look-ahead algorithms
+6. **Transposition table isolation** is critical for fair AI comparison
 
 This analysis provides a solid foundation for AI selection and future development efforts.

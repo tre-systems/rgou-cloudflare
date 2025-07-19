@@ -184,9 +184,13 @@ fn play_game_ai_vs_ai(
     let mut ai1_total_time_ms = 0;
     let mut ai2_total_time_ms = 0;
 
-    // Initialize AIs
-    let mut expectiminimax_ai1 = AI::new();
-    let mut expectiminimax_ai2 = AI::new();
+    // Initialize AIs - separate instances for each depth to avoid transposition table interference
+    let mut expectiminimax_ai1_depth1 = AI::new();
+    let mut expectiminimax_ai1_depth2 = AI::new();
+    let mut expectiminimax_ai1_depth3 = AI::new();
+    let mut expectiminimax_ai2_depth1 = AI::new();
+    let mut expectiminimax_ai2_depth2 = AI::new();
+    let mut expectiminimax_ai2_depth3 = AI::new();
     let mut heuristic_ai1 = HeuristicAI::new();
     let mut heuristic_ai2 = HeuristicAI::new();
     let mut ml_ai1 = MLAI::new();
@@ -207,7 +211,9 @@ fn play_game_ai_vs_ai(
         let best_move = if is_ai1_turn {
             get_ai_move(
                 ai1,
-                &mut expectiminimax_ai1,
+                &mut expectiminimax_ai1_depth1,
+                &mut expectiminimax_ai1_depth2,
+                &mut expectiminimax_ai1_depth3,
                 &mut heuristic_ai1,
                 &mut ml_ai1,
                 &game_state,
@@ -215,7 +221,9 @@ fn play_game_ai_vs_ai(
         } else {
             get_ai_move(
                 ai2,
-                &mut expectiminimax_ai2,
+                &mut expectiminimax_ai2_depth1,
+                &mut expectiminimax_ai2_depth2,
+                &mut expectiminimax_ai2_depth3,
                 &mut heuristic_ai2,
                 &mut ml_ai2,
                 &game_state,
@@ -289,7 +297,9 @@ fn play_game_ai_vs_ai(
 
 fn get_ai_move(
     ai_type: &AIType,
-    expectiminimax_ai: &mut AI,
+    expectiminimax_ai_depth1: &mut AI,
+    expectiminimax_ai_depth2: &mut AI,
+    expectiminimax_ai_depth3: &mut AI,
     heuristic_ai: &mut HeuristicAI,
     ml_ai: &mut MLAI,
     game_state: &GameState,
@@ -308,7 +318,12 @@ fn get_ai_move(
             move_option
         }
         AIType::Expectiminimax(depth) => {
-            let (move_option, _) = expectiminimax_ai.get_best_move(game_state, *depth);
+            let (move_option, _) = match depth {
+                1 => expectiminimax_ai_depth1.get_best_move(game_state, *depth),
+                2 => expectiminimax_ai_depth2.get_best_move(game_state, *depth),
+                3 => expectiminimax_ai_depth3.get_best_move(game_state, *depth),
+                _ => expectiminimax_ai_depth3.get_best_move(game_state, *depth),
+            };
             move_option
         }
         AIType::ML => {
