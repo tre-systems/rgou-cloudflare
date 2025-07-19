@@ -603,8 +603,7 @@ fn test_expectiminimax_vs_ml_comprehensive_analysis() {
             }
         }
     }
-
-   }
+}
 
 #[test]
 fn test_heuristic_ai_comprehensive_analysis() {
@@ -818,8 +817,10 @@ fn test_heuristic_ai_comprehensive_analysis() {
             println!("    ⚠️  Heuristic moderately stronger than Depth {}", depth);
         } else if heuristic_win_rate > 35.0 {
             println!("    📊 Heuristic competitive with Depth {}", depth);
-        } else {
+        } else if heuristic_win_rate > 20.0 {
             println!("    ❌ Heuristic weaker than Depth {}", depth);
+        } else {
+            println!("    💀 Heuristic severely outperformed by Depth {}", depth);
         }
     }
 

@@ -1,6 +1,6 @@
 use rand::Rng;
-use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use rgou_ai_core::{dice, GameState, Player, AI, PIECES_PER_PLAYER};
+use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 
 const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = if cfg!(feature = "slow_tests") { 4 } else { 3 };
 /// Returns the number of games to run for ML vs Expectiminimax tests.
@@ -925,9 +925,9 @@ fn test_ml_vs_expectiminimax_depth_comparison() {
 #[test]
 #[cfg_attr(not(feature = "slow_tests"), ignore)]
 fn test_expectiminimax_depth4_vs_ml_comprehensive() {
-    println!("🤖 Expectiminimax Depth 4 vs ML AI Comprehensive Test");
+    println!("🤖 Expectiminimax Depth 3 vs ML AI Comprehensive Test");
     println!("{}", "=".repeat(70));
-    println!("Testing the strength of depth 4 expectiminimax against ML AI");
+    println!("Testing the strength of depth 3 expectiminimax against ML AI");
 
     let (value_weights, policy_weights) = match load_ml_weights() {
         Ok(weights) => weights,
@@ -951,7 +951,7 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
     let mut ml_first_wins = 0;
     let mut ml_second_wins = 0;
 
-    println!("Running {} games with depth 4 expectiminimax...", num_games);
+    println!("Running {} games with depth 3 expectiminimax...", num_games);
 
     let mut expectiminimax_ai = AI::new();
 
@@ -986,7 +986,7 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
                 ml_response.r#move
             } else {
                 let start_time = std::time::Instant::now();
-                let (move_option, _) = expectiminimax_ai.get_best_move(&game_state, 4);
+                let (move_option, _) = expectiminimax_ai.get_best_move(&game_state, 3);
                 let end_time = std::time::Instant::now();
                 expectiminimax_ai_total_time_ms +=
                     end_time.duration_since(start_time).as_millis() as u64;
@@ -1091,10 +1091,10 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
 
         if (i + 1) % 25 == 0 {
             println!(
-                "  Game {}: ML wins: {}, EMM4 wins: {}",
-                i + 1,
-                ml_wins,
-                expectiminimax_wins
+                            "  Game {}: ML wins: {}, EMM3 wins: {}",
+            i + 1,
+            ml_wins,
+            expectiminimax_wins
             );
         }
     }
@@ -1114,22 +1114,22 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
     };
 
     println!("\n{}", "=".repeat(70));
-    println!("📊 DEPTH 4 vs ML AI COMPREHENSIVE RESULTS");
+    println!("📊 DEPTH 3 vs ML AI COMPREHENSIVE RESULTS");
     println!("{}", "=".repeat(70));
     println!("Total games: {}", num_games);
     println!("ML AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
     println!(
-        "Expectiminimax Depth 4 wins: {} ({:.1}%)",
+        "Expectiminimax Depth 3 wins: {} ({:.1}%)",
         expectiminimax_wins, expectiminimax_win_rate
     );
     println!("Average moves per game: {:.1}", avg_moves);
     println!("Average time per move - ML AI: {:.1}ms", avg_ml_time);
     println!(
-        "Average time per move - EMM4: {:.1}ms",
+        "Average time per move - EMM3: {:.1}ms",
         avg_expectiminimax_time
     );
     println!(
-        "Total moves made - ML AI: {}, EMM4: {}",
+        "Total moves made - ML AI: {}, EMM3: {}",
         total_ml_moves, total_expectiminimax_moves
     );
     println!(
@@ -1146,16 +1146,16 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
     println!("\n📈 PERFORMANCE ANALYSIS:");
     println!("{}", "-".repeat(30));
     let speed_factor = avg_expectiminimax_time / avg_ml_time;
-    println!("EMM4 is {:.1}x slower than ML AI", speed_factor);
+    println!("EMM3 is {:.1}x slower than ML AI", speed_factor);
 
     if expectiminimax_win_rate > 70.0 {
-        println!("✅ EMM4 is significantly stronger than ML AI");
+        println!("✅ EMM3 is significantly stronger than ML AI");
     } else if expectiminimax_win_rate > 55.0 {
-        println!("⚠️  EMM4 shows moderate advantage over ML AI");
+        println!("⚠️  EMM3 shows moderate advantage over ML AI");
     } else if expectiminimax_win_rate > 45.0 {
-        println!("📊 EMM4 and ML AI are closely matched");
+        println!("📊 EMM3 and ML AI are closely matched");
     } else {
-        println!("❌ ML AI outperforms EMM4");
+        println!("❌ ML AI outperforms EMM3");
     }
 
     println!("\n🎯 STRATEGIC INSIGHTS:");
@@ -1179,14 +1179,14 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
     println!("\n🔍 RECOMMENDATIONS:");
     println!("{}", "-".repeat(20));
     if expectiminimax_win_rate > 60.0 {
-        println!("✅ Use depth 4 expectiminimax for maximum strength");
+        println!("✅ Use depth 3 expectiminimax for maximum strength");
         println!("   Good balance of performance and speed");
     } else if expectiminimax_win_rate > 50.0 {
-        println!("⚠️  Consider depth 4 for competitive play");
+        println!("⚠️  Consider depth 3 for competitive play");
         println!("   Slight advantage over ML AI");
     } else {
         println!("❌ Consider lower depth or ML AI");
-        println!("   Depth 4 may be too slow for minimal gain");
+        println!("   Depth 3 may be too slow for minimal gain");
     }
 
     if ml_win_rate > 45.0 {
