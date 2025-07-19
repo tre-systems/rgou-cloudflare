@@ -168,6 +168,40 @@ For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
 - [Game Rules and Strategy](./docs/game-rules-strategy.md)
 - [Technical Implementation](./docs/technical-implementation.md)
 - [Testing Strategy](./docs/testing-strategy.md)
+- [Troubleshooting Guide](./docs/troubleshooting.md)
+
+## Troubleshooting
+
+### Cloudflare Deployment Issues
+
+#### "Failed to prepare server Error: An error occurred while loading the instrumentation hook"
+
+This error occurs when there's a version mismatch between local and GitHub Actions environments, particularly with newer versions of Next.js (15.4.2+) that aren't compatible with Cloudflare Workers.
+
+**Symptoms:**
+
+- Application works locally but fails on Cloudflare with instrumentation hook errors
+- GitHub Actions deployment works but local deployment fails
+- Error message: "Failed to prepare server Error: An error occurred while loading the instrumentation hook"
+
+**Solution:**
+Pin the exact dependency versions that work with Cloudflare Workers:
+
+```bash
+npm install --save-exact next@15.3.4 @opennextjs/cloudflare@1.3.1 wrangler@4.22.0
+```
+
+**Why this happens:**
+
+- Next.js 15.4.2+ introduced instrumentation hooks that aren't compatible with Cloudflare Workers
+- The caret (`^`) in package.json allows compatible updates that break Cloudflare deployment
+- GitHub Actions uses different versions than local environment
+
+**Prevention:**
+
+- Always use exact versions (without `^`) for critical dependencies
+- Test both local and GitHub Actions deployments after dependency updates
+- If you need to update dependencies, test thoroughly on Cloudflare first
 
 ## License
 
