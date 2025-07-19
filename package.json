@@ -21,6 +21,7 @@
     "check:slow": "npm run lint && npm run type-check && (cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture) && npm run test:coverage && npm run test:e2e",
     "test:rust": "cd worker/rust_ai_core && cargo test -- --nocapture",
     "test:rust:slow": "cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture",
+    "test:ml-v2": "cd worker/rust_ai_core && NUM_GAMES=20 cargo test test_ml_v2_vs_expectiminimax_ai -- --nocapture",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test --reporter=line",
@@ -31,6 +32,10 @@
     "migrate:d1": "wrangler d1 migrations apply rgou-db --remote",
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
     "train:ml": "python ml/scripts/train_ml_ai.py --use-rust-ai",
+    "train:ml:enhanced": "python ml/scripts/train_ml_ai.py --use-rust-ai --epochs 200 --num-games 1000 --learning-rate 0.0005",
+    "train:ml:selfplay": "python ml/scripts/train_ml_ai_advanced.py --iterations 5 --games-per-iteration 200 --epochs-per-iteration 100",
+    "train:ml:v2": "python ml/scripts/train_ml_ai_simple.py --num-games 30 --epochs 15 --output ml/data/weights/ml_ai_weights_v2.json",
+    "evaluate:ml": "python ml/scripts/evaluate_ml_ai.py --model ml/data/weights/ml_ai_weights.json --num-games 100",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "tsx ml/scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts"

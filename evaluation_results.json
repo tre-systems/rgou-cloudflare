@@ -1,0 +1,155 @@
+{
+  "model_path": "ml/data/weights/ml_ai_weights_v2.json",
+  "num_games": 20,
+  "evaluation_time_seconds": 0.727027177810669,
+  "ml_wins": 0,
+  "classic_wins": 0,
+  "draws": 20,
+  "ml_win_rate": 0.0,
+  "classic_win_rate": 0.0,
+  "draw_rate": 1.0,
+  "avg_moves_per_game": 0,
+  "games_per_second": 27.5092879749378,
+  "individual_games": [
+    {
+      "game_id": 0,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 1,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 2,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 3,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 4,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 5,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 6,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 7,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 8,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 9,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 10,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 11,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 12,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 13,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 14,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 15,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 16,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 17,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 18,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 19,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    }
+  ]
+}

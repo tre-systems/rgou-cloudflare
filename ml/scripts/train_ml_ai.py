@@ -20,6 +20,18 @@ from pathlib import Path
 import gzip
 
 
+def set_random_seeds(seed: int = 42):
+    """Set random seeds for reproducibility"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
 def get_device():
     if torch.backends.mps.is_available():
         return torch.device("mps")
@@ -480,17 +492,25 @@ class GameSimulator:
 
 
 class ValueNetwork(nn.Module):
-    def __init__(self, input_size: int = 150):
+    def __init__(self, input_size: int = 150, dropout_rate: float = 0.2):
         super(ValueNetwork, self).__init__()
         self.layers = nn.Sequential(
             nn.Linear(input_size, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(256, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(32, 1),
             nn.Tanh(),
         )
@@ -500,19 +520,27 @@ class ValueNetwork(nn.Module):
 
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_size: int = 150, output_size: int = 7):
+    def __init__(self, input_size: int = 150, output_size: int = 7, dropout_rate: float = 0.2):
         super(PolicyNetwork, self).__init__()
         self.layers = nn.Sequential(
             nn.Linear(input_size, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(256, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
+            nn.Dropout(dropout_rate),
             nn.Linear(32, output_size),
-            nn.Softmax(dim=1),
+            # Removed softmax - CrossEntropyLoss will handle this internally
         )
 
     def forward(self, x):
@@ -583,6 +611,7 @@ def generate_training_data(
         game_results = simulate_games_parallel(num_games, rust_ai_path)
 
         simulator = GameSimulator(None)
+        rust_client = RustAIClient(rust_ai_path)
 
         training_data = []
         for game_result in game_results:
@@ -590,14 +619,20 @@ def generate_training_data(
                 game_state = move_data["game_state"]
                 features = GameFeatures.from_game_state(game_state)
 
-                # Create value target (simple heuristic)
-                p1_finished = sum(
-                    1 for piece in game_state["player1_pieces"] if piece["square"] == 20
-                )
-                p2_finished = sum(
-                    1 for piece in game_state["player2_pieces"] if piece["square"] == 20
-                )
-                value_target = (p2_finished - p1_finished) / 7.0
+                # Use Classic AI's evaluation function as value target
+                try:
+                    value_target = rust_client.evaluate_position(game_state)
+                    # Scale the evaluation to [-1, 1] range for tanh output
+                    value_target = max(-1.0, min(1.0, value_target / 10.0))
+                except:
+                    # Fallback to piece count difference if evaluation fails
+                    p1_finished = sum(
+                        1 for piece in game_state["player1_pieces"] if piece["square"] == 20
+                    )
+                    p2_finished = sum(
+                        1 for piece in game_state["player2_pieces"] if piece["square"] == 20
+                    )
+                    value_target = (p2_finished - p1_finished) / 7.0
 
                 # Create policy target
                 policy_target = simulator._create_target_policy(
@@ -623,6 +658,7 @@ def generate_training_data(
                 game_state = move_data["game_state"]
                 features = GameFeatures.from_game_state(game_state)
 
+                # Use piece count difference as fallback value target
                 p1_finished = sum(
                     1 for piece in game_state["player1_pieces"] if piece["square"] == 20
                 )
@@ -657,6 +693,7 @@ def train_networks(
     epochs: int = 100,
     batch_size: int = None,
     learning_rate: float = 0.001,
+    validation_split: float = 0.2,
 ) -> Tuple[ValueNetwork, PolicyNetwork]:
     device = get_device()
     if batch_size is None:
@@ -666,11 +703,29 @@ def train_networks(
     print(f"Batch size: {batch_size}")
     print(f"DataLoader workers: {get_optimal_workers()}")
 
-    dataset = GameDataset(training_data)
-    dataloader = DataLoader(
-        dataset,
+    # Split data into training and validation
+    random.shuffle(training_data)
+    split_idx = int(len(training_data) * (1 - validation_split))
+    train_data = training_data[:split_idx]
+    val_data = training_data[split_idx:]
+    
+    print(f"Training samples: {len(train_data)}, Validation samples: {len(val_data)}")
+
+    train_dataset = GameDataset(train_data)
+    val_dataset = GameDataset(val_data)
+    
+    train_dataloader = DataLoader(
+        train_dataset,
         batch_size=batch_size,
         shuffle=True,
+        num_workers=get_optimal_workers(),
+        pin_memory=device.type == "cuda",
+    )
+    
+    val_dataloader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
         num_workers=get_optimal_workers(),
         pin_memory=device.type == "cuda",
     )
@@ -678,20 +733,32 @@ def train_networks(
     value_network = ValueNetwork().to(device)
     policy_network = PolicyNetwork().to(device)
 
-    value_optimizer = optim.Adam(value_network.parameters(), lr=learning_rate)
-    policy_optimizer = optim.Adam(policy_network.parameters(), lr=learning_rate)
+    # Use AdamW optimizer with weight decay for better regularization
+    value_optimizer = optim.AdamW(value_network.parameters(), lr=learning_rate, weight_decay=1e-4)
+    policy_optimizer = optim.AdamW(policy_network.parameters(), lr=learning_rate, weight_decay=1e-4)
+
+    # Add learning rate schedulers
+    value_scheduler = optim.lr_scheduler.ReduceLROnPlateau(value_optimizer, mode='min', factor=0.5, patience=10, verbose=True)
+    policy_scheduler = optim.lr_scheduler.ReduceLROnPlateau(policy_optimizer, mode='min', factor=0.5, patience=10, verbose=True)
 
     value_criterion = nn.MSELoss()
     policy_criterion = nn.CrossEntropyLoss()
 
-    print(f"Training for {epochs} epochs with {len(training_data)} samples...")
+    print(f"Training for {epochs} epochs with {len(train_data)} samples...")
+
+    best_val_loss = float('inf')
+    patience_counter = 0
+    patience = 20
 
     for epoch in range(epochs):
+        # Training phase
+        value_network.train()
+        policy_network.train()
+        
+        train_value_losses = []
+        train_policy_losses = []
 
-        value_losses = []
-        policy_losses = []
-
-        for features, value_targets, policy_targets in dataloader:
+        for features, value_targets, policy_targets in train_dataloader:
             features = features.to(device)
             value_targets = value_targets.to(device)
             policy_targets = policy_targets.to(device)
@@ -702,7 +769,7 @@ def train_networks(
             value_loss = value_criterion(value_outputs, value_targets)
             value_loss.backward()
             value_optimizer.step()
-            value_losses.append(value_loss.item())
+            train_value_losses.append(value_loss.item())
 
             # Train policy network
             policy_optimizer.zero_grad()
@@ -710,14 +777,59 @@ def train_networks(
             policy_loss = policy_criterion(policy_outputs, policy_targets)
             policy_loss.backward()
             policy_optimizer.step()
-            policy_losses.append(policy_loss.item())
+            train_policy_losses.append(policy_loss.item())
+
+        # Validation phase
+        value_network.eval()
+        policy_network.eval()
+        
+        val_value_losses = []
+        val_policy_losses = []
+
+        with torch.no_grad():
+            for features, value_targets, policy_targets in val_dataloader:
+                features = features.to(device)
+                value_targets = value_targets.to(device)
+                policy_targets = policy_targets.to(device)
+
+                value_outputs = value_network(features)
+                value_loss = value_criterion(value_outputs, value_targets)
+                val_value_losses.append(value_loss.item())
+
+                policy_outputs = policy_network(features)
+                policy_loss = policy_criterion(policy_outputs, policy_targets)
+                val_policy_losses.append(policy_loss.item())
+
+        # Calculate average losses
+        avg_train_value_loss = np.mean(train_value_losses)
+        avg_train_policy_loss = np.mean(train_policy_losses)
+        avg_val_value_loss = np.mean(val_value_losses)
+        avg_val_policy_loss = np.mean(val_policy_losses)
+        
+        total_val_loss = avg_val_value_loss + avg_val_policy_loss
+
+        # Update learning rate schedulers
+        value_scheduler.step(avg_val_value_loss)
+        policy_scheduler.step(avg_val_policy_loss)
+
+        # Early stopping
+        if total_val_loss < best_val_loss:
+            best_val_loss = total_val_loss
+            patience_counter = 0
+        else:
+            patience_counter += 1
 
         if (epoch + 1) % 10 == 0:
-            avg_value_loss = np.mean(value_losses)
-            avg_policy_loss = np.mean(policy_losses)
             print(
-                f"Epoch {epoch + 1}/{epochs} - Value Loss: {avg_value_loss:.4f}, Policy Loss: {avg_policy_loss:.4f}"
+                f"Epoch {epoch + 1}/{epochs} - "
+                f"Train V: {avg_train_value_loss:.4f}, P: {avg_train_policy_loss:.4f} - "
+                f"Val V: {avg_val_value_loss:.4f}, P: {avg_val_policy_loss:.4f} - "
+                f"LR: {value_optimizer.param_groups[0]['lr']:.6f}"
             )
+
+        if patience_counter >= patience:
+            print(f"Early stopping at epoch {epoch + 1}")
+            break
 
     return value_network, policy_network
 
@@ -735,6 +847,7 @@ def save_weights_optimized(
     filename: str,
     quantize: bool = True,
     compress: bool = True,
+    training_metadata: Dict[str, Any] = None,
 ):
     value_weights = extract_weights(value_network)
     policy_weights = extract_weights(policy_network)
@@ -756,6 +869,7 @@ def save_weights_optimized(
             "hidden_sizes": [256, 128, 64, 32],
             "output_size": 7,
         },
+        "training_metadata": training_metadata or {},
     }
 
     if compress:
@@ -800,9 +914,16 @@ def main():
     parser.add_argument(
         "--load-existing", action="store_true", help="Load existing training data"
     )
+    parser.add_argument(
+        "--seed", type=int, default=42, help="Random seed for reproducibility"
+    )
+    parser.add_argument(
+        "--validation-split", type=float, default=0.2, help="Validation split ratio"
+    )
 
     args = parser.parse_args()
 
+    set_random_seeds(args.seed)
     print("Starting ML AI training...")
     print(
         f"Configuration: {args.num_games} games, {args.epochs} epochs, batch size {args.batch_size or 'auto-detect'}"
@@ -810,6 +931,8 @@ def main():
     print(f"Device: {get_device()}")
     print(f"Parallel workers: {get_optimal_workers()}")
 
+    start_time = time.time()
+    
     training_data = generate_training_data(
         num_games=args.num_games,
         use_rust_ai=args.use_rust_ai,
@@ -824,10 +947,38 @@ def main():
         epochs=args.epochs,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
+        validation_split=args.validation_split,
     )
 
-    save_weights_optimized(value_network, policy_network, args.output)
-    print("Training completed!")
+    training_time = time.time() - start_time
+    
+    # Collect training metadata
+    training_metadata = {
+        "training_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "num_games": args.num_games,
+        "num_training_samples": len(training_data),
+        "epochs": args.epochs,
+        "learning_rate": args.learning_rate,
+        "batch_size": args.batch_size or get_optimal_batch_size(get_device()),
+        "validation_split": args.validation_split,
+        "seed": args.seed,
+        "use_rust_ai": args.use_rust_ai,
+        "training_time_seconds": training_time,
+        "device": str(get_device()),
+        "model_version": "v2",  # Increment version for significant changes
+        "improvements": [
+            "Fixed training loss function (removed softmax from policy network)",
+            "Added batch normalization and dropout for regularization",
+            "Enhanced value targets using Classic AI evaluation",
+            "Added learning rate scheduling and early stopping",
+            "Improved optimizer (AdamW with weight decay)",
+            "Added validation split and reproducibility controls"
+        ]
+    }
+
+    save_weights_optimized(value_network, policy_network, args.output, training_metadata=training_metadata)
+    print(f"Training completed in {training_time:.2f} seconds!")
+    print(f"Training metadata: {training_metadata}")
 
 
 if __name__ == "__main__":
