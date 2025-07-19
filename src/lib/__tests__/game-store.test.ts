@@ -166,7 +166,7 @@ describe('GameStore', () => {
           thinking: 'test',
           timings: { aiMoveCalculation: 100, totalHandlerTime: 150 },
           diagnostics: {
-            searchDepth: 3,
+            searchDepth: 4,
             validMoves: [0],
             moveEvaluations: [],
             transpositionHits: 0,

@@ -2,7 +2,7 @@ use rand::Rng;
 use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
-const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 3;
+const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 4;
 /// Returns the number of games to run for ML vs Expectiminimax tests.
 /// Defaults to 10 for fast checks, but can be overridden by setting the NUM_GAMES environment variable.
 fn num_games() -> usize {
@@ -408,4 +408,512 @@ fn test_ml_ai_consistency() {
     );
 
     println!("✅ ML AI shows consistent behavior");
+}
+
+#[test]
+fn test_ai_diagnostics() {
+    println!("Running AI diagnostics...");
+
+    let (value_weights, policy_weights) = match load_ml_weights() {
+        Ok(weights) => weights,
+        Err(e) => {
+            eprintln!("Failed to load ML weights: {}", e);
+            return;
+        }
+    };
+
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
+    // Test a simple starting position
+    let mut game_state = GameState::new();
+    game_state.dice_roll = 1;
+
+    println!("Testing starting position with dice roll 1:");
+    println!("Valid moves: {:?}", game_state.get_valid_moves());
+
+    // Test ML AI
+    let ml_state = convert_game_state_to_ml(&game_state);
+    let ml_response = ml_ai.get_best_move(&ml_state);
+    println!(
+        "ML AI chose: {:?}, evaluation: {:.3}",
+        ml_response.r#move, ml_response.evaluation
+    );
+    println!("ML AI thinking: {}", ml_response.thinking);
+
+    // Test Expectiminimax AI
+    let (expectiminimax_move, expectiminimax_evaluations) =
+        expectiminimax_ai.get_best_move(&game_state, EXPECTIMINIMAX_SEARCH_DEPTH);
+    println!("Expectiminimax AI chose: {:?}", expectiminimax_move);
+    println!(
+        "Expectiminimax evaluations: {:?}",
+        expectiminimax_evaluations
+    );
+
+    // Test a more complex position
+    println!("\nTesting complex position:");
+    game_state.player1_pieces[0].square = 4;
+    game_state.board[4] = Some(game_state.player1_pieces[0]);
+    game_state.player2_pieces[0].square = 6;
+    game_state.board[6] = Some(game_state.player2_pieces[0]);
+    game_state.dice_roll = 2;
+
+    println!("Valid moves: {:?}", game_state.get_valid_moves());
+
+    let ml_state = convert_game_state_to_ml(&game_state);
+    let ml_response = ml_ai.get_best_move(&ml_state);
+    println!(
+        "ML AI chose: {:?}, evaluation: {:.3}",
+        ml_response.r#move, ml_response.evaluation
+    );
+
+    let (expectiminimax_move, _) =
+        expectiminimax_ai.get_best_move(&game_state, EXPECTIMINIMAX_SEARCH_DEPTH);
+    println!("Expectiminimax AI chose: {:?}", expectiminimax_move);
+
+    println!("✅ AI diagnostics completed");
+}
+
+#[test]
+fn test_ml_vs_expectiminimax_fixed_dice() {
+    println!("Running ML vs Expectiminimax with fixed dice sequence...");
+
+    let (value_weights, policy_weights) = match load_ml_weights() {
+        Ok(weights) => weights,
+        Err(e) => {
+            eprintln!("Failed to load ML weights: {}", e);
+            return;
+        }
+    };
+
+    let mut ml_wins = 0;
+    let mut expectiminimax_wins = 0;
+    let mut total_moves = 0;
+
+    println!("Starting 20 games with fixed dice sequence");
+
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
+    // Fixed dice sequence for reproducible results
+    let fixed_dice = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4];
+    let mut dice_index = 0;
+
+    for i in 0..20 {
+        let ml_plays_first = i % 2 == 0;
+        let mut game_state = GameState::new();
+        let mut moves_played = 0;
+        let max_moves = 200;
+        let mut ml_ai_total_time_ms = 0;
+        let mut expectiminimax_ai_total_time_ms = 0;
+        let mut ml_ai_moves = 0;
+        let mut expectiminimax_ai_moves = 0;
+
+        while !game_state.is_game_over() && moves_played < max_moves {
+            let current_player = game_state.current_player;
+            let is_ml_turn = (current_player == Player::Player1) == ml_plays_first;
+
+            // Use fixed dice instead of random
+            game_state.dice_roll = fixed_dice[dice_index % fixed_dice.len()];
+            dice_index += 1;
+
+            if game_state.dice_roll == 0 {
+                game_state.current_player = game_state.current_player.opponent();
+                continue;
+            }
+
+            let best_move = if is_ml_turn {
+                let ml_state = convert_game_state_to_ml(&game_state);
+                let start_time = std::time::Instant::now();
+                let ml_response = ml_ai.get_best_move(&ml_state);
+                let end_time = std::time::Instant::now();
+                ml_ai_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
+                ml_ai_moves += 1;
+                ml_response.r#move
+            } else {
+                let start_time = std::time::Instant::now();
+                let (move_option, _) =
+                    expectiminimax_ai.get_best_move(&game_state, EXPECTIMINIMAX_SEARCH_DEPTH);
+                let end_time = std::time::Instant::now();
+                expectiminimax_ai_total_time_ms +=
+                    end_time.duration_since(start_time).as_millis() as u64;
+                expectiminimax_ai_moves += 1;
+                move_option
+            };
+
+            if let Some(piece_index) = best_move {
+                game_state.make_move(piece_index).unwrap();
+                moves_played += 1;
+
+                if game_state.is_game_over() {
+                    let p1_finished = game_state
+                        .player1_pieces
+                        .iter()
+                        .filter(|p| p.square == 20)
+                        .count();
+                    let p2_finished = game_state
+                        .player2_pieces
+                        .iter()
+                        .filter(|p| p.square == 20)
+                        .count();
+
+                    let winner = if p1_finished == PIECES_PER_PLAYER {
+                        Player::Player1
+                    } else {
+                        Player::Player2
+                    };
+
+                    let ml_won = if ml_plays_first {
+                        winner == Player::Player1
+                    } else {
+                        winner == Player::Player2
+                    };
+
+                    if ml_won {
+                        ml_wins += 1;
+                    } else {
+                        expectiminimax_wins += 1;
+                    }
+
+                    total_moves += moves_played;
+                    break;
+                }
+            } else {
+                game_state.current_player = game_state.current_player.opponent();
+            }
+        }
+
+        if (i + 1) % 10 == 0 {
+            println!(
+                "Game {}: ML wins: {}, Expectiminimax wins: {}",
+                i + 1,
+                ml_wins,
+                expectiminimax_wins
+            );
+        }
+    }
+
+    let ml_win_rate = (ml_wins as f64 / 20.0) * 100.0;
+    let avg_moves = total_moves as f64 / 20.0;
+
+    println!("\n=== Fixed Dice Results ===");
+    println!("Total games: 20");
+    println!("ML AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
+    println!(
+        "Expectiminimax AI wins: {} ({:.1}%)",
+        expectiminimax_wins,
+        100.0 - ml_win_rate
+    );
+    println!("Average moves per game: {:.1}", avg_moves);
+
+    if ml_win_rate > 45.0 {
+        println!("✅ ML AI shows competitive performance with fixed dice");
+    } else if ml_win_rate > 35.0 {
+        println!("⚠️  ML AI shows some promise but needs improvement");
+    } else {
+        println!("❌ ML AI needs significant improvement");
+    }
+}
+
+#[test]
+fn test_ml_vs_expectiminimax_depth_comparison() {
+    println!("Running ML vs Expectiminimax Depth Comparison Test");
+    println!("Using fixed dice sequence for reproducible results");
+    println!("{}", "=".repeat(60));
+
+    let (value_weights, policy_weights) = match load_ml_weights() {
+        Ok(weights) => weights,
+        Err(e) => {
+            eprintln!("Failed to load ML weights: {}", e);
+            return;
+        }
+    };
+
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+
+    // Fixed dice sequence for reproducible results
+    let fixed_dice = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4];
+    let num_games = 100; // 100 games per depth for better statistics
+
+    let depths = [2, 3, 4];
+    let mut results = Vec::new();
+
+    for &depth in &depths {
+        println!("\n🔍 Testing Expectiminimax Depth {}", depth);
+        println!("{}", "-".repeat(40));
+
+        let mut ml_wins = 0;
+        let mut expectiminimax_wins = 0;
+        let mut total_moves = 0;
+        let mut total_ml_time_ms = 0;
+        let mut total_expectiminimax_time_ms = 0;
+        let mut total_ml_moves = 0;
+        let mut total_expectiminimax_moves = 0;
+
+        let mut expectiminimax_ai = AI::new();
+        let mut dice_index = 0;
+
+        for i in 0..num_games {
+            let ml_plays_first = i % 2 == 0;
+            let mut game_state = GameState::new();
+            let mut moves_played = 0;
+            let max_moves = 200;
+            let mut ml_ai_total_time_ms = 0;
+            let mut expectiminimax_ai_total_time_ms = 0;
+            let mut ml_ai_moves = 0;
+            let mut expectiminimax_ai_moves = 0;
+
+            while !game_state.is_game_over() && moves_played < max_moves {
+                let current_player = game_state.current_player;
+                let is_ml_turn = (current_player == Player::Player1) == ml_plays_first;
+
+                // Use fixed dice
+                game_state.dice_roll = fixed_dice[dice_index % fixed_dice.len()];
+                dice_index += 1;
+
+                if game_state.dice_roll == 0 {
+                    game_state.current_player = game_state.current_player.opponent();
+                    continue;
+                }
+
+                let best_move = if is_ml_turn {
+                    let ml_state = convert_game_state_to_ml(&game_state);
+                    let start_time = std::time::Instant::now();
+                    let ml_response = ml_ai.get_best_move(&ml_state);
+                    let end_time = std::time::Instant::now();
+                    ml_ai_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
+                    ml_ai_moves += 1;
+                    ml_response.r#move
+                } else {
+                    let start_time = std::time::Instant::now();
+                    let (move_option, _) = expectiminimax_ai.get_best_move(&game_state, depth);
+                    let end_time = std::time::Instant::now();
+                    expectiminimax_ai_total_time_ms +=
+                        end_time.duration_since(start_time).as_millis() as u64;
+                    expectiminimax_ai_moves += 1;
+                    move_option
+                };
+
+                if let Some(piece_index) = best_move {
+                    game_state.make_move(piece_index).unwrap();
+                    moves_played += 1;
+
+                    if game_state.is_game_over() {
+                        let p1_finished = game_state
+                            .player1_pieces
+                            .iter()
+                            .filter(|p| p.square == 20)
+                            .count();
+                        let p2_finished = game_state
+                            .player2_pieces
+                            .iter()
+                            .filter(|p| p.square == 20)
+                            .count();
+
+                        let winner = if p1_finished == PIECES_PER_PLAYER {
+                            Player::Player1
+                        } else {
+                            Player::Player2
+                        };
+
+                        let ml_won = if ml_plays_first {
+                            winner == Player::Player1
+                        } else {
+                            winner == Player::Player2
+                        };
+
+                        if ml_won {
+                            ml_wins += 1;
+                        } else {
+                            expectiminimax_wins += 1;
+                        }
+
+                        total_moves += moves_played;
+                        total_ml_time_ms += ml_ai_total_time_ms;
+                        total_expectiminimax_time_ms += expectiminimax_ai_total_time_ms;
+                        total_ml_moves += ml_ai_moves;
+                        total_expectiminimax_moves += expectiminimax_ai_moves;
+                        break;
+                    }
+                } else {
+                    game_state.current_player = game_state.current_player.opponent();
+                }
+            }
+
+            // Handle case where game hits max moves
+            if moves_played >= max_moves {
+                let p1_finished = game_state
+                    .player1_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+                let p2_finished = game_state
+                    .player2_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+
+                // Determine winner by pieces finished
+                let winner = if p1_finished > p2_finished {
+                    Player::Player1
+                } else if p2_finished > p1_finished {
+                    Player::Player2
+                } else {
+                    // Tie - give to current player
+                    game_state.current_player
+                };
+
+                let ml_won = if ml_plays_first {
+                    winner == Player::Player1
+                } else {
+                    winner == Player::Player2
+                };
+
+                if ml_won {
+                    ml_wins += 1;
+                } else {
+                    expectiminimax_wins += 1;
+                }
+
+                total_moves += moves_played;
+                total_ml_time_ms += ml_ai_total_time_ms;
+                total_expectiminimax_time_ms += expectiminimax_ai_total_time_ms;
+                total_ml_moves += ml_ai_moves;
+                total_expectiminimax_moves += expectiminimax_ai_moves;
+            }
+
+            // Progress reporting
+            if (i + 1) % 25 == 0 {
+                println!(
+                    "  Game {}: ML wins: {}, Expectiminimax wins: {}",
+                    i + 1, ml_wins, expectiminimax_wins
+                );
+            }
+        }
+
+        let ml_win_rate = (ml_wins as f64 / num_games as f64) * 100.0;
+        let avg_moves = total_moves as f64 / num_games as f64;
+        let avg_ml_time = if total_ml_moves > 0 {
+            total_ml_time_ms as f64 / total_ml_moves as f64
+        } else {
+            0.0
+        };
+        let avg_expectiminimax_time = if total_expectiminimax_moves > 0 {
+            total_expectiminimax_time_ms as f64 / total_expectiminimax_moves as f64
+        } else {
+            0.0
+        };
+
+        results.push((
+            depth,
+            ml_wins,
+            expectiminimax_wins,
+            ml_win_rate,
+            avg_moves,
+            avg_ml_time,
+            avg_expectiminimax_time,
+        ));
+
+        println!("Games completed: {}", num_games);
+        println!("ML AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
+        println!(
+            "Expectiminimax wins: {} ({:.1}%)",
+            expectiminimax_wins,
+            (expectiminimax_wins as f64 / num_games as f64) * 100.0
+        );
+        println!(
+            "Total wins: {} (should be {})",
+            ml_wins + expectiminimax_wins,
+            num_games
+        );
+        println!("Average moves per game: {:.1}", avg_moves);
+        println!("Average time per move - ML: {:.1}ms", avg_ml_time);
+        println!(
+            "Average time per move - EMM: {:.1}ms",
+            avg_expectiminimax_time
+        );
+    }
+
+    // Summary comparison
+    println!("\n{}", "=".repeat(60));
+    println!("📊 DEPTH COMPARISON SUMMARY");
+    println!("{}", "=".repeat(60));
+    println!(
+        "{:<8} {:<12} {:<12} {:<12} {:<15} {:<15}",
+        "Depth", "ML Wins", "EMM Wins", "ML Win %", "Avg Moves", "EMM Time/ms"
+    );
+    println!("{}", "-".repeat(80));
+
+    for (
+        depth,
+        ml_wins,
+        expectiminimax_wins,
+        ml_win_rate,
+        avg_moves,
+        _avg_ml_time,
+        avg_expectiminimax_time,
+    ) in &results
+    {
+        println!(
+            "{:<8} {:<12} {:<12} {:<12.1} {:<15.1} {:<15.1}",
+            depth, ml_wins, expectiminimax_wins, ml_win_rate, avg_moves, avg_expectiminimax_time
+        );
+    }
+
+    println!("\n📈 IMPROVEMENT ANALYSIS:");
+    println!("{}", "-".repeat(30));
+
+    if results.len() >= 2 {
+        let depth2_ml_rate = results[0].3;
+        let depth3_ml_rate = results[1].3;
+        let depth4_ml_rate = results[2].3;
+
+        let improvement_2_to_3 = depth3_ml_rate - depth2_ml_rate;
+        let improvement_3_to_4 = depth4_ml_rate - depth3_ml_rate;
+        let improvement_2_to_4 = depth4_ml_rate - depth2_ml_rate;
+
+        println!(
+            "Depth 2 → 3: ML win rate change: {:.1}%",
+            improvement_2_to_3
+        );
+        println!(
+            "Depth 3 → 4: ML win rate change: {:.1}%",
+            improvement_3_to_4
+        );
+        println!(
+            "Depth 2 → 4: ML win rate change: {:.1}%",
+            improvement_2_to_4
+        );
+
+        if improvement_2_to_4 > 5.0 {
+            println!("✅ Significant improvement with deeper search");
+        } else if improvement_2_to_4 > 2.0 {
+            println!("⚠️  Moderate improvement with deeper search");
+        } else {
+            println!("❌ Minimal improvement with deeper search");
+        }
+    }
+
+    println!("\n⚡ PERFORMANCE TRADE-OFFS:");
+    println!("{}", "-".repeat(30));
+    for (
+        depth,
+        _ml_wins,
+        _expectiminimax_wins,
+        _ml_win_rate,
+        _avg_moves,
+        _avg_ml_time,
+        avg_expectiminimax_time,
+    ) in &results
+    {
+        let speed_factor = if *depth == 2 {
+            1.0
+        } else {
+            avg_expectiminimax_time / results[0].6
+        };
+        println!("Depth {}: {:.1}x slower than depth 2", depth, speed_factor);
+    }
 }

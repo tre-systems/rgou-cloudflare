@@ -341,7 +341,7 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
     let mut cache = SEARCH_CACHE.lock().unwrap();
 
     let can_use_cache =
-        cache.last_position_hash != 0 && cache.last_depth >= 3 && cache.last_nodes_evaluated > 0;
+        cache.last_position_hash != 0 && cache.last_depth >= 4 && cache.last_nodes_evaluated > 0;
 
     let ai_depth = if can_use_cache {
         let base_depth = 4;
@@ -349,7 +349,7 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
         if cache_quality > 5.0 {
             base_depth + 1
         } else {
-            base_depth.max(3)
+            base_depth.max(4)
         }
     } else {
         4

@@ -2,7 +2,7 @@ use rand::Rng;
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
 const AI1_SEARCH_DEPTH: u8 = 2;
-const AI2_SEARCH_DEPTH: u8 = 3;
+const AI2_SEARCH_DEPTH: u8 = 4;
 const NUM_GAMES: usize = 10;
 
 fn play_game(ai1: &mut AI, ai2: &mut AI) -> Player {
