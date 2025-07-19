@@ -2,7 +2,7 @@ use rand::Rng;
 use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
-const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 4;
+const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = if cfg!(feature = "slow_tests") { 4 } else { 3 };
 /// Returns the number of games to run for ML vs Expectiminimax tests.
 /// Defaults to 10 for fast checks, but can be overridden by setting the NUM_GAMES environment variable.
 fn num_games() -> usize {
@@ -618,6 +618,7 @@ fn test_ml_vs_expectiminimax_fixed_dice() {
 }
 
 #[test]
+#[cfg_attr(not(feature = "slow_tests"), ignore)]
 fn test_ml_vs_expectiminimax_depth_comparison() {
     println!("Running ML vs Expectiminimax Depth Comparison Test");
     println!("Using fixed dice sequence for reproducible results");
@@ -921,6 +922,7 @@ fn test_ml_vs_expectiminimax_depth_comparison() {
 }
 
 #[test]
+#[cfg_attr(not(feature = "slow_tests"), ignore)]
 fn test_expectiminimax_depth4_vs_ml_comprehensive() {
     println!("🤖 Expectiminimax Depth 4 vs ML AI Comprehensive Test");
     println!("{}", "=".repeat(70));

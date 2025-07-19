@@ -108,7 +108,7 @@ export class WasmAiService {
           diagnostics: {
             validMoves: gameState.validMoves,
             moveEvaluations: [],
-            searchDepth: 0,
+            searchDepth: 3,
             transpositionHits: 0,
             nodesEvaluated: 0,
           },

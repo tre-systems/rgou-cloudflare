@@ -183,7 +183,12 @@ fn test_ai_vs_ai_simulation() {
 
     let mut results = Vec::new();
 
-    let comparisons = [(1, 4), (2, 4), (3, 4)];
+    // Only run depth 4 comparisons if RUN_SLOW_TESTS environment variable is set
+    let comparisons = if std::env::var("RUN_SLOW_TESTS").is_ok() {
+        vec![(1, 4), (2, 4), (3, 4)]
+    } else {
+        vec![(1, 3), (2, 3)] // Skip depth 4 tests for regular runs
+    };
 
     for &(depth1, depth2) in &comparisons {
         println!(

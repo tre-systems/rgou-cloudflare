@@ -31,6 +31,6 @@ Keep the .gitignore file up to date.
 Keep the .cursorignore file up to date - it should ignore large model files and build artifacts that slow down Cursor indexing.
 When adding new large files (>100KB) or model files, update both .gitignore and .cursorignore appropriately.
 For model files: ignore uncompressed versions in .gitignore, keep compressed .gz versions.
-When I just type 'rcp' that means "review all changes in each file, remove comments, run 'npm run check' fix any issues then 'git add -A' and commit and push all changed files."
+When I just type 'rcp' that means "review all changes in each file, remove comments, run 'npm run check' fix any issues and analyse the results. If there are no issues or causes for concern, then 'git add -A' and commit and push all changed files."
 When I just type 'p' that means "proceed"
 Dont give me a list of options to choose, devise the best plan you can and proceed with it.

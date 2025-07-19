@@ -21,7 +21,7 @@ This implementation brings this ancient game to life with modern technology, all
 
 - Faithful recreation of the Royal Game of Ur
 - Two AI opponents:
-  - **Classic AI**: Uses expectiminimax algorithm for strategic depth (4-ply search, 0.1ms/move)
+  - **Classic AI**: Uses expectiminimax algorithm for strategic depth (3-ply search, 2.4ms/move)
   - **ML AI**: Neural network trained through self-play for a different playstyle (0.7ms/move)
 - AI vs. AI mode to watch the two AIs compete
 - All AI runs locally in your browser via WebAssembly (no server calls)
@@ -160,7 +160,10 @@ For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
 
 ## Documentation
 
+- [AI Investigation & Optimization Summary](./docs/ai-investigation-summary.md)
 - [ML AI System](./docs/ml-ai-system.md)
+- [Expectiminimax AI Optimization](./docs/expectiminimax-ai-optimization.md)
+- [AI Performance Quick Reference](./docs/ai-performance-quick-reference.md)
 - [AI Improvement Roadmap](./docs/ai-improvement-roadmap.md)
 - [High Priority TODOs](./docs/high-priority-todos.md)
 - [AI System (Classic)](./docs/ai-system.md)

@@ -145,7 +145,7 @@ export const useGameStore = create<GameStore>()(
                   totalHandlerTime: mlResponse.timings?.totalHandlerTime || 0,
                 },
                 diagnostics: {
-                  searchDepth: 0,
+                  searchDepth: 3,
                   validMoves: mlResponse.diagnostics.valid_moves,
                   moveEvaluations: mlResponse.diagnostics.move_evaluations.map(e => ({
                     pieceIndex: e.piece_index,

@@ -162,17 +162,26 @@ impl GameState {
     }
 
     pub fn evaluate(&self) -> i32 {
-        let mut score = 0i32;
-        let p1_finished = self
-            .player1_pieces
-            .iter()
-            .filter(|p| p.square == 20)
-            .count() as i32;
-        let p2_finished = self
-            .player2_pieces
-            .iter()
-            .filter(|p| p.square == 20)
-            .count() as i32;
+        let mut p1_finished = 0;
+        let mut p2_finished = 0;
+        let mut p1_on_board = 0;
+        let mut p2_on_board = 0;
+
+        for piece in &self.player1_pieces {
+            if piece.square == 20 {
+                p1_finished += 1;
+            } else if piece.square > -1 {
+                p1_on_board += 1;
+            }
+        }
+
+        for piece in &self.player2_pieces {
+            if piece.square == 20 {
+                p2_finished += 1;
+            } else if piece.square > -1 {
+                p2_on_board += 1;
+            }
+        }
 
         if p1_finished == PIECES_PER_PLAYER as i32 {
             return -WIN_SCORE;
@@ -181,10 +190,7 @@ impl GameState {
             return WIN_SCORE;
         }
 
-        score += (p2_finished - p1_finished) * FINISHED_PIECE_VALUE;
-
-        let p1_on_board = self.player1_pieces.iter().filter(|p| p.square > -1).count() as i32;
-        let p2_on_board = self.player2_pieces.iter().filter(|p| p.square > -1).count() as i32;
+        let mut score = (p2_finished - p1_finished) * FINISHED_PIECE_VALUE;
         score += (p2_on_board - p1_on_board) * CAPTURE_BONUS;
 
         let (p1_pos_score, p1_strategic_score) = self.evaluate_player_position(Player::Player1);
@@ -446,6 +452,7 @@ impl AI {
 
     fn expectiminimax(&mut self, state: &GameState, depth: u8, alpha: f32, beta: f32) -> f32 {
         let state_hash = state.hash();
+
         if let Some(entry) = self.transposition_table.get(&state_hash) {
             if entry.depth >= depth {
                 self.transposition_hits += 1;
@@ -454,7 +461,7 @@ impl AI {
         }
 
         if depth == 0 {
-            return self.quiescence_search(state, 4, alpha, beta);
+            return self.quiescence_search(state, 3, alpha, beta);
         }
 
         if state.is_game_over() {
@@ -520,8 +527,9 @@ impl AI {
         }
 
         let mut best_score = if is_maximizing { f32::MIN } else { f32::MAX };
+        let ordered_moves = self.order_moves(state, &valid_moves);
 
-        for &m in &valid_moves {
+        for &m in &ordered_moves {
             let mut next_state = state.clone();
             next_state
                 .make_move(m)
@@ -620,6 +628,29 @@ impl AI {
         }
 
         best_score
+    }
+
+    fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
+        let mut move_scores: Vec<(u8, f32)> = moves
+            .iter()
+            .map(|&m| {
+                let mut test_state = state.clone();
+                if test_state.make_move(m).is_ok() {
+                    (m, test_state.evaluate() as f32)
+                } else {
+                    (m, 0.0)
+                }
+            })
+            .collect();
+
+        let is_maximizing = state.current_player == Player::Player2;
+        if is_maximizing {
+            move_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        } else {
+            move_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        }
+
+        move_scores.into_iter().map(|(m, _)| m).collect()
     }
 }
 
