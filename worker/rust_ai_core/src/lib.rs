@@ -673,8 +673,9 @@ impl HeuristicAI {
             return (None, vec![]);
         }
 
+        let is_maximizing = state.current_player == Player::Player2;
         let mut best_move = None;
-        let mut best_score = f32::MIN;
+        let mut best_score = if is_maximizing { f32::MIN } else { f32::MAX };
         let mut move_evaluations = Vec::new();
 
         for &piece_index in &valid_moves {
@@ -711,12 +712,28 @@ impl HeuristicAI {
                     to_square,
                 });
 
-                if score > best_score {
-                    best_score = score;
-                    best_move = Some(piece_index);
+                if is_maximizing {
+                    if score > best_score {
+                        best_score = score;
+                        best_move = Some(piece_index);
+                    }
+                } else {
+                    if score < best_score {
+                        best_score = score;
+                        best_move = Some(piece_index);
+                    }
                 }
             }
         }
+
+        // Sort evaluations by score (best first for maximizing, worst first for minimizing)
+        move_evaluations.sort_by(|a, b| {
+            if is_maximizing {
+                b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal)
+            } else {
+                a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal)
+            }
+        });
 
         (best_move, move_evaluations)
     }
