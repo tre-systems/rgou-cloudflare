@@ -29,7 +29,7 @@ The input vector encodes:
 - Average position, safety, center lane control
 - Current player, dice roll, valid moves
 - Capture opportunities, vulnerability, progress
-- Advanced: mobility, development, tactics, king safety, center control, coordination, attack/defense, endgame, time, material, positional advantage
+- Advanced: mobility, development, tactics, rosette safety, center control, coordination, attack/defense, endgame, time, material, positional advantage
 
 ## Model Structure
 

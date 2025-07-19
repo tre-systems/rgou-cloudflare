@@ -140,10 +140,10 @@ impl GameFeatures {
         features[idx] = Self::tactical_opportunities(state, Player::Player2) as f32;
         idx += 1;
 
-        features[idx] = Self::king_safety_score(state, Player::Player1);
+        features[idx] = Self::rosette_safety_score(state, Player::Player1);
         idx += 1;
 
-        features[idx] = Self::king_safety_score(state, Player::Player2);
+        features[idx] = Self::rosette_safety_score(state, Player::Player2);
         idx += 1;
 
         features[idx] = Self::center_control_score(state, Player::Player1);
@@ -430,7 +430,7 @@ impl GameFeatures {
         opportunities
     }
 
-    fn king_safety_score(state: &GameState, player: Player) -> f32 {
+    fn rosette_safety_score(state: &GameState, player: Player) -> f32 {
         let pieces = if player == Player::Player1 {
             &state.player1_pieces
         } else {
