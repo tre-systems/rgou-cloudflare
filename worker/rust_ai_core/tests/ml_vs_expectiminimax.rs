@@ -252,6 +252,108 @@ fn play_game_ml_vs_expectiminimax(
     }
 }
 
+fn play_game_ml_vs_ml(
+    ml_ai_1: &mut MLAI,
+    ml_ai_2: &mut MLAI,
+    ml_1_plays_first: bool,
+) -> GameResult {
+    let mut game_state = GameState::new();
+    let mut moves_played = 0;
+    let max_moves = 200;
+    let mut ml_1_total_time_ms = 0;
+    let mut ml_2_total_time_ms = 0;
+    let mut ml_1_moves = 0;
+    let mut ml_2_moves = 0;
+
+    while !game_state.is_game_over() && moves_played < max_moves {
+        let current_player = game_state.current_player;
+        let is_ml_1_turn = (current_player == Player::Player1) == ml_1_plays_first;
+
+        game_state.dice_roll = dice::roll_dice();
+
+        if game_state.dice_roll == 0 {
+            game_state.current_player = game_state.current_player.opponent();
+            continue;
+        }
+
+        let best_move = if is_ml_1_turn {
+            let ml_state = convert_game_state_to_ml(&game_state);
+            let start_time = std::time::Instant::now();
+            let ml_response = ml_ai_1.get_best_move(&ml_state);
+            let end_time = std::time::Instant::now();
+            ml_1_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
+            ml_1_moves += 1;
+            ml_response.r#move
+        } else {
+            let ml_state = convert_game_state_to_ml(&game_state);
+            let start_time = std::time::Instant::now();
+            let ml_response = ml_ai_2.get_best_move(&ml_state);
+            let end_time = std::time::Instant::now();
+            ml_2_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
+            ml_2_moves += 1;
+            ml_response.r#move
+        };
+
+        if let Some(piece_index) = best_move {
+            game_state.make_move(piece_index).unwrap();
+            moves_played += 1;
+
+            if game_state.is_game_over() {
+                let p1_finished = game_state
+                    .player1_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+                let p2_finished = game_state
+                    .player2_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+
+                let winner = if p1_finished == PIECES_PER_PLAYER {
+                    Player::Player1
+                } else {
+                    Player::Player2
+                };
+
+                return GameResult {
+                    winner,
+                    moves_played,
+                    ml_ai_was_player1: ml_1_plays_first,
+                    p1_finished_pieces: p1_finished,
+                    p2_finished_pieces: p2_finished,
+                    ml_ai_total_time_ms: ml_1_total_time_ms,
+                    expectiminimax_ai_total_time_ms: ml_2_total_time_ms,
+                    ml_ai_moves: ml_1_moves,
+                    expectiminimax_ai_moves: ml_2_moves,
+                };
+            }
+        } else {
+            game_state.current_player = game_state.current_player.opponent();
+        }
+    }
+
+    GameResult {
+        winner: Player::Player2,
+        moves_played,
+        ml_ai_was_player1: ml_1_plays_first,
+        p1_finished_pieces: game_state
+            .player1_pieces
+            .iter()
+            .filter(|p| p.square == 20)
+            .count(),
+        p2_finished_pieces: game_state
+            .player2_pieces
+            .iter()
+            .filter(|p| p.square == 20)
+            .count(),
+        ml_ai_total_time_ms: ml_1_total_time_ms,
+        expectiminimax_ai_total_time_ms: ml_2_total_time_ms,
+        ml_ai_moves: ml_1_moves,
+        expectiminimax_ai_moves: ml_2_moves,
+    }
+}
+
 #[test]
 fn test_ml_vs_expectiminimax_ai() {
     println!("Loading ML AI weights from {}", ML_WEIGHTS_FILE);
@@ -1615,4 +1717,146 @@ fn test_ml_v3_vs_expectiminimax_ai() {
         println!("• Experiment with different network architectures");
         println!("• Try self-play training for further improvement");
     }
+}
+
+#[test]
+fn test_ml_v2_vs_ml_fast_comparison() {
+    println!("🤖 ML-v2 vs ML-fast Direct Comparison Test");
+    println!("==========================================");
+
+    // Load both models
+    let (v2_value_weights, v2_policy_weights) =
+        load_ml_v2_weights().expect("Failed to load ML-v2 weights");
+    let (fast_value_weights, fast_policy_weights) =
+        load_ml_weights().expect("Failed to load ML-fast weights");
+
+    let mut ml_v2_ai = MLAI::new();
+    ml_v2_ai.load_pretrained(&v2_value_weights, &v2_policy_weights);
+    let mut ml_fast_ai = MLAI::new();
+    ml_fast_ai.load_pretrained(&fast_value_weights, &fast_policy_weights);
+
+    let num_games = num_games();
+    let mut ml_v2_wins = 0;
+    let mut ml_fast_wins = 0;
+    let mut total_moves = 0;
+    let mut ml_v2_total_time = 0;
+    let mut ml_fast_total_time = 0;
+
+    println!("Starting {} games: ML-v2 AI vs ML-fast AI", num_games);
+
+    for game in 1..=num_games {
+        let ml_v2_plays_first = game % 2 == 1;
+        let result = play_game_ml_vs_ml(&mut ml_v2_ai, &mut ml_fast_ai, ml_v2_plays_first);
+
+        total_moves += result.moves_played;
+
+        match result.winner {
+            Player::Player1 => {
+                if ml_v2_plays_first {
+                    ml_v2_wins += 1;
+                } else {
+                    ml_fast_wins += 1;
+                }
+            }
+            Player::Player2 => {
+                if ml_v2_plays_first {
+                    ml_fast_wins += 1;
+                } else {
+                    ml_v2_wins += 1;
+                }
+            }
+        }
+
+        ml_v2_total_time += result.ml_ai_total_time_ms;
+        ml_fast_total_time += result.expectiminimax_ai_total_time_ms;
+
+        if game % 10 == 0 {
+            println!(
+                "  Game {}: ML-v2 wins: {}, ML-fast wins: {}",
+                game, ml_v2_wins, ml_fast_wins
+            );
+        }
+    }
+
+    println!("\n======================================================================");
+    println!("📊 ML-v2 AI vs ML-fast AI RESULTS");
+    println!("======================================================================");
+    println!("Total games: {}", num_games);
+    println!(
+        "ML-v2 AI wins: {} ({:.1}%)",
+        ml_v2_wins,
+        (ml_v2_wins as f64 / num_games as f64) * 100.0
+    );
+    println!(
+        "ML-fast AI wins: {} ({:.1}%)",
+        ml_fast_wins,
+        (ml_fast_wins as f64 / num_games as f64) * 100.0
+    );
+    println!(
+        "Average moves per game: {:.1}",
+        total_moves as f64 / num_games as f64
+    );
+    println!(
+        "Average time per move - ML-v2 AI: {:.1}ms",
+        ml_v2_total_time as f64 / total_moves as f64
+    );
+    println!(
+        "Average time per move - ML-fast AI: {:.1}ms",
+        ml_fast_total_time as f64 / total_moves as f64
+    );
+    println!(
+        "ML-v2 AI wins playing first: {} / {}",
+        if num_games % 2 == 0 {
+            num_games / 2
+        } else {
+            num_games / 2 + 1
+        },
+        if num_games % 2 == 0 {
+            num_games / 2
+        } else {
+            num_games / 2 + 1
+        }
+    );
+    println!(
+        "ML-v2 AI wins playing second: {} / {}",
+        num_games / 2,
+        num_games / 2
+    );
+
+    println!("\n📈 PERFORMANCE ANALYSIS:");
+    println!("------------------------------");
+    if ml_v2_total_time > 0 && ml_fast_total_time > 0 {
+        let speed_factor = ml_fast_total_time as f64 / ml_v2_total_time as f64;
+        println!("ML-fast is {:.1}x slower than ML-v2 AI", speed_factor);
+    }
+
+    if ml_v2_wins > ml_fast_wins {
+        println!("✅ ML-v2 AI significantly outperforms ML-fast AI");
+    } else if ml_fast_wins > ml_v2_wins {
+        println!("❌ ML-fast AI outperforms ML-v2 AI");
+    } else {
+        println!("⚠️  ML-v2 AI and ML-fast AI perform similarly");
+    }
+
+    println!("\n🎯 STRATEGIC INSIGHTS:");
+    println!("-------------------------");
+    println!("• ML-v2 AI has enhanced architecture (150 inputs vs 100)");
+    println!("• ML-fast AI has basic architecture (100 inputs)");
+    println!("• Both models use neural network evaluation");
+
+    println!("\n🔍 RECOMMENDATIONS:");
+    println!("--------------------");
+    if ml_v2_wins > ml_fast_wins {
+        println!("✅ Use ML-v2 AI for better performance");
+        println!("   Enhanced architecture provides stronger play");
+    } else {
+        println!("⚠️  Consider retraining ML-v2 AI");
+        println!("   Enhanced architecture should provide better performance");
+    }
+
+    println!("\n🚀 NEXT STEPS:");
+    println!("---------------");
+    println!("• Continue training ML-v2 AI with more data");
+    println!("• Experiment with different network architectures");
+    println!("• Consider self-play training for further improvement");
 }

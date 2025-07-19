@@ -249,9 +249,11 @@ class GameFeatures:
 
 class RustAIClient:
     def __init__(
-        self, rust_ai_path: str = "worker/rust_ai_core/target/release/rgou-ai-core"
+        self, rust_ai_path: str = "worker/rust_ai_core/target/release/rgou-ai-core",
+        depth: int = 3
     ):
         self.rust_ai_path = rust_ai_path
+        self.depth = depth
 
     def get_ai_move(self, game_state: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -261,8 +263,12 @@ class RustAIClient:
                 json.dump(game_state, f)
                 temp_file = f.name
 
+            cmd = [self.rust_ai_path, "get_move", temp_file]
+            if self.depth:
+                cmd += ["--depth", str(self.depth)]
+
             result = subprocess.run(
-                [self.rust_ai_path, "get_move", temp_file],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -287,8 +293,12 @@ class RustAIClient:
                 json.dump(game_state, f)
                 temp_file = f.name
 
+            cmd = [self.rust_ai_path, "evaluate", temp_file]
+            if self.depth:
+                cmd += ["--depth", str(self.depth)]
+
             result = subprocess.run(
-                [self.rust_ai_path, "evaluate", temp_file],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -429,6 +439,16 @@ class GameSimulator:
             "current_player": "player1",
             "dice_roll": 0,
             "valid_moves": [],
+            "genetic_params": {
+                "win_score": 11135,
+                "finished_piece_value": 1030,
+                "position_weight": 14,
+                "safety_bonus": 40,
+                "rosette_control_bonus": 29,
+                "advancement_bonus": 4,
+                "capture_bonus": 43,
+                "center_lane_bonus": 2
+            }
         }
 
     def simulate_game(self) -> Dict[str, Any]:
@@ -564,19 +584,19 @@ class GameDataset(Dataset):
 
 
 def simulate_game_worker(args):
-    rust_ai_path, game_id = args
-    client = RustAIClient(rust_ai_path)
+    rust_ai_path, game_id, depth = args
+    client = RustAIClient(rust_ai_path, depth=depth)
     simulator = GameSimulator(client)
     return simulator.simulate_game()
 
 
-def simulate_games_parallel(num_games, rust_ai_path):
+def simulate_games_parallel(num_games, rust_ai_path, depth):
     print(f"Simulating {num_games} games using {get_optimal_workers()} workers...")
 
     with concurrent.futures.ProcessPoolExecutor(
         max_workers=get_optimal_workers()
     ) as executor:
-        args = [(rust_ai_path, i) for i in range(num_games)]
+        args = [(rust_ai_path, i, depth) for i in range(num_games)]
         results = list(
             tqdm(
                 executor.map(simulate_game_worker, args),
@@ -589,10 +609,10 @@ def simulate_games_parallel(num_games, rust_ai_path):
 
 
 def process_game_worker(args):
-    game_result, rust_ai_path = args
+    game_result, rust_ai_path, depth = args
     
     simulator = GameSimulator(None)
-    rust_client = RustAIClient(rust_ai_path) if rust_ai_path else None
+    rust_client = RustAIClient(rust_ai_path, depth=depth) if rust_ai_path else None
     
     game_training_data = []
     
@@ -635,13 +655,13 @@ def process_game_worker(args):
     return game_training_data
 
 
-def process_games_parallel(game_results, rust_ai_path=None, max_workers=None):
+def process_games_parallel(game_results, rust_ai_path=None, max_workers=None, depth=3):
     if max_workers is None:
         max_workers = get_optimal_workers()
     
     print(f"Processing {len(game_results)} games using {max_workers} workers...")
     
-    args_list = [(game_result, rust_ai_path) for game_result in game_results]
+    args_list = [(game_result, rust_ai_path, depth) for game_result in game_results]
     
     training_data = []
     
@@ -665,6 +685,7 @@ def generate_training_data(
     use_rust_ai: bool = True,
     save_data: bool = True,
     load_existing: bool = False,
+    depth: int = 3,
 ) -> List[Dict[str, Any]]:
     if load_existing and os.path.exists("training_data_cache.json"):
         print("Loading existing training data...")
@@ -681,9 +702,9 @@ def generate_training_data(
                 ["cargo", "build", "--release"], cwd="worker/rust_ai_core", check=True
             )
 
-        game_results = simulate_games_parallel(num_games, rust_ai_path)
+        game_results = simulate_games_parallel(num_games, rust_ai_path, depth)
 
-        training_data = process_games_parallel(game_results, rust_ai_path)
+        training_data = process_games_parallel(game_results, rust_ai_path, depth=depth)
     else:
         simulator = GameSimulator(None)
         training_data = []
@@ -948,7 +969,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="ml/data/weights/ml_ai_weights.json",
+        default="ml/data/weights/ml_ai_weights_v3.json",
         help="Output weights filename",
     )
     parser.add_argument(
@@ -959,6 +980,9 @@ def main():
     )
     parser.add_argument(
         "--validation-split", type=float, default=0.2, help="Validation split ratio"
+    )
+    parser.add_argument(
+        "--depth", type=int, default=4, help="Expectiminimax search depth for Rust AI"
     )
 
     args = parser.parse_args()
@@ -973,11 +997,13 @@ def main():
 
     start_time = time.time()
     
+    rust_ai_client = RustAIClient(depth=args.depth)
     training_data = generate_training_data(
         num_games=args.num_games,
         use_rust_ai=args.use_rust_ai,
         save_data=True,
         load_existing=args.load_existing,
+        depth=args.depth,
     )
 
     print(f"Generated {len(training_data)} training samples")
@@ -1004,15 +1030,11 @@ def main():
         "useRustAi": args.use_rust_ai,
         "trainingTimeSeconds": training_time,
         "device": str(get_device()),
-        "modelVersion": "v2",  # Increment version for significant changes
+        "modelVersion": "v3",
         "improvements": [
-            "Fixed training loss function (removed softmax from policy network)",
-            "Added batch normalization and dropout for regularization",
-            "Enhanced value targets using Classic AI evaluation",
-            "Added learning rate scheduling and early stopping",
-            "Improved optimizer (AdamW with weight decay)",
-            "Added validation split and reproducibility controls",
-            "Extended training with more games and epochs for ML-v2"
+            "Trained on depth 4 expectiminimax data for ML-v3",
+            "Enhanced architecture (150 inputs)",
+            "All previous ML-v2 improvements"
         ]
     }
 

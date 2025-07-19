@@ -12,6 +12,8 @@ pub mod genetic_params;
 pub mod ml_ai;
 pub mod neural_network;
 
+
+
 pub const PIECES_PER_PLAYER: usize = 7;
 pub const BOARD_SIZE: usize = 21;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
@@ -21,6 +23,7 @@ const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 1
 // These constants are now part of GeneticParams
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Player {
     Player1 = 0,
     Player2 = 1,

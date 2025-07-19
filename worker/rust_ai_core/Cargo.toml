@@ -13,6 +13,10 @@ wasm-opt = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[[bin]]
+name = "rgou-ai-core"
+path = "src/main.rs"
+
 [features]
 default = []
 wasm = [
