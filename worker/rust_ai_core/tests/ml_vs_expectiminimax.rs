@@ -1,4 +1,3 @@
-use rand::Rng;
 use rgou_ai_core::{dice, GameState, Player, AI, PIECES_PER_PLAYER};
 use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 
@@ -100,10 +99,10 @@ fn play_game_ml_vs_expectiminimax(
     let mut game_state = GameState::new();
     let mut moves_played = 0;
     let max_moves = 200;
-    let mut ml_ai_total_time_ms = 0;
-    let mut expectiminimax_ai_total_time_ms = 0;
-    let mut ml_ai_moves = 0;
-    let mut expectiminimax_ai_moves = 0;
+            let mut ml_ai_total_time_ms = 0;
+        let mut expectiminimax_ai_total_time_ms = 0;
+        let mut ml_ai_moves = 0;
+        let mut expectiminimax_ai_moves = 0;
 
     while !game_state.is_game_over() && moves_played < max_moves {
         let current_player = game_state.current_player;
@@ -709,7 +708,7 @@ fn test_ml_vs_expectiminimax_depth_comparison() {
                             .iter()
                             .filter(|p| p.square == 20)
                             .count();
-                        let p2_finished = game_state
+                        let _p2_finished = game_state
                             .player2_pieces
                             .iter()
                             .filter(|p| p.square == 20)
@@ -1091,10 +1090,10 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
 
         if (i + 1) % 25 == 0 {
             println!(
-                            "  Game {}: ML wins: {}, EMM3 wins: {}",
-            i + 1,
-            ml_wins,
-            expectiminimax_wins
+                "  Game {}: ML wins: {}, EMM3 wins: {}",
+                i + 1,
+                ml_wins,
+                expectiminimax_wins
             );
         }
     }

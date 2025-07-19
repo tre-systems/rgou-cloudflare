@@ -2,7 +2,6 @@ use super::{GameState, HeuristicAI, PiecePosition, Player, AI};
 use crate::{dice, ml_ai::MLAI, MoveEvaluation};
 use js_sys;
 use lazy_static::lazy_static;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
