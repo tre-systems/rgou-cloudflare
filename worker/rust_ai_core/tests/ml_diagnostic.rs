@@ -37,6 +37,7 @@ fn convert_game_state_to_ml(rust_state: &GameState) -> MLGameState {
             Player::Player2 => MLPlayer::Player2,
         },
         dice_roll: rust_state.dice_roll,
+        genetic_params: rust_state.genetic_params.clone(),
     }
 }
 

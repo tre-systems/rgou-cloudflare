@@ -1,5 +1,5 @@
 use super::{GameState, PiecePosition, Player, AI};
-use crate::{ml_ai::MLAI, MoveEvaluation};
+use crate::{dice, ml_ai::MLAI, MoveEvaluation};
 use js_sys;
 use lazy_static::lazy_static;
 use rand::Rng;
@@ -201,14 +201,12 @@ pub fn get_ml_ai_info() -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn roll_dice_ml() -> u8 {
-    let mut rng = rand::thread_rng();
-    (0..4).map(|_| rng.gen_range(0..=1)).sum()
+    dice::roll_dice()
 }
 
 #[wasm_bindgen]
 pub fn roll_dice_wasm() -> u8 {
-    let mut rng = rand::thread_rng();
-    (0..4).map(|_| rng.gen_range(0..=1)).sum()
+    dice::roll_dice()
 }
 
 #[wasm_bindgen]

@@ -1,6 +1,6 @@
 use rand::Rng;
 use rgou_ai_core::ml_ai::MLAI;
-use rgou_ai_core::{GameState, HeuristicAI, Player, AI, PIECES_PER_PLAYER};
+use rgou_ai_core::{dice, GameState, HeuristicAI, Player, AI, PIECES_PER_PLAYER};
 
 const GAMES_PER_MATCHUP: usize = 50;
 
@@ -200,7 +200,7 @@ fn play_game_ai_vs_ai(
         let current_player = game_state.current_player;
         let is_ai1_turn = (current_player == Player::Player1) == ai1_plays_first;
 
-        game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+        game_state.dice_roll = dice::roll_dice();
 
         if game_state.dice_roll == 0 {
             game_state.current_player = game_state.current_player.opponent();

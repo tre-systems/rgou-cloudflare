@@ -1,4 +1,4 @@
-use rgou_ai_core::{GameState, PiecePosition, Player};
+use rgou_ai_core::{GameState, PiecePosition, Player, genetic_params::GeneticParams};
 use serde_json;
 use std::env;
 use std::fs;
@@ -110,5 +110,6 @@ fn convert_json_to_game_state(json_state: &serde_json::Value) -> GameState {
         player2_pieces,
         current_player,
         dice_roll,
+        genetic_params: GeneticParams::default(),
     }
 }

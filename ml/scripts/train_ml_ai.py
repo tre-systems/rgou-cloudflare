@@ -419,7 +419,14 @@ class GameSimulator:
         max_turns = 200
 
         while not self._is_game_over(game_state) and turn_count < max_turns:
-            dice_roll = random.randint(1, 4)
+            # Correct distribution for 4 tetrahedral dice (0-4)
+            # Roll 0: 1/16 (all 0s)
+            # Roll 1: 4/16 (one 1, three 0s)  
+            # Roll 2: 6/16 (two 1s, two 0s)
+            # Roll 3: 4/16 (three 1s, one 0)
+            # Roll 4: 1/16 (all 1s)
+            probabilities = [1/16, 4/16, 6/16, 4/16, 1/16]
+            dice_roll = random.choices(range(5), weights=probabilities)[0]
             game_state["dice_roll"] = dice_roll
 
             player = game_state["current_player"]

@@ -35,12 +35,25 @@ export function initializeGame(): GameState {
 }
 
 export function rollDice(): number {
-  let count = 0;
-  for (let i = 0; i < 4; i++) {
-    if (Math.random() < 0.5) count++;
+  // Correct distribution for 4 tetrahedral dice (0-4)
+  // Roll 0: 1/16 (all 0s)
+  // Roll 1: 4/16 (one 1, three 0s)
+  // Roll 2: 6/16 (two 1s, two 0s)
+  // Roll 3: 4/16 (three 1s, one 0)
+  // Roll 4: 1/16 (all 1s)
+  const probabilities = [1 / 16, 4 / 16, 6 / 16, 4 / 16, 1 / 16];
+  const random = Math.random();
+
+  let cumulativeProb = 0;
+  for (let i = 0; i < probabilities.length; i++) {
+    cumulativeProb += probabilities[i];
+    if (random <= cumulativeProb) {
+      return i;
+    }
   }
 
-  return count;
+  // Fallback (should never happen with exact probabilities)
+  return 2;
 }
 
 function getPlayerTrack(player: Player): readonly number[] {

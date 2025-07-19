@@ -1,3 +1,4 @@
+use crate::genetic_params::GeneticParams;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -5,7 +6,9 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
 
+pub mod dice;
 pub mod features;
+pub mod genetic_params;
 pub mod ml_ai;
 pub mod neural_network;
 
@@ -15,14 +18,7 @@ const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
 
-const WIN_SCORE: i32 = 10000;
-const FINISHED_PIECE_VALUE: i32 = 1000;
-const POSITION_WEIGHT: i32 = 15;
-const SAFETY_BONUS: i32 = 25;
-const ROSETTE_CONTROL_BONUS: i32 = 40;
-const ADVANCEMENT_BONUS: i32 = 5;
-const CAPTURE_BONUS: i32 = 35;
-const CENTER_LANE_BONUS: i32 = 2;
+// These constants are now part of GeneticParams
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Player {
@@ -52,6 +48,7 @@ pub struct GameState {
     pub player2_pieces: Vec<PiecePosition>,
     pub current_player: Player,
     pub dice_roll: u8,
+    pub genetic_params: GeneticParams,
 }
 
 impl GameState {
@@ -74,6 +71,30 @@ impl GameState {
             ],
             current_player: Player::Player1,
             dice_roll: 0,
+            genetic_params: GeneticParams::default(),
+        }
+    }
+
+    pub fn with_genetic_params(genetic_params: GeneticParams) -> Self {
+        GameState {
+            board: vec![None; BOARD_SIZE],
+            player1_pieces: vec![
+                PiecePosition {
+                    square: -1,
+                    player: Player::Player1,
+                };
+                PIECES_PER_PLAYER
+            ],
+            player2_pieces: vec![
+                PiecePosition {
+                    square: -1,
+                    player: Player::Player2,
+                };
+                PIECES_PER_PLAYER
+            ],
+            current_player: Player::Player1,
+            dice_roll: 0,
+            genetic_params,
         }
     }
 
@@ -184,19 +205,19 @@ impl GameState {
         }
 
         if p1_finished == PIECES_PER_PLAYER as i32 {
-            return -WIN_SCORE;
+            return -self.genetic_params.win_score;
         }
         if p2_finished == PIECES_PER_PLAYER as i32 {
-            return WIN_SCORE;
+            return self.genetic_params.win_score;
         }
 
-        let mut score = (p2_finished - p1_finished) * FINISHED_PIECE_VALUE;
-        score += (p2_on_board - p1_on_board) * CAPTURE_BONUS;
+        let mut score = (p2_finished - p1_finished) * self.genetic_params.finished_piece_value;
+        score += (p2_on_board - p1_on_board) * self.genetic_params.capture_bonus;
 
         let (p1_pos_score, p1_strategic_score) = self.evaluate_player_position(Player::Player1);
         let (p2_pos_score, p2_strategic_score) = self.evaluate_player_position(Player::Player2);
 
-        score += (p2_pos_score - p1_pos_score) * POSITION_WEIGHT / 10;
+        score += (p2_pos_score - p1_pos_score) * self.genetic_params.position_weight / 10;
         score += p2_strategic_score - p1_strategic_score;
         score += self.evaluate_board_control();
         score
@@ -215,13 +236,14 @@ impl GameState {
                 {
                     position_score += track_pos as i32 + 1;
                     if Self::is_rosette(piece.square as u8) {
-                        strategic_score += SAFETY_BONUS;
+                        strategic_score += self.genetic_params.safety_bonus;
                     }
                     if track_pos >= 4 && track_pos <= 11 {
-                        strategic_score += ADVANCEMENT_BONUS + CENTER_LANE_BONUS;
+                        strategic_score += self.genetic_params.advancement_bonus
+                            + self.genetic_params.center_lane_bonus;
                     }
                     if track_pos >= 12 {
-                        strategic_score += ADVANCEMENT_BONUS * 2;
+                        strategic_score += self.genetic_params.advancement_bonus * 2;
                     }
                 }
             }
@@ -234,9 +256,9 @@ impl GameState {
         for &rosette in &ROSETTE_SQUARES {
             if let Some(occupant) = self.board[rosette as usize] {
                 control_score += if occupant.player == Player::Player2 {
-                    ROSETTE_CONTROL_BONUS
+                    self.genetic_params.rosette_control_bonus
                 } else {
-                    -ROSETTE_CONTROL_BONUS
+                    -self.genetic_params.rosette_control_bonus
                 };
             }
         }
@@ -373,7 +395,7 @@ impl AI {
                 let mut next_state = state.clone();
                 next_state.make_move(m).expect("Valid move should succeed");
                 let value = self.quiescence_search(&next_state, 3, f32::MIN, f32::MAX);
-                
+
                 let from_square = state.get_pieces(state.current_player)[m as usize].square;
                 let track = GameState::get_player_track(state.current_player);
                 let current_track_pos = if from_square == -1 {
@@ -408,18 +430,25 @@ impl AI {
                     to_square: Some(to_square),
                 });
             }
-            
+
             // Sort by score (best first for maximizing, worst first for minimizing)
             let is_maximizing = state.current_player == Player::Player2;
             move_evaluations.sort_by(|a, b| {
                 if is_maximizing {
-                    b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal)
+                    b.score
+                        .partial_cmp(&a.score)
+                        .unwrap_or(std::cmp::Ordering::Equal)
                 } else {
-                    a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal)
+                    a.score
+                        .partial_cmp(&b.score)
+                        .unwrap_or(std::cmp::Ordering::Equal)
                 }
             });
-            
-            return (move_evaluations.first().map(|e| e.piece_index), move_evaluations);
+
+            return (
+                move_evaluations.first().map(|e| e.piece_index),
+                move_evaluations,
+            );
         }
 
         let is_maximizing = state.current_player == Player::Player2;
@@ -539,10 +568,7 @@ impl AI {
         self.nodes_evaluated += 1;
 
         let mut expected_score = 0.0;
-        const PROBABILITIES: [f32; 5] =
-            [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
-
-        for (roll, &prob) in PROBABILITIES.iter().enumerate() {
+        for (roll, &prob) in crate::dice::DICE_PROBABILITIES.iter().enumerate() {
             if prob == 0.0 {
                 continue;
             }
@@ -716,15 +742,13 @@ impl AI {
 
 impl HeuristicAI {
     pub fn new() -> Self {
-        HeuristicAI {
-            nodes_evaluated: 0,
-        }
+        HeuristicAI { nodes_evaluated: 0 }
     }
 
     pub fn get_best_move(&mut self, state: &GameState) -> (Option<u8>, Vec<MoveEvaluation>) {
         self.nodes_evaluated = 0;
         let valid_moves = state.get_valid_moves();
-        
+
         if valid_moves.is_empty() {
             return (None, vec![]);
         }
@@ -740,21 +764,30 @@ impl HeuristicAI {
                 let score = test_state.evaluate() as f32;
                 self.nodes_evaluated += 1;
 
-                let from_square = if state.get_pieces(state.current_player)[piece_index as usize].square == -1 {
-                    -1
-                } else {
-                    state.get_pieces(state.current_player)[piece_index as usize].square
-                };
+                let from_square =
+                    if state.get_pieces(state.current_player)[piece_index as usize].square == -1 {
+                        -1
+                    } else {
+                        state.get_pieces(state.current_player)[piece_index as usize].square
+                    };
 
-                let to_square = if test_state.get_pieces(state.current_player)[piece_index as usize].square == 20 {
+                let to_square = if test_state.get_pieces(state.current_player)[piece_index as usize]
+                    .square
+                    == 20
+                {
                     None
                 } else {
-                    Some(test_state.get_pieces(state.current_player)[piece_index as usize].square as u8)
+                    Some(
+                        test_state.get_pieces(state.current_player)[piece_index as usize].square
+                            as u8,
+                    )
                 };
 
                 let move_type = if from_square == -1 {
                     "move".to_string()
-                } else if to_square.is_some() && test_state.board[to_square.unwrap() as usize].is_some() {
+                } else if to_square.is_some()
+                    && test_state.board[to_square.unwrap() as usize].is_some()
+                {
                     "capture".to_string()
                 } else {
                     "move".to_string()
@@ -785,9 +818,13 @@ impl HeuristicAI {
         // Sort evaluations by score (best first for maximizing, worst first for minimizing)
         move_evaluations.sort_by(|a, b| {
             if is_maximizing {
-                b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal)
+                b.score
+                    .partial_cmp(&a.score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             } else {
-                a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal)
+                a.score
+                    .partial_cmp(&b.score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             }
         });
 
@@ -1089,7 +1126,7 @@ mod tests {
         for i in 0..PIECES_PER_PLAYER {
             game_state.player1_pieces[i].square = 20;
         }
-        assert_eq!(game_state.evaluate(), -WIN_SCORE);
+        assert_eq!(game_state.evaluate(), -game_state.genetic_params.win_score);
     }
 
     #[test]
@@ -1110,7 +1147,7 @@ mod tests {
         assert!(game_state.make_move((PIECES_PER_PLAYER - 1) as u8).is_ok());
 
         assert!(game_state.is_game_over());
-        assert_eq!(game_state.evaluate(), WIN_SCORE);
+        assert_eq!(game_state.evaluate(), game_state.genetic_params.win_score);
     }
 
     #[test]
@@ -1177,9 +1214,9 @@ mod tests {
         let mut ai = HeuristicAI::new();
         let mut state = GameState::new();
         state.dice_roll = 4;
-        
+
         let (best_move, evaluations) = ai.get_best_move(&state);
-        
+
         assert!(best_move.is_some());
         assert!(!evaluations.is_empty());
         assert!(ai.nodes_evaluated > 0);
@@ -1190,9 +1227,9 @@ mod tests {
         let mut ai = HeuristicAI::new();
         let mut state = GameState::new();
         state.dice_roll = 0;
-        
+
         let (best_move, evaluations) = ai.get_best_move(&state);
-        
+
         assert!(best_move.is_none());
         assert!(evaluations.is_empty());
         assert_eq!(ai.nodes_evaluated, 0);

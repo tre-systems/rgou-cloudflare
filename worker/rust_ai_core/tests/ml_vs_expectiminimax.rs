@@ -1,6 +1,6 @@
 use rand::Rng;
 use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
-use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
+use rgou_ai_core::{dice, GameState, Player, AI, PIECES_PER_PLAYER};
 
 const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = if cfg!(feature = "slow_tests") { 4 } else { 3 };
 /// Returns the number of games to run for ML vs Expectiminimax tests.
@@ -60,6 +60,7 @@ fn convert_game_state_to_ml(rust_state: &GameState) -> MLGameState {
             Player::Player2 => MLPlayer::Player2,
         },
         dice_roll: rust_state.dice_roll,
+        genetic_params: rust_state.genetic_params.clone(),
     }
 }
 
@@ -108,7 +109,7 @@ fn play_game_ml_vs_expectiminimax(
         let current_player = game_state.current_player;
         let is_ml_turn = (current_player == Player::Player1) == ml_plays_first;
 
-        game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+        game_state.dice_roll = dice::roll_dice();
 
         if game_state.dice_roll == 0 {
             game_state.current_player = game_state.current_player.opponent();
@@ -968,7 +969,7 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
             let current_player = game_state.current_player;
             let is_ml_turn = (current_player == Player::Player1) == ml_plays_first;
 
-            game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+            game_state.dice_roll = dice::roll_dice();
 
             if game_state.dice_roll == 0 {
                 game_state.current_player = game_state.current_player.opponent();

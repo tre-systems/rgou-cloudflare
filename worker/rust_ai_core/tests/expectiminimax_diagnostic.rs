@@ -1,7 +1,7 @@
 use rand::Rng;
 use rgou_ai_core::Player;
 use rgou_ai_core::PIECES_PER_PLAYER;
-use rgou_ai_core::{GameState, HeuristicAI, AI};
+use rgou_ai_core::{dice, GameState, HeuristicAI, AI};
 use std::time::Instant;
 
 #[test]
@@ -317,7 +317,7 @@ fn test_expectiminimax_vs_ml_comprehensive_analysis() {
                 let is_expectiminimax_turn =
                     (game_state.current_player == Player::Player1) == (i % 2 == 0);
 
-                game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+                game_state.dice_roll = dice::roll_dice();
 
                 if game_state.dice_roll == 0 {
                     game_state.current_player = game_state.current_player.opponent();
@@ -486,7 +486,7 @@ fn test_expectiminimax_vs_ml_comprehensive_analysis() {
                     let is_depth1_turn =
                         (game_state.current_player == Player::Player1) == (i % 2 == 0);
 
-                    game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+                    game_state.dice_roll = dice::roll_dice();
 
                     if game_state.dice_roll == 0 {
                         game_state.current_player = game_state.current_player.opponent();
@@ -674,7 +674,7 @@ fn test_heuristic_ai_comprehensive_analysis() {
                 let is_heuristic_turn =
                     (game_state.current_player == Player::Player1) == (i % 2 == 0);
 
-                game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+                game_state.dice_roll = dice::roll_dice();
 
                 if game_state.dice_roll == 0 {
                     game_state.current_player = game_state.current_player.opponent();

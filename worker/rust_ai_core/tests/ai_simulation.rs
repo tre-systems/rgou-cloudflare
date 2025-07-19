@@ -1,5 +1,5 @@
 use rand::Rng;
-use rgou_ai_core::{GameState, Player, AI, HeuristicAI, PIECES_PER_PLAYER};
+use rgou_ai_core::{dice, GameState, HeuristicAI, Player, AI, PIECES_PER_PLAYER};
 
 const NUM_GAMES: usize = 50;
 
@@ -30,7 +30,7 @@ fn play_game(ai1: &mut AI, ai2: &mut AI, depth1: u8, depth2: u8) -> (Player, usi
             &mut *ai2
         };
 
-        game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+        game_state.dice_roll = dice::roll_dice();
 
         if game_state.dice_roll == 0 {
             game_state.current_player = game_state.current_player.opponent();
@@ -380,11 +380,23 @@ fn test_heuristic_ai_vs_expectiminimax() {
         results.push(result.clone());
 
         println!("  Results:");
-        println!("    Heuristic wins: {} ({:.1}%)", heuristic_wins, (heuristic_wins as f64 / NUM_GAMES as f64) * 100.0);
-        println!("    Depth {} wins: {} ({:.1}%)", depth2, expectiminimax_wins, (expectiminimax_wins as f64 / NUM_GAMES as f64) * 100.0);
+        println!(
+            "    Heuristic wins: {} ({:.1}%)",
+            heuristic_wins,
+            (heuristic_wins as f64 / NUM_GAMES as f64) * 100.0
+        );
+        println!(
+            "    Depth {} wins: {} ({:.1}%)",
+            depth2,
+            expectiminimax_wins,
+            (expectiminimax_wins as f64 / NUM_GAMES as f64) * 100.0
+        );
         println!("    Average moves per game: {:.1}", avg_moves);
         println!("    Heuristic avg time: {:.1}ms", heuristic_avg_time);
-        println!("    Depth {} avg time: {:.1}ms", depth2, expectiminimax_avg_time);
+        println!(
+            "    Depth {} avg time: {:.1}ms",
+            depth2, expectiminimax_avg_time
+        );
     }
 
     println!("\n{}", "=".repeat(60));
@@ -417,9 +429,15 @@ fn test_heuristic_ai_vs_expectiminimax() {
         };
 
         if heuristic_win_rate > 60.0 {
-            println!("✅ Heuristic significantly stronger than Depth {}", result.depth2);
+            println!(
+                "✅ Heuristic significantly stronger than Depth {}",
+                result.depth2
+            );
         } else if heuristic_win_rate > 45.0 {
-            println!("⚠️  Heuristic moderately stronger than Depth {}", result.depth2);
+            println!(
+                "⚠️  Heuristic moderately stronger than Depth {}",
+                result.depth2
+            );
         } else if heuristic_win_rate > 35.0 {
             println!("📊 Heuristic competitive with Depth {}", result.depth2);
         } else {
@@ -436,15 +454,20 @@ fn test_heuristic_ai_vs_expectiminimax() {
         } else {
             f64::INFINITY
         };
-        println!("Heuristic vs Depth {}: {:.1}x faster", result.depth2, speed_factor);
+        println!(
+            "Heuristic vs Depth {}: {:.1}x faster",
+            result.depth2, speed_factor
+        );
     }
 
     println!("\n🎯 RECOMMENDATIONS:");
     println!("{}", "-".repeat(20));
-    let avg_heuristic_win_rate = results.iter()
+    let avg_heuristic_win_rate = results
+        .iter()
         .map(|r| (r.depth1_wins as f64 / NUM_GAMES as f64) * 100.0)
-        .sum::<f64>() / results.len() as f64;
-    
+        .sum::<f64>()
+        / results.len() as f64;
+
     if avg_heuristic_win_rate > 50.0 {
         println!("✅ Heuristic AI shows strong performance");
         println!("   Consider using for fast, lightweight gameplay");
@@ -469,7 +492,7 @@ fn play_game_heuristic_vs_expectiminimax(
         let current_player = game_state.current_player;
         let is_heuristic_turn = current_player == Player::Player1;
 
-        game_state.dice_roll = rand::thread_rng().gen_range(0..=4);
+        game_state.dice_roll = dice::roll_dice();
 
         if game_state.dice_roll == 0 {
             game_state.current_player = game_state.current_player.opponent();
@@ -481,7 +504,8 @@ fn play_game_heuristic_vs_expectiminimax(
             let (move_option, _) = heuristic_ai.get_best_move(&game_state);
             move_option
         } else {
-            let (move_option, _) = expectiminimax_ai.get_best_move(&game_state, expectiminimax_depth);
+            let (move_option, _) =
+                expectiminimax_ai.get_best_move(&game_state, expectiminimax_depth);
             move_option
         };
         let end_time = std::time::Instant::now();

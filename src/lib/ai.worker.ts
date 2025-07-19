@@ -102,13 +102,25 @@ const transformWasmResponse = (responseJson: string): ServerAIResponse => {
 };
 
 const rollDice = (): number => {
-  // Use WASM roll_dice_wasm if available, otherwise use Math.random
+  // Use WASM roll_dice_wasm if available, otherwise use correct distribution
   if (typeof wasmModule.roll_dice_wasm === 'function') {
     return wasmModule.roll_dice_wasm();
   }
 
-  // Fallback to Math.random for dice roll (0-4)
-  return Math.floor(Math.random() * 5);
+  // Fallback to correct distribution for 4 tetrahedral dice (0-4)
+  const probabilities = [1/16, 4/16, 6/16, 4/16, 1/16];
+  const random = Math.random();
+  
+  let cumulativeProb = 0;
+  for (let i = 0; i < probabilities.length; i++) {
+    cumulativeProb += probabilities[i];
+    if (random <= cumulativeProb) {
+      return i;
+    }
+  }
+  
+  // Fallback (should never happen with exact probabilities)
+  return 2;
 };
 
 const getAIMove = (gameState: GameState): ServerAIResponse => {
