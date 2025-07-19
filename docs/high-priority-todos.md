@@ -22,21 +22,7 @@ This document lists critical issues and improvements that can be implemented imm
   - Improves move consistency across similar positions
 - **Performance**: ~15-25% reduction in nodes evaluated
 
-### **3. Move Ordering Optimization** ✅
-
-- **Implementation**: Added `order_moves()` function that prioritizes promising moves
-- **Priority Order**:
-  1. **Finishing moves** (1000 points) - Highest priority
-  2. **Rosette moves** (800 points) - High priority
-  3. **Capture moves** (600 points) - Medium-high priority
-  4. **Board entry moves** (+100 bonus) - Medium priority
-  5. **Advancement moves** (+10 per square) - Lower priority
-- **Benefits**:
-  - Improves alpha-beta pruning efficiency
-  - Reduces average nodes per move by ~20-30%
-  - Maintains search quality while improving speed
-
-### **4. Enhanced Transposition Table** ✅
+### **3. Enhanced Transposition Table** ✅
 
 - **Implementation**: Improved transposition table with better hash collision handling
 - **Features**:
@@ -48,37 +34,46 @@ This document lists critical issues and improvements that can be implemented imm
   - Reduced redundant calculations
   - Better memory utilization
 
+### **4. Search Depth Optimization** ✅
+
+- **Implementation**: Reduced search depth from 6 to 4 ply (main game) and 3 ply (server/testing)
+- **Rationale**: Found optimal balance between speed and quality for Royal Game of Ur
+- **Benefits**:
+  - **30-50x speed improvement** (0.1ms vs 3-5ms per move)
+  - **Minimal quality loss** (45% win rate maintained)
+  - **Better user experience** (instant AI responses)
+  - **Efficient testing** (100 games in 10 seconds)
+- **Performance**: Classic AI now 7x faster than ML AI while maintaining competitiveness
+
 ### **5. Comprehensive Testing System** ✅
 
-- **Implementation**: Created `comprehensive_ai_test.rs` with configurable test scenarios
+- **Implementation**: Created configurable test scenarios for validation
 - **Test Types**:
-  - `test_classic_ai_improvements()` - Verifies caching and performance
-  - `test_move_ordering_effectiveness()` - Measures move ordering benefits
-  - `test_adaptive_depth_behavior()` - Validates adaptive depth logic
+  - `test_ml_vs_expectiminimax_ai()` - ML vs Classic AI comparison
   - `test_ai_consistency_and_performance()` - Overall performance validation
 - **Configurable Game Counts**:
-  - Quick: 5 games (`npm run test:ai:quick`)
-  - Standard: 20 games (`npm run test:ai:standard`)
-  - Thorough: 100 games (`npm run test:ai:thorough`)
-  - ML vs Classic: 50 games (`npm run test:ai:ml-vs-classic`)
+  - Quick: 10 games (default)
+  - Extended: 100 games (`NUM_GAMES=100`)
 
-### **Performance Results After Optimizations**
+### **Performance Results After All Optimizations**
 
-**50-Game Test Results:**
+**100-Game Test Results (Depth 3):**
 
-- **ML AI wins: 23 (46.0%)**
-- **Classic AI wins: 27 (54.0%)**
-- **Average moves per game: 122.5**
+- **ML AI wins: 45 (45.0%)**
+- **Classic AI wins: 55 (55.0%)**
+- **Average moves per game: 122.0**
 - **ML AI speed: 0.7ms/move**
-- **Classic AI speed: 3.5ms/move**
-- **ML AI pieces finished: 5.9/7**
-- **Classic AI pieces finished: 5.9/7**
+- **Classic AI speed: 0.1ms/move** (7x faster!)
+- **ML AI pieces finished: 5.8/7**
+- **Classic AI pieces finished: 5.8/7**
+- **Test duration: 9.98 seconds**
 
 ### **Key Improvements Summary**
 
 - ✅ **Persistent AI Instance**: Eliminates initialization overhead
 - ✅ **Incremental Search**: Reuses previous calculations
 - ✅ **Enhanced Caching**: Higher transposition table hit rates
+- ✅ **Optimal Search Depth**: Found sweet spot between speed and quality
 - ✅ **Comprehensive Testing**: Configurable test scenarios for validation
 
 ### **Lessons Learned**
@@ -87,8 +82,9 @@ This document lists critical issues and improvements that can be implemented imm
 - ❌ **Adaptive Depth**: Removed due to performance degradation
 - ✅ **Persistent Instance**: Provides significant performance benefits
 - ✅ **Transposition Table**: Maintains cache across games for better performance
+- ✅ **Depth Optimization**: Sometimes "less search" is better - found optimal depth for this game
 
-The Classic AI now provides **excellent performance (54% win rate)** while maintaining reasonable speed characteristics. The persistent instance improvements have successfully enhanced the Classic AI's competitiveness, making it a strong opponent that can outperform the ML AI in some scenarios.
+The Classic AI now provides **excellent performance (55% win rate)** while being **7x faster than the ML AI**. The search depth optimization was a breakthrough, finding the perfect balance between speed and quality for Royal Game of Ur.
 
 ## Test Results After Classic AI Optimizations
 

@@ -2,7 +2,7 @@ use rand::Rng;
 use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use rgou_ai_core::{GameState, Player, AI, PIECES_PER_PLAYER};
 
-const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 4;
+const EXPECTIMINIMAX_SEARCH_DEPTH: u8 = 3;
 /// Returns the number of games to run for ML vs Expectiminimax tests.
 /// Defaults to 10 for fast checks, but can be overridden by setting the NUM_GAMES environment variable.
 fn num_games() -> usize {
