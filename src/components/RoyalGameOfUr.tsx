@@ -93,7 +93,7 @@ export default function RoyalGameOfUr() {
     const isAIsTurn =
       isWatchMode ||
       (gameState.currentPlayer === 'player2' &&
-        (selectedMode === 'classic' || selectedMode === 'ml'));
+        (selectedMode === 'classic' || selectedMode === 'ml' || selectedMode === 'heuristic'));
 
     if (!isAIsTurn && gameState.canMove) {
       return;
