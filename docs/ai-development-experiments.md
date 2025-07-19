@@ -13,12 +13,14 @@ This document chronicles the comprehensive investigation and optimization of the
 - **Heuristic AI Perspective Bug**: Fixed inconsistent player perspective
 - **Transposition Table Interference**: Fixed shared transposition table causing unfair comparisons
 - **Performance Anomalies**: Identified that tactical evaluation > deep search for this game
+- **ML AI v2 Training**: Successfully trained v2 model with multiprocessing and improved architecture
 
 ### 🎯 **Current Recommendations**
 
 - **Production**: Use EMM-1 (Depth 1) - 53.6% win rate, instant speed
 - **Alternative**: Use EMM-2 (Depth 2) - 53.2% win rate, instant speed
 - **Educational**: Use Heuristic AI - 50.8% win rate, instant speed
+- **ML AI**: Use ML-v2 - 50% win rate vs EMM, competitive performance
 
 ## Historical Investigations
 

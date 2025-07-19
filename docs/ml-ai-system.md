@@ -43,6 +43,20 @@ The input vector encodes:
 
 The ML AI is competitive with the Classic AI (Expectiminimax algorithm) it was trained from, achieving approximately 50% win rate in head-to-head matches. This represents a strong baseline for a neural network trained through imitation learning.
 
+### ML AI Versions
+
+- **ML-v1**: Initial model with basic training
+- **ML-v2**: Improved model with batch normalization, dropout, learning rate scheduling, and enhanced training pipeline
+- **ML-v3**: Extended training with more games and epochs (when available)
+
+### Recent Improvements (v2)
+
+- **Enhanced Architecture**: Added batch normalization and dropout for better regularization
+- **Improved Training**: Learning rate scheduling and early stopping
+- **Better Optimizer**: AdamW with weight decay for improved convergence
+- **Multiprocessing**: Parallel game generation for faster training
+- **Validation Split**: Proper train/validation split for better generalization
+
 ## Future Improvements
 
 Several directions could be explored to create a stronger AI:
