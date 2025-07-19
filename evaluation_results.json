@@ -1,15 +1,15 @@
 {
   "model_path": "ml/data/weights/ml_ai_weights_v2.json",
-  "num_games": 10,
-  "evaluation_time_seconds": 0.32881999015808105,
+  "num_games": 100,
+  "evaluation_time_seconds": 2.0185091495513916,
   "ml_wins": 0,
   "classic_wins": 0,
-  "draws": 10,
+  "draws": 100,
   "ml_win_rate": 0.0,
   "classic_win_rate": 0.0,
   "draw_rate": 1.0,
   "avg_moves_per_game": 0,
-  "games_per_second": 30.41177634970573,
+  "games_per_second": 49.54151435093804,
   "individual_games": [
     {
       "game_id": 0,
@@ -76,6 +76,636 @@
     },
     {
       "game_id": 9,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 10,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 11,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 12,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 13,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 14,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 15,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 16,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 17,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 18,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 19,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 20,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 21,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 22,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 23,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 24,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 25,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 26,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 27,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 28,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 29,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 30,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 31,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 32,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 33,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 34,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 35,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 36,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 37,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 38,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 39,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 40,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 41,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 42,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 43,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 44,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 45,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 46,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 47,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 48,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 49,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 50,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 51,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 52,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 53,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 54,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 55,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 56,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 57,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 58,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 59,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 60,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 61,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 62,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 63,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 64,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 65,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 66,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 67,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 68,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 69,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 70,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 71,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 72,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 73,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 74,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 75,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 76,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 77,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 78,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 79,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 80,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 81,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 82,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 83,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 84,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 85,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 86,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 87,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 88,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 89,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 90,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 91,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 92,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 93,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 94,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 95,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 96,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 97,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 98,
+      "winner": "Draw",
+      "moves_played": 0,
+      "p1_finished": 0,
+      "p2_finished": 0
+    },
+    {
+      "game_id": 99,
       "winner": "Draw",
       "moves_played": 0,
       "p1_finished": 0,
