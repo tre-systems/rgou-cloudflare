@@ -8,11 +8,16 @@ import type { ServerAIResponse } from './types';
 interface WasmModule {
   default: (input?: string | URL) => Promise<unknown>;
   get_ai_move_wasm: (gameState: unknown) => string;
+  get_classic_ai_move_optimized: (gameState: unknown) => string;
+  init_classic_ai: () => string;
+  clear_classic_ai_cache: () => string;
+  init_ml_ai: () => string;
   roll_dice_wasm?: () => number;
 }
 
 let wasmModule: WasmModule;
 let wasmReady: Promise<void> | null = null;
+let classicAiInitialized = false;
 
 const loadWasm = (): Promise<void> => {
   if (wasmReady) return wasmReady;
@@ -46,6 +51,29 @@ const loadWasm = (): Promise<void> => {
       // Verify the WASM module has the expected functions
       if (typeof wasmModule.get_ai_move_wasm !== 'function') {
         throw new Error('WASM module does not have get_ai_move_wasm function');
+      }
+
+      // Initialize Classic AI with persistent instance
+      try {
+        if (typeof wasmModule.init_classic_ai === 'function') {
+          const initResponse = wasmModule.init_classic_ai();
+          console.log('AI Worker: Classic AI initialized:', initResponse);
+          classicAiInitialized = true;
+        } else {
+          console.warn('AI Worker: init_classic_ai function not available, using fallback');
+        }
+      } catch (error) {
+        console.warn('AI Worker: Failed to initialize Classic AI, using fallback:', error);
+      }
+
+      // Initialize ML AI
+      try {
+        if (typeof wasmModule.init_ml_ai === 'function') {
+          const mlInitResponse = wasmModule.init_ml_ai();
+          console.log('AI Worker: ML AI initialized:', mlInitResponse);
+        }
+      } catch (error) {
+        console.warn('AI Worker: Failed to initialize ML AI:', error);
       }
 
       console.log('AI Worker: WASM module loaded and verified successfully.');
@@ -83,6 +111,26 @@ const rollDice = (): number => {
   return Math.floor(Math.random() * 5);
 };
 
+const getAIMove = (gameState: GameState): ServerAIResponse => {
+  const request = transformGameStateToRequest(gameState);
+
+  // Use optimized Classic AI if available, otherwise fallback to original
+  if (classicAiInitialized && typeof wasmModule.get_classic_ai_move_optimized === 'function') {
+    try {
+      console.log('AI Worker: Using optimized Classic AI with persistent instance');
+      const responseJson = wasmModule.get_classic_ai_move_optimized(request);
+      return transformWasmResponse(responseJson);
+    } catch (error) {
+      console.warn('AI Worker: Optimized Classic AI failed, falling back to original:', error);
+    }
+  }
+
+  // Fallback to original implementation
+  console.log('AI Worker: Using original Classic AI implementation');
+  const responseJson = wasmModule.get_ai_move_wasm(request);
+  return transformWasmResponse(responseJson);
+};
+
 self.addEventListener(
   'message',
   async (event: MessageEvent<{ id: number; gameState?: GameState; type?: string }>) => {
@@ -101,11 +149,21 @@ self.addEventListener(
         return;
       }
 
+      // Handle cache clear requests
+      if (type === 'clearCache') {
+        if (typeof wasmModule.clear_classic_ai_cache === 'function') {
+          const clearResponse = wasmModule.clear_classic_ai_cache();
+          console.log('AI Worker: Cache cleared:', clearResponse);
+          self.postMessage({ type: 'success', id, response: { message: 'Cache cleared' } });
+        } else {
+          self.postMessage({ type: 'error', id, error: 'Cache clear function not available' });
+        }
+        return;
+      }
+
       // Handle AI move requests (default behavior)
       if (gameState) {
-        const request = transformGameStateToRequest(gameState);
-        const responseJson = wasmModule.get_ai_move_wasm(request);
-        const response = transformWasmResponse(responseJson);
+        const response = getAIMove(gameState);
 
         console.log('AI Worker: Sending success response:', { type: 'success', id, response });
         self.postMessage({ type: 'success', id, response });

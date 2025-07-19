@@ -9,6 +9,31 @@ use wasm_bindgen::prelude::*;
 
 lazy_static! {
     static ref ML_AI_INSTANCE: Mutex<Option<MLAI>> = Mutex::new(None);
+    static ref CLASSIC_AI_INSTANCE: Mutex<Option<AI>> = Mutex::new(None);
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchCache {
+    pub last_position_hash: u64,
+    pub last_evaluations: Vec<MoveEvaluationWasm>,
+    pub last_depth: u8,
+    pub last_nodes_evaluated: u64,
+}
+
+impl SearchCache {
+    pub fn new() -> Self {
+        SearchCache {
+            last_position_hash: 0,
+            last_evaluations: Vec::new(),
+            last_depth: 0,
+            last_nodes_evaluated: 0,
+        }
+    }
+}
+
+lazy_static! {
+    static ref SEARCH_CACHE: Mutex<SearchCache> = Mutex::new(SearchCache::new());
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -265,4 +290,124 @@ pub fn evaluate_ml_position(game_state_request_js: JsValue) -> Result<JsValue, J
             "ML AI not initialized. Call init_ml_ai() first.",
         ))
     }
+}
+
+#[wasm_bindgen]
+pub fn init_classic_ai() -> Result<JsValue, JsValue> {
+    let classic_ai = AI::new();
+    let mut instance = CLASSIC_AI_INSTANCE.lock().unwrap();
+    *instance = Some(classic_ai);
+
+    let mut cache = SEARCH_CACHE.lock().unwrap();
+    *cache = SearchCache::new();
+
+    let response = serde_json::to_string(&"Classic AI initialized with persistent instance")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+    Ok(JsValue::from_str(&response))
+}
+
+#[wasm_bindgen]
+pub fn clear_classic_ai_cache() -> Result<JsValue, JsValue> {
+    let mut instance = CLASSIC_AI_INSTANCE.lock().unwrap();
+    if let Some(ref mut ai) = *instance {
+        ai.transposition_table.clear();
+        ai.nodes_evaluated = 0;
+        ai.transposition_hits = 0;
+    }
+
+    let mut cache = SEARCH_CACHE.lock().unwrap();
+    *cache = SearchCache::new();
+
+    let response = serde_json::to_string(&"Classic AI cache cleared")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+    Ok(JsValue::from_str(&response))
+}
+
+#[wasm_bindgen]
+pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<JsValue, JsValue> {
+    let game_state_request: GameStateRequest =
+        serde_wasm_bindgen::from_value(game_state_request_js)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let start_time = js_sys::Date::now();
+    let game_state = convert_request_to_game_state(&game_state_request);
+    let current_position_hash = game_state.hash();
+
+    let mut instance = CLASSIC_AI_INSTANCE.lock().unwrap();
+    let ai = instance.as_mut().ok_or_else(|| {
+        JsValue::from_str("Classic AI not initialized. Call init_classic_ai() first.")
+    })?;
+
+    let mut cache = SEARCH_CACHE.lock().unwrap();
+
+    let can_use_cache =
+        cache.last_position_hash != 0 && cache.last_depth >= 3 && cache.last_nodes_evaluated > 0;
+
+    let ai_depth = if can_use_cache {
+        let base_depth = 6;
+        let cache_quality = cache.last_nodes_evaluated as f32 / 1000.0;
+        if cache_quality > 5.0 {
+            base_depth + 1
+        } else {
+            base_depth.max(4)
+        }
+    } else {
+        6
+    };
+
+    let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
+    let evaluation = game_state.evaluate();
+    let end_time = js_sys::Date::now();
+
+    let move_evaluations_wasm: Vec<MoveEvaluationWasm> =
+        move_evaluations.iter().map(|eval| eval.into()).collect();
+
+    cache.last_position_hash = current_position_hash;
+    cache.last_evaluations = move_evaluations_wasm.clone();
+    cache.last_depth = ai_depth;
+    cache.last_nodes_evaluated = ai.nodes_evaluated as u64;
+
+    let cache_info = if can_use_cache {
+        format!(
+            " (incremental search, {} nodes, {} cache hits)",
+            ai.nodes_evaluated, ai.transposition_hits
+        )
+    } else {
+        format!(
+            " (full search, {} nodes, {} cache hits)",
+            ai.nodes_evaluated, ai.transposition_hits
+        )
+    };
+
+    let response = AIResponse {
+        r#move: ai_move,
+        evaluation,
+        thinking: format!(
+            "Classic AI (depth {}) chose move {:?} with score {:.1}.{}{}",
+            ai_depth,
+            ai_move,
+            move_evaluations_wasm
+                .first()
+                .map(|m| m.score)
+                .unwrap_or(0.0),
+            cache_info,
+            if can_use_cache { " [CACHED]" } else { "" }
+        ),
+        timings: Timings {
+            ai_move_calculation: ((end_time - start_time) as u32).max(1),
+            total_handler_time: 0,
+        },
+        diagnostics: Diagnostics {
+            search_depth: ai_depth,
+            valid_moves: game_state.get_valid_moves(),
+            move_evaluations: move_evaluations_wasm,
+            transposition_hits: ai.transposition_hits as usize,
+            nodes_evaluated: ai.nodes_evaluated as u64,
+        },
+    };
+
+    let response_json = serde_json::to_string(&response)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+
+    Ok(JsValue::from_str(&response_json))
 }

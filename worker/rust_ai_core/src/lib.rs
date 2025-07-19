@@ -5,7 +5,6 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
 
-// Import ML AI functionality
 pub mod features;
 pub mod ml_ai;
 pub mod neural_network;
@@ -327,6 +326,16 @@ impl AI {
             nodes_evaluated: 0,
             transposition_hits: 0,
         }
+    }
+
+    pub fn get_transposition_table_size(&self) -> usize {
+        self.transposition_table.len()
+    }
+
+    pub fn clear_transposition_table(&mut self) {
+        self.transposition_table.clear();
+        self.nodes_evaluated = 0;
+        self.transposition_hits = 0;
     }
 
     pub fn get_best_move(

@@ -221,12 +221,12 @@ fn test_ml_vs_expectiminimax_ai() {
 
     println!("Starting {} games: ML AI vs Expectiminimax AI", num_games());
 
+    // Create persistent AI instances
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
     for i in 0..num_games() {
-        let mut ml_ai = MLAI::new();
-        ml_ai.load_pretrained(&value_weights, &policy_weights);
-
-        let mut expectiminimax_ai = AI::new();
-
         let ml_plays_first = i % 2 == 0;
         let result =
             play_game_ml_vs_expectiminimax(&mut ml_ai, &mut expectiminimax_ai, ml_plays_first);
@@ -262,6 +262,11 @@ fn test_ml_vs_expectiminimax_ai() {
         total_expectiminimax_ai_time_ms += result.expectiminimax_ai_total_time_ms;
         total_ml_ai_moves += result.ml_ai_moves;
         total_expectiminimax_ai_moves += result.expectiminimax_ai_moves;
+
+        // Clear transposition table periodically to prevent memory bloat
+        if (i + 1) % 20 == 0 {
+            expectiminimax_ai.clear_transposition_table();
+        }
 
         if (i + 1) % 10 == 0 {
             let ml_avg_time = if result.ml_ai_moves > 0 {
