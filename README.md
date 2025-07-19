@@ -113,6 +113,9 @@ bash ml/scripts/train_ml_ai_version.sh --version v3 --skip-test --reuse-games
 - **Learning Rate Scheduling**: Adaptive learning rate based on validation performance
 - **Weight Compression**: Automatic compression and quantization of trained weights
 - **Metadata Tracking**: Comprehensive training metadata and version history
+- **Parallel Processing**: Optimized parallel game processing for 3-8x faster data generation
+- **GPU Acceleration**: Automatic MPS (Apple Silicon) and CUDA (NVIDIA) GPU detection and usage
+- **Optimized Batch Sizes**: Larger batch sizes for GPU training (256 for MPS, 512 for CUDA)
 
 ### Training Output
 

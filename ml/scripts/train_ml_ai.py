@@ -34,7 +34,14 @@ def set_random_seeds(seed: int = 42):
 
 def get_device():
     if torch.backends.mps.is_available():
-        return torch.device("mps")
+        try:
+            test_tensor = torch.randn(10, 10, device="mps")
+            test_result = test_tensor + test_tensor
+            print("MPS device is working, using Apple Silicon GPU")
+            return torch.device("mps")
+        except Exception as e:
+            print(f"MPS device failed test: {e}, falling back to CPU")
+            return torch.device("cpu")
     elif torch.cuda.is_available():
         return torch.device("cuda")
     else:
@@ -43,9 +50,9 @@ def get_device():
 
 def get_optimal_batch_size(device):
     if device.type == "mps":
-        return 128
-    elif device.type == "cuda":
         return 256
+    elif device.type == "cuda":
+        return 512
     else:
         return 64
 
@@ -587,6 +594,78 @@ def simulate_games_parallel(num_games, rust_ai_path):
     return results
 
 
+def process_game_worker(args):
+    game_result, rust_ai_path = args
+    
+    simulator = GameSimulator(None)
+    rust_client = RustAIClient(rust_ai_path) if rust_ai_path else None
+    
+    game_training_data = []
+    
+    for move_data in game_result["moves"]:
+        game_state = move_data["game_state"]
+        features = GameFeatures.from_game_state(game_state)
+
+        try:
+            if rust_client:
+                value_target = rust_client.evaluate_position(game_state)
+                value_target = max(-1.0, min(1.0, value_target / 10.0))
+            else:
+                p1_finished = sum(
+                    1 for piece in game_state["player1_pieces"] if piece["square"] == 20
+                )
+                p2_finished = sum(
+                    1 for piece in game_state["player2_pieces"] if piece["square"] == 20
+                )
+                value_target = (p2_finished - p1_finished) / 7.0
+        except:
+            p1_finished = sum(
+                1 for piece in game_state["player1_pieces"] if piece["square"] == 20
+            )
+            p2_finished = sum(
+                1 for piece in game_state["player2_pieces"] if piece["square"] == 20
+            )
+            value_target = (p2_finished - p1_finished) / 7.0
+
+        policy_target = simulator._create_target_policy(
+            game_state, move_data["move"]
+        )
+
+        game_training_data.append({
+            "features": features.tolist(),
+            "value_target": value_target,
+            "policy_target": policy_target,
+            "game_state": game_state,
+        })
+    
+    return game_training_data
+
+
+def process_games_parallel(game_results, rust_ai_path=None, max_workers=None):
+    if max_workers is None:
+        max_workers = get_optimal_workers()
+    
+    print(f"Processing {len(game_results)} games using {max_workers} workers...")
+    
+    args_list = [(game_result, rust_ai_path) for game_result in game_results]
+    
+    training_data = []
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_game = {executor.submit(process_game_worker, args): args for args in args_list}
+        
+        for future in tqdm(concurrent.futures.as_completed(future_to_game), 
+                          total=len(future_to_game), 
+                          desc="Processing games"):
+            try:
+                game_training_data = future.result()
+                training_data.extend(game_training_data)
+            except Exception as exc:
+                print(f'Game processing generated an exception: {exc}')
+    
+    return training_data
+
+
 def generate_training_data(
     num_games: int = 1000,
     use_rust_ai: bool = True,
@@ -610,44 +689,7 @@ def generate_training_data(
 
         game_results = simulate_games_parallel(num_games, rust_ai_path)
 
-        simulator = GameSimulator(None)
-        rust_client = RustAIClient(rust_ai_path)
-
-        training_data = []
-        print("Processing games into training samples...")
-        for game_result in tqdm(game_results, desc="Processing games"):
-            for move_data in game_result["moves"]:
-                game_state = move_data["game_state"]
-                features = GameFeatures.from_game_state(game_state)
-
-                # Use Classic AI's evaluation function as value target
-                try:
-                    value_target = rust_client.evaluate_position(game_state)
-                    # Scale the evaluation to [-1, 1] range for tanh output
-                    value_target = max(-1.0, min(1.0, value_target / 10.0))
-                except:
-                    # Fallback to piece count difference if evaluation fails
-                    p1_finished = sum(
-                        1 for piece in game_state["player1_pieces"] if piece["square"] == 20
-                    )
-                    p2_finished = sum(
-                        1 for piece in game_state["player2_pieces"] if piece["square"] == 20
-                    )
-                    value_target = (p2_finished - p1_finished) / 7.0
-
-                # Create policy target
-                policy_target = simulator._create_target_policy(
-                    game_state, move_data["move"]
-                )
-
-                training_data.append(
-                    {
-                        "features": features.tolist(),
-                        "value_target": value_target,
-                        "policy_target": policy_target,
-                        "game_state": game_state,
-                    }
-                )
+        training_data = process_games_parallel(game_results, rust_ai_path)
     else:
         simulator = GameSimulator(None)
         training_data = []
