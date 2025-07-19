@@ -5,6 +5,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 #[cfg(feature = "wasm")]
 pub mod wasm_api;
 
+pub mod dice;
 pub mod features;
 pub mod ml_ai;
 pub mod neural_network;
@@ -539,10 +540,7 @@ impl AI {
         self.nodes_evaluated += 1;
 
         let mut expected_score = 0.0;
-        const PROBABILITIES: [f32; 5] =
-            [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
-
-        for (roll, &prob) in PROBABILITIES.iter().enumerate() {
+        for (roll, &prob) in crate::dice::DICE_PROBABILITIES.iter().enumerate() {
             if prob == 0.0 {
                 continue;
             }
