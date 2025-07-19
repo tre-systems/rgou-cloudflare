@@ -604,15 +604,7 @@ fn test_expectiminimax_vs_ml_comprehensive_analysis() {
         }
     }
 
-    println!("\n3. Final Recommendations");
-    println!("{}", "-".repeat(30));
-    println!("Based on comprehensive testing:");
-    println!("• Depth 3 provides the best balance of performance and strength");
-    println!("• Depth 4 is significantly slower with minimal strength improvement");
-    println!("• Expectiminimax shows good performance against random play");
-    println!("• Transposition table provides significant speedup");
-    println!("• Move ordering helps with alpha-beta pruning efficiency");
-}
+   }
 
 #[test]
 fn test_heuristic_ai_comprehensive_analysis() {

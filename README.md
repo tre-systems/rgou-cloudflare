@@ -21,8 +21,8 @@ This implementation brings this ancient game to life with modern technology, all
 
 - Faithful recreation of the Royal Game of Ur
 - Two AI opponents:
-  - **Classic AI**: Uses expectiminimax algorithm for strategic depth (3-ply search, 2.4ms/move)
-  - **ML AI**: Neural network trained through self-play for a different playstyle (0.7ms/move)
+  - **Classic AI**: Uses expectiminimax algorithm for strategic depth (3-ply search, 81.2% win rate, 14.1ms/move)
+- **ML AI**: Neural network trained through self-play for a different playstyle (61.2% win rate, 58.0ms/move)
 - AI vs. AI mode to watch the two AIs compete
 - All AI runs locally in your browser via WebAssembly (no server calls)
 - PWA: works offline, installable
@@ -160,26 +160,25 @@ For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
 
 ## Documentation
 
-- **[Documentation Index](./docs/README.md)** - **START HERE** - Complete documentation overview and organization
-- **[Latest Matrix Comparison Results](./docs/latest-matrix-comparison-results.md)** - **CURRENT** - Latest performance data (July 2025)
-- **[AI Performance Quick Reference](./docs/ai-performance-quick-reference.md)** - **CURRENT** - Quick reference for developers
-- **[Comprehensive AI Matrix Analysis](./docs/comprehensive-ai-matrix-analysis.md)** - **CURRENT** - Updated analysis and recommendations
+### Current Implementation
 
-### Historical Investigations & Fixes
-
-- **[AI Investigation Summary](./docs/ai-investigation-summary.md)** - **HISTORICAL** - Overview of past investigations
-- **[Depth Performance Analysis](./docs/depth-1-vs-depth-3-analysis.md)** - **RESOLVED** - Transposition table interference fix
-- **[Depth 2 vs Depth 3 Analysis](./docs/why-depth2-beats-depth3.md)** - **INVESTIGATED** - Performance anomaly analysis
-
-### Reference & Technical Details
-
+- **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI implementation
 - **[ML AI System](./docs/ml-ai-system.md)** - Machine learning AI implementation
-- **[AI System (Classic)](./docs/ai-system.md)** - Classic expectiminimax AI details
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
 - **[Technical Implementation](./docs/technical-implementation.md)** - Implementation details
+
+### Development & Testing
+
 - **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
+- **[Test Configuration Guide](./docs/test-configuration-guide.md)** - How to run different test configurations
 - **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
+
+### Historical Research & Future Development
+
+- **[AI Development Experiments](./docs/ai-development-experiments.md)** - **HISTORICAL** - All AI experiments, investigations, and lessons learned
+- **[Latest Matrix Comparison Results](./docs/latest-matrix-comparison-results.md)** - **CURRENT** - Latest performance data (July 2025)
+- **[AI Performance Quick Reference](./docs/ai-performance-quick-reference.md)** - **CURRENT** - Quick reference for developers
 
 ## Troubleshooting
 

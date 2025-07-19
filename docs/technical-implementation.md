@@ -30,7 +30,7 @@ npm install
 - `migrations/`: Database schema
 - `public/`: Static assets
 
-See [AI System Documentation](./ai-system.md) for Classic AI (Expectiminimax algorithm) and [ML AI System](./ml-ai-system.md) for ML AI (Neural network model) details.
+See [AI System](./ai-system.md) for Classic AI and [ML AI System](./ml-ai-system.md) for ML AI details.
 
 ## Build Process
 

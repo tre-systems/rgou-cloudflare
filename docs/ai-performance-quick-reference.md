@@ -70,9 +70,9 @@
 
 | Use Case                     | Depth | Performance | Win Rate vs Random | Win Rate vs ML AI |
 | ---------------------------- | ----- | ----------- | ------------------ | ----------------- |
-| **Production (Recommended)** | 1     | 0.0ms/game  | 56%                | 64%               |
-| **Fast Play**                | 2     | 0.0ms/game  | 54%                | 58%               |
-| **Maximum Strength**         | 3     | 10.2ms/game | 50%                | 46%               |
+| **Production (Recommended)** | 3     | 14.1ms/game | 100%               | 74%               |
+| **Fast Play**                | 2     | 0.0ms/game  | 98%                | 54%               |
+| **Maximum Strength**         | 3     | 14.1ms/game | 100%               | 74%               |
 
 ### Configuration Files
 

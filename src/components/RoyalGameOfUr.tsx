@@ -215,7 +215,7 @@ export default function RoyalGameOfUr() {
       setAiSourceP1(null);
       setAiSourceP2('ml');
     } else if (mode === 'watch') {
-      setAiSourceP1('heuristic');
+      setAiSourceP1('client');
       setAiSourceP2('ml');
     }
 

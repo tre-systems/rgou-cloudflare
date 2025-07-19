@@ -22,12 +22,12 @@ This implementation stands out for several reasons:
 ## Core Components
 
 1. **Next.js Frontend**: React app for UI and game state
-2. **AI (WebAssembly)**: Rust AI logic compiled to Wasm for browser (**Classic AI (Expectiminimax algorithm)** and **ML AI (Neural network model)**)
+2. **AI (WebAssembly)**: Rust AI logic compiled to Wasm for browser (Classic AI and ML AI)
 3. **Database**: Cloudflare D1, Drizzle ORM
 
-The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both Classic AI (Expectiminimax algorithm) and ML AI (Neural network model) use this for identical strategy, running locally in the browser.
+The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both Classic AI and ML AI use this for identical strategy, running locally in the browser.
 
-For AI algorithm details, see [AI System Documentation](./ai-system.md). For ML AI, see [ML AI System](./ml-ai-system.md).
+For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [ML AI System](./ml-ai-system.md).
 
 ### Frontend (`src/`)
 
@@ -40,15 +40,15 @@ For AI algorithm details, see [AI System Documentation](./ai-system.md). For ML 
 
 ### AI Engine
 
-- **Classic AI (Expectiminimax algorithm)**: Rust, expectiminimax, compiled to WebAssembly
-- **ML AI (Neural network model)**: Rust, neural network, compiled to WebAssembly
+- **Classic AI**: Rust, expectiminimax, compiled to WebAssembly
+- **ML AI**: Rust, neural network, compiled to WebAssembly
 - **Performance**: All AI runs locally in the browser (no server calls)
 
 ### Data Flow: AI Turn
 
 1. `RoyalGameOfUr.tsx` detects AI turn
 2. Calls `makeAIMove` in `game-store.ts`
-3. Calls appropriate AI service (Classic AI/ML AI)
+3. Calls appropriate AI service (Classic AI or ML AI)
 4. Chosen move processed by `makeMoveLogic`
 5. UI updates
 
@@ -86,7 +86,7 @@ Set in `public/_headers`:
 ## Development vs Production UI
 
 - **Dev-only tools**: AI diagnostics, AI toggle, reset/test buttons (only on localhost)
-- **Production**: Clean UI, Classic AI (Expectiminimax algorithm) default
+- **Production**: Clean UI, Classic AI default
 
 ## Summary
 
