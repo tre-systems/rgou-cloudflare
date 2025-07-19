@@ -2,7 +2,6 @@ use rgou_ai_core::{dice, GameState, Player, AI, PIECES_PER_PLAYER};
 use rgou_ai_core::{ml_ai::MLAI, GameState as MLGameState, Player as MLPlayer};
 use std::time::Instant;
 
-
 const NUM_GAMES: usize = 10;
 
 #[derive(Debug, Clone)]
@@ -79,23 +78,23 @@ fn test_ai_performance_matrix() {
         "• Fastest: {} ({:.1}ms avg)",
         fastest.ai_type, fastest.avg_time_ms
     );
-    println!("• Production Choice: {} (best balance of speed and strength)", best_performance.ai_type);
+    println!(
+        "• Production Choice: {} (best balance of speed and strength)",
+        best_performance.ai_type
+    );
     println!("• Learning Choice: ML AI (adaptive behavior)");
     println!("• Educational Choice: Heuristic (understandable logic)");
-
-    // Update test matrix documentation
-    update_performance_docs(&results);
 }
 
 fn measure_transposition_table_memory(depth: u8) -> f64 {
     let mut ai = AI::new();
     let test_state = GameState::new();
-    
+
     // Run some searches to populate transposition table
     for _ in 0..10 {
         let _ = ai.get_best_move(&test_state, depth);
     }
-    
+
     let table_size = ai.get_transposition_table_size();
     let memory_bytes = table_size * std::mem::size_of::<u64>() * 2; // Rough estimate
     memory_bytes as f64 / (1024.0 * 1024.0) // Convert to MB
@@ -329,33 +328,4 @@ fn convert_game_state_to_ml(rust_state: &GameState) -> MLGameState {
         dice_roll: rust_state.dice_roll,
         genetic_params: rust_state.genetic_params.clone(),
     }
-}
-
-fn update_performance_docs(results: &[PerformanceResult]) {
-    use std::fs;
-    use std::path::Path;
-
-    let mut content = String::new();
-    content.push_str("# AI Test Matrix\n\n");
-
-    content.push_str("## Performance Matrix\n\n");
-    content.push_str("| AI Type | Win Rate | Avg Time | Avg Nodes | Memory |\n");
-    content.push_str("|---------|----------|----------|-----------|--------|\n");
-
-    for result in results {
-        content.push_str(&format!(
-            "| {} | {:.1}% | {:.1}ms | {} | {:.1}MB |\n",
-            result.ai_type,
-            result.win_rate * 100.0,
-            result.avg_time_ms,
-            result.avg_nodes,
-            result.memory_usage_mb
-        ));
-    }
-
-    let docs_path = Path::new("../../docs/test-matrix.md");
-    if let Some(parent) = docs_path.parent() {
-        let _ = fs::create_dir_all(parent);
-    }
-    let _ = fs::write(docs_path, content);
 }
