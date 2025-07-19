@@ -438,12 +438,7 @@ class GameSimulator:
         max_turns = 200
 
         while not self._is_game_over(game_state) and turn_count < max_turns:
-            # Correct distribution for 4 tetrahedral dice (0-4)
-            # Roll 0: 1/16 (all 0s)
-            # Roll 1: 4/16 (one 1, three 0s)  
-            # Roll 2: 6/16 (two 1s, two 0s)
-            # Roll 3: 4/16 (three 1s, one 0)
-            # Roll 4: 1/16 (all 1s)
+            
             probabilities = [1/16, 4/16, 6/16, 4/16, 1/16]
             dice_roll = random.choices(range(5), weights=probabilities)[0]
             game_state["dice_roll"] = dice_roll
@@ -547,7 +542,6 @@ class PolicyNetwork(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout_rate),
             nn.Linear(32, output_size),
-            # Removed softmax - CrossEntropyLoss will handle this internally
         )
 
     def forward(self, x):
@@ -701,7 +695,6 @@ def generate_training_data(
                 game_state = move_data["game_state"]
                 features = GameFeatures.from_game_state(game_state)
 
-                # Use piece count difference as fallback value target
                 p1_finished = sum(
                     1 for piece in game_state["player1_pieces"] if piece["square"] == 20
                 )
@@ -746,7 +739,6 @@ def train_networks(
     print(f"Batch size: {batch_size}")
     print(f"DataLoader workers: {get_optimal_workers()}")
 
-    # Split data into training and validation
     random.shuffle(training_data)
     split_idx = int(len(training_data) * (1 - validation_split))
     train_data = training_data[:split_idx]
@@ -776,11 +768,9 @@ def train_networks(
     value_network = ValueNetwork().to(device)
     policy_network = PolicyNetwork().to(device)
 
-    # Use AdamW optimizer with weight decay for better regularization
     value_optimizer = optim.AdamW(value_network.parameters(), lr=learning_rate, weight_decay=1e-4)
     policy_optimizer = optim.AdamW(policy_network.parameters(), lr=learning_rate, weight_decay=1e-4)
 
-    # Add learning rate schedulers
     value_scheduler = optim.lr_scheduler.ReduceLROnPlateau(value_optimizer, mode='min', factor=0.5, patience=10, verbose=True)
     policy_scheduler = optim.lr_scheduler.ReduceLROnPlateau(policy_optimizer, mode='min', factor=0.5, patience=10, verbose=True)
 
@@ -793,20 +783,20 @@ def train_networks(
     patience_counter = 0
     patience = 20
 
-    for epoch in range(epochs):
-        # Training phase
+    epoch_pbar = tqdm(range(epochs), desc="Training epochs", unit="epoch")
+    for epoch in epoch_pbar:
         value_network.train()
         policy_network.train()
         
         train_value_losses = []
         train_policy_losses = []
 
-        for features, value_targets, policy_targets in train_dataloader:
+        batch_pbar = tqdm(train_dataloader, desc=f"Training batches", leave=False)
+        for features, value_targets, policy_targets in batch_pbar:
             features = features.to(device)
             value_targets = value_targets.to(device)
             policy_targets = policy_targets.to(device)
 
-            # Train value network
             value_optimizer.zero_grad()
             value_outputs = value_network(features)
             value_loss = value_criterion(value_outputs, value_targets)
@@ -814,15 +804,15 @@ def train_networks(
             value_optimizer.step()
             train_value_losses.append(value_loss.item())
 
-            # Train policy network
             policy_optimizer.zero_grad()
             policy_outputs = policy_network(features)
             policy_loss = policy_criterion(policy_outputs, policy_targets)
             policy_loss.backward()
             policy_optimizer.step()
             train_policy_losses.append(policy_loss.item())
+            
+            batch_pbar.set_description(f"Training - V: {value_loss.item():.4f}, P: {policy_loss.item():.4f}")
 
-        # Validation phase
         value_network.eval()
         policy_network.eval()
         
@@ -830,7 +820,8 @@ def train_networks(
         val_policy_losses = []
 
         with torch.no_grad():
-            for features, value_targets, policy_targets in val_dataloader:
+            val_batch_pbar = tqdm(val_dataloader, desc=f"Validation batches", leave=False)
+            for features, value_targets, policy_targets in val_batch_pbar:
                 features = features.to(device)
                 value_targets = value_targets.to(device)
                 policy_targets = policy_targets.to(device)
@@ -842,8 +833,9 @@ def train_networks(
                 policy_outputs = policy_network(features)
                 policy_loss = policy_criterion(policy_outputs, policy_targets)
                 val_policy_losses.append(policy_loss.item())
+                
+                val_batch_pbar.set_description(f"Validation - V: {value_loss.item():.4f}, P: {policy_loss.item():.4f}")
 
-        # Calculate average losses
         avg_train_value_loss = np.mean(train_value_losses)
         avg_train_policy_loss = np.mean(train_policy_losses)
         avg_val_value_loss = np.mean(val_value_losses)
@@ -851,17 +843,22 @@ def train_networks(
         
         total_val_loss = avg_val_value_loss + avg_val_policy_loss
 
-        # Update learning rate schedulers
         value_scheduler.step(avg_val_value_loss)
         policy_scheduler.step(avg_val_policy_loss)
 
-        # Early stopping
         if total_val_loss < best_val_loss:
             best_val_loss = total_val_loss
             patience_counter = 0
         else:
             patience_counter += 1
 
+        epoch_pbar.set_description(
+            f"Epoch {epoch + 1}/{epochs} - "
+            f"Train V: {avg_train_value_loss:.4f}, P: {avg_train_policy_loss:.4f} - "
+            f"Val V: {avg_val_value_loss:.4f}, P: {avg_val_policy_loss:.4f} - "
+            f"LR: {value_optimizer.param_groups[0]['lr']:.6f}"
+        )
+        
         if (epoch + 1) % 10 == 0:
             print(
                 f"Epoch {epoch + 1}/{epochs} - "
@@ -900,19 +897,19 @@ def save_weights_optimized(
         policy_weights = quantize_weights(policy_weights, 16)
 
     weights_data = {
-        "value_weights": value_weights,
-        "policy_weights": policy_weights,
-        "value_network_config": {
-            "input_size": 150,
-            "hidden_sizes": [256, 128, 64, 32],
-            "output_size": 1,
+        "valueWeights": value_weights,
+        "policyWeights": policy_weights,
+        "valueNetworkConfig": {
+            "inputSize": 150,
+            "hiddenSizes": [256, 128, 64, 32],
+            "outputSize": 1,
         },
-        "policy_network_config": {
-            "input_size": 150,
-            "hidden_sizes": [256, 128, 64, 32],
-            "output_size": 7,
+        "policyNetworkConfig": {
+            "inputSize": 150,
+            "hiddenSizes": [256, 128, 64, 32],
+            "outputSize": 7,
         },
-        "training_metadata": training_metadata or {},
+        "trainingMetadata": training_metadata or {},
     }
 
     if compress:
@@ -995,20 +992,19 @@ def main():
 
     training_time = time.time() - start_time
     
-    # Collect training metadata
     training_metadata = {
-        "training_date": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "num_games": args.num_games,
-        "num_training_samples": len(training_data),
+        "trainingDate": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "numGames": args.num_games,
+        "numTrainingSamples": len(training_data),
         "epochs": args.epochs,
-        "learning_rate": args.learning_rate,
-        "batch_size": args.batch_size or get_optimal_batch_size(get_device()),
-        "validation_split": args.validation_split,
+        "learningRate": args.learning_rate,
+        "batchSize": args.batch_size or get_optimal_batch_size(get_device()),
+        "validationSplit": args.validation_split,
         "seed": args.seed,
-        "use_rust_ai": args.use_rust_ai,
-        "training_time_seconds": training_time,
+        "useRustAi": args.use_rust_ai,
+        "trainingTimeSeconds": training_time,
         "device": str(get_device()),
-        "model_version": "v3",  # Increment version for significant changes
+        "modelVersion": "v2",  # Increment version for significant changes
         "improvements": [
             "Fixed training loss function (removed softmax from policy network)",
             "Added batch normalization and dropout for regularization",
@@ -1016,7 +1012,7 @@ def main():
             "Added learning rate scheduling and early stopping",
             "Improved optimizer (AdamW with weight decay)",
             "Added validation split and reproducibility controls",
-            "Extended training with more games and epochs for ML-v3"
+            "Extended training with more games and epochs for ML-v2"
         ]
     }
 

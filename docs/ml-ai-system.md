@@ -94,7 +94,7 @@ The training system now supports GPU acceleration:
 - **NVIDIA GPUs:** Uses CUDA for acceleration
 - **Fallback:** CPU training if GPU unavailable
 
-Training includes enhanced progress logging with epoch timing and real-time metrics.
+Training includes enhanced progress bars with real-time epoch and batch progress, live loss updates, and detailed metrics.
 
 ## Move Selection
 

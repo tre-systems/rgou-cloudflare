@@ -107,7 +107,7 @@ bash ml/scripts/train_ml_ai_version.sh --version v3 --skip-test --reuse-games
 
 ### Training Features
 
-- **Progress Updates**: Shows training progress every epoch with timing and loss metrics
+- **Progress Bars**: Real-time epoch and batch progress bars with live loss updates
 - **Game Reuse**: Option to reuse existing training games for faster iteration
 - **Early Stopping**: Automatic early stopping when validation loss plateaus
 - **Learning Rate Scheduling**: Adaptive learning rate based on validation performance
