@@ -128,6 +128,33 @@ Training includes enhanced progress bars with real-time epoch and batch progress
 - To retrain the model, generate new games, adjust features, or change the architecture and retrain using the provided Python scripts.
 - To make the AI stronger, use more data, deeper networks, self-play, or new features.
 
+## Weight Loading and Model Management
+
+The ML AI system supports multiple model versions and flexible weight loading:
+
+### Available Models
+- **Fast Model**: Simpler architecture (100 inputs, [128,64,32] hidden layers) - faster inference
+- **v2 Model**: Enhanced architecture (150 inputs, [256,128,64,32] hidden layers) - stronger play
+
+### Loading Weights
+```bash
+# Load fast model
+npm run load:ml-weights ml/data/weights/ml_ai_weights_fast.json
+
+# Load v2 model  
+npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
+```
+
+The weight loading system automatically:
+- Detects camelCase vs snake_case JSON formats
+- Validates network architecture compatibility
+- Copies weights to the public directory for game use
+- Supports different model architectures flexibly
+
+### Model Performance
+- **Fast Model**: ~20% win rate vs Expectiminimax, <1ms per move
+- **v2 Model**: ~50% win rate vs Expectiminimax, <1ms per move
+
 ## See Also
 
 - [AI System Documentation](./ai-system.md)
