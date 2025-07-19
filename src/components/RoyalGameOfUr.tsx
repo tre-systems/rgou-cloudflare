@@ -17,6 +17,15 @@ import ModeSelectionCard from './ModeSelectionCard';
 
 const MODE_OPTIONS = [
   {
+    key: 'heuristic',
+    label: 'Heuristic AI',
+    description: 'A fast and competitive AI using immediate position evaluation.',
+    subtitle: 'Best performing AI (53.6% win rate)',
+    icon: Cpu,
+    colorClass: 'text-green-400',
+    borderColorClass: 'border-green-400/30 hover:border-green-400/60',
+  },
+  {
     key: 'classic',
     label: 'Classic AI',
     description: 'A strategic opponent using a classic game AI algorithm.',
@@ -37,11 +46,11 @@ const MODE_OPTIONS = [
   {
     key: 'watch',
     label: 'Watch a Match',
-    description: 'Sit back and watch the Classic AI challenge the ML AI.',
+    description: 'Sit back and watch the Heuristic AI challenge the ML AI.',
     subtitle: '',
     icon: Eye,
-    colorClass: 'text-green-400',
-    borderColorClass: 'border-green-400/30 hover:border-green-400/60',
+    colorClass: 'text-orange-400',
+    borderColorClass: 'border-orange-400/30 hover:border-orange-400/60',
   },
 ];
 
@@ -101,7 +110,7 @@ export default function RoyalGameOfUr() {
         const aiSource = gameState.currentPlayer === 'player1' ? aiSourceP1 : aiSourceP2;
         if (aiSource) {
           if (!isWatchMode) soundEffects.aiThinking();
-          makeAIMove(aiSource, isWatchMode);
+          makeAIMove(aiSource as 'heuristic' | 'client' | 'ml', isWatchMode);
         }
       }, moveDelay);
       return () => clearTimeout(timer);
@@ -194,16 +203,19 @@ export default function RoyalGameOfUr() {
     actions.createNearWinningState();
   };
 
-  const handleOverlaySelect = (mode: 'classic' | 'ml' | 'watch') => {
+  const handleOverlaySelect = (mode: 'heuristic' | 'classic' | 'ml' | 'watch') => {
     setSelectedMode(mode);
-    if (mode === 'classic') {
+    if (mode === 'heuristic') {
+      setAiSourceP1(null);
+      setAiSourceP2('heuristic');
+    } else if (mode === 'classic') {
       setAiSourceP1(null);
       setAiSourceP2('client');
     } else if (mode === 'ml') {
       setAiSourceP1(null);
       setAiSourceP2('ml');
     } else if (mode === 'watch') {
-      setAiSourceP1('client');
+      setAiSourceP1('heuristic');
       setAiSourceP2('ml');
     }
 

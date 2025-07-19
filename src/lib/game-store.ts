@@ -27,7 +27,7 @@ type GameStore = {
     processDiceRoll: (roll?: number) => void;
     endTurn: () => void;
     makeMove: (pieceIndex: number) => void;
-    makeAIMove: (aiSource: 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
+    makeAIMove: (aiSource: 'heuristic' | 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
     postGameToServer: () => Promise<void>;
     createNearWinningState: () => void;
@@ -91,7 +91,7 @@ export const useGameStore = create<GameStore>()(
             });
           }
         },
-        makeAIMove: async (aiSource: 'client' | 'ml', isPlayer1AI = false) => {
+        makeAIMove: async (aiSource: 'heuristic' | 'client' | 'ml', isPlayer1AI = false) => {
           const { gameState, actions } = get();
 
           if (!gameState.canMove) return;
@@ -160,6 +160,11 @@ export const useGameStore = create<GameStore>()(
                 aiType: 'ml' as const,
               };
               console.log('GameStore: Processed ML AI response:', aiResponse);
+            } else if (aiSource === 'heuristic') {
+              console.log('GameStore: Using Heuristic AI service');
+              const heuristicResponse = await wasmAiService.getHeuristicAIMove(gameState);
+              console.log('GameStore: Heuristic AI response received:', heuristicResponse);
+              aiResponse = { ...heuristicResponse, aiType: 'heuristic' as const };
             } else {
               console.log('GameStore: Using WASM AI service for', aiSource);
               const wasmResponse = await wasmAiService.getAIMove(gameState);

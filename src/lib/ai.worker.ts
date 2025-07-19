@@ -12,12 +12,15 @@ interface WasmModule {
   init_classic_ai: () => string;
   clear_classic_ai_cache: () => string;
   init_ml_ai: () => string;
+  init_heuristic_ai: () => string;
+  get_heuristic_ai_move: (gameState: unknown) => string;
   roll_dice_wasm?: () => number;
 }
 
 let wasmModule: WasmModule;
 let wasmReady: Promise<void> | null = null;
 let classicAiInitialized = false;
+let heuristicAiInitialized = false;
 
 const loadWasm = (): Promise<void> => {
   if (wasmReady) return wasmReady;
@@ -76,6 +79,19 @@ const loadWasm = (): Promise<void> => {
         console.warn('AI Worker: Failed to initialize ML AI:', error);
       }
 
+      // Initialize Heuristic AI
+      try {
+        if (typeof wasmModule.init_heuristic_ai === 'function') {
+          const heuristicInitResponse = wasmModule.init_heuristic_ai();
+          console.log('AI Worker: Heuristic AI initialized:', heuristicInitResponse);
+          heuristicAiInitialized = true;
+        } else {
+          console.warn('AI Worker: init_heuristic_ai function not available');
+        }
+      } catch (error) {
+        console.warn('AI Worker: Failed to initialize Heuristic AI:', error);
+      }
+
       console.log('AI Worker: WASM module loaded and verified successfully.');
     } catch (error) {
       console.error('AI Worker: Failed to load WebAssembly module:', error);
@@ -108,9 +124,9 @@ const rollDice = (): number => {
   }
 
   // Fallback to correct distribution for 4 tetrahedral dice (0-4)
-  const probabilities = [1/16, 4/16, 6/16, 4/16, 1/16];
+  const probabilities = [1 / 16, 4 / 16, 6 / 16, 4 / 16, 1 / 16];
   const random = Math.random();
-  
+
   let cumulativeProb = 0;
   for (let i = 0; i < probabilities.length; i++) {
     cumulativeProb += probabilities[i];
@@ -118,7 +134,7 @@ const rollDice = (): number => {
       return i;
     }
   }
-  
+
   // Fallback (should never happen with exact probabilities)
   return 2;
 };
@@ -141,6 +157,25 @@ const getAIMove = (gameState: GameState): ServerAIResponse => {
   console.log('AI Worker: Using original Classic AI implementation');
   const responseJson = wasmModule.get_ai_move_wasm(request);
   return transformWasmResponse(responseJson);
+};
+
+const getHeuristicAIMove = (gameState: GameState): ServerAIResponse => {
+  const request = transformGameStateToRequest(gameState);
+
+  // Use Heuristic AI if available
+  if (heuristicAiInitialized && typeof wasmModule.get_heuristic_ai_move === 'function') {
+    try {
+      console.log('AI Worker: Using Heuristic AI');
+      const responseJson = wasmModule.get_heuristic_ai_move(request);
+      return transformWasmResponse(responseJson);
+    } catch (error) {
+      console.warn('AI Worker: Heuristic AI failed, falling back to Classic AI:', error);
+    }
+  }
+
+  // Fallback to Classic AI
+  console.log('AI Worker: Heuristic AI not available, falling back to Classic AI');
+  return getAIMove(gameState);
 };
 
 self.addEventListener(
@@ -173,9 +208,17 @@ self.addEventListener(
         return;
       }
 
-      // Handle AI move requests (default behavior)
+      // Handle AI move requests
       if (gameState) {
-        const response = getAIMove(gameState);
+        let response: ServerAIResponse;
+        
+        if (type === 'heuristic') {
+          console.log('AI Worker: Processing Heuristic AI move request');
+          response = getHeuristicAIMove(gameState);
+        } else {
+          console.log('AI Worker: Processing Classic AI move request');
+          response = getAIMove(gameState);
+        }
 
         console.log('AI Worker: Sending success response:', { type: 'success', id, response });
         self.postMessage({ type: 'success', id, response });

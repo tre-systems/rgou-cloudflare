@@ -10,8 +10,8 @@ interface GameStatusProps {
   gameState: GameState;
   aiThinking: boolean;
   watchMode?: boolean;
-  aiSourceP1?: 'client' | 'ml' | null;
-  aiSourceP2?: 'client' | 'ml';
+  aiSourceP1?: 'client' | 'ml' | 'heuristic' | null;
+  aiSourceP2?: 'client' | 'ml' | 'heuristic';
 }
 
 export default function GameStatus({

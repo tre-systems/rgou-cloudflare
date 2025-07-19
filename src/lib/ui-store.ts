@@ -2,17 +2,17 @@ import { create } from 'zustand';
 
 type UIStore = {
   showModelOverlay: boolean;
-  selectedMode: 'classic' | 'ml' | 'watch' | null;
-  aiSourceP1: 'client' | 'ml' | null;
-  aiSourceP2: 'client' | 'ml';
+  selectedMode: 'heuristic' | 'classic' | 'ml' | 'watch' | null;
+  aiSourceP1: 'heuristic' | 'client' | 'ml' | null;
+  aiSourceP2: 'heuristic' | 'client' | 'ml';
   soundEnabled: boolean;
   diagnosticsPanelOpen: boolean;
   howToPlayOpen: boolean;
   actions: {
     setShowModelOverlay: (show: boolean) => void;
-    setSelectedMode: (mode: 'classic' | 'ml' | 'watch' | null) => void;
-    setAiSourceP1: (source: 'client' | 'ml' | null) => void;
-    setAiSourceP2: (source: 'client' | 'ml') => void;
+    setSelectedMode: (mode: 'heuristic' | 'classic' | 'ml' | 'watch' | null) => void;
+    setAiSourceP1: (source: 'heuristic' | 'client' | 'ml' | null) => void;
+    setAiSourceP2: (source: 'heuristic' | 'client' | 'ml') => void;
     setSoundEnabled: (enabled: boolean) => void;
     setDiagnosticsPanelOpen: (open: boolean) => void;
     setHowToPlayOpen: (open: boolean) => void;

@@ -12,7 +12,7 @@ export const games = sqliteTable('games', {
   duration: integer('duration'),
   clientHeader: text('clientHeader'),
   history: text('history', { mode: 'json' }),
-  gameType: text('gameType', { enum: ['classic', 'ml', 'watch'] })
+  gameType: text('gameType', { enum: ['classic', 'ml', 'watch', 'heuristic'] })
     .notNull()
     .default('classic'),
 });

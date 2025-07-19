@@ -123,6 +123,56 @@ export class WasmAiService {
     }
   }
 
+  async getHeuristicAIMove(gameState: GameState): Promise<ServerAIResponse> {
+    console.log('WasmAiService: getHeuristicAIMove() called.');
+
+    try {
+      await this.ensureWorkerReady();
+
+      const messageId = this.messageCounter++;
+      const promise = new Promise<ServerAIResponse>((resolve, reject) => {
+        this.pendingRequests.set(messageId, { resolve, reject });
+      });
+
+      console.log(`WasmAiService: Posting heuristic AI message to worker (id: ${messageId}):`, {
+        id: messageId,
+        gameState,
+        type: 'heuristic',
+      });
+      this.worker!.postMessage({ id: messageId, gameState, type: 'heuristic' });
+
+      const response = await promise;
+      console.log('WasmAiService: Heuristic AI move response received:', response);
+      return response;
+    } catch (error) {
+      console.error('WasmAiService: Error getting Heuristic AI move:', error);
+
+      if (gameState.validMoves.length > 0) {
+        const fallbackMove =
+          gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
+        console.warn('WasmAiService: Using fallback random move:', fallbackMove);
+        return {
+          move: fallbackMove,
+          evaluation: 0,
+          thinking: 'Fallback: Random move due to worker error',
+          diagnostics: {
+            validMoves: gameState.validMoves,
+            moveEvaluations: [],
+            searchDepth: 0,
+            transpositionHits: 0,
+            nodesEvaluated: 0,
+          },
+          timings: {
+            aiMoveCalculation: 0,
+            totalHandlerTime: 0,
+          },
+        };
+      }
+
+      throw new Error(`Failed to get Heuristic AI move: ${error}`);
+    }
+  }
+
   async rollDice(): Promise<number> {
     console.log('WasmAiService: rollDice() called.');
     await this.ensureWorkerReady();

@@ -22,7 +22,9 @@ export function getPlayerId(): string {
   return playerId;
 }
 
-export function getAIName(aiSource: 'server' | 'client' | 'ml' | 'fallback' | null): string {
+export function getAIName(
+  aiSource: 'server' | 'client' | 'ml' | 'fallback' | 'heuristic' | null
+): string {
   if (!aiSource) return 'Unknown';
   switch (aiSource) {
     case 'client':
@@ -33,17 +35,23 @@ export function getAIName(aiSource: 'server' | 'client' | 'ml' | 'fallback' | nu
       return 'Server AI';
     case 'fallback':
       return 'Fallback';
+    case 'heuristic':
+      return 'Heuristic';
     default:
       return 'Unknown';
   }
 }
 
-export function getAISubtitle(aiSource: 'server' | 'client' | 'ml' | 'fallback' | null): string {
+export function getAISubtitle(
+  aiSource: 'server' | 'client' | 'ml' | 'fallback' | 'heuristic' | null
+): string {
   switch (aiSource) {
     case 'client':
       return 'Expectiminimax algorithm';
     case 'ml':
       return 'Neural network model';
+    case 'heuristic':
+      return 'Immediate evaluation';
     default:
       return '';
   }

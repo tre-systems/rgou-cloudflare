@@ -16,7 +16,7 @@ interface PlayerAreaProps {
   isStartMoveValid: boolean;
   validMoves: number[];
   onPieceClick: (pieceIndex: number) => void;
-  aiType?: 'client' | 'ml' | null;
+  aiType?: 'client' | 'ml' | 'heuristic' | null;
 }
 
 export default function PlayerArea({

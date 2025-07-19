@@ -102,7 +102,7 @@ export const AIResponseSchema = z.object({
   thinking: z.string(),
   timings: TimingsSchema,
   diagnostics: DiagnosticsSchema,
-  aiType: z.enum(['client', 'server', 'fallback', 'ml']),
+  aiType: z.enum(['client', 'server', 'fallback', 'ml', 'heuristic']),
 });
 export type AIResponse = z.infer<typeof AIResponseSchema>;
 
@@ -116,7 +116,7 @@ export const SaveGamePayloadSchema = z.object({
   moveCount: z.number().optional(),
   duration: z.number().optional(),
   clientHeader: z.string().optional(),
-  gameType: z.enum(['classic', 'ml', 'watch']).default('classic'),
+  gameType: z.enum(['classic', 'ml', 'watch', 'heuristic']).default('classic'),
 });
 export type SaveGamePayload = z.infer<typeof SaveGamePayloadSchema>;
 
