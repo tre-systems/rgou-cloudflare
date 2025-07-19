@@ -366,6 +366,62 @@ impl AI {
             return (Some(valid_moves[0]), vec![]);
         }
 
+        // Handle depth 0 case (quiescence search only)
+        if depth == 0 {
+            let mut move_evaluations = Vec::new();
+            for &m in &valid_moves {
+                let mut next_state = state.clone();
+                next_state.make_move(m).expect("Valid move should succeed");
+                let value = self.quiescence_search(&next_state, 3, f32::MIN, f32::MAX);
+                
+                let from_square = state.get_pieces(state.current_player)[m as usize].square;
+                let track = GameState::get_player_track(state.current_player);
+                let current_track_pos = if from_square == -1 {
+                    -1
+                } else {
+                    track
+                        .iter()
+                        .position(|&s| s as i8 == from_square)
+                        .map(|p| p as i8)
+                        .unwrap_or(-1)
+                };
+                let new_track_pos = current_track_pos + state.dice_roll as i8;
+                let to_square = if new_track_pos >= track.len() as i8 {
+                    20
+                } else {
+                    track[new_track_pos as usize]
+                };
+
+                let move_type = if to_square == 20 {
+                    "finish".to_string()
+                } else if GameState::is_rosette(to_square) {
+                    "rosette".to_string()
+                } else {
+                    "move".to_string()
+                };
+
+                move_evaluations.push(MoveEvaluation {
+                    piece_index: m,
+                    score: value,
+                    move_type,
+                    from_square,
+                    to_square: Some(to_square),
+                });
+            }
+            
+            // Sort by score (best first for maximizing, worst first for minimizing)
+            let is_maximizing = state.current_player == Player::Player2;
+            move_evaluations.sort_by(|a, b| {
+                if is_maximizing {
+                    b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal)
+                } else {
+                    a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal)
+                }
+            });
+            
+            return (move_evaluations.first().map(|e| e.piece_index), move_evaluations);
+        }
+
         let is_maximizing = state.current_player == Player::Player2;
 
         let mut best_move = valid_moves[0];
