@@ -508,7 +508,7 @@ fn test_expectiminimax_vs_ml_comprehensive_analysis() {
                                     .iter()
                                     .filter(|p| p.square == 20)
                                     .count();
-                                let p2_finished = game_state
+                                let _p2_finished = game_state
                                     .player2_pieces
                                     .iter()
                                     .filter(|p| p.square == 20)

@@ -506,10 +506,10 @@ fn test_ml_vs_expectiminimax_fixed_dice() {
         let mut game_state = GameState::new();
         let mut moves_played = 0;
         let max_moves = 200;
-        let mut ml_ai_total_time_ms = 0;
-        let mut expectiminimax_ai_total_time_ms = 0;
-        let mut ml_ai_moves = 0;
-        let mut expectiminimax_ai_moves = 0;
+        let mut _ml_ai_total_time_ms = 0;
+        let mut _expectiminimax_ai_total_time_ms = 0;
+        let mut _ml_ai_moves = 0;
+        let mut _expectiminimax_ai_moves = 0;
 
         while !game_state.is_game_over() && moves_played < max_moves {
             let current_player = game_state.current_player;
@@ -529,17 +529,17 @@ fn test_ml_vs_expectiminimax_fixed_dice() {
                 let start_time = std::time::Instant::now();
                 let ml_response = ml_ai.get_best_move(&ml_state);
                 let end_time = std::time::Instant::now();
-                ml_ai_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
-                ml_ai_moves += 1;
+                _ml_ai_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
+                _ml_ai_moves += 1;
                 ml_response.r#move
             } else {
                 let start_time = std::time::Instant::now();
                 let (move_option, _) =
                     expectiminimax_ai.get_best_move(&game_state, EXPECTIMINIMAX_SEARCH_DEPTH);
                 let end_time = std::time::Instant::now();
-                expectiminimax_ai_total_time_ms +=
+                _expectiminimax_ai_total_time_ms +=
                     end_time.duration_since(start_time).as_millis() as u64;
-                expectiminimax_ai_moves += 1;
+                _expectiminimax_ai_moves += 1;
                 move_option
             };
 
@@ -553,7 +553,7 @@ fn test_ml_vs_expectiminimax_fixed_dice() {
                         .iter()
                         .filter(|p| p.square == 20)
                         .count();
-                    let p2_finished = game_state
+                    let _p2_finished = game_state
                         .player2_pieces
                         .iter()
                         .filter(|p| p.square == 20)
@@ -1003,7 +1003,7 @@ fn test_expectiminimax_depth4_vs_ml_comprehensive() {
                         .iter()
                         .filter(|p| p.square == 20)
                         .count();
-                    let p2_finished = game_state
+                    let _p2_finished = game_state
                         .player2_pieces
                         .iter()
                         .filter(|p| p.square == 20)
