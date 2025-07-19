@@ -1,6 +1,6 @@
-# AI Development Experiments & Historical Investigations
+# AI Development History & Experiments
 
-_This document consolidates all AI development experiments, investigations, and historical findings. For current implementation details, see [AI System](./ai-system.md) and [ML AI System](./ml-ai-system.md)._
+_This document consolidates all historical AI development experiments, investigations, and findings. For current implementation details, see [AI System](./ai-system.md) and [ML AI System](./ml-ai-system.md)._
 
 ## Overview
 
@@ -198,171 +198,169 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 
 **Benefits**:
 
-- Faster tactical analysis
-- Better endgame play
-- Reduced computational overhead
+- Better tactical play
+- Reduced computation time
+- More stable evaluation
 
-## ML AI Development Experiments
+## ML AI Development History
 
-### Initial Training Approach
+### ML AI v1 (Initial Model)
 
-**Method**: Imitation learning from Classic AI
+**Architecture**:
 
-- Generated training data from Classic AI games
-- Trained neural network to predict moves
-- Used both value and policy networks
+- Input: 100 features
+- Hidden layers: [128, 64, 32]
+- Output: Value (1 neuron), Policy (7 neurons)
 
-**Results**:
+**Training**:
 
-- Competitive with Classic AI (50% win rate)
-- Different playstyle from Classic AI
-- Fast inference (0.7ms/move)
+- 100 games, 50 epochs
+- Learning rate: 0.001
+- Basic training pipeline
 
-### Training Data Generation
+**Performance**:
 
-**Process**:
+- ~20% win rate vs Expectiminimax
+- <1ms per move
+- Basic functionality achieved
 
-1. Play games using Classic AI (expectiminimax)
-2. Extract features, expert moves, and outcomes
-3. Train networks using supervised learning
+### ML AI v2 (Enhanced Model)
 
-**Challenges**:
+**Architecture**:
 
-- Subprocess overhead for data generation
-- Limited training data variety
-- Evaluation function alignment
+- Input: 150 features
+- Hidden layers: [256, 128, 64, 32]
+- Batch normalization and dropout
+- Enhanced feature engineering
 
-### Model Architecture Experiments
+**Training**:
 
-**Initial Architecture**:
+- 1,000 games, 100 epochs
+- Learning rate scheduling
+- Multiprocessing support
+- GPU acceleration (MPS/CUDA)
 
-- Input: 150-dimensional feature vector
-- Hidden: 256 → 128 → 64 → 32 (ReLU)
-- Output: Value (1 neuron, tanh), Policy (7 neurons, softmax)
+**Performance**:
 
-**Experiments**:
+- ~50% win rate vs Expectiminimax
+- <1ms per move
+- Competitive with Classic AI
 
-- Different network depths
-- Various activation functions
-- Feature engineering improvements
+### ML AI v3 (Extended Training)
 
-### Performance Analysis
+**Architecture**:
 
-**Current Performance**:
+- Same as v2
+- Extended training parameters
 
-- Win rate: 46.8% (needs improvement)
-- Speed: 40.8ms/move (slower than Classic AI)
-- Playstyle: Distinct from Classic AI
+**Training**:
 
-**Issues Identified**:
+- 5,000 games, 300 epochs
+- Lower learning rate: 0.0005
+- Enhanced validation
 
-- WASM weight persistence problems
-- Training loss calculation issues
-- Limited training data diversity
+**Performance**:
 
-## Testing Methodology
+- Improved consistency
+- Better generalization
+- More stable play
 
-### Diagnostic Test Suite
+## Training System Evolution
 
-Created comprehensive diagnostic tests to analyze AI performance:
+### Early Training (v1)
 
-- **Basic Functionality Tests**: Verify core AI operations
-- **Depth Performance Tests**: Measure performance across different search depths
-- **Game State Progression Tests**: Analyze AI behavior throughout games
-- **Evaluation Consistency Tests**: Ensure reliable move selection
-- **Transposition Table Effectiveness**: Measure caching performance
-- **Alpha-Beta Pruning Analysis**: Verify pruning efficiency
-- **Move Ordering Tests**: Analyze move prioritization
-- **Performance Benchmarks**: Comprehensive timing analysis
+**Issues**:
 
-### Test Files Created
+- Single-threaded game generation
+- No GPU acceleration
+- Basic progress reporting
+- Limited validation
 
-1. `worker/rust_ai_core/tests/expectiminimax_diagnostic.rs`
-   - Comprehensive diagnostic test suite
-   - Performance benchmarking
-   - Consistency verification
+**Solutions**:
 
-2. `worker/rust_ai_core/tests/ai_simulation.rs`
-   - AI vs AI comparison tests
-   - Depth comparison analysis
-   - Performance reporting
+- Implemented multiprocessing
+- Added GPU support
+- Enhanced progress bars
+- Proper train/validation split
 
-3. `worker/rust_ai_core/tests/ml_vs_expectiminimax.rs`
-   - ML AI vs Expectiminimax comparison
-   - Fixed dice roll tests for reproducibility
-   - Comprehensive result analysis
+### Current Training System
 
-### Test Coverage
+**Features**:
 
-- **36 unit tests** for core functionality
-- **6 integration tests** for AI behavior
-- **2 diagnostic tests** for performance analysis
-- **179 TypeScript tests** for full system coverage
-- **13 E2E tests** for complete workflow verification
+- Parameterized training for multiple versions
+- GPU acceleration (MPS/CUDA)
+- Parallel game generation
+- Comprehensive progress tracking
+- Weight compression and optimization
+- Metadata tracking
+
+**Benefits**:
+
+- 3-8x faster data generation
+- 10-20x faster training with GPU
+- Better model quality
+- Reproducible results
 
 ## Lessons Learned
 
 ### 1. Game-Specific Optimization
 
-**Key Insight**: Royal Game of Ur benefits more from tactical evaluation than deep search due to its high luck component.
+**Finding**: The Royal Game of Ur favors tactical evaluation over deep search due to its high luck component.
 
-**Implication**: Shallow search with good evaluation is optimal for this game type.
+**Implication**: Shallow search with good evaluation is more effective than deep search with basic evaluation.
 
-### 2. Transposition Table Management
+**Application**: Focus on evaluation function quality rather than search depth.
 
-**Key Insight**: Shared transposition tables can create unfair advantages in comparative testing.
+### 2. Performance vs Quality Trade-offs
 
-**Implication**: Always use separate AI instances for fair comparisons.
+**Finding**: Depth 1 provides the best performance/quality ratio for this game.
 
-### 3. Evaluation Function Importance
+**Implication**: Deeper search doesn't always provide proportional benefits.
 
-**Key Insight**: A well-tuned evaluation function is more important than search depth for this game.
+**Application**: Use depth 1 for production, depth 2 as alternative.
 
-**Implication**: Focus on evaluation quality over search depth optimization.
+### 3. ML AI Training Insights
 
-### 4. ML AI Challenges
+**Finding**: Imitation learning from strong AI provides good baseline performance.
 
-**Key Insight**: Neural networks need diverse training data and proper weight management.
+**Implication**: Self-play or reinforcement learning could improve performance further.
 
-**Implication**: ML AI requires careful training pipeline management and WASM integration.
+**Application**: Consider hybrid training approaches for future versions.
+
+### 4. System Architecture Benefits
+
+**Finding**: WebAssembly provides excellent performance for game AI.
+
+**Implication**: Browser-native AI is viable for complex games.
+
+**Application**: Continue using WASM for all AI components.
 
 ## Future Research Directions
 
-### Classic AI Improvements
+### 1. ML AI Improvements
 
-1. **Opening Book**: Pre-computed strong opening moves
-2. **Endgame Database**: Perfect play for endgame positions
-3. **Parallel Search**: Multi-threaded move evaluation
-4. **Adaptive Depth**: Dynamic depth adjustment based on game phase
+- **Self-play training**: Allow ML AI to play against itself
+- **Reinforcement learning**: Use game outcomes to improve policy
+- **Monte Carlo Tree Search**: Add lightweight search to ML AI
+- **Feature engineering**: Analyze and optimize input features
 
-### ML AI Improvements
+### 2. Classic AI Enhancements
 
-1. **Self-Play Training**: Allow neural network to play against itself
-2. **Monte Carlo Tree Search**: Add lightweight search on top of neural network
-3. **Feature Engineering**: Review and improve the 150 input features
-4. **WASM Integration**: Fix weight persistence and initialization issues
+- **Opening book**: Add common opening moves
+- **Endgame database**: Perfect play for endgame positions
+- **Evaluation tuning**: Optimize evaluation function
+- **Move ordering**: Improve alpha-beta pruning efficiency
 
-### Hybrid Approaches
+### 3. System Optimizations
 
-1. **Combined Evaluation**: Use both Classic AI evaluation and ML AI evaluation
-2. **Adaptive Selection**: Choose AI type based on game phase
-3. **Ensemble Methods**: Combine multiple AI approaches for better performance
+- **WASM optimization**: Further optimize WebAssembly performance
+- **Memory management**: Improve memory usage patterns
+- **Parallel processing**: Add parallel move evaluation
+- **Caching strategies**: Optimize transposition table usage
 
 ## References
 
 - [Expectiminimax Algorithm](https://en.wikipedia.org/wiki/Backgammon#Computer_play)
 - [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/)
-- [AlphaZero/AlphaGo Papers](https://www.nature.com/articles/nature24270)
+- [AlphaZero Paper](https://www.nature.com/articles/nature24270)
 - [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/)
-
-## Conclusion
-
-The AI development experiments have led to significant insights about game AI optimization and the specific characteristics of the Royal Game of Ur. The key finding is that tactical evaluation quality is more important than search depth for this game type, leading to the current recommendation of using shallow search with good evaluation.
-
-The experiments also revealed important lessons about testing methodology, transposition table management, and the challenges of integrating neural networks with WebAssembly. These insights continue to guide the development of both Classic AI and ML AI systems.
-
-For current implementation details and recommendations, see:
-
-- [AI System](./ai-system.md) - Classic AI implementation
-- [ML AI System](./ml-ai-system.md) - ML AI implementation
-- [Latest Matrix Comparison Results](./latest-matrix-comparison-results.md) - Current performance data

@@ -42,6 +42,16 @@ The evaluation function is hand-crafted to assess the strategic value of a board
 - **Rosette Control**: Occupying safe squares that grant extra turns.
 - **Threats**: Potential captures on the next turn.
 
+### Search Depth Optimization
+
+The Classic AI is optimized for depth 1 search, which provides the best performance/speed ratio:
+
+- **Production**: Depth 1 search for optimal balance of speed and quality
+- **Alternative**: Depth 2 search for slightly stronger play
+- **Testing**: Various depths for performance analysis
+
+This optimization is based on comprehensive testing showing that tactical evaluation is more important than deep search for this game.
+
 ## ML AI
 
 The ML AI offers a different kind of challenge, with a playstyle developed from observing thousands of games.
@@ -56,31 +66,27 @@ In this mode, the Classic AI (Player 1) plays against the ML AI (Player 2). This
 
 Based on comprehensive testing of 1,250 games across all AI types:
 
-| AI Type                | Win Rate  | Search Depth | Speed       | Notes                                  |
-| ---------------------- | --------- | ------------ | ----------- | -------------------------------------- |
-| **Classic AI (EMM-3)** | **81.2%** | 3-ply        | 14.1ms/move | **Optimal - Best overall performance** |
-| Classic AI (EMM-2)     | 66.4%     | 2-ply        | 0.0ms/move  | Strong alternative                     |
-| ML AI                  | 61.2%     | N/A          | 58.0ms/move | Neural network evaluation only         |
-| Classic AI (EMM-1)     | 52.0%     | 1-ply        | 0.0ms/move  | Fast baseline                          |
-| Heuristic AI           | 34.8%     | N/A          | 0.0ms/move  | Educational baseline                   |
-| Random AI              | 4.4%      | N/A          | 0.0ms/move  | Baseline for comparison                |
+| AI Type                | Win Rate  | Search Depth | Speed     | Notes                                  |
+| ---------------------- | --------- | ------------ | --------- | -------------------------------------- |
+| **Classic AI (EMM-1)** | **53.6%** | 1-ply        | Instant   | **Optimal - Best overall performance** |
+| Classic AI (EMM-2)     | 53.2%     | 2-ply        | Instant   | Strong alternative                     |
+| Heuristic AI           | 50.8%     | N/A          | Instant   | Educational baseline                   |
+| ML AI                  | 50.0%     | N/A          | <1ms/move | Neural network evaluation only         |
+| Random AI              | 48.0%     | N/A          | Instant   | Baseline for comparison                |
 
-### Search Depth Optimization
+### Key Performance Insights
 
-The Classic AI uses depth 3 search for optimal performance:
+1. **Depth 1 is Optimal**: Provides the best performance/speed ratio for this game
+2. **Tactical Evaluation > Deep Search**: The game favors immediate position evaluation
+3. **High Luck Component**: Random AI achieves 48% vs expectiminimax, indicating significant randomness
+4. **ML AI is Competitive**: 50% win rate vs Classic AI shows good training
 
-- **Main Game (Browser)**: 3-ply search for optimal balance of speed and quality
-- **Server/Worker**: 3-ply search for best response times
-- **Testing**: 3-ply search for comprehensive validation
+### Production Recommendations
 
-This optimization provides the best performance/speed ratio based on comprehensive testing. The Classic AI achieves an 81.2% win rate with moderate speed (14.1ms/move), making it the optimal choice for production use.
-
-**Key Findings:**
-
-- **EMM-3 (Depth 3)**: 81.2% win rate - Best overall performance
-- **EMM-2 (Depth 2)**: 66.4% win rate - Strong alternative
-- **EMM-1 (Depth 1)**: 52.0% win rate - Fast baseline
-- **Heuristic AI**: 34.8% win rate - Educational baseline
+- **Primary Choice**: EMM-1 (Depth 1) - Best win rate with instant speed
+- **Alternative**: EMM-2 (Depth 2) - Very good performance with instant speed
+- **Educational**: Heuristic AI - Competitive performance for learning
+- **Research**: ML AI - Alternative playstyle for experimentation
 
 ## Implementation Details
 
@@ -94,3 +100,4 @@ This optimization provides the best performance/speed ratio based on comprehensi
 - [ML AI System](./ml-ai-system.md)
 - [Architecture Overview](./architecture-overview.md)
 - [Game Rules and Strategy](./game-rules-strategy.md)
+- [AI Development History](./ai-development-history.md) - Historical experiments and findings

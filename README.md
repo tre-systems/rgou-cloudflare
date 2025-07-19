@@ -19,25 +19,23 @@ This implementation brings this ancient game to life with modern technology, all
 
 ## Features
 
-- Faithful recreation of the Royal Game of Ur
-- Two AI opponents:
-  - **Classic AI**: Uses expectiminimax algorithm for strategic depth (3-ply search, 81.2% win rate, 14.1ms/move)
-- **ML AI**: Neural network trained through self-play for a different playstyle (61.2% win rate, 58.0ms/move)
-- AI vs. AI mode to watch the two AIs compete
-- All AI runs locally in your browser via WebAssembly (no server calls)
-- PWA: works offline, installable
-- Game statistics and database integration
-- Modern, responsive UI
+- **Faithful Recreation**: Complete implementation of the Royal Game of Ur
+- **Dual AI System**:
+  - **Classic AI**: Expectiminimax algorithm (53.6% win rate, instant speed)
+  - **ML AI**: Neural network trained through self-play (50% win rate, <1ms/move)
+- **AI vs. AI Mode**: Watch the two AIs compete
+- **Browser-Native**: All AI runs locally via WebAssembly (no server calls)
+- **PWA Support**: Works offline, installable on mobile devices
+- **Game Statistics**: Track performance and save games to database
+- **Modern UI**: Responsive design with animations and sound effects
 
 ## Quick Start
 
-Want to play right away? The game is available online and works in any modern browser. Just visit the deployed version to start playing against the AI.
+**Play Online**: https://rgou.tre.systems/
 
-https://rgou.tre.systems/
+The game works in any modern browser and requires no installation.
 
-For developers who want to run locally or contribute:
-
-## Getting Started
+## Development Setup
 
 ### Prerequisites
 
@@ -46,8 +44,6 @@ For developers who want to run locally or contribute:
 - [Rust & Cargo](https://www.rust-lang.org/tools/install)
 - `cargo install wasm-pack`
 - [Python 3.10+](https://www.python.org/downloads/) (for ML training, optional)
-- Install ML dependencies (for training, optional):
-  - `pip install -r ml/requirements.txt`
 
 ### Local Development
 
@@ -61,20 +57,52 @@ npm run dev
 
 Game opens at http://localhost:3000
 
-## Machine Learning (ML) Training System
+## AI System
 
-The project uses a **parameterized training system** that supports multiple ML versions with scalable configurations. All training is now consolidated through a single, flexible system.
+The project features two distinct AI opponents, each with unique characteristics:
 
-### Training System Overview
+### Classic AI (Expectiminimax)
 
-- **Main Script**: `ml/scripts/train_ml_ai_version.py` - Parameterized training for any ML version
-- **Shell Wrapper**: `ml/scripts/train_ml_ai_version.sh` - Easy-to-use shell script with options
-- **Base Training**: `ml/scripts/train_ml_ai.py` - Core training infrastructure (imported by versioned script)
-- **Evaluation**: `ml/scripts/evaluate_ml_ai.py` - Model evaluation against Classic AI
+- **Algorithm**: Expectiminimax with alpha-beta pruning
+- **Performance**: 53.6% win rate, instant speed
+- **Depth**: Optimized for depth 1 search
+- **Use Case**: Production gameplay, competitive play
 
-### Available ML Versions
+### ML AI (Neural Network)
 
-The system supports multiple ML versions with automatically scaled parameters:
+- **Architecture**: Dual-head neural network (value + policy)
+- **Training**: Self-play with imitation learning
+- **Performance**: 50% win rate vs Classic AI, <1ms/move
+- **Use Case**: Alternative playstyle, research platform
+
+Both AIs run entirely in the browser via WebAssembly, providing desktop-level performance without server dependencies.
+
+## Machine Learning Training
+
+The project includes a comprehensive ML training system for developing and improving the neural network AI.
+
+### Quick Training
+
+```bash
+# Train ML AI v2 (recommended)
+npm run train:ml:version -- --version v2
+
+# Train with custom parameters
+python ml/scripts/train_ml_ai_version.py --version v3 --epochs 500
+
+# Reuse existing games (faster)
+python ml/scripts/train_ml_ai_version.py --version v2 --reuse-games
+```
+
+### Training Features
+
+- **GPU Acceleration**: Automatic MPS (Apple Silicon) and CUDA support
+- **Parallel Processing**: 3-8x faster data generation
+- **Versioned Training**: Multiple model versions with scaled parameters
+- **Progress Tracking**: Real-time training progress with detailed metrics
+- **Weight Compression**: Automatic compression and optimization
+
+### Available Versions
 
 | Version | Games  | Epochs | Learning Rate | Purpose           |
 | ------- | ------ | ------ | ------------- | ----------------- |
@@ -84,159 +112,111 @@ The system supports multiple ML versions with automatically scaled parameters:
 | v4      | 10,000 | 500    | 0.0003        | Advanced training |
 | v5      | 20,000 | 1,000  | 0.0002        | Maximum training  |
 
-### Training Commands
+## Testing
+
+### Run All Tests
 
 ```bash
-# Train specific version (using parameterized command)
-npm run train:ml:version -- --version v2
-npm run train:ml:version -- --version v3
-npm run train:ml:version -- --version v4
-
-# Train with custom parameters
-python ml/scripts/train_ml_ai_version.py --version v3 --epochs 500 --num-games 2000
-
-# Reuse existing games (faster training)
-python ml/scripts/train_ml_ai_version.py --version v3 --reuse-games
-
-# List all version configurations
-python ml/scripts/train_ml_ai_version.py --list-versions
-
-# Shell script with options
-bash ml/scripts/train_ml_ai_version.sh --version v3 --skip-test --reuse-games
+npm run check
 ```
 
-### Training Features
-
-- **Progress Bars**: Real-time epoch and batch progress bars with live loss updates
-- **Game Reuse**: Option to reuse existing training games for faster iteration
-- **Early Stopping**: Automatic early stopping when validation loss plateaus
-- **Learning Rate Scheduling**: Adaptive learning rate based on validation performance
-- **Weight Compression**: Automatic compression and quantization of trained weights
-- **Metadata Tracking**: Comprehensive training metadata and version history
-- **Parallel Processing**: Optimized parallel game processing for 3-8x faster data generation
-- **GPU Acceleration**: Automatic MPS (Apple Silicon) and CUDA (NVIDIA) GPU detection and usage
-- **Optimized Batch Sizes**: Larger batch sizes for GPU training (512 for MPS/CUDA)
-- **Enhanced Logging**: Real-time epoch timing, batch progress, and detailed metrics
-
-### Training Output
-
-After training, you get:
-
-- `ml/data/weights/ml_ai_weights_vX.json` - Main weights file
-- `ml/data/weights/ml_ai_weights_vX.json.gz` - Compressed weights
-- `training_data_cache.json` - Reusable training data (if generated)
-
-### Loading and Testing
+### Test Configurations
 
 ```bash
-# Load weights into the app
-npm run load:ml-weights ml/data/weights/ml_ai_weights_v3.json
+# Quick tests (10 games each)
+npm run test:rust:quick
 
-# Test against Classic AI
-cd worker/rust_ai_core && cargo test test_ml_v3_vs_expectiminimax_ai -- --nocapture
+# Comprehensive tests (100 games each)
+npm run test:rust:slow
 
-# Evaluate performance
-npm run evaluate:ml -- --model ml/data/weights/ml_ai_weights_v3.json --num-games 100
+# End-to-end tests
+npm run test:e2e
 ```
 
-## How to Use the ML AI (WASM)
+### Performance Testing
 
-The ML AI is a neural network-based opponent that runs efficiently in your browser via WebAssembly. You can play against it, or watch it compete against the Classic AI.
+```bash
+# Matrix comparison of all AI types
+npm run test:rust:matrix
 
-### ML AI WASM Interface
-
-The ML AI is exposed to TypeScript via the following interface:
-
-```ts
-interface MLWasmModule {
-  default: (input?: string | URL) => Promise<unknown>;
-  init_ml_ai: () => void;
-  load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
-  get_ml_ai_move: (gameState: unknown) => string;
-  evaluate_ml_position: (gameState: unknown) => string;
-  get_ml_ai_info: () => string;
-  roll_dice_ml: () => number;
-}
+# ML AI evaluation
+npm run evaluate:ml -- --model ml/data/weights/ml_ai_weights_v2.json
 ```
 
-### WASM Asset Files
+## Architecture
 
-- `public/wasm/rgou_ai_core.js`
-- `public/wasm/rgou_ai_core_bg.wasm`
+- **Frontend**: Next.js with React, TypeScript, Tailwind CSS
+- **AI Engine**: Rust compiled to WebAssembly
+- **Database**: Cloudflare D1 with Drizzle ORM
+- **Deployment**: Cloudflare Pages with GitHub Actions
 
-### Loading Weights
+### Key Components
 
-To load weights into the ML AI:
-
-```ts
-mlWasmModule.load_ml_weights(valueWeights, policyWeights);
-```
-
-where `valueWeights` and `policyWeights` are arrays of numbers (float32) representing the neural network weights.
-
-### Usage
-
-- The ML AI worker loads the WASM module and initializes the ML AI with `init_ml_ai()`.
-- Weights must be loaded before requesting moves or evaluations.
-- Use `get_ml_ai_move(gameState)` to get the best move for a given game state.
-- Use `evaluate_ml_position(gameState)` to get a value network evaluation for a game state.
-
-For more details, see `docs/ml-ai-system.md` and `src/lib/ml-ai.worker.ts`.
+- `src/components/` - React UI components
+- `src/lib/` - Game logic, AI services, state management
+- `worker/rust_ai_core/` - Rust AI engine
+- `ml/scripts/` - ML training system
 
 ## Documentation
 
-### Current Implementation
+### Current System
 
 - **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI implementation
 - **[ML AI System](./docs/ml-ai-system.md)** - Machine learning AI implementation
+- **[AI Performance](./docs/ai-performance.md)** - Current performance data and analysis
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
-- **[Technical Implementation](./docs/technical-implementation.md)** - Implementation details
 
 ### Development & Testing
 
 - **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
 - **[Test Configuration Guide](./docs/test-configuration-guide.md)** - How to run different test configurations
 - **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
+- **[Current TODOs](./docs/current-todos.md)** - Active tasks and improvements
 
-### Historical Research & Future Development
+### Historical Research
 
-- **[AI Development Experiments](./docs/ai-development-experiments.md)** - **HISTORICAL** - All AI experiments, investigations, and lessons learned
-- **[Latest Matrix Comparison Results](./docs/latest-matrix-comparison-results.md)** - **CURRENT** - Latest performance data (July 2025)
-- **[AI Performance Quick Reference](./docs/ai-performance-quick-reference.md)** - **CURRENT** - Quick reference for developers
+- **[AI Development History](./docs/ai-development-history.md)** - **HISTORICAL** - All AI experiments, investigations, and lessons learned
+
+## Performance
+
+### Current AI Performance (July 2025)
+
+| AI Type                | Win Rate  | Speed     | Use Case                |
+| ---------------------- | --------- | --------- | ----------------------- |
+| **Classic AI (EMM-1)** | **53.6%** | Instant   | **Production gameplay** |
+| Classic AI (EMM-2)     | 53.2%     | Instant   | Alternative option      |
+| Heuristic AI           | 50.8%     | Instant   | Educational baseline    |
+| ML AI                  | 50.0%     | <1ms/move | Alternative playstyle   |
+| Random AI              | 48.0%     | Instant   | Baseline testing        |
 
 ## Troubleshooting
 
-### Cloudflare Deployment Issues
+### Common Issues
 
-#### "Failed to prepare server Error: An error occurred while loading the instrumentation hook"
+**Cloudflare Deployment Issues**
 
-This error occurs when there's a version mismatch between local and GitHub Actions environments, particularly with newer versions of Next.js (15.4.2+) that aren't compatible with Cloudflare Workers.
+- Pin exact dependency versions: `npm install --save-exact next@15.3.4 @opennextjs/cloudflare@1.3.1 wrangler@4.22.0`
+- Test both local and GitHub Actions deployments
 
-**Symptoms:**
+**ML Training Issues**
 
-- Application works locally but fails on Cloudflare with instrumentation hook errors
-- GitHub Actions deployment works but local deployment fails
-- Error message: "Failed to prepare server Error: An error occurred while loading the instrumentation hook"
+- Ensure GPU is available for training (MPS for Apple Silicon, CUDA for NVIDIA)
+- Use `--reuse-games` flag for faster iteration
+- Check `ml/requirements.txt` for Python dependencies
 
-**Solution:**
-Pin the exact dependency versions that work with Cloudflare Workers:
+**WASM Build Issues**
 
-```bash
-npm install --save-exact next@15.3.4 @opennextjs/cloudflare@1.3.1 wrangler@4.22.0
-```
+- Run `npm run build:wasm-assets` before `npm run check`
+- Ensure `wasm-pack` is installed: `cargo install wasm-pack`
 
-**Why this happens:**
+## Contributing
 
-- Next.js 15.4.2+ introduced instrumentation hooks that aren't compatible with Cloudflare Workers
-- The caret (`^`) in package.json allows compatible updates that break Cloudflare deployment
-- GitHub Actions uses different versions than local environment
-
-**Prevention:**
-
-- Always use exact versions (without `^`) for critical dependencies
-- Test both local and GitHub Actions deployments after dependency updates
-- If you need to update dependencies, test thoroughly on Cloudflare first
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `npm run check`
+5. Submit a pull request
 
 ## License
 

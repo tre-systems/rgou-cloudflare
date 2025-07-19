@@ -1,117 +1,78 @@
-# Royal Game of Ur - Documentation Index
+# Documentation Index
 
-_Last updated: July 19, 2025_
+This directory contains all documentation for the Royal Game of Ur project, organized by category.
 
-## 📋 **Documentation Overview**
+## Current System Documentation
 
-This documentation is organized into three main categories:
+### Core System
 
-1. **🎯 Current Implementation** - Active system documentation and guides
-2. **🔧 Development & Testing** - Development workflow and testing information
-3. **📚 Historical Research** - Past experiments and investigations
-
----
-
-## 🎯 **Current Implementation**
-
-### **AI Systems**
-
-- **[AI System](./ai-system.md)** - Classic expectiminimax AI implementation
-- **[ML AI System](./ml-ai-system.md)** - Machine learning AI implementation
-
-### **System Architecture**
-
-- **[Architecture Overview](./architecture-overview.md)** - System design and components
-- **[Technical Implementation](./technical-implementation.md)** - Implementation details
-
-### **Game & Rules**
-
+- **[AI System](./ai-system.md)** - Classic expectiminimax AI implementation and performance
+- **[ML AI System](./ml-ai-system.md)** - Machine learning AI implementation and training
+- **[AI Performance](./ai-performance.md)** - Current performance data and analysis for all AI types
+- **[Architecture Overview](./architecture-overview.md)** - System design, components, and data flow
 - **[Game Rules and Strategy](./game-rules-strategy.md)** - Game rules and strategic concepts
-- **[Game Statistics](./game-statistics.md)** - Statistical analysis of gameplay
 
----
-
-## 🔧 **Development & Testing**
-
-### **Testing & Quality**
+### Development & Operations
 
 - **[Testing Strategy](./testing-strategy.md)** - Testing approach and methodology
 - **[Test Configuration Guide](./test-configuration-guide.md)** - How to run different test configurations
 - **[Troubleshooting Guide](./troubleshooting.md)** - Common issues and solutions
+- **[Current TODOs](./current-todos.md)** - Active tasks and improvements
+- **[Game Statistics](./game-statistics.md)** - Statistics tracking and database integration
+- **[Mac Optimization Guide](./mac-optimization-guide.md)** - Performance optimization for Mac systems
+- **[Checking Training Status](./checking-training-status.md)** - How to monitor ML training progress
 
-### **Platform-Specific**
+## Historical Documentation
 
-- **[Mac Optimization Guide](./mac-optimization-guide.md)** - macOS-specific optimizations
-- **[Checking Training Status](./checking-training-status.md)** - ML training monitoring
+- **[AI Development History](./ai-development-history.md)** - **HISTORICAL** - All AI experiments, investigations, and lessons learned
 
----
+## Documentation Organization
 
-## 📚 **Historical Research & Future Development**
+### Current vs Historical
 
-### **AI Development Experiments**
+- **Current System**: Documents that describe the current implementation and are actively maintained
+- **Historical**: Documents that preserve historical information for reference but are not actively updated
 
-- **[AI Development Experiments](./ai-development-experiments.md)** - **HISTORICAL** - All AI experiments, investigations, and lessons learned
+### Categories
 
-### **Current Performance Data**
+- **Core System**: Main system components and architecture
+- **Development & Operations**: Tools, processes, and operational concerns
+- **Historical**: Past experiments and findings
 
-- **[Latest Matrix Comparison Results](./latest-matrix-comparison-results.md)** - **CURRENT** - Latest performance data (July 2025)
-- **[AI Performance Quick Reference](./ai-performance-quick-reference.md)** - **CURRENT** - Quick reference for developers
+## Maintenance Guidelines
 
-### **Future Development**
+### Current System Documentation
 
-- **[AI Improvement Roadmap](./ai-improvement-roadmap.md)** - Planned improvements and enhancements
-- **[High Priority TODOs](./high-priority-todos.md)** - Current development priorities
+- Update when features change
+- Keep performance data current
+- Ensure accuracy with implementation
+- Add new documents for new features
 
----
+### Historical Documentation
 
-## 🚀 **Quick Start for Developers**
+- Preserve for reference
+- Don't update unless correcting factual errors
+- Use for learning from past experiments
+- Reference in current documentation when relevant
 
-### **Current Best Practices (July 2025)**
+## Quick Reference
 
-1. **Use EMM-1 (Depth 1) for production** - Best performance/speed ratio
-2. **Run matrix comparison tests** - `npm run test:rust:slow`
-3. **Reference latest results** - See "Current Performance Data" above
+### For New Developers
 
-### **Testing Commands**
+1. Start with [Architecture Overview](./architecture-overview.md)
+2. Read [AI System](./ai-system.md) and [ML AI System](./ml-ai-system.md)
+3. Check [Current TODOs](./current-todos.md) for active work
+4. Use [Troubleshooting Guide](./troubleshooting.md) for issues
 
-```bash
-# Run comprehensive matrix analysis (current results)
-npm run test:rust:slow
+### For AI Development
 
-# Run fast tests only
-npm run test:rust
+1. Review [AI Performance](./ai-performance.md) for current metrics
+2. Check [AI Development History](./ai-development-history.md) for past experiments
+3. Use [Mac Optimization Guide](./mac-optimization-guide.md) for training
+4. Monitor training with [Checking Training Status](./checking-training-status.md)
 
-# Run all tests
-npm run check
-```
+### For Testing
 
-### **Key Configuration**
-
-- **Production AI**: Depth 1 (EMM-1)
-- **Alternative**: Depth 2 (EMM-2)
-- **Educational**: Heuristic AI
-- **Testing**: Random AI
-
----
-
-## 📊 **Current Performance Summary**
-
-### **AI Performance Ranking (July 2025)**
-
-1. **EMM-1 (Depth 1)**: 53.6% win rate (0.0ms/move) - **Best overall**
-2. **EMM-2 (Depth 2)**: 53.2% win rate (0.0ms/move) - Very strong alternative
-3. **Heuristic**: 50.8% win rate (0.0ms/move) - Competitive baseline
-4. **Random**: 48.0% win rate (0.0ms/move) - Expected baseline
-5. **EMM-3 (Depth 3)**: 47.6% win rate (10.2ms/move) - Good but slower
-6. **ML**: 46.8% win rate (40.8ms/move) - Needs improvement
-
-### **Production Recommendations**
-
-- **Primary**: EMM-1 (Depth 1) - Best performance and speed
-- **Alternative**: EMM-2 (Depth 2) - Very good alternative
-- **Educational**: Heuristic AI - Good for understanding evaluation
-- **Testing**: Random AI - Baseline comparison
-
----
-
-_This documentation is actively maintained. For the most current results, always refer to the "Current Performance Data" section._
+1. Follow [Testing Strategy](./testing-strategy.md)
+2. Use [Test Configuration Guide](./test-configuration-guide.md) for different scenarios
+3. Check [Troubleshooting Guide](./troubleshooting.md) for test issues
