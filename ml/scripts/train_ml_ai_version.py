@@ -185,7 +185,7 @@ def train_networks_with_progress(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=get_optimal_workers(),
+        num_workers=0,  # Use 0 workers to avoid multiprocessing issues
         pin_memory=device.type in ["cuda", "mps"],
     )
     
@@ -193,7 +193,7 @@ def train_networks_with_progress(
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=get_optimal_workers(),
+        num_workers=0,  # Use 0 workers to avoid multiprocessing issues
         pin_memory=device.type in ["cuda", "mps"],
     )
 
