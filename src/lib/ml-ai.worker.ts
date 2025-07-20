@@ -18,8 +18,8 @@ let mlWasmModule: MLWasmModule;
 let mlWasmReady: Promise<void> | null = null;
 let weightsLoaded = false;
 const networkConfig: {
-  value?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
-  policy?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
+  value?: { input_size: number; hidden_sizes: number[]; output_size: number };
+  policy?: { input_size: number; hidden_sizes: number[]; output_size: number };
 } = {};
 
 console.log('ML AI Worker: Variables initialized');
