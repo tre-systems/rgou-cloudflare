@@ -71,6 +71,35 @@ npm run test:coverage
 
 # All checks (including Rust)
 npm run check
+
+# Quick tests (10 games)
+npm run test:rust:quick
+
+# Comprehensive tests (100 games)
+npm run test:rust:slow
+```
+
+## Test Configuration
+
+### Standard Test Configuration
+
+- **Games**: 100 per model comparison
+- **Opponent**: Expectiminimax AI (Depth 3)
+- **Turn Order**: Alternating (50 games each)
+- **Environment**: Consistent hardware and software
+- **Validation**: Multiple test runs for reliability
+
+### Test Commands
+
+```bash
+# Test specific model
+NUM_GAMES=100 cargo test test_ml_v2_vs_expectiminimax_ai -- --nocapture
+
+# Test all models
+npm run test:rust
+
+# Quick tests (10 games)
+cargo test test_ml_v2_vs_expectiminimax_ai -- --nocapture
 ```
 
 ## E2E Testing
@@ -97,7 +126,100 @@ npm run test:e2e:ui
 - Focus on critical flows, avoid edge cases
 - Verify actual database saves, don't mock
 
+## AI Performance Testing
+
+### Test Matrix Results
+
+All tests conducted with 100 games vs Expectiminimax AI (Depth 3) unless otherwise specified.
+
+### ML AI Models Performance
+
+| Model      | Win Rate | Losses | Avg Moves | Speed | First/Second | Status               |
+| ---------- | -------- | ------ | --------- | ----- | ------------ | -------------------- |
+| **v2**     | **44%**  | 56%    | 152.3     | 0.7ms | 23/21        | ✅ **Best**          |
+| **Fast**   | 36%      | 64%    | 172.1     | 0.7ms | 11/25        | Competitive          |
+| **v4**     | 32%      | 68%    | 147.9     | 0.7ms | 15/17        | ⚠️ Needs Improvement |
+| **Hybrid** | 30%      | 70%    | 173.7     | 0.7ms | 9/21         | ⚠️ Needs Improvement |
+
+### Performance Insights
+
+#### 🏆 **v2 Model - Best Performance**
+
+- **Win Rate**: 44% (44 wins, 56 losses)
+- **Training**: 1,000 games, 50 epochs, depth 3
+- **Architecture**: 150 inputs, enhanced network
+- **Key Strength**: Balanced performance regardless of turn order
+- **Recommendation**: Use for production
+
+#### 🥈 **Fast Model - Competitive**
+
+- **Win Rate**: 36% (36 wins, 64 losses)
+- **Training**: 500 games, 25 epochs, depth 2
+- **Architecture**: 100 inputs, basic network
+- **Key Strength**: Better when playing second
+- **Recommendation**: Good baseline model
+
+#### ⚠️ **v4 Model - Training Regression**
+
+- **Win Rate**: 32% (32 wins, 68 losses)
+- **Training**: 5,000 games, 100 epochs, depth 3
+- **Architecture**: 150 inputs, production training
+- **Issue**: Despite excellent validation loss (0.707), competitive performance is poor
+- **Recommendation**: Investigate training methodology
+
+#### ⚠️ **Hybrid Model - Performance Issues**
+
+- **Win Rate**: 30% (30 wins, 70 losses)
+- **Training**: 10,000 games, 100 epochs, depth 3
+- **Architecture**: Hybrid Rust+Python training
+- **Issue**: Worst performance despite most training data
+- **Recommendation**: Revisit training approach
+
+## Common Test Issues
+
+### E2E Tests Failing
+
+**Solution:**
+
+```bash
+# Install Playwright browsers
+npx playwright install --with-deps
+
+# Run with UI for debugging
+npm run test:e2e:ui
+```
+
+### Unit Tests Failing
+
+**Solution:**
+
+```bash
+npm run test:coverage
+npm install
+```
+
+### Rust Tests Failing
+
+**Solution:**
+
+```bash
+# Build WASM assets first
+npm run build:wasm-assets
+
+# Run Rust tests
+npm run test:rust
+```
+
+## Quick Fixes
+
+| Issue            | Quick Fix                   |
+| ---------------- | --------------------------- |
+| WASM not loading | `npm run build:wasm-assets` |
+| Tests failing    | `npm run nuke`              |
+| E2E broken       | `npx playwright install`    |
+| Rust tests fail  | `cargo clean && cargo test` |
+
 ## Related Documentation
 
-- [Test Configuration Guide](./test-configuration-guide.md) - Test setup and configuration
-- [Troubleshooting Guide](./troubleshooting.md) - Common test issues
+- [Troubleshooting Guide](./troubleshooting.md) - Common issues and solutions
+- [Architecture Overview](./architecture-overview.md) - System design

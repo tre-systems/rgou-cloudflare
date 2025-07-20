@@ -160,6 +160,5 @@ npm run check:slow
 
 ## Related Documentation
 
-- [Testing Strategy](./testing-strategy.md) - Testing approach
-- [Test Configuration Guide](./test-configuration-guide.md) - Test setup
+- [Testing Strategy](./testing-strategy.md) - Testing approach and methodology
 - [Architecture Overview](./architecture-overview.md) - System design

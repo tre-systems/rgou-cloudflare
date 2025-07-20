@@ -126,6 +126,7 @@ The system extracts 150 features from game state:
 The training system provides comprehensive real-time feedback:
 
 #### Data Generation Phase
+
 ```
 🎮 Core 2: 5.0% - 0.0 games/sec - ETA: 0s - Samples: 150
 🎮 Core 3: 10.0% - 0.0 games/sec - ETA: 0s - Samples: 300
@@ -137,6 +138,7 @@ The training system provides comprehensive real-time feedback:
 ```
 
 #### Training Phase (Every 10 seconds)
+
 ```
 🎯 Training Progress (updates every 10 seconds):
 ═══════════════════════════════════════════════════════════════
@@ -146,6 +148,7 @@ The training system provides comprehensive real-time feedback:
 ```
 
 #### Final Summary
+
 ```
 🎉 === Training Complete ===
 ⏱️  Total training time: 180.45 seconds
@@ -184,183 +187,211 @@ The training system provides comprehensive real-time feedback:
 
 ### Current Models
 
-- **v2 Model**: 44% win rate vs Classic AI - **Best Performance** ✅
-- **v4 Model**: 32% win rate vs Classic AI - **Needs Improvement** ⚠️
-- **v5 Model**: In development with EMM-4 training
+| Model      | Win Rate vs EMM-3 | Training Time | Parameters | Status                  |
+| ---------- | ----------------- | ------------- | ---------- | ----------------------- |
+| **v2**     | **44%**           | 2h            | 164K       | ✅ **Best Performance** |
+| **Fast**   | 36%               | 1h            | 164K       | Competitive             |
+| **v4**     | 32%               | 1h 53m        | 164K       | ⚠️ Needs Improvement    |
+| **Hybrid** | 30%               | 3h            | 164K       | ⚠️ Needs Improvement    |
+| **v5**     | TBD               | TBD           | 164K       | In development          |
 
 ### Model Comparison
 
-| Model | Win Rate vs EMM-3 | Training Time | Parameters |
-| ----- | ----------------- | ------------- | ---------- |
-| v2    | 44%               | 2h            | 164K       |
-| v4    | 32%               | 1h 53m        | 164K       |
-| v5    | TBD               | TBD           | 164K       |
+- **v2 Model**: **Best performing model** (July 2025) - **44% win rate vs EMM-3** - **Production Ready** ✅
+- **Fast Model**: Competitive model (100 inputs) - **36% win rate vs EMM-3**
+- **v4 Model**: Latest production model (July 2025) - **32% win rate vs EMM-3** - **Needs Improvement** ⚠️
+- **Hybrid Model**: Hybrid architecture model - **30% win rate vs EMM-3** - **Needs Improvement** ⚠️
 
-## Burn Framework Integration
-
-### Apple Silicon Support
-
-Burn supports Apple Silicon through **WGPU (WebGPU)** with Metal backend:
-
-```rust
-// Cargo.toml
-[dependencies]
-burn = { version = "0.18.0", features = ["train", "autodiff", "wgpu"] }
-burn-wgpu = { version = "0.18.0", features = ["metal"] }
-```
-
-**Features**:
-
-- **Metal backend** - Native Apple Silicon GPU acceleration
-- **Automatic tuning** - Optimized for M1/M2/M3 chips
-- **Memory efficient** - Shared memory with CPU
-- **Cross-compilation** - Works with existing WASM setup
-
-### Implementation Plan
-
-#### Phase 1: Burn Networks
-
-```rust
-#[derive(Module, Debug)]
-pub struct ValueNetwork<B: Backend> {
-    layer1: Linear<B>,
-    layer2: Linear<B>,
-    layer3: Linear<B>,
-    layer4: Linear<B>,
-    output: Linear<B>,
-    dropout: Dropout,
-}
-```
-
-#### Phase 2: Burn Trainer
-
-```rust
-pub struct BurnTrainer {
-    value_network: ValueNetwork<WgpuBackend>,
-    policy_network: PolicyNetwork<WgpuBackend>,
-    value_optimizer: Adam<WgpuBackend>,
-    policy_optimizer: Adam<WgpuBackend>,
-    device: WgpuDevice,
-}
-```
-
-#### Phase 3: Training Binary
-
-```rust
-// worker/rust_ai_core/src/bin/train_burn.rs
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut trainer = BurnTrainer::new(config);
-    let metadata = trainer.train(&training_data);
-    trainer.save_weights(&output_file)?;
-    Ok(())
-}
-```
-
-## Migration from Python
-
-### What Was Removed
-
-- ❌ **Python training scripts** - `train_hybrid.py` (951 lines)
-- ❌ **Python dependencies** - `requirements.txt`
-- ❌ **Shell scripts** - `train_production.sh`, `test_optimized_training.sh`
-- ❌ **Hybrid architecture** - Rust data + Python training
-
-### What Was Kept
-
-- ✅ **TypeScript utilities** - `load-ml-weights.ts` (still useful)
-- ✅ **Training data** - `ml/data/` directory
-- ✅ **Model weights** - `ml/data/weights/` directory
-- ✅ **Documentation** - Consolidated training guides
-
-### Benefits Achieved
-
-#### Performance
-
-- **10-20x faster training** - Native GPU acceleration
-- **No subprocess overhead** - Everything in one process
-- **Optimized memory usage** - Efficient GPU memory management
-- **Parallel processing** - Uses all CPU cores
-
-#### Maintenance
-
-- **Single codebase** - No more Python/Rust duplication
-- **Type safety** - Rust's type system prevents bugs
-- **Better error handling** - Rust's Result types
-- **Simpler deployment** - No Python dependencies
-
-#### Reliability
-
-- **No inconsistencies** - Same code for training and inference
-- **Memory safety** - No segfaults or memory leaks
-- **Deterministic** - Reproducible results
-- **Cross-platform** - Works on all platforms
-
-## Troubleshooting
-
-### Common Issues
-
-#### WASM Build Issues
+### Loading Weights
 
 ```bash
-# Ensure correct features
-npm run build:wasm  # Uses --features wasm --no-default-features
+# Load best performing model (v2)
+npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
+
+# Load fast model
+npm run load:ml-weights ml/data/weights/ml_ai_weights_fast.json
+
+# Load latest v4 model
+npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_v4.json
+
+# Load hybrid model
+npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_hybrid.json
 ```
 
-#### Training Build Issues
+### Training Data Organization
+
+```
+ml/data/
+├── training/       # Generated training data
+├── weights/        # Trained model weights
+└── genetic_params/ # Genetic algorithm parameters
+```
+
+## Training Configuration
+
+| Parameter         | Default | Description                           |
+| ----------------- | ------- | ------------------------------------- |
+| `--num-games`     | 1000    | Number of training games to generate  |
+| `--epochs`        | 50      | Training epochs                       |
+| `--depth`         | 3       | Expectiminimax depth for expert moves |
+| `--batch-size`    | auto    | GPU batch size (auto-detected)        |
+| `--learning-rate` | 0.001   | Learning rate                         |
+| `--verbose`       | false   | Detailed logging                      |
+
+## Key Improvements Needed
+
+### High Priority
+
+- **Fix WASM Weight Persistence**: Maintain global singleton in Rust code
+- **Correct Training Loss**: Remove softmax from PolicyNetwork definition
+
+### Medium Priority
+
+- **Enhanced Training Data**: Add `simulate_complete_game()` function in Rust
+- **Better Value Targets**: Use Classic AI's evaluation function
+- **Unified Architecture**: Single network with two outputs
+
+### Advanced
+
+- **Self-Play Reinforcement Learning**: Fine-tune through self-play
+- **Monte Carlo Tree Search**: Add lightweight search on top of neural network
+- **Feature Engineering**: Review and optimize 150 features
+
+## Testing
 
 ```bash
-# Ensure training features enabled
-cargo build --release --features training
+# Test best performing model (v2)
+npm run test:ml-v2
+
+# Test fast model performance
+npm run test:ml-fast
+
+# Test v4 model performance
+npm run test:ml-v4
+
+# Test hybrid model performance
+npm run test:ml-hybrid
+
+# Run all ML tests
+npm run test:rust
 ```
 
-#### GPU Issues
+## Recent Optimizations
+
+### ✅ Completed
+
+- **v5 EMM-4 Training**: Training new model with Expectiminimax depth 4 for stronger play
+- **Apple Silicon Optimization**: Uses only performance cores (8/10) for intensive work
+- **Improved Progress Tracking**: Atomic completion counter with core identification
+- **Fixed Game Simulation**: Corrected turn counting and value target calculation
+- **Pure Rust Architecture**: Rust data generation + Rust GPU training
+- **GPU Detection**: Automatic device selection with validation
+- **Comprehensive Logging**: Real-time progress tracking
+- **Clean Exit**: Proper resource cleanup and exit handling
+- **Organized Storage**: Project-based training data organization
+
+## GPU Training Support
+
+- **Apple Silicon (M1/M2/M3)**: Metal Performance Shaders (MPS) - 10-20x speedup
+- **NVIDIA GPUs**: CUDA acceleration
+- **Fallback**: CPU training if GPU unavailable
+
+## Move Selection
+
+For each valid move:
+
+1. Simulate the move
+2. Extract features
+3. Evaluate with both networks
+4. Select move with highest combined score
+
+## Why Use ML Instead of Search?
+
+- **Speed**: Moves selected in milliseconds without deep search
+- **Unique Playstyle**: Strategies learned from data, not hand-coded
+- **Efficiency**: Runs efficiently in browser via WebAssembly
+
+## Mac Optimization
+
+### System Requirements
+
+- macOS 12.3+
+- Rust (latest stable)
+- Apple Silicon (M1/M2/M3) or Intel Mac with Metal support
+
+### Key Optimizations
+
+- **GPU Acceleration (MPS)**: Uses Metal for neural network training (3-5x faster than CPU-only)
+- **Parallel Processing**: Uses all CPU cores for data generation and training
+- **Memory Optimization**: Efficient batch processing and GPU memory management
+
+### Environment Setup
 
 ```bash
-# Test Burn GPU support
-cd worker/rust_ai_core && cargo run --bin test_burn --features training
+# Optimal threading for Apple Silicon
+export OMP_NUM_THREADS=$(sysctl -n hw.ncpu)
+export MKL_NUM_THREADS=$(sysctl -n hw.ncpu)
+export NUMEXPR_NUM_THREADS=$(sysctl -n hw.ncpu)
+export VECLIB_MAXIMUM_THREADS=$(sysctl -n hw.ncpu)
 ```
 
-### Performance Optimization
+### Rust Compilation Optimization
 
-#### Apple Silicon
+```toml
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+```
 
-- Use performance cores only for intensive work
-- Enable Metal backend for GPU acceleration
-- Optimize batch size for M1/M2/M3 memory
+### Preventing Sleep During Training
 
-#### Memory Management
+Training automatically uses `caffeinate -i` to keep Mac awake. If running manually:
 
-- Monitor GPU memory usage
-- Use appropriate batch sizes
-- Enable memory pinning for GPU transfer
+```bash
+caffeinate -i cargo run --bin train --release --features training
+```
 
-## Future Improvements
+### Performance Expectations
 
-### Planned Enhancements
+- **10-core Mac**: ~1000 games/min, 2-4GB RAM
+- **Training time**: 2-4 hours for 10k games/300 epochs
 
-1. **Burn Implementation** - Complete GPU training pipeline
-2. **Self-play Training** - Reinforcement learning approach
-3. **Model Compression** - Reduce WASM size further
-4. **Hyperparameter Optimization** - Automated tuning
-5. **Distributed Training** - Multi-GPU support
+## Monitoring Training Status
 
-### Success Metrics
+### Quick Status Check
 
-- ✅ **Eliminate all Python training code**
-- ✅ **Single neural network implementation**
-- ✅ **Apple Silicon GPU acceleration**
-- ✅ **10-20x faster training**
-- ✅ **Simpler maintenance**
-- ✅ **Better reliability**
+```bash
+# Check if training is running
+ps aux | grep train | grep -v grep
 
-## Conclusion
+# Check output files
+ls -lh ml/data/weights/ml_ai_weights_*.json*
 
-The pure Rust training system provides:
+# Check recent activity
+ls -lt ml/data/weights/ | head -5
 
-1. **Superior performance** - Native GPU acceleration
-2. **Simpler maintenance** - Single codebase
-3. **Better reliability** - Rust's safety guarantees
-4. **Tiny WASM bundle** - No training code included
-5. **Future-proof architecture** - Ready for Burn implementation
+# Check CPU usage
+top -o cpu
+```
 
-This approach eliminates all duplication while providing the best possible performance on Apple Silicon systems.
+### Status Indicators
+
+- **Training Running**: Rust process with high CPU usage
+- **Training Complete**: Large weights file exists with recent timestamp
+- **Check Terminal**: Look for progress output in training terminal
+
+### Troubleshooting
+
+| Issue               | Solution                                                            |
+| ------------------- | ------------------------------------------------------------------- |
+| MPS not available   | Check Metal support: `cargo run --bin test_gpu --features training` |
+| Memory issues       | Reduce batch size in training configuration                         |
+| Rust build failures | `cargo clean && cargo build --release`                              |
+
+## Related Documentation
+
+- [AI System](./ai-system.md) - Classic expectiminimax AI
+- [Architecture Overview](./architecture-overview.md) - System design

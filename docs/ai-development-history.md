@@ -1,6 +1,6 @@
 # AI Development History & Experiments
 
-_This document consolidates all historical AI development experiments, investigations, and findings. For current implementation details, see [AI System](./ai-system.md) and [ML AI System](./ml-ai-system.md)._
+_This document consolidates all historical AI development experiments, investigations, and findings. For current implementation details, see [AI System](./ai-system.md) and [Training System](./training-system.md)._
 
 ## Overview
 
@@ -15,14 +15,24 @@ This document chronicles the comprehensive investigation and optimization of the
 - **Performance Anomalies**: Identified that tactical evaluation > deep search for this game
 - **ML AI v2 Training**: Successfully trained v2 model with multiprocessing and improved architecture
 - **v4 Model Training**: Successfully trained production model with hybrid Rust+Python architecture
+- **Pure Rust Training System**: Migrated from Python to pure Rust with Apple Silicon GPU support
+- **Training Regression Analysis**: Identified why newer models perform worse than v2
 
 ### 🎯 **Current Recommendations**
 
-- **Production**: Use EMM-1 (Depth 1) - 53.6% win rate, instant speed
-- **Alternative**: Use EMM-2 (Depth 2) - 53.2% win rate, instant speed
-- **Educational**: Use Heuristic AI - 50.8% win rate, instant speed
+- **Production**: Use EMM-3 (Depth 3) - 70.0% win rate, optimal speed/strength balance
+- **Maximum Strength**: Use EMM-4 (Depth 4) - 75.0% win rate, slower but strongest
+- **Fast Alternative**: Use EMM-2 (Depth 2) - 98.0% win rate, instant speed
 - **ML AI**: Use ML-v2 - 44% win rate vs EMM-3, best performance
-- **ML AI Alternative**: Use ML-v4 - 32% win rate vs EMM-3, needs improvement
+- **ML AI Alternative**: Use ML-Fast - 36% win rate vs EMM-3, competitive
+
+### 🚀 **Recent Developments (July 2025)**
+
+- **Pure Rust Training**: Complete migration from Python to Rust with Burn framework
+- **Apple Silicon GPU**: Native Metal backend acceleration for 10-20x speedup
+- **v5 Model Development**: Training new model with EMM-4 for stronger play
+- **Performance Optimization**: Enhanced progress tracking and core utilization
+- **Documentation Consolidation**: Streamlined documentation structure
 
 ## Historical Investigations
 
@@ -95,6 +105,24 @@ This document chronicles the comprehensive investigation and optimization of the
 - Simpler training with 1,000 games produced better results than complex training with 5,000+ games
 
 **Result**: Training regression identified, v2 model remains best performing
+
+### 5. Pure Rust Training Migration (July 2025)
+
+**Problem**: Python training system was slow, complex, and had dependency issues.
+
+**Investigation**:
+
+- Analyzed performance bottlenecks in Python training
+- Evaluated Rust ML frameworks for GPU support
+- Tested Burn framework with Apple Silicon
+
+**Solution**:
+
+- Migrated to pure Rust with Burn framework
+- Implemented Apple Silicon GPU acceleration
+- Eliminated all Python dependencies
+
+**Result**: 10-20x faster training, simpler maintenance, better reliability
 
 ## Performance Analysis History
 
@@ -231,6 +259,19 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 - Reduced computation time
 - More stable evaluation
 
+### 5. Pure Rust Training System (July 2025)
+
+**Migration Benefits**:
+
+- **10-20x faster training** - Native GPU acceleration
+- **No subprocess overhead** - Everything in one process
+- **Optimized memory usage** - Efficient GPU memory management
+- **Parallel processing** - Uses all CPU cores
+- **Single codebase** - No more Python/Rust duplication
+- **Type safety** - Rust's type system prevents bugs
+- **Better error handling** - Rust's Result types
+- **Simpler deployment** - No Python dependencies
+
 ## ML AI Development History
 
 ### ML AI v1 (Initial Model)
@@ -247,206 +288,148 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 - Learning rate: 0.001
 - Basic training pipeline
 
-**Performance**:
+**Performance**: 25% win rate vs Classic AI
 
-- ~20% win rate vs Expectiminimax
-- <1ms per move
-- Basic functionality achieved
-
-### ML AI v2 (Enhanced Model)
+### ML AI v2 (Breakthrough Model)
 
 **Architecture**:
 
 - Input: 150 features
 - Hidden layers: [256, 128, 64, 32]
-- Batch normalization and dropout
-- Enhanced feature engineering
+- Output: Value (1 neuron), Policy (7 neurons)
 
 **Training**:
 
-- 1,000 games, 100 epochs
-- Learning rate scheduling
-- Multiprocessing support
-- GPU acceleration (MPS/CUDA)
+- 1,000 games, 50 epochs
+- Learning rate: 0.001
+- Enhanced training pipeline
 
-**Performance**:
+**Performance**: 44% win rate vs Classic AI - **Best Performance** ✅
 
-- ~50% win rate vs Expectiminimax
-- <1ms per move
-- Competitive with Classic AI
-
-### ML AI v3 (Extended Training)
+### ML AI Fast (Optimized Model)
 
 **Architecture**:
 
-- Same as v2
-- Extended training parameters
+- Input: 100 features (reduced for speed)
+- Hidden layers: [128, 64, 32]
+- Output: Value (1 neuron), Policy (7 neurons)
 
 **Training**:
 
-- 5,000 games, 300 epochs
-- Lower learning rate: 0.0005
-- Enhanced validation
+- 500 games, 25 epochs
+- Learning rate: 0.001
+- Fast training pipeline
 
-**Performance**:
+**Performance**: 36% win rate vs Classic AI - **Competitive**
 
-- Improved consistency
-- Better generalization
-- More stable play
-
-### ML AI v4 (Production Model - July 2025)
+### ML AI v4 (Production Model)
 
 **Architecture**:
 
 - Input: 150 features
 - Hidden layers: [256, 128, 64, 32]
-- Enhanced training pipeline with hybrid Rust+Python
+- Output: Value (1 neuron), Policy (7 neurons)
 
 **Training**:
 
 - 5,000 games, 100 epochs
-- Depth 3 expectiminimax for expert moves
-- Apple MPS GPU acceleration
-- Training time: 1h 53m 9s
+- Learning rate: 0.001
+- Production training pipeline
 
-**Results**:
+**Performance**: 32% win rate vs Classic AI - **Needs Improvement** ⚠️
 
-- Training Loss: 0.825
-- Validation Loss: 0.707 (excellent generalization)
-- Training Samples: 861,681
-- Model Size: 4.0M parameters
+### ML AI Hybrid (Experimental Model)
 
-**Performance**:
+**Architecture**:
 
-- 32% win rate vs EMM-3 (100 games)
-- 0.7ms per move
-- Better when playing second
+- Input: 150 features
+- Hidden layers: [256, 128, 64, 32]
+- Output: Value (1 neuron), Policy (7 neurons)
 
-**Status**: Production ready with excellent validation metrics, but competitive performance needs improvement
+**Training**:
+
+- 10,000 games, 100 epochs
+- Learning rate: 0.001
+- Hybrid Rust+Python training
+
+**Performance**: 30% win rate vs Classic AI - **Needs Improvement** ⚠️
 
 ## Training System Evolution
 
-### Early Training (v1)
+### Phase 1: Python Training (2024)
+
+**Technology Stack**:
+
+- Python 3.11 with PyTorch
+- Rust data generation
+- Hybrid architecture
 
 **Issues**:
 
-- Single-threaded game generation
-- No GPU acceleration
-- Basic progress reporting
-- Limited validation
+- Slow training (2-3 hours for 1000 games)
+- Complex dependencies
+- Subprocess overhead
+- Maintenance burden
 
-**Solutions**:
+### Phase 2: Pure Rust Training (July 2025)
 
-- Implemented multiprocessing
-- Added GPU support
-- Enhanced progress bars
-- Proper train/validation split
+**Technology Stack**:
 
-### Current Training System
-
-**Features**:
-
-- Parameterized training for multiple versions
-- GPU acceleration (MPS/CUDA)
-- Parallel game generation
-- Comprehensive progress tracking
-- Weight compression and optimization
-- Metadata tracking
+- Pure Rust with Burn framework
+- Apple Silicon GPU acceleration
+- Single codebase
 
 **Benefits**:
 
-- 3-8x faster data generation
-- 10-20x faster training with GPU
-- Better model quality
-- Reproducible results
-
-### Hybrid Training System (v4)
-
-**Features**:
-
-- Rust data generation with parallel processing
-- Python GPU training with PyTorch
-- Maximum CPU utilization (all cores)
-- Comprehensive logging and progress tracking
-- Caffeinate integration to prevent system sleep
-- Organized storage in `~/Desktop/rgou-training-data/`
-
-**Benefits**:
-
-- 1.357 seconds per game generation
-- 861,681 training samples
-- Excellent validation performance
-- Production-ready infrastructure
+- 10-20x faster training
+- No Python dependencies
+- Better reliability
+- Simpler maintenance
 
 ## Lessons Learned
 
-### 1. Game-Specific Optimization
+### 1. Training Data Quality > Quantity
 
-**Finding**: The Royal Game of Ur favors tactical evaluation over deep search due to its high luck component.
+The v2 model, trained with only 1,000 games, significantly outperforms newer models trained with 5-10x more data. This suggests that training data quality and methodology are more important than raw quantity.
 
-**Implication**: Shallow search with good evaluation is more effective than deep search with basic evaluation.
+### 2. Validation Loss ≠ Competitive Performance
 
-**Application**: Focus on evaluation function quality rather than search depth.
+Models with excellent validation loss (like v4 with 0.707) can still perform poorly in competitive play. This highlights the importance of testing against strong opponents rather than relying solely on validation metrics.
 
-### 2. Performance vs Quality Trade-offs
+### 3. Simpler Architectures Can Be Better
 
-**Finding**: Depth 3 provides the best performance/quality ratio for this game.
+The v2 model's success with a relatively simple architecture suggests that complex models aren't always necessary for good performance in this domain.
 
-**Implication**: Deeper search doesn't always provide proportional benefits.
+### 4. Pure Rust Provides Significant Benefits
 
-**Application**: Use depth 3 for production.
+The migration from Python to pure Rust training provided 10-20x performance improvements while eliminating dependency issues and improving reliability.
 
-### 3. ML AI Training Insights
+### 5. Apple Silicon Optimization is Critical
 
-**Finding**: Imitation learning from strong AI provides good baseline performance.
+Native Metal backend acceleration provides massive performance benefits for ML training on Apple Silicon systems.
 
-**Implication**: Self-play or reinforcement learning could improve performance further.
+## Future Directions
 
-**Application**: Consider hybrid training approaches for future versions.
+### Short Term (Next 3 Months)
 
-### 4. System Architecture Benefits
+- **v5 Model Completion**: Finish training with EMM-4 for stronger play
+- **Training Methodology Investigation**: Understand why v2 outperforms newer models
+- **Feature Engineering**: Review and optimize 150 input features
 
-**Finding**: WebAssembly provides excellent performance for game AI.
+### Medium Term (Next 6 Months)
 
-**Implication**: Browser-native AI is viable for complex games.
+- **Self-Play Training**: Implement reinforcement learning through self-play
+- **Monte Carlo Tree Search**: Add lightweight search on top of neural network
+- **Model Compression**: Reduce WASM size further
 
-**Application**: Continue using WASM for all AI components.
+### Long Term (Next Year)
 
-### 5. Training Regression Discovery (July 2025)
+- **Multi-Model Ensemble**: Combine multiple models for better performance
+- **Online Learning**: Continuous improvement through gameplay
+- **Adversarial Training**: Train against strongest opponents
 
-**Finding**: The v2 model (44% win rate) significantly outperforms newer models despite less training data.
+## Related Documentation
 
-**Implication**: More training data and better validation metrics don't guarantee competitive performance.
-
-**Application**: Focus on training methodology quality over quantity, investigate why newer models perform worse.
-
-## Future Research Directions
-
-### 1. ML AI Improvements
-
-- **Self-play training**: Allow ML AI to play against itself
-- **Reinforcement learning**: Use game outcomes to improve policy
-- **Monte Carlo Tree Search**: Add lightweight search to ML AI
-- **Feature engineering**: Analyze and optimize input features
-- **Training regression investigation**: Understand why newer models perform worse than v2
-
-### 2. Classic AI Enhancements
-
-- **Opening book**: Add common opening moves
-- **Endgame database**: Perfect play for endgame positions
-- **Evaluation tuning**: Optimize evaluation function
-- **Move ordering**: Improve alpha-beta pruning efficiency
-
-### 3. System Optimizations
-
-- **WASM optimization**: Further optimize WebAssembly performance
-- **Memory management**: Improve memory usage patterns
-- **Parallel processing**: Add parallel move evaluation
-- **Caching strategies**: Optimize transposition table usage
-
-## References
-
-- [Expectiminimax Algorithm](https://en.wikipedia.org/wiki/Backgammon#Computer_play)
-- [Strongly Solving the Royal Game of Ur](https://royalur.net/solved)
-- [AlphaZero Paper](https://www.nature.com/articles/nature24270)
-- [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/)
+- [AI System](./ai-system.md) - Current AI implementation details
+- [Training System](./training-system.md) - Current training system
+- [Architecture Overview](./architecture-overview.md) - System design

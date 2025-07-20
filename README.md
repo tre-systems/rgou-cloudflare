@@ -76,7 +76,7 @@ The project features two distinct AI opponents:
   - **v4 Model**: 32% win rate vs Classic AI - **Needs Improvement** ⚠️
   - **Hybrid Model**: 30% win rate vs Classic AI - **Needs Improvement** ⚠️
 
-Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-system.md) and [ML AI System](./docs/ml-ai-system.md) for details.
+Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-system.md) for details.
 
 ## 🧠 Machine Learning
 
@@ -140,9 +140,8 @@ The project evolved from hybrid client/server AI to pure client-side execution f
 ### Core System
 
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
-- **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI implementation
+- **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI and ML AI implementation
 - **[Training System](./docs/training-system.md)** - Machine learning training system
-- **[AI Performance](./docs/ai-performance.md)** - Performance data and analysis
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
 
 ### Development
@@ -154,6 +153,10 @@ The project evolved from hybrid client/server AI to pure client-side execution f
 ### Infrastructure
 
 - **[Cloudflare Worker Infrastructure](./docs/cloudflare-worker-infrastructure.md)** - Preserved server-side infrastructure
+
+### Historical
+
+- **[AI Development History](./docs/ai-development-history.md)** - Historical experiments and findings
 
 ## 🔧 Troubleshooting
 

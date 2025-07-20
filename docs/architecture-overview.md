@@ -28,7 +28,7 @@ This implementation stands out for several reasons:
 
 The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both Classic AI and ML AI use this for identical strategy, running locally in the browser.
 
-For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [ML AI System](./ml-ai-system.md).
+For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [Training System](./training-system.md).
 
 ### Frontend (`src/`)
 
@@ -51,17 +51,20 @@ For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [ML AI
 The project has evolved from a hybrid client/server architecture to a pure client-side implementation:
 
 **Original Design (Early Development)**:
+
 - AI computation could run on either client (WASM) or server (Cloudflare Worker)
 - Server-side AI provided backup and potential performance benefits
 - More complex deployment and infrastructure requirements
 
 **Current Design (Production)**:
+
 - All AI computation runs client-side via WebAssembly workers
 - Eliminates network latency and server infrastructure costs
 - Enables true offline play without server dependencies
 - Simplified deployment and reduced attack surface
 
 **Preserved Infrastructure**:
+
 - Cloudflare Worker code remains in `worker/src/lib.rs` for potential future use
 - Server-side AI endpoints (`/ai-move`, `/health`) are inactive but available
 - Architecture supports easy reactivation if server-side features are needed
@@ -87,6 +90,93 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 - **Local**: SQLite (`local.db`), Drizzle ORM
 - **Production**: Cloudflare D1, Drizzle ORM
 - **Schema**: See `src/lib/db/schema.ts`
+
+### Game Statistics
+
+The game includes comprehensive statistics tracking that records game outcomes and provides performance insights.
+
+#### Features
+
+- **Win/Loss Tracking**: Automatic recording of game outcomes
+- **Win Rate Calculation**: Percentage of games won
+- **Local Storage**: Statistics persist across browser sessions
+- **Database Integration**: Games saved to database for analytics
+- **Real-time Updates**: Statistics update immediately after game completion
+
+#### Implementation
+
+**Local Statistics Store**:
+
+Statistics managed using Zustand with persistent storage:
+
+```typescript
+// src/lib/stats-store.ts
+export const useStatsStore = create<StatsStore>()(
+  persist(
+    (set, get) => ({
+      stats: {
+        wins: 0,
+        losses: 0,
+        gamesPlayed: 0,
+      },
+      actions: {
+        incrementWins: () => {
+          /* ... */
+        },
+        incrementLosses: () => {
+          /* ... */
+        },
+      },
+    }),
+    {
+      name: 'rgou-stats-storage',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
+```
+
+**Database Schema**:
+
+Games automatically saved to database upon completion:
+
+```typescript
+// src/lib/db/schema.ts
+export const games = sqliteTable('games', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  playerId: text('playerId').notNull(),
+  winner: text('winner', { enum: ['player1', 'player2'] }),
+  completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
+  moveCount: integer('moveCount'),
+  duration: integer('duration'),
+  history: text('history', { mode: 'json' }),
+  gameType: text('gameType', { enum: ['classic', 'ml', 'watch'] }),
+});
+```
+
+#### Data Flow
+
+**Game Completion Flow**:
+
+1. **Game Ends**: `gameState.gameStatus` becomes 'finished'
+2. **Statistics Update**: Local stats incremented via `useStatsStore`
+3. **Database Save**: Game data posted to server via `saveGame` action
+4. **UI Update**: Statistics panel shows updated win/loss counts
+
+**Environment Handling**:
+
+- **Local Development**: SQLite database (`local.db`)
+- **Production**: Cloudflare D1 database
+- **Testing**: E2E tests verify database saves work correctly
+
+#### Privacy
+
+- **Player ID**: Generated using `nanoid()` for anonymous tracking
+- **Local Storage**: Statistics remain on user's device
+- **Database**: Only game outcomes and metadata stored
+- **No Personal Data**: No names, emails, or identifying information
 
 ## Deployment
 
@@ -116,3 +206,5 @@ Set in `public/_headers`:
 - All AI runs locally in the browser (WASM)
 - Clear separation of concerns
 - Full offline and online support
+- Comprehensive statistics tracking
+- Privacy-focused data collection
