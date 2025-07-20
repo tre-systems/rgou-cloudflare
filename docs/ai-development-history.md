@@ -23,14 +23,15 @@ This document chronicles the comprehensive investigation and optimization of the
 - **Production**: Use EMM-3 (Depth 3) - 70.0% win rate, optimal speed/strength balance
 - **Maximum Strength**: Use EMM-4 (Depth 4) - 75.0% win rate, slower but strongest
 - **Fast Alternative**: Use EMM-2 (Depth 2) - 98.0% win rate, instant speed
-- **ML AI**: Use ML-v2 - 44% win rate vs EMM-3, best performance
-- **ML AI Alternative**: Use ML-Fast - 36% win rate vs EMM-3, competitive
+- **ML AI Breakthrough**: Use PyTorch V5 - 44% win rate vs EMM-4, 8.1x faster
+- **ML AI Alternative**: Use ML-v2 - 40% win rate vs EMM-3, competitive
 
 ### 🚀 **Recent Developments (July 2025)**
 
 - **Pure Rust Training**: Complete migration from Python to Rust with Burn framework
 - **Apple Silicon GPU**: Native Metal backend acceleration for 10-20x speedup
-- **v5 Model Development**: Training new model with EMM-4 for stronger play
+- **PyTorch V5 Breakthrough**: First ML model competitive with EMM-4 (44% win rate)
+- **Speed Revolution**: PyTorch V5 is 8.1x faster than EMM-4 while being competitive
 - **Performance Optimization**: Enhanced progress tracking and core utilization
 - **Documentation Consolidation**: Streamlined documentation structure
 
@@ -88,7 +89,31 @@ This document chronicles the comprehensive investigation and optimization of the
 
 **Result**: Confirmed that shallow search with good evaluation is optimal for this game
 
-### 4. ML AI Training Regression (July 2025)
+### 4. PyTorch V5 vs Expectiminimax Depth 4 Breakthrough (July 2025)
+
+**Achievement**: First ML model to be competitive with the strongest classic AI (EMM-4)
+
+**Test Results**:
+- **50 games** played between PyTorch V5 and EMM-4
+- **PyTorch V5 wins: 22/50 (44.0%)**
+- **EMM-4 wins: 28/50 (56.0%)**
+- **Speed advantage: PyTorch V5 is 8.1x faster (0.7ms vs 5.5ms)**
+
+**Significance**:
+- **Competitive Performance**: Only 12% difference in win rate against strongest classic AI
+- **Speed Revolution**: Massive speed advantage for real-time applications
+- **Strategic Balance**: PyTorch V5 performs better when playing first
+- **Production Ready**: Excellent for applications where speed matters
+
+**Technical Details**:
+- Test used random dice (not fixed sequence)
+- Alternating first/second player for fairness
+- Comprehensive performance analysis included
+- New test function added: `test_ml_pytorch_v5_vs_expectiminimax_depth4()`
+
+**Impact**: PyTorch V5 represents a breakthrough in ML AI development, being the first model to compete with the strongest expectiminimax AI while maintaining massive speed advantages.
+
+### 5. ML AI Training Regression (July 2025)
 
 **Problem**: Newer ML models (v4, hybrid) perform worse than older v2 model despite more training data and better validation metrics.
 

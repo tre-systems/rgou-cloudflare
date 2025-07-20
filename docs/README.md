@@ -57,13 +57,13 @@ This directory contains comprehensive documentation for the Royal Game of Ur pro
 
 ### ML AI Models Performance
 
-| Model          | Win Rate vs EMM-3 | Status                  |
-| -------------- | ----------------- | ----------------------- |
-| **PyTorch V5** | **49.0%**         | ✅ **Best Performance** |
-| **v2**         | 40.0%             | ⚠️ Needs Improvement    |
-| **Fast**       | N/A               | ⚠️ Not tested vs EMM    |
-| **v4**         | 20.0%             | ❌ Needs Retraining     |
-| **Hybrid**     | 30.0%             | ❌ Needs Retraining     |
+| Model          | Win Rate vs EMM-3 | Win Rate vs EMM-4 | Status                  |
+| -------------- | ----------------- | ----------------- | ----------------------- |
+| **PyTorch V5** | **49.0%**         | **44.0%**         | ✅ **Best Performance** |
+| **v2**         | 40.0%             | N/A               | ⚠️ Needs Improvement    |
+| **Fast**       | N/A               | N/A               | ⚠️ Not tested vs EMM    |
+| **v4**         | 20.0%             | N/A               | ❌ Needs Retraining     |
+| **Hybrid**     | 30.0%             | N/A               | ❌ Needs Retraining     |
 
 ## 🚀 Latest Training Options
 

@@ -441,6 +441,119 @@ fn play_game_ml_vs_ml(
     }
 }
 
+fn play_game_ml_vs_expectiminimax_depth4(
+    ml_ai: &mut MLAI,
+    expectiminimax_ai: &mut AI,
+    ml_plays_first: bool,
+) -> GameResult {
+    let mut game_state = GameState::new();
+    let mut moves_played = 0;
+    let max_moves = 200;
+    let mut ml_ai_total_time_ms = 0;
+    let mut expectiminimax_ai_total_time_ms = 0;
+    let mut ml_ai_moves = 0;
+    let mut expectiminimax_ai_moves = 0;
+
+    while !game_state.is_game_over() && moves_played < max_moves {
+        let current_player = game_state.current_player;
+        let is_ml_turn = (current_player == Player::Player1) == ml_plays_first;
+
+        game_state.dice_roll = dice::roll_dice();
+
+        if game_state.dice_roll == 0 {
+            game_state.current_player = game_state.current_player.opponent();
+            continue;
+        }
+
+        let best_move = if is_ml_turn {
+            let ml_state = convert_game_state_to_ml(&game_state);
+            let start_time = std::time::Instant::now();
+            let ml_response = ml_ai.get_best_move(&ml_state);
+            let end_time = std::time::Instant::now();
+            ml_ai_total_time_ms += end_time.duration_since(start_time).as_millis() as u64;
+            ml_ai_moves += 1;
+            ml_response.r#move
+        } else {
+            let start_time = std::time::Instant::now();
+            let (move_option, _) = expectiminimax_ai.get_best_move(&game_state, 4);
+            let end_time = std::time::Instant::now();
+            expectiminimax_ai_total_time_ms +=
+                end_time.duration_since(start_time).as_millis() as u64;
+            expectiminimax_ai_moves += 1;
+            move_option
+        };
+
+        if let Some(piece_index) = best_move {
+            game_state.make_move(piece_index).unwrap();
+            moves_played += 1;
+
+            if game_state.is_game_over() {
+                let p1_finished = game_state
+                    .player1_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+                let p2_finished = game_state
+                    .player2_pieces
+                    .iter()
+                    .filter(|p| p.square == 20)
+                    .count();
+
+                let winner = if p1_finished == PIECES_PER_PLAYER {
+                    Player::Player1
+                } else {
+                    Player::Player2
+                };
+
+                return GameResult {
+                    winner,
+                    moves_played,
+                    ml_ai_was_player1: ml_plays_first,
+                    p1_finished_pieces: p1_finished,
+                    p2_finished_pieces: p2_finished,
+                    ml_ai_total_time_ms,
+                    expectiminimax_ai_total_time_ms,
+                    ml_ai_moves,
+                    expectiminimax_ai_moves,
+                };
+            }
+        } else {
+            game_state.current_player = game_state.current_player.opponent();
+        }
+    }
+
+    let p1_finished = game_state
+        .player1_pieces
+        .iter()
+        .filter(|p| p.square == 20)
+        .count();
+    let p2_finished = game_state
+        .player2_pieces
+        .iter()
+        .filter(|p| p.square == 20)
+        .count();
+
+    let winner = if p1_finished > p2_finished {
+        Player::Player1
+    } else if p2_finished > p1_finished {
+        Player::Player2
+    } else {
+        Player::Player1
+    };
+
+    GameResult {
+        winner,
+        moves_played,
+        ml_ai_was_player1: ml_plays_first,
+        p1_finished_pieces: p1_finished,
+        p2_finished_pieces: p2_finished,
+        ml_ai_total_time_ms,
+        expectiminimax_ai_total_time_ms,
+        ml_ai_moves,
+        expectiminimax_ai_moves,
+    }
+}
+
 #[test]
 fn test_ml_vs_expectiminimax_ai() {
     println!("Loading ML AI weights from {}", ML_WEIGHTS_FILE);
@@ -2470,6 +2583,182 @@ fn test_ml_pytorch_v5_vs_expectiminimax_ai() {
     if ml_win_rate > 50.0 {
         println!("• ML PyTorch v5 AI is ready for production use");
         println!("• Consider replacing previous ML versions");
+        println!("• Add to the main test matrix");
+    } else {
+        println!("• Retrain ML PyTorch v5 AI with more games or epochs");
+        println!("• Experiment with different network architectures");
+        println!("• Try self-play training for further improvement");
+    }
+}
+
+#[test]
+fn test_ml_pytorch_v5_vs_expectiminimax_depth4() {
+    let num_games = 50;
+    println!("\n🎮 Testing ML PyTorch v5 AI vs Expectiminimax Depth 4 ({} games)", num_games);
+
+    let (value_weights, policy_weights) = match load_ml_pytorch_v5_weights() {
+        Ok(weights) => weights,
+        Err(e) => {
+            eprintln!("Failed to load ML PyTorch v5 weights: {}", e);
+            eprintln!("Skipping ML PyTorch v5 vs Expectiminimax Depth 4 test");
+            return;
+        }
+    };
+
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
+    let mut results = Vec::new();
+    let mut ml_wins = 0;
+    let mut expectiminimax_wins = 0;
+    let mut ml_first_wins = 0;
+    let mut ml_second_wins = 0;
+    let mut total_moves = 0;
+    let mut ml_total_time = 0;
+    let mut expectiminimax_total_time = 0;
+    let mut ml_moves = 0;
+    let mut expectiminimax_moves = 0;
+
+    for i in 0..num_games {
+        let ml_plays_first = i % 2 == 0;
+        let result = play_game_ml_vs_expectiminimax_depth4(&mut ml_ai, &mut expectiminimax_ai, ml_plays_first);
+        
+        results.push(result.clone());
+        
+        match result.winner {
+            Player::Player1 => {
+                if result.ml_ai_was_player1 {
+                    ml_wins += 1;
+                    if ml_plays_first {
+                        ml_first_wins += 1;
+                    } else {
+                        ml_second_wins += 1;
+                    }
+                } else {
+                    expectiminimax_wins += 1;
+                }
+            }
+            Player::Player2 => {
+                if !result.ml_ai_was_player1 {
+                    ml_wins += 1;
+                    if ml_plays_first {
+                        ml_first_wins += 1;
+                    } else {
+                        ml_second_wins += 1;
+                    }
+                } else {
+                    expectiminimax_wins += 1;
+                }
+            }
+        }
+        
+        total_moves += result.moves_played;
+        ml_total_time += result.ml_ai_total_time_ms;
+        expectiminimax_total_time += result.expectiminimax_ai_total_time_ms;
+        ml_moves += result.ml_ai_moves;
+        expectiminimax_moves += result.expectiminimax_ai_moves;
+
+        if (i + 1) % 10 == 0 {
+            println!("Completed {} games...", i + 1);
+        }
+    }
+
+    let ml_win_rate = (ml_wins as f64 / num_games as f64) * 100.0;
+    let avg_moves = total_moves as f64 / num_games as f64;
+
+    println!("\n======================================================================");
+    println!("📊 ML PyTorch v5 AI vs EXPECTIMINIMAX DEPTH 4 RESULTS");
+    println!("======================================================================");
+    println!("Total games: {}", num_games);
+    println!("ML PyTorch v5 AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
+    println!(
+        "Expectiminimax Depth 4 wins: {} ({:.1}%)",
+        expectiminimax_wins,
+        100.0 - ml_win_rate
+    );
+    println!("Average moves per game: {:.1}", avg_moves);
+    println!(
+        "Average time per move - ML PyTorch v5 AI: {:.1}ms",
+        ml_total_time as f64 / ml_moves as f64
+    );
+    println!(
+        "Average time per move - EMM Depth 4: {:.1}ms",
+        expectiminimax_total_time as f64 / expectiminimax_moves as f64
+    );
+    println!(
+        "Total moves made - ML PyTorch v5 AI: {}, EMM Depth 4: {}",
+        ml_moves, expectiminimax_moves
+    );
+    println!(
+        "ML PyTorch v5 AI wins playing first: {} / {}",
+        ml_first_wins,
+        (num_games + 1) / 2
+    );
+    println!(
+        "ML PyTorch v5 AI wins playing second: {} / {}",
+        ml_second_wins,
+        num_games / 2
+    );
+
+    println!("\n📈 PERFORMANCE ANALYSIS:");
+    println!("------------------------------");
+    if expectiminimax_total_time > 0 && ml_total_time > 0 {
+        let speed_factor = expectiminimax_total_time as f64 / ml_total_time as f64;
+        println!("EMM Depth 4 is {:.1}x slower than ML PyTorch v5 AI", speed_factor);
+    }
+
+    if ml_win_rate > 55.0 {
+        println!("✅ ML PyTorch v5 AI significantly outperforms Expectiminimax Depth 4");
+    } else if ml_win_rate > 50.0 {
+        println!("✅ ML PyTorch v5 AI shows clear advantage over Expectiminimax Depth 4");
+    } else if ml_win_rate > 45.0 {
+        println!("⚠️  ML PyTorch v5 AI shows moderate advantage over Expectiminimax Depth 4");
+    } else if ml_win_rate > 35.0 {
+        println!("📊 ML PyTorch v5 AI and Expectiminimax Depth 4 are closely matched");
+    } else {
+        println!("❌ Expectiminimax Depth 4 outperforms ML PyTorch v5 AI");
+    }
+
+    println!("\n🎯 STRATEGIC INSIGHTS:");
+    println!("-------------------------");
+    if ml_first_wins > ml_second_wins {
+        println!("• ML PyTorch v5 AI performs better when playing first");
+    } else if ml_second_wins > ml_first_wins {
+        println!("• ML PyTorch v5 AI performs better when playing second");
+    } else {
+        println!("• ML PyTorch v5 AI performance is balanced regardless of turn order");
+    }
+
+    if avg_moves < 120.0 {
+        println!("• Games are relatively short, suggesting decisive play");
+    } else if avg_moves > 150.0 {
+        println!("• Games are long, suggesting defensive play");
+    } else {
+        println!("• Games have moderate length, balanced play");
+    }
+
+    println!("\n🔍 RECOMMENDATIONS:");
+    println!("--------------------");
+    if ml_win_rate > 55.0 {
+        println!("✅ ML PyTorch v5 AI shows excellent performance against Depth 4");
+        println!("   Ready for production use");
+    } else if ml_win_rate > 45.0 {
+        println!("✅ ML PyTorch v5 AI shows strong performance against Depth 4");
+        println!("   Consider using for competitive play");
+    } else if ml_win_rate > 40.0 {
+        println!("⚠️  ML PyTorch v5 AI shows competitive performance against Depth 4");
+        println!("   May need further training for optimal results");
+    } else {
+        println!("❌ ML PyTorch v5 AI needs improvement against Depth 4");
+        println!("   Consider retraining with more data or better parameters");
+    }
+
+    println!("\n🚀 NEXT STEPS:");
+    println!("---------------");
+    if ml_win_rate > 50.0 {
+        println!("• ML PyTorch v5 AI can compete with Expectiminimax Depth 4");
+        println!("• Consider using for high-performance applications");
         println!("• Add to the main test matrix");
     } else {
         println!("• Retrain ML PyTorch v5 AI with more games or epochs");

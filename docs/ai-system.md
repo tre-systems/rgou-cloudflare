@@ -101,14 +101,13 @@ Based on comprehensive testing of 1,250 games across all AI types:
 
 ### ML AI Performance (Updated)
 
-| Model      | Win Rate vs EMM-3 | Status                  |
-| ---------- | ----------------- | ----------------------- |
-| **PyTorch V5** | **49.0%**        | ✅ **Best Performance** |
-| **v2**     | 40.0%            | ⚠️ Needs Improvement    |
-| **Fast**   | N/A              | ⚠️ Not tested vs EMM    |
-| **v4**     | 20.0%            | ❌ Needs Retraining     |
-| **Hybrid** | 30.0%            | ❌ Needs Retraining     |
-| Random AI              | 50.0%     | N/A          | Instant | Baseline for comparison    |
+| Model          | Win Rate vs EMM-3 | Win Rate vs EMM-4 | Status                  |
+| -------------- | ----------------- | ----------------- | ----------------------- |
+| **PyTorch V5** | **49.0%**         | **44.0%**         | ✅ **Best Performance** |
+| **v2**         | 40.0%             | N/A               | ⚠️ Needs Improvement    |
+| **Fast**       | N/A               | N/A               | ⚠️ Not tested vs EMM    |
+| **v4**         | 20.0%             | N/A               | ❌ Needs Retraining     |
+| **Hybrid**     | 30.0%             | N/A               | ❌ Needs Retraining     |
 
 ### ML AI Models Performance
 
@@ -123,8 +122,9 @@ Based on comprehensive testing of 1,250 games across all AI types:
 
 1. **Depth 3 is Optimal**: Provides the best performance/speed ratio for this game
 2. **Depth Matters Significantly**: Each depth level provides substantial improvement
-3. **ML AI is Competitive**: v2 model shows 44% win rate vs EMM-3
-4. **Training Regression**: Newer models (v4, hybrid) perform worse than v2 despite more training data
+3. **ML AI Breakthrough**: PyTorch V5 shows 44% win rate vs EMM-4 (strongest classic AI)
+4. **Speed Advantage**: PyTorch V5 is 8.1x faster than EMM-4 while being competitive
+5. **Training Regression**: Newer models (v4, hybrid) perform worse than v2 despite more training data
 
 ### Speed Analysis
 
@@ -138,6 +138,7 @@ Based on comprehensive testing of 1,250 games across all AI types:
 - **Primary Choice**: EMM-3 (Depth 3) - Best balance of strength and speed
 - **Maximum Strength**: EMM-4 (Depth 4) - Highest win rate but slower
 - **Fast Alternative**: EMM-2 (Depth 2) - Instant speed with strong play
+- **ML AI Breakthrough**: PyTorch V5 - Competitive with EMM-4, 8.1x faster
 - **Alternative Playstyle**: ML AI v2 - Different strategic approach
 - **Educational**: Heuristic AI - Good for learning game mechanics
 
