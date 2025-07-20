@@ -555,6 +555,16 @@ def save_weights(value_network: ValueNetwork, policy_network: PolicyNetwork, fil
     weights_data = {
         "value_weights": value_weights,
         "policy_weights": policy_weights,
+        "value_network_config": {
+            "input_size": 150,
+            "hidden_sizes": [256, 128, 64, 32],
+            "output_size": 1
+        },
+        "policy_network_config": {
+            "input_size": 150,
+            "hidden_sizes": [256, 128, 64, 32],
+            "output_size": 7
+        },
         "metadata": metadata,
     }
     

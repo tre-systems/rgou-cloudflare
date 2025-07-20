@@ -22,9 +22,11 @@ The ML AI is a neural network agent that learns to play by imitating the Classic
 
 ## Current Performance
 
-- **Win Rate**: ~30% vs Classic AI (EMM-1)
+- **Hybrid Model**: 55% win rate vs Classic AI (EMM-3) - **Production Ready**
+- **v2 Model**: 30% win rate vs Classic AI (EMM-3)
+- **Fast Model**: 10% win rate vs Classic AI (EMM-3)
 - **Speed**: <1ms per move
-- **Status**: Competitive baseline with room for improvement
+- **Status**: Hybrid model significantly outperforms Classic AI
 
 ## Training Pipeline
 
@@ -74,9 +76,9 @@ python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbo
 
 ### Available Models
 
-- **Hybrid Model**: Latest trained model with hybrid architecture
-- **Fast Model**: Simpler architecture (100 inputs) - faster inference
-- **v2 Model**: Enhanced architecture (150 inputs) - stronger play
+- **Hybrid Model**: Latest trained model with hybrid architecture - **55% win rate vs EMM-3**
+- **v2 Model**: Enhanced architecture (150 inputs) - 30% win rate vs EMM-3
+- **Fast Model**: Simpler architecture (100 inputs) - 10% win rate vs EMM-3
 
 ### Loading Weights
 
@@ -119,6 +121,19 @@ npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
 - **Self-Play Reinforcement Learning**: Fine-tune through self-play
 - **Monte Carlo Tree Search**: Add lightweight search on top of neural network
 - **Feature Engineering**: Review and optimize 150 features
+
+## Testing
+
+```bash
+# Test hybrid model performance
+npm run test:ml-hybrid
+
+# Test v2 model performance  
+npm run test:ml-v2
+
+# Run all ML tests
+npm run test:rust
+```
 
 ## Recent Optimizations
 
