@@ -410,6 +410,22 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 - **Architecture**: Same neural network (150 features → [256,128,64,32] → 1/7)
 - **Optimizations**: Increased batch size for faster training, Apple Metal acceleration
 
+**v5 Model Results (July 2025)**:
+
+- **Win Rate vs Expectiminimax AI**: 49.0% (100 games)
+- **Average Win Rate vs Other ML Models**: 61.7% (20 games each)
+- **Performance Rating**: ⭐⭐⭐⭐⭐ (Best performing model)
+- **Average Move Time**: 0.7ms
+- **Key Insight**: Performs better when playing second (60% vs 38% when playing first)
+
+**Model Comparison Results**:
+- **PyTorch V5**: 61.7% average win rate (1st place)
+- **Fast**: 55.0% average win rate (2nd place)
+- **V2**: 41.7% average win rate (3rd place)
+- **V4**: 41.7% average win rate (4th place)
+
+**Recommendation**: PyTorch V5 is ready for production use and represents a significant improvement over previous models.
+
 ## Lessons Learned
 
 ### 1. Training Data Quality > Quantity

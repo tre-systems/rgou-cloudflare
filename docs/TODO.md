@@ -2,8 +2,8 @@
 
 ## High Priority
 
+- [x] Improve ML AI performance vs Classic AI
 - [ ] Investigate ONNX and 'trace' for ML AI
-- [ ] Improve ML AI performance vs Classic AI
 - [ ] Optimize neural network architecture
 
 ## Medium Priority

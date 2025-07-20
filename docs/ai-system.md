@@ -98,6 +98,16 @@ Based on comprehensive testing of 1,250 games across all AI types:
 | **Classic AI (EMM-3)** | **70.0%** | 3-ply        | 15ms    | **Optimal - Best balance** |
 | Classic AI (EMM-2)     | 98.0%     | 2-ply        | Instant | Strong alternative         |
 | Heuristic AI           | 40.0%     | N/A          | Instant | Educational baseline       |
+
+### ML AI Performance (Updated)
+
+| Model      | Win Rate vs EMM-3 | Status                  |
+| ---------- | ----------------- | ----------------------- |
+| **PyTorch V5** | **49.0%**        | ✅ **Best Performance** |
+| **v2**     | 40.0%            | ⚠️ Needs Improvement    |
+| **Fast**   | N/A              | ⚠️ Not tested vs EMM    |
+| **v4**     | 20.0%            | ❌ Needs Retraining     |
+| **Hybrid** | 30.0%            | ❌ Needs Retraining     |
 | Random AI              | 50.0%     | N/A          | Instant | Baseline for comparison    |
 
 ### ML AI Models Performance

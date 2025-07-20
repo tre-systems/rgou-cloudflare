@@ -7,8 +7,8 @@ This directory contains comprehensive documentation for the Royal Game of Ur pro
 ### Core System
 
 - **[Architecture Overview](./architecture-overview.md)** - System design, components, and game statistics
-- **[AI System](./ai-system.md)** - Classic expectiminimax AI and ML AI implementation
-- **[ML System Overview](./ml-system-overview.md)** - Complete ML system guide with PyTorch and Rust training
+- **[AI System](./ai-system.md)** - Classic expectiminimax AI and ML AI implementation with performance data
+- **[ML System Overview](./ml-system-overview.md)** - Complete ML system guide with training, performance matrix, and model comparisons
 - **[Game Rules and Strategy](./game-rules-strategy.md)** - Game rules and strategic concepts
 
 ### Development
@@ -57,12 +57,13 @@ This directory contains comprehensive documentation for the Royal Game of Ur pro
 
 ### ML AI Models Performance
 
-| Model      | Win Rate vs EMM-3 | Status                  |
-| ---------- | ----------------- | ----------------------- |
-| **v2**     | **44%**           | ✅ **Best Performance** |
-| **Fast**   | 36%               | Competitive             |
-| **v4**     | 32%               | ⚠️ Needs Improvement    |
-| **Hybrid** | 30%               | ⚠️ Needs Improvement    |
+| Model          | Win Rate vs EMM-3 | Status                  |
+| -------------- | ----------------- | ----------------------- |
+| **PyTorch V5** | **49.0%**         | ✅ **Best Performance** |
+| **v2**         | 40.0%             | ⚠️ Needs Improvement    |
+| **Fast**       | N/A               | ⚠️ Not tested vs EMM    |
+| **v4**         | 20.0%             | ❌ Needs Retraining     |
+| **Hybrid**     | 30.0%             | ❌ Needs Retraining     |
 
 ## 🚀 Latest Training Options
 
@@ -100,7 +101,10 @@ npm run train:rust:production
 
 ## 🔄 Recent Updates
 
-- **July 2025**: Added v5 PyTorch training configuration (2000 games, 100 epochs, ~30 min)
+- **July 2025**: PyTorch V5 model achieves 49% win rate against expectiminimax AI
+- **July 2025**: Consolidated ML test matrix into ML system overview
+- **July 2025**: Updated AI system with latest performance data
+- **July 2025**: PyTorch V5 training configuration (2000 games, 100 epochs, ~30 min)
 - **July 2025**: Consolidated ML documentation into single comprehensive guide
 - **July 2025**: Removed redundant training documentation files
 - **July 2025**: Updated AI development history with recent developments
@@ -121,13 +125,14 @@ When updating documentation:
 
 ### Consolidated Files
 
-- **ML System Overview**: Combined PyTorch training, Rust training, and system architecture
-- **AI System**: Combined Classic AI and ML AI information
+- **ML System Overview**: Combined PyTorch training, Rust training, system architecture, and model performance matrix
+- **AI System**: Combined Classic AI and ML AI information with latest performance data
 - **Architecture Overview**: Includes game statistics and database schema
 - **Testing Strategy**: Includes AI performance testing and test configuration
 
 ### Removed Files
 
+- `ml-test-matrix.md` → Consolidated into `ml-system-overview.md`
 - `pytorch-training.md` → Consolidated into `ml-system-overview.md`
 - `training-system.md` → Consolidated into `ml-system-overview.md`
 - `ml-ai-system.md` → Consolidated into `ai-system.md`

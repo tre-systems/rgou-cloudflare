@@ -15,6 +15,7 @@ const ML_V2_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v2.json";
 const ML_V3_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v3.json";
 const ML_HYBRID_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_hybrid.json";
 const ML_V4_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v4.json";
+const ML_PYTORCH_V5_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_pytorch_v5.json";
 
 #[derive(Debug, Clone)]
 struct GameResult {
@@ -187,6 +188,34 @@ fn load_ml_v4_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Erro
         .parent()
         .unwrap()
         .join("ml/data/weights/ml_ai_weights_v4.json");
+    let content = std::fs::read_to_string(weights_path)?;
+    let weights: serde_json::Value = serde_json::from_str(&content)?;
+
+    let value_weights: Vec<f32> = weights["value_weights"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap() as f32)
+        .collect();
+
+    let policy_weights: Vec<f32> = weights["policy_weights"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap() as f32)
+        .collect();
+
+    Ok((value_weights, policy_weights))
+}
+
+fn load_ml_pytorch_v5_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let weights_path = std::path::Path::new(manifest_dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ml/data/weights/ml_ai_weights_pytorch_v5.json");
     let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
@@ -2270,5 +2299,301 @@ fn test_ml_v4_vs_expectiminimax_ai() {
         println!("• Retrain ML-v4 AI with more games or epochs");
         println!("• Experiment with different network architectures");
         println!("• Try self-play training for further improvement");
+    }
+}
+
+#[test]
+fn test_ml_pytorch_v5_vs_expectiminimax_ai() {
+    let num_games = num_games();
+    println!("\n🎮 Testing ML PyTorch v5 AI vs Expectiminimax AI ({} games)", num_games);
+
+    let (value_weights, policy_weights) = match load_ml_pytorch_v5_weights() {
+        Ok(weights) => weights,
+        Err(e) => {
+            eprintln!("Failed to load ML PyTorch v5 weights: {}", e);
+            eprintln!("Skipping ML PyTorch v5 vs Expectiminimax test");
+            return;
+        }
+    };
+
+    let mut ml_ai = MLAI::new();
+    ml_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
+    let mut results = Vec::new();
+    let mut ml_wins = 0;
+    let mut expectiminimax_wins = 0;
+    let mut ml_first_wins = 0;
+    let mut ml_second_wins = 0;
+    let mut total_moves = 0;
+    let mut ml_total_time = 0;
+    let mut expectiminimax_total_time = 0;
+    let mut ml_moves = 0;
+    let mut expectiminimax_moves = 0;
+
+    for i in 0..num_games {
+        let ml_plays_first = i % 2 == 0;
+        let result = play_game_ml_vs_expectiminimax(&mut ml_ai, &mut expectiminimax_ai, ml_plays_first);
+        
+        results.push(result.clone());
+        
+        match result.winner {
+            Player::Player1 => {
+                if result.ml_ai_was_player1 {
+                    ml_wins += 1;
+                    if ml_plays_first {
+                        ml_first_wins += 1;
+                    } else {
+                        ml_second_wins += 1;
+                    }
+                } else {
+                    expectiminimax_wins += 1;
+                }
+            }
+            Player::Player2 => {
+                if !result.ml_ai_was_player1 {
+                    ml_wins += 1;
+                    if ml_plays_first {
+                        ml_first_wins += 1;
+                    } else {
+                        ml_second_wins += 1;
+                    }
+                } else {
+                    expectiminimax_wins += 1;
+                }
+            }
+        }
+        
+        total_moves += result.moves_played;
+        ml_total_time += result.ml_ai_total_time_ms;
+        expectiminimax_total_time += result.expectiminimax_ai_total_time_ms;
+        ml_moves += result.ml_ai_moves;
+        expectiminimax_moves += result.expectiminimax_ai_moves;
+
+        if (i + 1) % 10 == 0 {
+            println!("Completed {} games...", i + 1);
+        }
+    }
+
+    let ml_win_rate = (ml_wins as f64 / num_games as f64) * 100.0;
+    let avg_moves = total_moves as f64 / num_games as f64;
+
+    println!("\n======================================================================");
+    println!("📊 ML PyTorch v5 AI vs EXPECTIMINIMAX AI RESULTS");
+    println!("======================================================================");
+    println!("Total games: {}", num_games);
+    println!("ML PyTorch v5 AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
+    println!(
+        "Expectiminimax AI wins: {} ({:.1}%)",
+        expectiminimax_wins,
+        100.0 - ml_win_rate
+    );
+    println!("Average moves per game: {:.1}", avg_moves);
+    println!(
+        "Average time per move - ML PyTorch v5 AI: {:.1}ms",
+        ml_total_time as f64 / ml_moves as f64
+    );
+    println!(
+        "Average time per move - EMM: {:.1}ms",
+        expectiminimax_total_time as f64 / expectiminimax_moves as f64
+    );
+    println!(
+        "Total moves made - ML PyTorch v5 AI: {}, EMM: {}",
+        ml_moves, expectiminimax_moves
+    );
+    println!(
+        "ML PyTorch v5 AI wins playing first: {} / {}",
+        ml_first_wins,
+        (num_games + 1) / 2
+    );
+    println!(
+        "ML PyTorch v5 AI wins playing second: {} / {}",
+        ml_second_wins,
+        num_games / 2
+    );
+
+    println!("\n📈 PERFORMANCE ANALYSIS:");
+    println!("------------------------------");
+    if expectiminimax_total_time > 0 && ml_total_time > 0 {
+        let speed_factor = expectiminimax_total_time as f64 / ml_total_time as f64;
+        println!("EMM is {:.1}x slower than ML PyTorch v5 AI", speed_factor);
+    }
+
+    if ml_win_rate > 55.0 {
+        println!("✅ ML PyTorch v5 AI significantly outperforms Expectiminimax AI");
+    } else if ml_win_rate > 50.0 {
+        println!("✅ ML PyTorch v5 AI shows clear advantage over Expectiminimax AI");
+    } else if ml_win_rate > 45.0 {
+        println!("⚠️  ML PyTorch v5 AI shows moderate advantage over Expectiminimax AI");
+    } else if ml_win_rate > 35.0 {
+        println!("📊 ML PyTorch v5 AI and Expectiminimax AI are closely matched");
+    } else {
+        println!("❌ Expectiminimax AI outperforms ML PyTorch v5 AI");
+    }
+
+    println!("\n🎯 STRATEGIC INSIGHTS:");
+    println!("-------------------------");
+    if ml_first_wins > ml_second_wins {
+        println!("• ML PyTorch v5 AI performs better when playing first");
+    } else if ml_second_wins > ml_first_wins {
+        println!("• ML PyTorch v5 AI performs better when playing second");
+    } else {
+        println!("• ML PyTorch v5 AI performance is balanced regardless of turn order");
+    }
+
+    if avg_moves < 120.0 {
+        println!("• Games are relatively short, suggesting decisive play");
+    } else if avg_moves > 150.0 {
+        println!("• Games are long, suggesting defensive play");
+    } else {
+        println!("• Games have moderate length, balanced play");
+    }
+
+    println!("\n🔍 RECOMMENDATIONS:");
+    println!("--------------------");
+    if ml_win_rate > 55.0 {
+        println!("✅ ML PyTorch v5 AI shows excellent performance");
+        println!("   Ready for production use");
+    } else if ml_win_rate > 45.0 {
+        println!("✅ ML PyTorch v5 AI shows strong performance");
+        println!("   Consider using for competitive play");
+    } else if ml_win_rate > 40.0 {
+        println!("⚠️  ML PyTorch v5 AI shows competitive performance");
+        println!("   May need further training for optimal results");
+    } else {
+        println!("❌ ML PyTorch v5 AI needs improvement");
+        println!("   Consider retraining with more data or better parameters");
+    }
+
+    println!("\n🚀 NEXT STEPS:");
+    println!("---------------");
+    if ml_win_rate > 50.0 {
+        println!("• ML PyTorch v5 AI is ready for production use");
+        println!("• Consider replacing previous ML versions");
+        println!("• Add to the main test matrix");
+    } else {
+        println!("• Retrain ML PyTorch v5 AI with more games or epochs");
+        println!("• Experiment with different network architectures");
+        println!("• Try self-play training for further improvement");
+    }
+}
+
+#[test]
+fn test_ml_model_comparison_matrix() {
+    let num_games = 20;
+    println!("\n🎮 ML Model Comparison Matrix ({} games each)", num_games);
+    println!("{}", "=".repeat(60));
+
+    let models = vec![
+        ("Fast", load_ml_weights as fn() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>),
+        ("V2", load_ml_v2_weights as fn() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>),
+        ("V4", load_ml_v4_weights as fn() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>),
+        ("PyTorch V5", load_ml_pytorch_v5_weights as fn() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>),
+    ];
+
+    let mut results = Vec::new();
+
+    for (i, (name1, loader1)) in models.iter().enumerate() {
+        for (j, (name2, loader2)) in models.iter().enumerate() {
+            if i >= j { continue; }
+
+            println!("\n🔄 Testing {} vs {}", name1, name2);
+
+            let (weights1_v, weights1_p) = match loader1() {
+                Ok(weights) => weights,
+                Err(e) => {
+                    eprintln!("Failed to load {} weights: {}", name1, e);
+                    continue;
+                }
+            };
+
+            let (weights2_v, weights2_p) = match loader2() {
+                Ok(weights) => weights,
+                Err(e) => {
+                    eprintln!("Failed to load {} weights: {}", name2, e);
+                    continue;
+                }
+            };
+
+            let mut ai1 = MLAI::new();
+            ai1.load_pretrained(&weights1_v, &weights1_p);
+            let mut ai2 = MLAI::new();
+            ai2.load_pretrained(&weights2_v, &weights2_p);
+
+            let mut wins1 = 0;
+            let mut wins2 = 0;
+            let mut total_moves = 0;
+
+            for game in 0..num_games {
+                let ai1_first = game % 2 == 0;
+                let result = play_game_ml_vs_ml(&mut ai1, &mut ai2, ai1_first);
+                
+                total_moves += result.moves_played;
+                
+                let ai1_won = if result.ml_ai_was_player1 {
+                    result.winner == Player::Player1
+                } else {
+                    result.winner == Player::Player2
+                };
+
+                if ai1_won {
+                    wins1 += 1;
+                } else {
+                    wins2 += 1;
+                }
+            }
+
+            let win_rate1 = (wins1 as f64 / num_games as f64) * 100.0;
+            let avg_moves = total_moves as f64 / num_games as f64;
+
+            results.push((name1.to_string(), name2.to_string(), win_rate1, avg_moves));
+
+            println!("  {} wins: {} ({:.1}%)", name1, wins1, win_rate1);
+            println!("  {} wins: {} ({:.1}%)", name2, wins2, 100.0 - win_rate1);
+            println!("  Average moves: {:.1}", avg_moves);
+        }
+    }
+
+    println!("\n\n");
+    println!("📊 ML MODEL COMPARISON MATRIX");
+    println!("{}", "=".repeat(60));
+    println!("{:<12} {:<12} {:<10} {:<10}", "Model 1", "Model 2", "Win Rate 1", "Avg Moves");
+    println!("{}", "-".repeat(50));
+    
+    for (name1, name2, win_rate, avg_moves) in &results {
+        println!("{:<12} {:<12} {:<10.1}% {:<10.1}", name1, name2, win_rate, avg_moves);
+    }
+
+    println!("\n🏆 PERFORMANCE SUMMARY:");
+    println!("{}", "-".repeat(30));
+    
+    let mut model_wins = std::collections::HashMap::new();
+    for (name1, name2, win_rate, _) in &results {
+        *model_wins.entry(name1.clone()).or_insert(0.0) += win_rate;
+        *model_wins.entry(name2.clone()).or_insert(0.0) += 100.0 - win_rate;
+    }
+
+    let mut sorted_models: Vec<_> = model_wins.iter().collect();
+    sorted_models.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap());
+
+    for (i, (model, total_win_rate)) in sorted_models.iter().enumerate() {
+        let avg_win_rate = *total_win_rate / (models.len() - 1) as f64;
+        println!("{}. {}: {:.1}% average win rate", i + 1, model, avg_win_rate);
+    }
+
+    println!("\n🎯 RECOMMENDATIONS:");
+    println!("{}", "-".repeat(20));
+    if let Some((best_model, best_rate)) = sorted_models.first() {
+        let avg_rate = *best_rate / (models.len() - 1) as f64;
+        if avg_rate > 60.0 {
+            println!("✅ {} is the clear winner with {:.1}% average win rate", best_model, avg_rate);
+            println!("   Ready for production use");
+        } else if avg_rate > 50.0 {
+            println!("✅ {} shows the best performance with {:.1}% average win rate", best_model, avg_rate);
+            println!("   Consider using for competitive play");
+        } else {
+            println!("⚠️  All models show similar performance");
+            println!("   Consider retraining with different architectures");
+        }
     }
 }
