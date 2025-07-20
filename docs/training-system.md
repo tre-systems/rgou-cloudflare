@@ -103,13 +103,15 @@ The system extracts 150 features from game state:
 - **Apple Silicon optimization** - Uses performance cores only
 - **Game simulation** - Generates training games with expectiminimax AI
 - **Feature extraction** - Extracts features from each position
+- **Real-time progress** - Updates every game with core utilization
 
-### Phase 2: GPU Training
+### Phase 2: Neural Network Training
 
-- **Burn framework** - Pure Rust GPU acceleration
-- **Apple Silicon Metal** - Native GPU support
-- **Automatic differentiation** - Built-in backpropagation
-- **Optimization** - Adam optimizer with learning rate scheduling
+- **Sequential gradient descent** - Standard ML training approach
+- **Dual networks** - Separate value and policy networks
+- **Progress monitoring** - Updates every 10 seconds with loss trends
+- **Early stopping** - Automatic stopping when no improvement
+- **Validation split** - 20% validation data for overfitting detection
 
 ### Phase 3: Model Saving
 
@@ -117,14 +119,59 @@ The system extracts 150 features from game state:
 - **Metadata tracking** - Training parameters and performance
 - **Version control** - Model versioning and comparison
 
+## Training Output
+
+### Enhanced Progress Monitoring
+
+The training system provides comprehensive real-time feedback:
+
+#### Data Generation Phase
+```
+🎮 Core 2: 5.0% - 0.0 games/sec - ETA: 0s - Samples: 150
+🎮 Core 3: 10.0% - 0.0 games/sec - ETA: 0s - Samples: 300
+...
+✅ === Data Generation Complete ===
+⏱️  Generation time: 0.25 seconds
+📊 Generated 1662 training samples
+⚡ Samples per second: 6629
+```
+
+#### Training Phase (Every 10 seconds)
+```
+🎯 Training Progress (updates every 10 seconds):
+═══════════════════════════════════════════════════════════════
+⏱️  Epoch 1/100 (2s) | Train: 2.3070 | Val: 1.9651 | Δ: +0.0000 | ETA: 3.3m
+   📊 Trends: Train 📉 | Val 📉 | Best Val: 1.9651
+   🎉 New best validation loss: 1.9651
+```
+
+#### Final Summary
+```
+🎉 === Training Complete ===
+⏱️  Total training time: 180.45 seconds
+📊 Final validation loss: 0.8234
+📈 Loss improvement: 58.12%
+```
+
+### Progress Metrics
+
+- **⏱️ Epoch Progress**: Current epoch, total epochs, epoch time
+- **📊 Loss Values**: Training and validation loss with 4 decimal precision
+- **📈 Loss Change**: Delta from previous epoch (+/-)
+- **⏰ ETA**: Estimated time remaining in minutes
+- **📉📈 Trends**: Visual indicators showing if loss is decreasing/increasing
+- **🎉 Achievements**: New best validation loss notifications
+- **🛑 Early Stopping**: Automatic stopping if no improvement for 20 epochs
+
 ## Performance
 
 ### Training Performance
 
-- **Data generation**: ~1.4 seconds per game (Apple Silicon)
-- **GPU training**: 10-20x faster than CPU
+- **Data generation**: ~6,600 samples/second across 8 cores
+- **Training speed**: ~2-3 hours for 100 epochs (5000 games)
 - **Memory efficient**: Optimized for M1/M2/M3 chips
 - **Parallel processing**: Uses all available cores
+- **Progress monitoring**: Real-time updates every 10 seconds
 
 ### Inference Performance
 

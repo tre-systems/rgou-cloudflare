@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn test_ml_ai_position_evaluation() {
-        let mut ai = MLAI::new();
+        let ai = MLAI::new();
         let state = GameState::new();
 
         let evaluation = ai.evaluate_position(&state);
