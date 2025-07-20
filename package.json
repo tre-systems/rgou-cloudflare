@@ -34,8 +34,8 @@
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
     "train:ml": "cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 1000 50 0.001 32 3",
     "train:ml:test": "cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 100 10 0.001 32 3",
-    "train:ml:v2": "caffeinate cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 5000 100 0.001 32 3 ml_ai_weights_v2.json",
-    "train:ml:v5": "caffeinate cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 5000 100 0.001 32 4 ml_ai_weights_v5.json",
+    "train:ml:v2": "caffeinate -i sh -c 'cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 5000 100 0.001 32 3 ml_ai_weights_v2.json'",
+    "train:ml:v5": "caffeinate -i sh -c 'cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 5000 100 0.001 32 4 ml_ai_weights_v5.json'",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "tsx scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts"
