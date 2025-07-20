@@ -18,20 +18,7 @@ interface MLWeights {
   };
 }
 
-interface MLWeightsCamelCase {
-  valueWeights: number[];
-  policyWeights: number[];
-  valueNetworkConfig: {
-    inputSize: number;
-    hiddenSizes: number[];
-    outputSize: number;
-  };
-  policyNetworkConfig: {
-    inputSize: number;
-    hiddenSizes: number[];
-    outputSize: number;
-  };
-}
+
 
 async function loadWeightsFile(weightsPath: string): Promise<MLWeights> {
   const fullPath = path.resolve(weightsPath);
@@ -42,26 +29,7 @@ async function loadWeightsFile(weightsPath: string): Promise<MLWeights> {
 
   const content = fs.readFileSync(fullPath, 'utf-8');
   const parsed = JSON.parse(content);
-  
-  // Check if it's camelCase format and convert to snake_case
-  if ('valueWeights' in parsed) {
-    const camelCase = parsed as MLWeightsCamelCase;
-    return {
-      value_weights: camelCase.valueWeights,
-      policy_weights: camelCase.policyWeights,
-      value_network_config: {
-        input_size: camelCase.valueNetworkConfig.inputSize,
-        hidden_sizes: camelCase.valueNetworkConfig.hiddenSizes,
-        output_size: camelCase.valueNetworkConfig.outputSize,
-      },
-      policy_network_config: {
-        input_size: camelCase.policyNetworkConfig.inputSize,
-        hidden_sizes: camelCase.policyNetworkConfig.hiddenSizes,
-        output_size: camelCase.policyNetworkConfig.outputSize,
-      },
-    };
-  }
-  
+
   return parsed as MLWeights;
 }
 
@@ -98,9 +66,13 @@ function validateWeights(weights: MLWeights): void {
   );
 
   console.log('✅ Weights validation passed');
-  console.log(`Value network: ${weights.value_weights.length} weights (expected ~${expectedValueWeights})`);
-  console.log(`Policy network: ${weights.policy_weights.length} weights (expected ~${expectedPolicyWeights})`);
-  
+  console.log(
+    `Value network: ${weights.value_weights.length} weights (expected ~${expectedValueWeights})`
+  );
+  console.log(
+    `Policy network: ${weights.policy_weights.length} weights (expected ~${expectedPolicyWeights})`
+  );
+
   // Note: v2 models may have additional parameters (batch norm, dropout) that increase weight count
   if (Math.abs(weights.value_weights.length - expectedValueWeights) > 1000) {
     console.warn(`⚠️  Value network weight count differs significantly from expected`);

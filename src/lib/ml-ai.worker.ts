@@ -168,29 +168,29 @@ self.addEventListener(
           if (event.data.weights) {
             console.log('ML AI Worker: Loading weights into WASM...');
             const weights = event.data.weights as {
-              valueWeights: number[];
-              policyWeights: number[];
-              valueNetworkConfig?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
-              policyNetworkConfig?: {
-                inputSize: number;
-                hiddenSizes: number[];
-                outputSize: number;
+              value_weights: number[];
+              policy_weights: number[];
+              value_network_config?: { input_size: number; hidden_sizes: number[]; output_size: number };
+              policy_network_config?: {
+                input_size: number;
+                hidden_sizes: number[];
+                output_size: number;
               };
             };
 
-            if (weights.valueWeights) {
-              console.log('ML AI Worker: Value weights size:', weights.valueWeights.length);
-              networkConfig.value = weights.valueNetworkConfig;
-              console.log('ML AI Worker: Value network config:', weights.valueNetworkConfig);
+            if (weights.value_weights) {
+              console.log('ML AI Worker: Value weights size:', weights.value_weights.length);
+              networkConfig.value = weights.value_network_config;
+              console.log('ML AI Worker: Value network config:', weights.value_network_config);
             }
 
-            if (weights.policyWeights) {
-              console.log('ML AI Worker: Policy weights size:', weights.policyWeights.length);
-              networkConfig.policy = weights.policyNetworkConfig;
-              console.log('ML AI Worker: Policy network config:', weights.policyNetworkConfig);
+            if (weights.policy_weights) {
+              console.log('ML AI Worker: Policy weights size:', weights.policy_weights.length);
+              networkConfig.policy = weights.policy_network_config;
+              console.log('ML AI Worker: Policy network config:', weights.policy_network_config);
             }
 
-            mlWasmModule.load_ml_weights(weights.valueWeights, weights.policyWeights);
+            mlWasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
             weightsLoaded = true;
             console.log('ML AI Worker: Weights loaded successfully into WASM');
             self.postMessage({ type: 'success', id, response: { status: 'weights_loaded' } });

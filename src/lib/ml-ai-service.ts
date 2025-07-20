@@ -2,17 +2,17 @@ import type { GameState } from './schemas';
 import pako from 'pako';
 
 interface MLWeights {
-  valueWeights: number[];
-  policyWeights: number[];
-  valueNetworkConfig?: {
-    inputSize: number;
-    hiddenSizes: number[];
-    outputSize: number;
+  value_weights: number[];
+  policy_weights: number[];
+  value_network_config?: {
+    input_size: number;
+    hidden_sizes: number[];
+    output_size: number;
   };
-  policyNetworkConfig?: {
-    inputSize: number;
-    hiddenSizes: number[];
-    outputSize: number;
+  policy_network_config?: {
+    input_size: number;
+    hidden_sizes: number[];
+    output_size: number;
   };
 }
 
@@ -56,8 +56,8 @@ export class MLAIService {
   private readonly pendingRequests = new Map<number, PendingRequestType>();
   private weightsLoaded = false;
   private networkConfig: {
-    value?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
-    policy?: { inputSize: number; hiddenSizes: number[]; outputSize: number };
+    value?: { input_size: number; hidden_sizes: number[]; output_size: number };
+    policy?: { input_size: number; hidden_sizes: number[]; output_size: number };
   } = {};
 
   constructor() {
@@ -130,19 +130,19 @@ export class MLAIService {
     console.log('ML AI Service: Loading weights...');
     console.log(
       'ML AI Service: Weight sizes - Value:',
-      weights.valueWeights.length,
+      weights.value_weights.length,
       'Policy:',
-      weights.policyWeights.length
+      weights.policy_weights.length
     );
 
-    if (weights.valueNetworkConfig) {
-      console.log('ML AI Service: Value network config:', weights.valueNetworkConfig);
-      this.networkConfig.value = weights.valueNetworkConfig;
+    if (weights.value_network_config) {
+      console.log('ML AI Service: Value network config:', weights.value_network_config);
+      this.networkConfig.value = weights.value_network_config;
     }
 
-    if (weights.policyNetworkConfig) {
-      console.log('ML AI Service: Policy network config:', weights.policyNetworkConfig);
-      this.networkConfig.policy = weights.policyNetworkConfig;
+    if (weights.policy_network_config) {
+      console.log('ML AI Service: Policy network config:', weights.policy_network_config);
+      this.networkConfig.policy = weights.policy_network_config;
     }
 
     await this.ensureWorkerReady();
