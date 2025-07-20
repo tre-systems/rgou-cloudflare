@@ -44,13 +44,14 @@ The evaluation function is hand-crafted to assess the strategic value of a board
 
 ### Search Depth Optimization
 
-The Classic AI is optimized for depth 1 search, which provides the best performance/speed ratio:
+The Classic AI is optimized for depth 3 search, which provides the best performance/speed ratio:
 
-- **Production**: Depth 1 search for optimal balance of speed and quality
-- **Alternative**: Depth 2 search for slightly stronger play
+- **Production**: Depth 3 search for optimal balance of speed and quality
+- **Maximum Strength**: Depth 4 search for strongest play
+- **Fast Alternative**: Depth 2 search for instant speed with strong play
 - **Testing**: Various depths for performance analysis
 
-This optimization is based on comprehensive testing showing that tactical evaluation is more important than deep search for this game.
+This optimization is based on comprehensive testing showing that depth 3 provides excellent strength while maintaining good speed.
 
 ## ML AI
 
@@ -62,31 +63,33 @@ See the [ML AI System Documentation](./ml-ai-system.md) for a detailed breakdown
 
 In this mode, the Classic AI (Player 1) plays against the ML AI (Player 2). This provides an opportunity to observe the strategic differences between the two AI systems. The game proceeds automatically, with each AI taking its turn until a winner is decided. Both AIs run locally in the browser via WebAssembly.
 
-## Performance (July 2025)
+## Performance (January 2025)
 
 Based on comprehensive testing of 1,250 games across all AI types:
 
-| AI Type                | Win Rate  | Search Depth | Speed     | Notes                                  |
-| ---------------------- | --------- | ------------ | --------- | -------------------------------------- |
-| **Classic AI (EMM-1)** | **53.6%** | 1-ply        | Instant   | **Optimal - Best overall performance** |
-| Classic AI (EMM-2)     | 53.2%     | 2-ply        | Instant   | Strong alternative                     |
-| Heuristic AI           | 50.8%     | N/A          | Instant   | Educational baseline                   |
-| ML AI                  | 50.0%     | N/A          | <1ms/move | Neural network evaluation only         |
-| Random AI              | 48.0%     | N/A          | Instant   | Baseline for comparison                |
+| AI Type                | Win Rate  | Search Depth | Speed     | Notes                          |
+| ---------------------- | --------- | ------------ | --------- | ------------------------------ |
+| **Classic AI (EMM-4)** | **75.0%** | 4-ply        | 370ms     | **Maximum strength**           |
+| **Classic AI (EMM-3)** | **70.0%** | 3-ply        | 15ms      | **Optimal - Best balance**     |
+| Classic AI (EMM-2)     | 98.0%     | 2-ply        | Instant   | Strong alternative             |
+| ML AI                  | 49.0%     | N/A          | <1ms/move | Neural network evaluation only |
+| Heuristic AI           | 40.0%     | N/A          | Instant   | Educational baseline           |
+| Random AI              | 50.0%     | N/A          | Instant   | Baseline for comparison        |
 
 ### Key Performance Insights
 
-1. **Depth 1 is Optimal**: Provides the best performance/speed ratio for this game
-2. **Tactical Evaluation > Deep Search**: The game favors immediate position evaluation
-3. **High Luck Component**: Random AI achieves 48% vs expectiminimax, indicating significant randomness
-4. **ML AI is Competitive**: 50% win rate vs Classic AI shows good training
+1. **Depth 3 is Optimal**: Provides the best performance/speed ratio for this game
+2. **Depth Matters Significantly**: Each depth level provides substantial improvement
+3. **ML AI is Competitive**: 49% win rate vs EMM-3 shows good training
+4. **Heuristic is Weak**: Only 40% vs EMM-1, suitable for education only
 
 ### Production Recommendations
 
-- **Primary Choice**: EMM-1 (Depth 1) - Best win rate with instant speed
-- **Alternative**: EMM-2 (Depth 2) - Very good performance with instant speed
-- **Educational**: Heuristic AI - Competitive performance for learning
-- **Research**: ML AI - Alternative playstyle for experimentation
+- **Primary Choice**: EMM-3 (Depth 3) - Best balance of strength and speed
+- **Maximum Strength**: EMM-4 (Depth 4) - Highest win rate but slower
+- **Fast Alternative**: EMM-2 (Depth 2) - Instant speed with strong play
+- **Alternative Playstyle**: ML AI - Different strategic approach
+- **Educational**: Heuristic AI - Good for learning game mechanics
 
 ## Implementation Details
 
