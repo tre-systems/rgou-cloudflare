@@ -109,18 +109,6 @@ npm ci --cache .npm
 npm run nuke
 ```
 
-### ML Training Issues
-
-**Solution:**
-
-```bash
-# Ensure GPU available
-python -c "import torch; print(torch.cuda.is_available())"
-
-# Use reuse flag for faster iteration
-python ml/scripts/train_ml_ai_version.py --version v2 --reuse-games
-```
-
 ## Common Commands
 
 ### Reset Environment

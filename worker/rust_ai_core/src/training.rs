@@ -270,7 +270,7 @@ impl Trainer {
         let patience = 20;
         let mut loss_history = Vec::new();
 
-        println!("🎯 Training Progress (updates every 10 seconds):");
+        println!("🎯 Training Progres:");
         println!("═══════════════════════════════════════════════════════════════");
 
         for epoch in 0..self.config.epochs {

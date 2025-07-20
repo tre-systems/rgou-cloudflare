@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("\n🎮 Starting game generation and data preparation...");
             let training_data = trainer.generate_training_data();
 
-            // Save training data for Python to use
+            // Save training data
             println!("\n💾 Saving training data...");
             let output_data = serde_json::to_string_pretty(&training_data)?;
             std::fs::write(&config.output_file, output_data)?;

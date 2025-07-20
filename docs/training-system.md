@@ -109,7 +109,7 @@ The system extracts 150 features from game state:
 
 - **Sequential gradient descent** - Standard ML training approach
 - **Dual networks** - Separate value and policy networks
-- **Progress monitoring** - Updates every 10 seconds with loss trends
+- **Progress monitoring** - Updates with loss trends
 - **Early stopping** - Automatic stopping when no improvement
 - **Validation split** - 20% validation data for overfitting detection
 
@@ -137,10 +137,10 @@ The training system provides comprehensive real-time feedback:
 ⚡ Samples per second: 6629
 ```
 
-#### Training Phase (Every 10 seconds)
+#### Training Phase
 
 ```
-🎯 Training Progress (updates every 10 seconds):
+🎯 Training Progress:
 ═══════════════════════════════════════════════════════════════
 ⏱️  Epoch 1/100 (2s) | Train: 2.3070 | Val: 1.9651 | Δ: +0.0000 | ETA: 3.3m
    📊 Trends: Train 📉 | Val 📉 | Best Val: 1.9651
@@ -174,7 +174,7 @@ The training system provides comprehensive real-time feedback:
 - **Training speed**: ~2-3 hours for 100 epochs (5000 games)
 - **Memory efficient**: Optimized for M1/M2/M3 chips
 - **Parallel processing**: Uses all available cores
-- **Progress monitoring**: Real-time updates every 10 seconds
+- **Progress monitoring**: Real-time updates
 
 ### Inference Performance
 

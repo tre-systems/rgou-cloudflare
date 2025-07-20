@@ -171,7 +171,7 @@ All tests conducted with 100 games vs Expectiminimax AI (Depth 3) unless otherwi
 
 - **Win Rate**: 30% (30 wins, 70 losses)
 - **Training**: 10,000 games, 100 epochs, depth 3
-- **Architecture**: Hybrid Rust+Python training
+- **Architecture**: Rust training
 - **Issue**: Worst performance despite most training data
 - **Recommendation**: Revisit training approach
 
