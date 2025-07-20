@@ -11,6 +11,7 @@ pub mod features;
 pub mod genetic_params;
 pub mod ml_ai;
 pub mod neural_network;
+pub mod training;
 
 
 

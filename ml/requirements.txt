@@ -1,1 +1,3 @@
-# (No content change, just move the file to ml/requirements.txt) 
+torch>=2.0.0
+numpy>=1.21.0
+tqdm>=4.64.0 

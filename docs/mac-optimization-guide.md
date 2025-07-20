@@ -61,7 +61,7 @@ strip = true
 ./scripts/train_ml_ai_optimized.sh
 
 # Manual training
-python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai
+python ml/scripts/train_hybrid.py --num-games 10000 --epochs 300 --verbose
 ```
 
 ### Build Optimized Rust Core
@@ -75,7 +75,7 @@ python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai
 Training script uses `caffeinate -i` to keep Mac awake. If running manually:
 
 ```bash
-caffeinate -i python scripts/train_ml_ai.py
+caffeinate -i python ml/scripts/train_hybrid.py --num-games 5000 --epochs 100 --verbose
 ```
 
 ## Performance Expectations

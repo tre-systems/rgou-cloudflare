@@ -28,48 +28,77 @@ The ML AI is a neural network agent that learns to play by imitating the Classic
 
 ## Training Pipeline
 
-1. **Data Generation**: Play games using Classic AI, extract features and outcomes
-2. **Training**: Train networks with GPU acceleration (MPS/CUDA)
-3. **Evaluation**: Test vs Classic AI for win rate and move quality
+The project uses a **hybrid Rust+Python architecture** for optimal performance:
+
+1. **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
+2. **🔥 Python GPU Training**: Efficient neural network training with PyTorch
+3. **⚡ Maximum CPU Utilization**: Uses all available cores for data generation
+4. **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
 ## Quick Training
 
 ```bash
-# Train ML AI v2 (recommended)
-npm run train:ml:version -- --version v2
+# Quick test (5 games, 1 epoch)
+npm run train:ml:test
 
-# Train with custom parameters
-python ml/scripts/train_ml_ai_version.py --version v3 --epochs 500
+# Standard training (1000 games, 50 epochs)
+npm run train:ml
 
-# Reuse existing games (faster)
-python ml/scripts/train_ml_ai_version.py --version v2 --reuse-games
+# Production training (5000 games, 100 epochs)
+npm run train:ml:production
+
+# Custom training
+python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbose
 ```
 
-## Available Versions
+## Training Features
 
-| Version | Games  | Epochs | Learning Rate | Purpose           |
-| ------- | ------ | ------ | ------------- | ----------------- |
-| v1      | 100    | 50     | 0.001         | Quick testing     |
-| v2      | 1,000  | 100    | 0.001         | Standard training |
-| v3      | 5,000  | 300    | 0.0005        | Extended training |
-| v4      | 10,000 | 500    | 0.0003        | Advanced training |
-| v5      | 20,000 | 1,000  | 0.0002        | Maximum training  |
+- **🚀 GPU Acceleration**: Apple MPS, NVIDIA CUDA, or CPU fallback
+- **📁 Organized Storage**: Training data and weights in `~/Desktop/rgou-training-data/`
+- **📊 Progress Logging**: Real-time batch and epoch progress updates
+- **⏱️ Early Stopping**: Prevents overfitting with validation monitoring
+- **🧹 Clean Exit**: Proper cleanup and resource management
+
+## Training Configuration
+
+| Parameter | Default | Description |
+| --------- | ------- | ----------- |
+| `--num-games` | 1000 | Number of training games to generate |
+| `--epochs` | 50 | Training epochs |
+| `--depth` | 3 | Expectiminimax depth for expert moves |
+| `--batch-size` | auto | GPU batch size (auto-detected) |
+| `--learning-rate` | 0.001 | Learning rate |
+| `--verbose` | false | Detailed logging |
 
 ## Model Management
 
 ### Available Models
 
+- **Hybrid Model**: Latest trained model with hybrid architecture
 - **Fast Model**: Simpler architecture (100 inputs) - faster inference
 - **v2 Model**: Enhanced architecture (150 inputs) - stronger play
 
 ### Loading Weights
 
 ```bash
+# Load latest hybrid model
+npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_hybrid.json
+
 # Load fast model
 npm run load:ml-weights ml/data/weights/ml_ai_weights_fast.json
 
 # Load v2 model
 npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
+```
+
+### Training Data Organization
+
+```
+~/Desktop/rgou-training-data/
+├── data/           # Generated training data
+├── weights/        # Trained model weights
+├── logs/           # Training logs
+└── temp/           # Temporary files
 ```
 
 ## Key Improvements Needed
@@ -90,6 +119,17 @@ npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
 - **Self-Play Reinforcement Learning**: Fine-tune through self-play
 - **Monte Carlo Tree Search**: Add lightweight search on top of neural network
 - **Feature Engineering**: Review and optimize 150 features
+
+## Recent Optimizations
+
+### ✅ Completed
+
+- **Hybrid Architecture**: Rust data generation + Python GPU training
+- **Maximum CPU Utilization**: Parallel processing with rayon
+- **GPU Detection**: Automatic device selection with validation
+- **Comprehensive Logging**: Real-time progress tracking
+- **Clean Exit**: Proper resource cleanup and exit handling
+- **Organized Storage**: Desktop-based training data organization
 
 ## GPU Training Support
 

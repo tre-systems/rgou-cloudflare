@@ -17,6 +17,10 @@ crate-type = ["cdylib", "rlib"]
 name = "rgou-ai-core"
 path = "src/main.rs"
 
+[[bin]]
+name = "train"
+path = "src/bin/train.rs"
+
 [features]
 default = []
 wasm = [
@@ -41,6 +45,8 @@ web-sys = { version = "0.3", optional = true, features = ["console"] }
 lazy_static = "1.4"
 
 ndarray = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
+rayon = "1.8"
 
 [profile.release]
 opt-level = 3

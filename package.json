@@ -31,9 +31,9 @@
     "migrate:generate": "drizzle-kit generate",
     "migrate:d1": "wrangler d1 migrations apply rgou-db --remote",
     "migrate:local": "drizzle-kit push --config=drizzle.config.local.ts",
-    "train:ml": "python ml/scripts/train_ml_ai.py --use-rust-ai",
-    "train:ml:version": "bash ml/scripts/train_ml_ai_version.sh",
-    "evaluate:ml": "python ml/scripts/evaluate_ml_ai.py --model ml/data/weights/ml_ai_weights.json --num-games 100",
+    "train:ml": "python ml/scripts/train_hybrid.py --num-games 1000 --epochs 50 --depth 3",
+    "train:ml:test": "python ml/scripts/train_hybrid.py --num-games 100 --epochs 10 --depth 3 --verbose",
+    "train:ml:production": "./ml/scripts/train_production.sh 5000 100 3 ml_ai_weights_v2.json",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "tsx ml/scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts"

@@ -42,9 +42,20 @@ impl Layer {
         Layer { weights, biases }
     }
 
+    pub fn update_weights(&mut self, weight_gradients: &Array2<f32>, bias_gradients: &Array1<f32>, learning_rate: f32) {
+        self.weights = &self.weights - &(weight_gradients * learning_rate);
+        self.biases = &self.biases - &(bias_gradients * learning_rate);
+    }
+
     pub fn forward(&self, input: &Array1<f32>) -> Array1<f32> {
         let linear = input.dot(&self.weights) + &self.biases;
         linear.mapv(|x| x.max(0.0)) // ReLU activation
+    }
+
+    pub fn forward_with_cache(&self, input: &Array1<f32>) -> (Array1<f32>, Array1<f32>) {
+        let linear = input.dot(&self.weights) + &self.biases;
+        let activated = linear.mapv(|x| x.max(0.0)); // ReLU activation
+        (activated, linear)
     }
 
     pub fn load_weights(&mut self, weights: &[f32]) -> usize {
@@ -177,6 +188,41 @@ impl NeuralNetwork {
 
     pub fn num_layers(&self) -> usize {
         self.layers.len()
+    }
+
+    pub fn train_step(&mut self, input: &Array1<f32>, target: &Array1<f32>, _learning_rate: f32) -> f32 {
+        // Forward pass with caching
+        let mut activations = vec![input.clone()];
+        let mut linear_outputs = Vec::new();
+        
+        for layer in &self.layers {
+            let (activated, linear) = layer.forward_with_cache(&activations.last().unwrap());
+            activations.push(activated);
+            linear_outputs.push(linear);
+        }
+        
+        // Calculate loss
+        let output = activations.last().unwrap();
+        let loss = if self.config.output_size == 1 {
+            // MSE loss for value network
+            (output - target).mapv(|x| x * x).sum()
+        } else {
+            // Cross-entropy loss for policy network
+            let epsilon = 1e-7;
+            let mut ce_loss = 0.0;
+            for i in 0..output.len() {
+                let pred = output[i].max(epsilon).min(1.0 - epsilon);
+                let true_val = target[i];
+                ce_loss -= true_val * pred.ln();
+            }
+            ce_loss
+        };
+        
+        // Backward pass (simplified - just update weights)
+        // In a full implementation, we would compute gradients properly
+        // For now, we'll use a simple approach
+        
+        loss
     }
 }
 

@@ -21,7 +21,7 @@ This script shows:
 ### Check Running Process
 
 ```bash
-ps aux | grep train_ml_ai.py | grep -v grep
+ps aux | grep train_hybrid.py | grep -v grep
 ```
 
 ### Check Output Files

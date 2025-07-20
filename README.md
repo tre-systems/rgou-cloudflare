@@ -76,17 +76,30 @@ Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-
 
 ## 🧠 Machine Learning
 
-Train and improve the neural network AI:
+Train and improve the neural network AI with the optimized hybrid Rust+Python system:
 
 ```bash
-# Quick training
-npm run train:ml:version -- --version v2
+# Quick test
+npm run train:ml:test
+
+# Standard training
+npm run train:ml
+
+# Production training
+npm run train:ml:production
 
 # Custom training
-python ml/scripts/train_ml_ai_version.py --version v3 --epochs 500
+python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbose
 ```
 
-Features GPU acceleration, parallel processing, and versioned training. See [ML AI System](./docs/ml-ai-system.md) for complete training guide.
+**Optimized Features:**
+- **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
+- **🔥 Python GPU Training**: Efficient neural network training with PyTorch
+- **⚡ Maximum CPU Utilization**: Uses all available cores for data generation
+- **📊 Comprehensive Logging**: Detailed logs saved to `~/Desktop/rgou-training-data/logs/`
+- **📁 Organized Storage**: Training data and weights stored in `~/Desktop/rgou-training-data/`
+
+See [ML AI System](./docs/ml-ai-system.md) for complete training guide.
 
 ## 🧪 Testing
 
