@@ -361,6 +361,6 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 ## References
 
 - [Expectiminimax Algorithm](https://en.wikipedia.org/wiki/Backgammon#Computer_play)
-- [Strongly Solving the Royal Game of Ur](https://royalur.net/articles/solving/)
+- [Strongly Solving the Royal Game of Ur](https://royalur.net/solved)
 - [AlphaZero Paper](https://www.nature.com/articles/nature24270)
 - [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/)

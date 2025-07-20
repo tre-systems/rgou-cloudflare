@@ -11,13 +11,14 @@ This directory contains all documentation for the Royal Game of Ur project, orga
 - **[AI Performance](./ai-performance.md)** - Current performance data and analysis for all AI types
 - **[Architecture Overview](./architecture-overview.md)** - System design, components, and data flow
 - **[Game Rules and Strategy](./game-rules-strategy.md)** - Game rules and strategic concepts
+- **[Cloudflare Worker Infrastructure](./cloudflare-worker-infrastructure.md)** - Preserved server-side AI infrastructure and future use cases
 
 ### Development & Operations
 
 - **[Testing Strategy](./testing-strategy.md)** - Testing approach and methodology
 - **[Test Configuration Guide](./test-configuration-guide.md)** - How to run different test configurations
 - **[Troubleshooting Guide](./troubleshooting.md)** - Common issues and solutions
-- **[Current TODOs](./current-todos.md)** - Active tasks and improvements
+- **[TODO](./TODO.md)** - Consolidated task list and improvements
 - **[Game Statistics](./game-statistics.md)** - Statistics tracking and database integration
 - **[Mac Optimization Guide](./mac-optimization-guide.md)** - Performance optimization for Mac systems
 - **[Checking Training Status](./checking-training-status.md)** - How to monitor ML training progress
@@ -61,7 +62,7 @@ This directory contains all documentation for the Royal Game of Ur project, orga
 
 1. Start with [Architecture Overview](./architecture-overview.md)
 2. Read [AI System](./ai-system.md) and [ML AI System](./ml-ai-system.md)
-3. Check [Current TODOs](./current-todos.md) for active work
+3. Check [TODO](./TODO.md) for active work
 4. Use [Troubleshooting Guide](./troubleshooting.md) for issues
 
 ### For AI Development

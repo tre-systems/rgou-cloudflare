@@ -11,6 +11,7 @@ This implementation stands out for several reasons:
 - **Browser-Native AI**: All AI runs locally in your browser via WebAssembly - no server calls needed
 - **Offline-First**: Works completely offline once loaded, perfect for mobile or unreliable connections
 - **Performance**: Rust-compiled AI provides desktop-level performance in the browser
+- **Evolutionary Architecture**: Successfully migrated from hybrid client/server AI to pure client-side execution
 
 ## Principles
 
@@ -43,6 +44,27 @@ For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [ML AI
 - **Classic AI**: Rust, expectiminimax, compiled to WebAssembly
 - **ML AI**: Rust, neural network, compiled to WebAssembly
 - **Performance**: All AI runs locally in the browser (no server calls)
+- **Architecture**: Pure client-side execution via Web Workers
+
+### WASM Architecture Evolution
+
+The project has evolved from a hybrid client/server architecture to a pure client-side implementation:
+
+**Original Design (Early Development)**:
+- AI computation could run on either client (WASM) or server (Cloudflare Worker)
+- Server-side AI provided backup and potential performance benefits
+- More complex deployment and infrastructure requirements
+
+**Current Design (Production)**:
+- All AI computation runs client-side via WebAssembly workers
+- Eliminates network latency and server infrastructure costs
+- Enables true offline play without server dependencies
+- Simplified deployment and reduced attack surface
+
+**Preserved Infrastructure**:
+- Cloudflare Worker code remains in `worker/src/lib.rs` for potential future use
+- Server-side AI endpoints (`/ai-move`, `/health`) are inactive but available
+- Architecture supports easy reactivation if server-side features are needed
 
 ### Data Flow: AI Turn
 

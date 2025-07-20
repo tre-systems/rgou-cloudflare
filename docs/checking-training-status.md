@@ -1,26 +1,24 @@
 # Checking ML Training Status
 
-To safely check the status of a Royal Game of Ur ML training run, follow these steps:
+_How to safely check the status of ML training runs._
 
-## 1. Use the Provided Script (Recommended)
-
-Run this command from your project root:
+## Quick Check (Recommended)
 
 ```bash
 bash scripts/check_training_status.sh
 ```
 
-This script will:
+This script shows:
 
-- Show if the training process is running and its resource usage
-- Show the size and last modification time of `training_data_cache.json`
-- Show if output weights files (e.g., `ml/data/weights/ml_ai_weights_overnight.json`) exist
-- List the 10 most recently modified files
-- Show the top CPU processes (for troubleshooting)
+- Training process status and resource usage
+- Size and modification time of `training_data_cache.json`
+- Output weights files existence
+- Recent file activity
+- Top CPU processes
 
-## 2. Manual Checks (Advanced)
+## Manual Checks
 
-### Check for Running Training Process
+### Check Running Process
 
 ```bash
 ps aux | grep train_ml_ai.py | grep -v grep
@@ -32,7 +30,7 @@ ps aux | grep train_ml_ai.py | grep -v grep
 ls -lh training_data_cache.json ml/data/weights/ml_ai_weights_overnight.json*
 ```
 
-### Check Recent File Activity
+### Check Recent Activity
 
 ```bash
 ls -lt | head -10
@@ -44,9 +42,13 @@ ls -lt | head -10
 top -o cpu
 ```
 
-## Notes
+## Status Indicators
 
-- The script is safe to run while training is ongoing.
-- If you see a Python process with high CPU, training is still running.
-- If you see a large weights file (e.g., `ml/data/weights/ml_ai_weights_overnight.json`), training has finished.
-- If in doubt, check the terminal where you started the training for log output.
+- **Training Running**: Python process with high CPU
+- **Training Complete**: Large weights file exists
+- **Check Terminal**: Look for log output in training terminal
+
+## Related Documentation
+
+- [ML AI System](./ml-ai-system.md) - Training and AI implementation
+- [Mac Optimization Guide](./mac-optimization-guide.md) - Performance optimization

@@ -9,208 +9,152 @@
   <hr />
 </div>
 
-A modern, web-based implementation of the ancient Royal Game of Ur, featuring a beautiful UI, offline support, and two powerful AI opponents (Classic and Machine Learning-based). Built with Next.js, TypeScript, Rust, and WebAssembly.
+A modern web implementation of the ancient Royal Game of Ur (2500 BCE) with dual AI opponents, offline support, and beautiful animations. Built with Next.js, TypeScript, Rust, and WebAssembly.
 
-## What is the Royal Game of Ur?
+## 🎮 Play Now
 
-The Royal Game of Ur is one of the oldest known board games, dating to around 2500 BCE in ancient Mesopotamia. It's a strategic race game where two players compete to move all seven pieces around a unique board and off the finish line first. The game combines luck (from dice rolls) with strategic decision-making, featuring special "rosette" squares that grant extra turns and safe havens.
+**[Play Online](https://rgou.tre.systems/)** - Works in any modern browser, no installation required.
 
-This implementation brings this ancient game to life with modern technology, allowing you to play against sophisticated AI opponents that run entirely in your browser.
+## ✨ Features
 
-## Features
-
-- **Faithful Recreation**: Complete implementation of the Royal Game of Ur
-- **Dual AI System**:
-  - **Classic AI**: Expectiminimax algorithm (53.6% win rate, instant speed)
-  - **ML AI**: Neural network trained through self-play (50% win rate, <1ms/move)
-- **AI vs. AI Mode**: Watch the two AIs compete
-- **Browser-Native**: All AI runs locally via WebAssembly (no server calls)
-- **PWA Support**: Works offline, installable on mobile devices
-- **Game Statistics**: Track performance and save games to database
+- **Dual AI System**: Classic expectiminimax (53.6% win rate) + Neural network (50% win rate)
+- **Browser-Native**: All AI runs locally via WebAssembly - no server calls
+- **Offline Support**: PWA with full offline gameplay
 - **Modern UI**: Responsive design with animations and sound effects
+- **Game Statistics**: Track performance and save games to database
 
-## Quick Start
-
-**Play Online**: https://rgou.tre.systems/
-
-The game works in any modern browser and requires no installation.
-
-## Development Setup
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Git](https://git-scm.com/downloads)
-- [Node.js (v20+)](https://nodejs.org/)
-- [Rust & Cargo](https://www.rust-lang.org/tools/install)
-- `cargo install wasm-pack`
-- [Python 3.10+](https://www.python.org/downloads/) (for ML training, optional)
+- **Node.js 20+** ([Download](https://nodejs.org/)) - Required for Next.js 15
+- **Rust & Cargo** ([Install](https://www.rust-lang.org/tools/install)) - For WebAssembly compilation
+- **wasm-pack**: `cargo install wasm-pack --version 0.12.1 --locked` - For WASM builds
 
-### Local Development
+### Development Setup
 
 ```bash
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/rgilks/rgou-cloudflare.git
 cd rgou-cloudflare
+
+# Install dependencies
 npm install
+
+# Set up local database
 npm run migrate:local
+
+# Start development server
 npm run dev
 ```
 
-Game opens at http://localhost:3000
+The game will open at http://localhost:3000
 
-## AI System
+### First Run Notes
 
-The project features two distinct AI opponents, each with unique characteristics:
+- The first run may take longer as it builds WebAssembly assets
+- If you encounter WASM build issues, run: `npm run build:wasm-assets`
+- For ML training, you'll also need Python 3.10+ (see [ML AI System](./docs/ml-ai-system.md))
 
-### Classic AI (Expectiminimax)
+### Common Setup Issues
 
-- **Algorithm**: Expectiminimax with alpha-beta pruning
-- **Performance**: 53.6% win rate, instant speed
-- **Depth**: Optimized for depth 1 search
-- **Use Case**: Production gameplay, competitive play
+- **WASM Build Failures**: Ensure wasm-pack version 0.12.1 is installed
+- **Database Issues**: Run `npm run migrate:local` to set up local SQLite
+- **Dependency Issues**: Try `npm run nuke` to reset the environment
 
-### ML AI (Neural Network)
+See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
 
-- **Architecture**: Dual-head neural network (value + policy)
-- **Training**: Self-play with imitation learning
-- **Performance**: 50% win rate vs Classic AI, <1ms/move
-- **Use Case**: Alternative playstyle, research platform
+## 🤖 AI System
 
-Both AIs run entirely in the browser via WebAssembly, providing desktop-level performance without server dependencies.
+The project features two distinct AI opponents:
 
-## Machine Learning Training
+- **Classic AI**: Expectiminimax algorithm with alpha-beta pruning (instant speed)
+- **ML AI**: Neural network trained through self-play (<1ms/move)
 
-The project includes a comprehensive ML training system for developing and improving the neural network AI.
+Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-system.md) and [ML AI System](./docs/ml-ai-system.md) for details.
 
-### Quick Training
+## 🧠 Machine Learning
+
+Train and improve the neural network AI:
 
 ```bash
-# Train ML AI v2 (recommended)
+# Quick training
 npm run train:ml:version -- --version v2
 
-# Train with custom parameters
+# Custom training
 python ml/scripts/train_ml_ai_version.py --version v3 --epochs 500
-
-# Reuse existing games (faster)
-python ml/scripts/train_ml_ai_version.py --version v2 --reuse-games
 ```
 
-### Training Features
+Features GPU acceleration, parallel processing, and versioned training. See [ML AI System](./docs/ml-ai-system.md) for complete training guide.
 
-- **GPU Acceleration**: Automatic MPS (Apple Silicon) and CUDA support
-- **Parallel Processing**: 3-8x faster data generation
-- **Versioned Training**: Multiple model versions with scaled parameters
-- **Progress Tracking**: Real-time training progress with detailed metrics
-- **Weight Compression**: Automatic compression and optimization
-
-### Available Versions
-
-| Version | Games  | Epochs | Learning Rate | Purpose           |
-| ------- | ------ | ------ | ------------- | ----------------- |
-| v1      | 100    | 50     | 0.001         | Quick testing     |
-| v2      | 1,000  | 100    | 0.001         | Standard training |
-| v3      | 5,000  | 300    | 0.0005        | Extended training |
-| v4      | 10,000 | 500    | 0.0003        | Advanced training |
-| v5      | 20,000 | 1,000  | 0.0002        | Maximum training  |
-
-## Testing
-
-### Run All Tests
+## 🧪 Testing
 
 ```bash
+# Run all tests
 npm run check
-```
 
-### Test Configurations
-
-```bash
-# Quick tests (10 games each)
+# Quick tests (10 games)
 npm run test:rust:quick
 
-# Comprehensive tests (100 games each)
+# Comprehensive tests (100 games)
 npm run test:rust:slow
 
 # End-to-end tests
 npm run test:e2e
 ```
 
-### Performance Testing
+See [Testing Strategy](./docs/testing-strategy.md) for detailed testing information.
 
-```bash
-# Matrix comparison of all AI types
-npm run test:rust:matrix
-
-# ML AI evaluation
-npm run evaluate:ml -- --model ml/data/weights/ml_ai_weights_v2.json
-```
-
-## Architecture
+## 🏗️ Architecture
 
 - **Frontend**: Next.js with React, TypeScript, Tailwind CSS
-- **AI Engine**: Rust compiled to WebAssembly
+- **AI Engine**: Rust compiled to WebAssembly (client-side only)
 - **Database**: Cloudflare D1 with Drizzle ORM
 - **Deployment**: Cloudflare Pages with GitHub Actions
 
-### Key Components
+The project evolved from hybrid client/server AI to pure client-side execution for optimal performance and offline capability. See [Architecture Overview](./docs/architecture-overview.md) for detailed system design.
 
-- `src/components/` - React UI components
-- `src/lib/` - Game logic, AI services, state management
-- `worker/rust_ai_core/` - Rust AI engine
-- `ml/scripts/` - ML training system
-
-## Documentation
-
-### Current System
-
-- **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI implementation
-- **[ML AI System](./docs/ml-ai-system.md)** - Machine learning AI implementation
-- **[AI Performance](./docs/ai-performance.md)** - Current performance data and analysis
-- **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
-- **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
-
-### Development & Testing
-
-- **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
-- **[Test Configuration Guide](./docs/test-configuration-guide.md)** - How to run different test configurations
-- **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
-- **[Current TODOs](./docs/current-todos.md)** - Active tasks and improvements
-
-### Historical Research
-
-- **[AI Development History](./docs/ai-development-history.md)** - **HISTORICAL** - All AI experiments, investigations, and lessons learned
-
-## Performance
-
-### Current AI Performance (July 2025)
+## 📊 Performance
 
 | AI Type                | Win Rate  | Speed     | Use Case                |
 | ---------------------- | --------- | --------- | ----------------------- |
 | **Classic AI (EMM-1)** | **53.6%** | Instant   | **Production gameplay** |
-| Classic AI (EMM-2)     | 53.2%     | Instant   | Alternative option      |
-| Heuristic AI           | 50.8%     | Instant   | Educational baseline    |
 | ML AI                  | 50.0%     | <1ms/move | Alternative playstyle   |
-| Random AI              | 48.0%     | Instant   | Baseline testing        |
+| Heuristic AI           | 50.8%     | Instant   | Educational baseline    |
 
-## Troubleshooting
+See [AI Performance](./docs/ai-performance.md) for detailed analysis.
 
-### Common Issues
+## 📚 Documentation
 
-**Cloudflare Deployment Issues**
+### Core System
 
-- Pin exact dependency versions: `npm install --save-exact next@15.3.4 @opennextjs/cloudflare@1.3.1 wrangler@4.22.0`
-- Test both local and GitHub Actions deployments
+- **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
+- **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI implementation
+- **[ML AI System](./docs/ml-ai-system.md)** - Machine learning AI implementation
+- **[AI Performance](./docs/ai-performance.md)** - Performance data and analysis
+- **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
 
-**ML Training Issues**
+### Development
 
-- Ensure GPU is available for training (MPS for Apple Silicon, CUDA for NVIDIA)
-- Use `--reuse-games` flag for faster iteration
-- Check `ml/requirements.txt` for Python dependencies
+- **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
+- **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
+- **[TODO](./docs/TODO.md)** - Consolidated task list and improvements
 
-**WASM Build Issues**
+### Infrastructure
 
-- Run `npm run build:wasm-assets` before `npm run check`
-- Ensure `wasm-pack` is installed: `cargo install wasm-pack`
+- **[Cloudflare Worker Infrastructure](./docs/cloudflare-worker-infrastructure.md)** - Preserved server-side infrastructure
 
-## Contributing
+## 🔧 Troubleshooting
+
+**Common Issues:**
+
+- **WASM Build**: Run `npm run build:wasm-assets` before `npm run check`
+- **ML Training**: Ensure GPU available, use `--reuse-games` for faster iteration
+- **Deployment**: Pin exact dependency versions for Cloudflare compatibility
+
+See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -218,6 +162,6 @@ npm run evaluate:ml -- --model ml/data/weights/ml_ai_weights_v2.json
 4. Run tests: `npm run check`
 5. Submit a pull request
 
-## License
+## 📄 License
 
 Open source. See [LICENSE](LICENSE).

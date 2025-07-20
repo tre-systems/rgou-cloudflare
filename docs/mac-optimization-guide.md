@@ -1,10 +1,6 @@
 # Mac Optimization Guide
 
-Related: [ML AI System](./ml-ai-system.md) | [Technical Implementation Guide](./technical-implementation.md)
-
-## Overview
-
-This guide documents optimizations for ML training on Mac, especially with MPS (Metal Performance Shaders) support.
+_Performance optimization for ML training on Mac systems._
 
 ## System Requirements
 
@@ -13,33 +9,39 @@ This guide documents optimizations for ML training on Mac, especially with MPS (
 - Rust (latest stable)
 - Apple Silicon (M1/M2) or Intel Mac with Metal support
 
-## Optimizations
+## Key Optimizations
 
-### 1. GPU Acceleration (MPS)
+### GPU Acceleration (MPS)
 
 - Uses Metal for neural network training
 - 3-5x faster than CPU-only
-- Automatic device detection
 - Batch size: 128 for MPS
 - Pin memory for fast transfer
 
-### 2. Parallel Processing
+### Parallel Processing
 
 - Uses all CPU cores for data and training
-- Linear scaling with core count
 - DataLoader: up to 8 workers
 - Game simulation: all cores
 
-### 3. Memory Optimization
+### Memory Optimization
 
 - Pin memory for GPU
 - Efficient batch processing
 - Monitor memory usage
 
-### 4. Rust Compilation
+## Environment Setup
 
-- Optimized for performance
-- Example:
+### Optimal Threading
+
+```bash
+export OMP_NUM_THREADS=$(sysctl -n hw.ncpu)
+export MKL_NUM_THREADS=$(sysctl -n hw.ncpu)
+export NUMEXPR_NUM_THREADS=$(sysctl -n hw.ncpu)
+export VECLIB_MAXIMUM_THREADS=$(sysctl -n hw.ncpu)
+```
+
+### Rust Compilation
 
 ```toml
 [profile.release]
@@ -50,29 +52,16 @@ panic = "abort"
 strip = true
 ```
 
-### 5. Environment Variables
-
-- Set optimal threading for numerical libraries
-
-```bash
-export OMP_NUM_THREADS=$(sysctl -n hw.ncpu)
-export MKL_NUM_THREADS=$(sysctl -n hw.ncpu)
-export NUMEXPR_NUM_THREADS=$(sysctl -n hw.ncpu)
-export VECLIB_MAXIMUM_THREADS=$(sysctl -n hw.ncpu)
-```
-
-### 6. Neural Network Architecture
-
-- Larger hidden layers
-- Dropout for regularization
-- ReLU activations for MPS
-
 ## Usage
 
+### Training
+
 ```bash
+# Optimized training script
 ./scripts/train_ml_ai_optimized.sh
-# Or
-python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai --output ml/data/weights/ml_ai_weights.json
+
+# Manual training
+python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai
 ```
 
 ### Build Optimized Rust Core
@@ -81,25 +70,35 @@ python scripts/train_ml_ai.py --num-games 10000 --epochs 300 --use-rust-ai --out
 ./scripts/build_rust_ai.sh
 ```
 
-## Preventing Mac Sleep During Training
+## Preventing Sleep During Training
 
-- Training script uses `caffeinate -i` to keep Mac awake
-- If running manually, prefix with `caffeinate -i`
+Training script uses `caffeinate -i` to keep Mac awake. If running manually:
 
-## Performance Monitoring
+```bash
+caffeinate -i python scripts/train_ml_ai.py
+```
 
-- Built-in resource usage tracking
-- On a 10-core Mac, expect ~1000 games/min, 2-4GB RAM, 2-4 hours for 10k games/300 epochs
+## Performance Expectations
+
+- **10-core Mac**: ~1000 games/min, 2-4GB RAM
+- **Training time**: 2-4 hours for 10k games/300 epochs
 
 ## Troubleshooting
 
-- **MPS not available:** `python -c "import torch; print(torch.backends.mps.is_available())"`
-- **Memory issues:** Reduce batch size
-- **Rust build failures:** `cargo clean && cargo build --release`
+| Issue               | Solution                                                             |
+| ------------------- | -------------------------------------------------------------------- |
+| MPS not available   | `python -c "import torch; print(torch.backends.mps.is_available())"` |
+| Memory issues       | Reduce batch size                                                    |
+| Rust build failures | `cargo clean && cargo build --release`                               |
 
 ## Best Practices
 
-- Monitor system resources
+- Monitor system resources during training
 - Adjust batch size and worker count for your hardware
 - Clean Rust build artifacts periodically
 - Update PyTorch and macOS for latest improvements
+
+## Related Documentation
+
+- [ML AI System](./ml-ai-system.md) - Training and AI implementation
+- [Checking Training Status](./checking-training-status.md) - Monitor training progress
