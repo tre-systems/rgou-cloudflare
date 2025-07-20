@@ -16,15 +16,16 @@ import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
 import ModeSelectionCard from './ModeSelectionCard';
 
 const MODE_OPTIONS = [
-  {
-    key: 'heuristic',
-    label: 'Heuristic AI',
-    description: 'A fast and competitive AI using immediate position evaluation.',
-    subtitle: 'Immediate evaluation only',
-    icon: Cpu,
-    colorClass: 'text-green-400',
-    borderColorClass: 'border-green-400/30 hover:border-green-400/60',
-  },
+  // Dont delete this, it's a placeholder for the heuristic AI
+  // {
+  //   key: 'heuristic',
+  //   label: 'Heuristic AI',
+  //   description: 'A fast and competitive AI using immediate position evaluation.',
+  //   subtitle: 'Immediate evaluation only',
+  //   icon: Cpu,
+  //   colorClass: 'text-green-400',
+  //   borderColorClass: 'border-green-400/30 hover:border-green-400/60',
+  // },
   {
     key: 'classic',
     label: 'Classic AI',

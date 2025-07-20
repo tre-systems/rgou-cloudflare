@@ -686,10 +686,16 @@ def generate_training_data(
     save_data: bool = True,
     load_existing: bool = False,
     depth: int = 3,
+    training_data_dir: str = None,
 ) -> List[Dict[str, Any]]:
-    if load_existing and os.path.exists("training_data_cache.json"):
-        print("Loading existing training data...")
-        with open("training_data_cache.json", "r") as f:
+    cache_file = "training_data_cache.json"
+    if training_data_dir:
+        os.makedirs(training_data_dir, exist_ok=True)
+        cache_file = os.path.join(training_data_dir, "training_data_cache.json")
+    
+    if load_existing and os.path.exists(cache_file):
+        print(f"Loading existing training data from {cache_file}...")
+        with open(cache_file, "r") as f:
             return json.load(f)
 
     print(f"Generating {num_games} training games...")
@@ -738,8 +744,8 @@ def generate_training_data(
                 )
 
     if save_data:
-        print("Saving training data...")
-        with open("training_data_cache.json", "w") as f:
+        print(f"Saving training data to {cache_file}...")
+        with open(cache_file, "w") as f:
             json.dump(training_data, f)
 
     return training_data
@@ -792,8 +798,8 @@ def train_networks(
     value_optimizer = optim.AdamW(value_network.parameters(), lr=learning_rate, weight_decay=1e-4)
     policy_optimizer = optim.AdamW(policy_network.parameters(), lr=learning_rate, weight_decay=1e-4)
 
-    value_scheduler = optim.lr_scheduler.ReduceLROnPlateau(value_optimizer, mode='min', factor=0.5, patience=10, verbose=True)
-    policy_scheduler = optim.lr_scheduler.ReduceLROnPlateau(policy_optimizer, mode='min', factor=0.5, patience=10, verbose=True)
+    value_scheduler = optim.lr_scheduler.ReduceLROnPlateau(value_optimizer, mode='min', factor=0.5, patience=10)
+    policy_scheduler = optim.lr_scheduler.ReduceLROnPlateau(policy_optimizer, mode='min', factor=0.5, patience=10)
 
     value_criterion = nn.MSELoss()
     policy_criterion = nn.CrossEntropyLoss()
@@ -984,6 +990,17 @@ def main():
     parser.add_argument(
         "--depth", type=int, default=4, help="Expectiminimax search depth for Rust AI"
     )
+    parser.add_argument(
+        "--training-data-dir", 
+        type=str, 
+        default=None, 
+        help="Directory to store training data (default: project root)"
+    )
+    parser.add_argument(
+        "--reuse-training-data", 
+        action="store_true", 
+        help="Reuse existing training data from training_data_cache.json"
+    )
 
     args = parser.parse_args()
 
@@ -1002,8 +1019,9 @@ def main():
         num_games=args.num_games,
         use_rust_ai=args.use_rust_ai,
         save_data=True,
-        load_existing=args.load_existing,
+        load_existing=args.reuse_training_data,
         depth=args.depth,
+        training_data_dir=args.training_data_dir,
     )
 
     print(f"Generated {len(training_data)} training samples")

@@ -78,5 +78,4 @@ ml/scripts/pkg/
 
 *.pyc
 
-training_data_cache.json
-
+/test_state.json

@@ -4,35 +4,34 @@ globs:
 alwaysApply: true
 ---
 
+Code should be as simple, concise and elegant as possible.
 Make sure we can elegantly handle errors, but don't overcomplicate error handling.
 NEVER ignore linting rules! fix the problems.
 Always look for opportunities to strengthen the linting rules.
 Consolidate domain types in one location so we have a strong domain model.
 Always try and improve the type checking.
 Try and avoid duplication between types.
-Use immer where possible to avoid mutation.
-Use Zustand to manage state.
-Try to keep the state machine simple and easy to understand.
-Don't add a logging facility, the console is fine.
-Code should be as simple and concise as possible.
+Use immer in TypeScript where possible to avoid mutation.
+Use Zustand to manage state in React.
+Try to keep the state machine simple, consolidated and easy to understand.
 REMOVE ALL COMMENTS! unless they are really important.
+Don't add a logging facility, the console is fine.
 Logging should be sufficient to diagnose problems at all levels but not overdone.
 Use blank lines to make code easier to read.
 Please ALWAYS! keep the README file up to date.
-When reviewing a file, should it be broken up? can it be improved? is this functionality in the right location within the project
+When reviewing a file, should it be broken up? can it be improved? is this functionality in the right location within the project?
 Keep the test coverage high.
 We are using vitest for unit testing.
 We are using playwright for end to end testing.
 Don't write unit tests for UI components.
-Use data-testid for testing.
-Extract logic from UI components into the lib folder so it can be tested.
-Make sure changes have automated tests.
+Add data-testid to all UI components for e2e testing.
+Extract logic from UI components into the lib folder so it can be unit tested.
 Keep the .gitignore file up to date.
-Keep the .cursorignore file up to date - it should ignore large model files and build artifacts that slow down Cursor indexing.
-When adding new large files (>100KB) or model files, update both .gitignore and .cursorignore appropriately.
-Please use Rust in preference over Python if you can.
-Try to keep integration tests code concise and consolidated.
+Keep the .cursorignore file up to date - it should ignore large model files and build artifacts that slow down indexing.
+Please use Rust instead of Python if you can.
+Keep up to date documentation in the docs folder.
 Try to keep documents concise and to the point, consolidate information where possible.
-When I just type 'rcp' that means "review all changes in each file, remove comments, run 'npm run check' fix any issues and analyse the results. If there are no issues or causes for concern, update relevant documentation and then 'git add -A' and commit and push all changed files."
+When I just type 'rcp' that means "review all changes in each file, remove comments, make sure changes have automated tests, run 'npm run check' fix any issues and analyse the results. If there are no issues or causes for concern, update relevant documentation and then 'git add -A' and commit and push all changed files."
 When I just type 'p' that means "proceed"
 Dont give me a list of options to choose, devise the best plan you can and proceed with it.
+Always run training and other long running scripts using caffeinate.

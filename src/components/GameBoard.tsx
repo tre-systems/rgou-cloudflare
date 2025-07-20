@@ -203,7 +203,7 @@ export default function GameBoard({
             pieces={gameState.player2Pieces}
             isCurrentPlayer={gameState.currentPlayer === 'player2'}
             isAI={watchMode || true}
-            aiType={watchMode ? aiSourceP2 : undefined}
+            aiType={aiSourceP2}
             isStartMoveValid={false}
             validMoves={gameState.validMoves}
             onPieceClick={onPieceClick}
@@ -276,7 +276,7 @@ export default function GameBoard({
             pieces={gameState.player1Pieces}
             isCurrentPlayer={gameState.currentPlayer === 'player1'}
             isAI={watchMode}
-            aiType={watchMode ? aiSourceP1 : undefined}
+            aiType={watchMode ? aiSourceP1 : null}
             isStartMoveValid={
               gameState.currentPlayer === 'player1' &&
               gameState.validMoves.some(

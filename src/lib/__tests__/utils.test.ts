@@ -80,7 +80,9 @@ describe('Utils', () => {
       expect(getAIName('ml')).toBe('ML AI');
       expect(getAIName('server')).toBe('Server AI');
       expect(getAIName('fallback')).toBe('Fallback');
+      expect(getAIName('heuristic')).toBe('Heuristic');
       expect(getAIName(null)).toBe('Unknown');
+      expect(getAIName(undefined as any)).toBe('Unknown');
     });
   });
 
