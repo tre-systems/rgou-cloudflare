@@ -79,6 +79,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let config_content = std::fs::read_to_string(config_file)?;
             let config: TrainingConfig = serde_json::from_str(&config_content)?;
+            
+            // Ensure the output directory exists
+            if let Some(output_path) = std::path::Path::new(&config.output_file).parent() {
+                std::fs::create_dir_all(output_path)?;
+            }
 
             println!("=== Rust Data Generation ===");
             println!("Games: {}", config.num_games);

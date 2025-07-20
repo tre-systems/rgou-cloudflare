@@ -28,7 +28,7 @@ Add data-testid to all UI components for e2e testing.
 Extract logic from UI components into the lib folder so it can be unit tested.
 Keep the .gitignore file up to date.
 Keep the .cursorignore file up to date - it should ignore large model files and build artifacts that slow down indexing.
-Please use Rust and never use Python.
+Please use Rust where you can, but use Python you must.
 Keep up to date documentation in the docs folder.
 Try to keep documents concise and to the point, consolidate information where possible.
 When I just type 'rcp' that means "review all changes in each file, remove comments, make sure changes have automated tests, run 'npm run check' fix any issues and analyse the results. If there are no issues or causes for concern, update relevant documentation and then 'git add -A' and commit and push all changed files."

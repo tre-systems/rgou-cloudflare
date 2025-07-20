@@ -80,29 +80,60 @@ Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-
 
 ## 🧠 Machine Learning
 
-Train and improve the neural network AI with the pure Rust system:
+Train and improve the neural network AI with two training systems:
+
+### 🚀 PyTorch Training (Recommended)
+
+Fast GPU-accelerated training using PyTorch with Rust data generation:
+
+```bash
+# Install PyTorch dependencies
+pip install -r requirements.txt
+
+# Quick test
+./ml/scripts/train-pytorch.sh 100 10 0.001 32 3 test_weights.json
+
+# Standard training
+./ml/scripts/train-pytorch.sh 1000 50 0.001 32 3 ml_ai_weights_v6.json
+
+# Production training
+./ml/scripts/train-pytorch.sh 2000 75 0.001 32 4 ml_ai_weights_v7.json
+
+# Convert PyTorch weights for Rust use
+python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v7.json --test
+```
+
+**PyTorch Features:**
+- **🎮 GPU Acceleration**: Automatic CUDA/MPS detection and utilization
+- **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
+- **⚡ Optimized Training**: PyTorch's highly optimized neural network operations
+- **📊 Advanced Features**: Dropout, Adam optimizer, early stopping
+- **🔄 Seamless Integration**: Weights automatically compatible with Rust system
+- **📁 Organized Storage**: Training data stored in `~/Desktop/rgou-training-data/`
+
+### 🦀 Rust Training (Legacy)
+
+Pure Rust training system for maximum compatibility:
 
 ```bash
 # Quick test
-npm run train:ml:test
+npm run train:rust:quick
 
 # Standard training
-npm run train:ml
+npm run train:rust
 
 # Production training
-npm run train:ml:v5
+npm run train:rust:production
 
 # Custom training
 cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 2000 75 0.001 32 4 custom_weights.json
 ```
 
-**Optimized Features:**
-
-- **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
+**Rust Features:**
+- **🦀 Pure Rust**: No external dependencies
 - **⚡ CPU Training**: Efficient neural network training with custom implementation
 - **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
 - **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
-- **📁 Organized Storage**: Training data and weights stored in `ml/data/`
 
 See [Training System](./docs/training-system.md) for complete training guide.
 
@@ -139,7 +170,8 @@ The project evolved from hybrid client/server AI to pure client-side execution f
 
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
 - **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI and ML AI implementation
-- **[Training System](./docs/training-system.md)** - Machine learning training system
+- **[ML System Overview](./docs/ml-system-overview.md)** - Complete ML system guide with PyTorch and Rust training
+- **[Training System](./docs/training-system.md)** - Detailed training system documentation
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
 
 ### Development
