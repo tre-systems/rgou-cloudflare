@@ -28,7 +28,7 @@ This implementation stands out for several reasons:
 
 The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both Classic AI and ML AI use this for identical strategy, running locally in the browser.
 
-For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [Training System](./training-system.md).
+For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [ML System Overview](./ml-system-overview.md).
 
 ### Frontend (`src/`)
 

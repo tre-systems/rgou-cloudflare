@@ -76,4 +76,4 @@ The ML system integrates with the main application:
 3. **Load** into browser using `npm run load:ml-weights`
 4. **Use** in game via the existing Rust inference system
 
-See [PyTorch Training Documentation](../docs/pytorch-training.md) for detailed usage instructions.
+See [ML System Overview](../docs/ml-system-overview.md) for detailed usage instructions.

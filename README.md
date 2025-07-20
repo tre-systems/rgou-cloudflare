@@ -55,7 +55,7 @@ The game will open at http://localhost:3000
 
 - The first run may take longer as it builds WebAssembly assets
 - If you encounter WASM build issues, run: `npm run build:wasm-assets`
-- For ML training, you'll need Rust and Apple Silicon Mac (see [Training System](./docs/training-system.md))
+- For ML training, you'll need Rust and Apple Silicon Mac (see [ML System Overview](./docs/ml-system-overview.md))
 
 ### Common Setup Issues
 
@@ -91,19 +91,26 @@ Fast GPU-accelerated training using PyTorch with Rust data generation:
 pip install -r requirements.txt
 
 # Quick test
-./ml/scripts/train-pytorch.sh 100 10 0.001 32 3 test_weights.json
+npm run train:pytorch:test
 
 # Standard training
-./ml/scripts/train-pytorch.sh 1000 50 0.001 32 3 ml_ai_weights_v6.json
+npm run train:pytorch
+
+# Fast training
+npm run train:pytorch:fast
 
 # Production training
-./ml/scripts/train-pytorch.sh 2000 75 0.001 32 4 ml_ai_weights_v7.json
+npm run train:pytorch:production
+
+# v5 training (2000 games, 100 epochs, ~30 min)
+npm run train:pytorch:v5
 
 # Convert PyTorch weights for Rust use
-python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v7.json --test
+python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v5.json --test
 ```
 
 **PyTorch Features:**
+
 - **🎮 GPU Acceleration**: Automatic CUDA/MPS detection and utilization
 - **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
 - **⚡ Optimized Training**: PyTorch's highly optimized neural network operations
@@ -130,12 +137,13 @@ cd worker/rust_ai_core && cargo run --bin train --release --features training --
 ```
 
 **Rust Features:**
+
 - **🦀 Pure Rust**: No external dependencies
 - **⚡ CPU Training**: Efficient neural network training with custom implementation
 - **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
 - **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
-See [Training System](./docs/training-system.md) for complete training guide.
+See [ML System Overview](./docs/ml-system-overview.md) for complete training guide.
 
 ## 🧪 Testing
 
@@ -171,7 +179,6 @@ The project evolved from hybrid client/server AI to pure client-side execution f
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
 - **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI and ML AI implementation
 - **[ML System Overview](./docs/ml-system-overview.md)** - Complete ML system guide with PyTorch and Rust training
-- **[Training System](./docs/training-system.md)** - Detailed training system documentation
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
 
 ### Development

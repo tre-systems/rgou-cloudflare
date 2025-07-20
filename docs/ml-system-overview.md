@@ -45,14 +45,23 @@ ml/
 ### PyTorch Training
 
 ```bash
+# Install PyTorch dependencies
+pip install -r requirements.txt
+
 # Quick test (100 games, 10 epochs)
 npm run train:pytorch:test
 
 # Standard training (1000 games, 50 epochs)
 npm run train:pytorch
 
+# Fast training (500 games, 25 epochs)
+npm run train:pytorch:fast
+
 # Production training (2000 games, 75 epochs)
 npm run train:pytorch:production
+
+# v5 training (2000 games, 100 epochs, ~30 min)
+npm run train:pytorch:v5
 
 # Custom training
 ./ml/scripts/train-pytorch.sh 1500 60 0.001 64 4 custom_weights.json
@@ -86,102 +95,171 @@ npm run load:ml-weights ml/weights/ml_ai_weights_v1_rust.json
 
 ## Performance Comparison
 
-| Aspect                 | PyTorch Training              | Rust Training           |
-| ---------------------- | ----------------------------- | ----------------------- |
-| **Training Speed**     | 🚀 **10-50x faster** (GPU)    | ⚡ Fast (CPU optimized) |
-| **GPU Support**        | ✅ **Full CUDA acceleration** | ❌ CPU only             |
-| **Memory Usage**       | 📊 Higher (GPU memory)        | 📊 Lower (CPU memory)   |
-| **Dependencies**       | 🐍 Python + PyTorch           | 🦀 Pure Rust            |
-| **Setup Complexity**   | 🔧 Moderate                   | 🔧 Simple               |
-| **Cross-platform**     | ✅ Yes                        | ✅ Yes                  |
-| **WASM Compatibility** | ✅ Via conversion             | ✅ Direct               |
+| Aspect                 | PyTorch Training                  | Rust Training           |
+| ---------------------- | --------------------------------- | ----------------------- |
+| **Training Speed**     | 🚀 **10-50x faster** (GPU)        | ⚡ Fast (CPU optimized) |
+| **GPU Support**        | ✅ **Full CUDA/MPS acceleration** | ❌ CPU only             |
+| **Memory Usage**       | 📊 Higher (GPU memory)            | 📊 Lower (CPU memory)   |
+| **Dependencies**       | 🐍 Python + PyTorch               | 🦀 Pure Rust            |
+| **Setup Complexity**   | 🔧 Moderate                       | 🔧 Simple               |
+| **Cross-platform**     | ✅ Yes                            | ✅ Yes                  |
+| **WASM Compatibility** | ✅ Via conversion                 | ✅ Direct               |
 
 ## Neural Network Architecture
 
-Both systems use the same neural network architecture:
+### Architecture Details
 
 - **Input**: 150-dimensional feature vector
-- **Hidden layers**: [256, 128, 64, 32] (ReLU activation)
+- **Hidden layers**: [256, 128, 64, 32] (ReLU activation + Dropout 0.1)
 - **Value output**: 1 neuron (tanh activation)
 - **Policy output**: 7 neurons (softmax activation)
+- **Optimizer**: Adam with configurable learning rate
+- **Loss functions**: MSE for value, CrossEntropy for policy
 - **Total parameters**: ~81K (value) + ~82K (policy)
 
-### PyTorch Optimizations
+### Feature Engineering
+
+The 150 features include:
+
+- **28 features**: Piece positions (14 per player)
+- **21 features**: Board occupancy
+- **20+ features**: Strategic metrics (rosette control, safety scores, etc.)
+- **1 feature**: Current player
+- **1 feature**: Dice roll
+- **1 feature**: Valid moves count
+- **Plus many advanced strategic features**
+
+## Training Pipeline
+
+### PyTorch Training System
+
+The PyTorch training system uses a **hybrid approach**:
+
+1. **Rust Data Generation** - Fast parallel game simulation using all CPU cores
+2. **PyTorch Training** - GPU-accelerated neural network training with optimized operations
+
+#### Data Flow
+
+```
+Rust Game Simulation → JSON Training Data → PyTorch DataLoader → GPU Training → JSON Weights → Rust Inference
+```
+
+#### Key Components
+
+- **`ml/scripts/train_pytorch.py`** - Main PyTorch training script
+- **`ml/scripts/train-pytorch.sh`** - Shell wrapper with caffeinate
+- **`ml/scripts/load_pytorch_weights.py`** - Weight conversion utility
+- **Rust data generation** - Leverages existing `worker/rust_ai_core/src/bin/train.rs`
+- **Training data directory** - `~/Desktop/rgou-training-data/` for all temporary files
+- **Weights directory** - `ml/weights/` for all trained model weights
+
+### Rust Training System
+
+#### WASM vs Training Separation
+
+The system uses **feature flags** to keep training code completely separate from the WASM bundle:
+
+```toml
+[features]
+training = []
+```
+
+#### Size Comparison
+
+| Build Type           | Size      | Training Code   |
+| -------------------- | --------- | --------------- |
+| **WASM (optimized)** | **223KB** | ✅ **Excluded** |
+| **Training (full)**  | ~50MB     | ✅ **Included** |
+
+**WASM size reduction: 99.85% smaller!**
+
+## Prerequisites
+
+### PyTorch Training
+
+- **Python 3.8+** - For PyTorch training
+- **PyTorch** - Install with: `pip install -r requirements.txt`
+- **GPU Support** - CUDA (NVIDIA) or MPS (Apple Silicon) for acceleration
+- **Rust & Cargo** - For data generation
+- **wasm-pack** - For WASM builds: `cargo install wasm-pack --version 0.12.1 --locked`
+
+### Rust Training
+
+- **Rust & Cargo** - Latest stable version
+- **wasm-pack** - For WASM builds: `cargo install wasm-pack --version 0.12.1 --locked`
+
+## Advanced Features
+
+### GPU Acceleration
+
+PyTorch training automatically detects and uses:
+
+- **CUDA** - NVIDIA GPUs
+- **MPS** - Apple Silicon (M1/M2/M3)
+- **CPU fallback** - If no GPU available
+
+### Apple Silicon Optimization
+
+Both training systems are optimized for Apple Silicon:
+
+- **8 performance cores** - Used for parallel processing
+- **MPS acceleration** - PyTorch uses Metal Performance Shaders
+- **Caffeinate** - Prevents system sleep during training
+
+### Training Optimizations
 
 - **Dropout layers** - Prevents overfitting
 - **Adam optimizer** - Adaptive learning rate
-- **GPU acceleration** - Automatic CUDA utilization
 - **Batch processing** - Efficient parallel training
 - **Early stopping** - Prevents overtraining
+- **Validation split** - 20% for monitoring performance
 
-## Training Data Flow
+## Model Performance
 
-### PyTorch Training Pipeline
+### Current Model Rankings
 
-1. **Rust Data Generation** - Fast parallel game simulation using all CPU cores
-2. **JSON Export** - Training data saved to `~/Desktop/rgou-training-data/`
-3. **PyTorch Loading** - Data loaded into PyTorch DataLoaders
-4. **GPU Training** - Neural network training with GPU acceleration
-5. **Weight Export** - Trained weights saved to `ml/weights/`
-6. **Conversion** - Optional conversion to Rust-compatible format
+| Model      | Win Rate vs EMM-3 | Status                  |
+| ---------- | ----------------- | ----------------------- |
+| **v2**     | **44%**           | ✅ **Best Performance** |
+| **Fast**   | 36%               | Competitive             |
+| **v4**     | 32%               | ⚠️ Needs Improvement    |
+| **Hybrid** | 30%               | ⚠️ Needs Improvement    |
 
-### Rust Training Pipeline
+### Training Time Estimates
 
-1. **Direct Training** - Game simulation and training in single process
-2. **CPU Optimization** - Uses all available CPU cores efficiently
-3. **Weight Export** - Trained weights saved directly to output file
+| Configuration  | Games | Epochs | Batch Size | Estimated Time |
+| -------------- | ----- | ------ | ---------- | -------------- |
+| **Quick Test** | 100   | 10     | 32         | ~2 minutes     |
+| **Standard**   | 1000  | 50     | 32         | ~10 minutes    |
+| **Fast**       | 500   | 25     | 32         | ~5 minutes     |
+| **Production** | 2000  | 75     | 32         | ~25 minutes    |
+| **v5**         | 2000  | 100    | 64         | ~30 minutes    |
 
-## File Locations
-
-### Training Scripts
-
-- **PyTorch**: `ml/scripts/train_pytorch.py`
-- **Shell wrapper**: `ml/scripts/train-pytorch.sh`
-- **Weight converter**: `ml/scripts/load_pytorch_weights.py`
-
-### Weights Storage
-
-- **PyTorch weights**: `ml/weights/*.json`
-- **Rust weights**: `ml/weights/*.json` (converted)
-- **Temporary data**: `~/Desktop/rgou-training-data/`
-
-### Documentation
-
-- **System overview**: `docs/ml-system-overview.md`
-- **PyTorch training**: `docs/pytorch-training.md`
-- **Training system**: `docs/training-system.md`
-- **ML directory**: `ml/README.md`
-
-## Integration with Main Application
-
-1. **Train** with PyTorch or Rust using the provided scripts
-2. **Convert** PyTorch weights to Rust format if needed
-3. **Load** weights into browser using `npm run load:ml-weights`
-4. **Use** in game via the existing Rust inference system
+_Times are approximate and depend on hardware (GPU acceleration significantly reduces time)_
 
 ## Troubleshooting
 
 ### Common Issues
 
-- **GPU not detected**: Ensure PyTorch is installed with GPU support
-- **Rust compilation errors**: Run `cargo clean` and rebuild
-- **Memory issues**: Reduce batch size or number of games
-- **Slow training**: Use PyTorch with GPU for significant speedup
+1. **GPU not detected** - Ensure PyTorch is installed with GPU support
+2. **Memory issues** - Reduce batch size or number of games
+3. **Training too slow** - Check if GPU acceleration is active
+4. **WASM build failures** - Run `npm run build:wasm-assets`
 
 ### Performance Tips
 
-- **Use PyTorch for production**: 10-50x faster with GPU
-- **Use Rust for development**: Simpler setup, no Python dependencies
-- **Optimize batch size**: Balance memory usage and training speed
-- **Monitor GPU usage**: Ensure GPU is being utilized effectively
+- **Use GPU acceleration** - PyTorch training is 10-50x faster with GPU
+- **Optimize batch size** - Larger batches are faster but use more memory
+- **Monitor training** - Watch for overfitting with validation loss
+- **Use caffeinate** - Prevents system sleep during long training runs
 
-## Next Steps
+## Integration with Game
 
-1. **Choose training system** based on your needs (PyTorch recommended)
-2. **Install dependencies** for your chosen system
-3. **Run quick test** to verify setup
-4. **Train production model** with appropriate parameters
-5. **Load weights** into browser for testing
-6. **Iterate and improve** based on performance
+Trained models are automatically integrated into the game:
 
-See individual documentation files for detailed usage instructions.
+1. **Weight conversion** - PyTorch weights converted to Rust format
+2. **WASM compilation** - Rust code compiled to WebAssembly
+3. **Browser loading** - Weights loaded in browser for inference
+4. **Real-time play** - AI responds in real-time during gameplay
+
+See [AI System](./ai-system.md) for details on how the ML AI integrates with the game.

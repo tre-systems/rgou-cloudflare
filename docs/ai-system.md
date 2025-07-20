@@ -80,7 +80,7 @@ The project uses a **pure Rust architecture** with **optimized CPU parallel proc
 3. **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
 4. **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
-See [Training System](./training-system.md) for complete training guide.
+See [ML System Overview](./ml-system-overview.md) for complete training guide.
 
 ## AI vs. AI Mode
 
@@ -140,7 +140,7 @@ Based on comprehensive testing of 1,250 games across all AI types:
 
 ## See Also
 
-- [Training System](./training-system.md) - Machine learning training system
+- [ML System Overview](./ml-system-overview.md) - Machine learning training system
 - [Architecture Overview](./architecture-overview.md) - System design and components
 - [Game Rules and Strategy](./game-rules-strategy.md) - Game rules and strategic concepts
 - [AI Development History](./ai-development-history.md) - Historical experiments and findings

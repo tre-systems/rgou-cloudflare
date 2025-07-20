@@ -1,6 +1,6 @@
 # AI Development History & Experiments
 
-_This document consolidates all historical AI development experiments, investigations, and findings. For current implementation details, see [AI System](./ai-system.md) and [Training System](./training-system.md)._
+_This document consolidates all historical AI development experiments, investigations, and findings. For current implementation details, see [AI System](./ai-system.md) and [ML System Overview](./ml-system-overview.md)._
 
 ## Overview
 
@@ -388,6 +388,28 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 - Better reliability
 - Simpler maintenance
 
+### Phase 3: PyTorch Training (July 2025)
+
+**Technology Stack**:
+
+- PyTorch with GPU acceleration (CUDA/MPS)
+- Rust data generation for fast game simulation
+- Hybrid approach combining best of both worlds
+
+**Benefits**:
+
+- 10-50x faster training with GPU acceleration
+- Automatic CUDA/MPS detection and utilization
+- Advanced features (dropout, Adam optimizer, early stopping)
+- Seamless integration with existing Rust inference system
+
+**v5 Model Training**:
+
+- **Configuration**: 2000 games, 100 epochs, depth 4, batch size 64
+- **Target Time**: ~30 minutes with GPU acceleration
+- **Architecture**: Same neural network (150 features → [256,128,64,32] → 1/7)
+- **Optimizations**: Increased batch size for faster training, Apple Metal acceleration
+
 ## Lessons Learned
 
 ### 1. Training Data Quality > Quantity
@@ -414,7 +436,7 @@ Native Metal backend acceleration provides massive performance benefits for ML t
 
 ### Short Term (Next 3 Months)
 
-- **v5 Model Completion**: Finish training with EMM-4 for stronger play
+- **v5 Model Training**: PyTorch-based training with 2000 games, 100 epochs, depth 4 (~30 min)
 - **Training Methodology Investigation**: Understand why v2 outperforms newer models
 - **Feature Engineering**: Review and optimize 150 input features
 
@@ -433,5 +455,5 @@ Native Metal backend acceleration provides massive performance benefits for ML t
 ## Related Documentation
 
 - [AI System](./ai-system.md) - Current AI implementation details
-- [Training System](./training-system.md) - Current training system
+- [ML System Overview](./ml-system-overview.md) - Current training system
 - [Architecture Overview](./architecture-overview.md) - System design

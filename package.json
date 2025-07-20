@@ -39,6 +39,7 @@
     "train:pytorch:test": "./ml/scripts/train-pytorch.sh 100 10 0.001 32 3 test_pytorch_weights.json",
     "train:pytorch:fast": "./ml/scripts/train-pytorch.sh 500 25 0.001 32 3 ml_ai_weights_pytorch_fast.json",
     "train:pytorch:production": "./ml/scripts/train-pytorch.sh 2000 75 0.001 32 4 ml_ai_weights_pytorch_v1.json",
+    "train:pytorch:v5": "./ml/scripts/train-pytorch.sh 2000 100 0.001 64 4 ml_ai_weights_pytorch_v5.json",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "tsx scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts"
