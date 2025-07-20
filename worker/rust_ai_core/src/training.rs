@@ -407,11 +407,12 @@ mod tests {
             counts[roll as usize] += 1;
         }
 
-        // Check that rolls follow expected distribution
-        assert!(counts[0] > 0 && counts[0] < 100); // ~1/16
+        // Check that rolls follow expected distribution (1:4:6:4:1)
+        // Expected counts for 1000 rolls: ~62:250:375:250:62
+        assert!(counts[0] > 30 && counts[0] < 100); // ~1/16
         assert!(counts[1] > 200 && counts[1] < 300); // ~4/16
-        assert!(counts[2] > 300 && counts[2] < 400); // ~6/16
+        assert!(counts[2] > 350 && counts[2] < 400); // ~6/16
         assert!(counts[3] > 200 && counts[3] < 300); // ~4/16
-        assert!(counts[4] > 0 && counts[4] < 100); // ~1/16
+        assert!(counts[4] > 30 && counts[4] < 100); // ~1/16
     }
 }

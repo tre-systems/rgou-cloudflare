@@ -1,4 +1,4 @@
-use rgou_ai_core::training::{Trainer, TrainingConfig, TrainingMetadata};
+use rgou_ai_core::training::{Trainer, TrainingConfig};
 use std::env;
 use std::time::Instant;
 

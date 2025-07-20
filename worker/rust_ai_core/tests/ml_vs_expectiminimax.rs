@@ -78,14 +78,14 @@ fn load_ml_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>>
     let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
-    let value_weights: Vec<f32> = weights["valueWeights"]
+    let value_weights: Vec<f32> = weights["value_weights"]
         .as_array()
         .unwrap()
         .iter()
         .map(|v| v.as_f64().unwrap() as f32)
         .collect();
 
-    let policy_weights: Vec<f32> = weights["policyWeights"]
+    let policy_weights: Vec<f32> = weights["policy_weights"]
         .as_array()
         .unwrap()
         .iter()
@@ -106,14 +106,14 @@ fn load_ml_v2_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Erro
     let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
-    let value_weights: Vec<f32> = weights["valueWeights"]
+    let value_weights: Vec<f32> = weights["value_weights"]
         .as_array()
         .unwrap()
         .iter()
         .map(|v| v.as_f64().unwrap() as f32)
         .collect();
 
-    let policy_weights: Vec<f32> = weights["policyWeights"]
+    let policy_weights: Vec<f32> = weights["policy_weights"]
         .as_array()
         .unwrap()
         .iter()
