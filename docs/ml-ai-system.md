@@ -53,38 +53,38 @@ The ML AI is a neural network agent that learns to play by imitating the Classic
 
 ## Training Pipeline
 
-The project uses a **hybrid Rust+Python architecture** for optimal performance:
+The project uses a **pure Rust architecture** with **Apple Silicon GPU acceleration**:
 
-1. **🦀 Rust Data Generation**: Fast parallel game simulation using performance cores only
-2. **🔥 Python GPU Training**: Efficient neural network training with PyTorch
-3. **⚡ Optimized CPU Usage**: Uses only performance cores on Apple Silicon for intensive work
+1. **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
+2. **🔥 Rust GPU Training**: Efficient neural network training with Burn framework
+3. **⚡ Apple Silicon Optimization**: Uses Metal backend for GPU acceleration
 4. **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
 ## Quick Training
 
 ```bash
-# Quick test (5 games, 1 epoch)
+# Quick test (100 games, 10 epochs)
 npm run train:ml:test
 
 # Standard training (1000 games, 50 epochs)
 npm run train:ml
 
 # Production training (5000 games, 100 epochs)
-npm run train:ml:production
+npm run train:ml:v5
 
 # Custom training
-python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbose
+cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 2000 75 0.001 32 4 custom_weights.json
 ```
 
 ## Training Features
 
 - **🚀 GPU Acceleration**: Apple MPS, NVIDIA CUDA, or CPU fallback
-- **📁 Organized Storage**: Training data and weights in `~/Desktop/rgou-training-data/`
-- **📊 Progress Logging**: Real-time core-based progress updates with completion tracking
+- **📁 Organized Storage**: Training data and weights in `ml/data/`
+- **📊 Progress Logging**: Real-time progress tracking and performance metrics
 - **⏱️ Early Stopping**: Prevents overfitting with validation monitoring
 - **🧹 Clean Exit**: Proper cleanup and resource management
 - **💤 Caffeinate**: Prevents system sleep during long training runs
-- **🍎 Apple Silicon Optimization**: Uses only performance cores for intensive work
+- **🍎 Apple Silicon Optimization**: Uses Metal backend for GPU acceleration
 
 ## Training Configuration
 
@@ -125,11 +125,10 @@ npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_hybri
 ### Training Data Organization
 
 ```
-~/Desktop/rgou-training-data/
-├── data/           # Generated training data
+ml/data/
+├── training/       # Generated training data
 ├── weights/        # Trained model weights
-├── logs/           # Training logs
-└── temp/           # Temporary files
+└── genetic_params/ # Genetic algorithm parameters
 ```
 
 ## Key Improvements Needed
@@ -178,11 +177,11 @@ npm run test:rust
 - **Apple Silicon Optimization**: Uses only performance cores (8/10) for intensive work
 - **Improved Progress Tracking**: Atomic completion counter with core identification
 - **Fixed Game Simulation**: Corrected turn counting and value target calculation
-- **Hybrid Architecture**: Rust data generation + Python GPU training
+- **Pure Rust Architecture**: Rust data generation + Rust GPU training
 - **GPU Detection**: Automatic device selection with validation
 - **Comprehensive Logging**: Real-time progress tracking
 - **Clean Exit**: Proper resource cleanup and exit handling
-- **Organized Storage**: Desktop-based training data organization
+- **Organized Storage**: Project-based training data organization
 
 ## GPU Training Support
 

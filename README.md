@@ -55,7 +55,7 @@ The game will open at http://localhost:3000
 
 - The first run may take longer as it builds WebAssembly assets
 - If you encounter WASM build issues, run: `npm run build:wasm-assets`
-- For ML training, you'll also need Python 3.10+ (see [ML AI System](./docs/ml-ai-system.md))
+- For ML training, you'll need Rust and Apple Silicon Mac (see [Training System](./docs/training-system.md))
 
 ### Common Setup Issues
 
@@ -80,7 +80,7 @@ Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-
 
 ## 🧠 Machine Learning
 
-Train and improve the neural network AI with the optimized hybrid Rust+Python system:
+Train and improve the neural network AI with the pure Rust system:
 
 ```bash
 # Quick test
@@ -90,23 +90,23 @@ npm run train:ml:test
 npm run train:ml
 
 # Production training
-npm run train:ml:production
+npm run train:ml:v5
 
 # Custom training
-python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbose
+cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 2000 75 0.001 32 4 custom_weights.json
 ```
 
 **Optimized Features:**
 
 - **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
-- **🔥 Python GPU Training**: Efficient neural network training with PyTorch
-- **⚡ Maximum CPU Utilization**: Uses all available cores for data generation
-- **📊 Comprehensive Logging**: Detailed logs saved to `~/Desktop/rgou-training-data/logs/`
-- **📁 Organized Storage**: Training data and weights stored in `~/Desktop/rgou-training-data/`
-- **🔄 Real-time Progress Updates**: Frequent progress updates during data preparation
+- **🔥 Rust GPU Training**: Efficient neural network training with Burn framework
+- **⚡ Apple Silicon GPU**: Native Metal backend acceleration
+- **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
+- **📁 Organized Storage**: Training data and weights stored in `ml/data/`
+- **🔄 Real-time Progress Updates**: Frequent progress updates during training
 - **📈 Performance Metrics**: Games per second, ETA, and detailed timing information
 
-See [ML AI System](./docs/ml-ai-system.md) for complete training guide.
+See [Training System](./docs/training-system.md) for complete training guide.
 
 ## 🧪 Testing
 
@@ -141,7 +141,7 @@ The project evolved from hybrid client/server AI to pure client-side execution f
 
 - **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
 - **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI implementation
-- **[ML AI System](./docs/ml-ai-system.md)** - Machine learning AI implementation
+- **[Training System](./docs/training-system.md)** - Machine learning training system
 - **[AI Performance](./docs/ai-performance.md)** - Performance data and analysis
 - **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
 
