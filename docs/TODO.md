@@ -3,6 +3,8 @@
 ## High Priority
 
 - [x] Improve ML AI performance vs Classic AI
+- [x] Fix ML AI value network always returning 0.000 (was ReLU activation on final layer)
+- [x] Update Classic AI to use depth 4 to match ML training opponent
 - [ ] Investigate ONNX and 'trace' for ML AI
 - [ ] Optimize neural network architecture
 

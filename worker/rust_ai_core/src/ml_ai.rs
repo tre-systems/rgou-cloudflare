@@ -482,4 +482,51 @@ mod tests {
             assert_eq!(best_eval.score, scores[0]);
         }
     }
+
+    #[test]
+    fn test_ml_ai_actual_weights() {
+        use serde_json;
+        use std::fs;
+
+        // Try to load the actual weights file
+        let weights_path = "../../ml/data/weights/ml_ai_weights_pytorch_v5.json";
+        if let Ok(content) = fs::read_to_string(weights_path) {
+            if let Ok(weights_data) = serde_json::from_str::<serde_json::Value>(&content) {
+                if let (Some(value_weights), Some(policy_weights)) = (
+                    weights_data["value_weights"].as_array(),
+                    weights_data["policy_weights"].as_array(),
+                ) {
+                    let value_weights: Vec<f32> = value_weights
+                        .iter()
+                        .filter_map(|v| v.as_f64().map(|f| f as f32))
+                        .collect();
+                    let policy_weights: Vec<f32> = policy_weights
+                        .iter()
+                        .filter_map(|v| v.as_f64().map(|f| f as f32))
+                        .collect();
+
+                    let mut ai = MLAI::new();
+                    ai.load_pretrained(&value_weights, &policy_weights);
+
+                    let mut state = GameState::new();
+                    state.dice_roll = 1;
+                    let response = ai.get_best_move(&state);
+
+                    // Check that value network is not always zero
+                    assert_ne!(
+                        response.diagnostics.value_network_output, 0.0,
+                        "Value network should not always return 0.0"
+                    );
+
+                    // Check that policy network outputs are reasonable
+                    assert_eq!(
+                        response.diagnostics.policy_network_outputs.len(),
+                        PIECES_PER_PLAYER
+                    );
+                    let sum: f32 = response.diagnostics.policy_network_outputs.iter().sum();
+                    assert!((sum - 1.0).abs() < 1e-6, "Policy outputs should sum to 1.0");
+                }
+            }
+        }
+    }
 }

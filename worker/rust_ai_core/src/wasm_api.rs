@@ -341,7 +341,7 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
     let can_use_cache =
         cache.last_position_hash != 0 && cache.last_depth >= 3 && cache.last_nodes_evaluated > 0;
 
-    let ai_depth = 3;
+    let ai_depth = 4;
 
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
     let evaluation = game_state.evaluate();

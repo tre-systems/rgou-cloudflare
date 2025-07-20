@@ -59,6 +59,10 @@ impl Layer {
         linear.mapv(|x| x.max(0.0)) // ReLU activation
     }
 
+    pub fn forward_linear(&self, input: &Array1<f32>) -> Array1<f32> {
+        input.dot(&self.weights) + &self.biases
+    }
+
     pub fn forward_with_cache(&self, input: &Array1<f32>) -> (Array1<f32>, Array1<f32>) {
         let linear = input.dot(&self.weights) + &self.biases;
         let activated = linear.mapv(|x| x.max(0.0)); // ReLU activation
@@ -134,8 +138,14 @@ impl NeuralNetwork {
     pub fn forward(&self, input: &Array1<f32>) -> Array1<f32> {
         let mut current = input.clone();
 
-        for layer in &self.layers {
-            current = layer.forward(&current);
+        for (i, layer) in self.layers.iter().enumerate() {
+            if i == self.layers.len() - 1 {
+                // Final layer: linear only, no ReLU
+                current = layer.forward_linear(&current);
+            } else {
+                // Hidden layers: linear + ReLU
+                current = layer.forward(&current);
+            }
         }
 
         // Apply tanh activation to output for value network
@@ -453,11 +463,11 @@ mod tests {
         // Verify training actually changed the output or loss decreased
         let output_changed = (initial_output[0] - final_output[0]).abs() > 1e-6;
         let loss_decreased = true; // We'll assume loss decreased if we got here
-        
-        assert!(output_changed || loss_decreased, 
-                "Training should either change output or decrease loss");
 
-
+        assert!(
+            output_changed || loss_decreased,
+            "Training should either change output or decrease loss"
+        );
     }
 
     #[test]
