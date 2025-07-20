@@ -73,7 +73,6 @@ function validateWeights(weights: MLWeights): void {
     `Policy network: ${weights.policy_weights.length} weights (expected ~${expectedPolicyWeights})`
   );
 
-  // Note: v2 models may have additional parameters (batch norm, dropout) that increase weight count
   if (Math.abs(weights.value_weights.length - expectedValueWeights) > 1000) {
     console.warn(`⚠️  Value network weight count differs significantly from expected`);
   }

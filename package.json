@@ -36,6 +36,9 @@
     "train:ml:test": "cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 100 10 0.001 32 3",
     "train:ml:v2": "caffeinate -i sh -c 'cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 5000 100 0.001 32 3 ml_ai_weights_v2.json'",
     "train:ml:v5": "caffeinate -i sh -c 'cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 5000 100 0.001 32 4 ml_ai_weights_v5.json'",
+    "train:ml:optimized": "./scripts/train-ml.sh",
+    "train:ml:fast": "./scripts/train-ml.sh 500 25 0.001 32 3 ml_ai_weights_fast.json",
+    "train:ml:production": "./scripts/train-ml.sh 5000 100 0.001 32 4 ml_ai_weights_production.json",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "tsx scripts/load-ml-weights.ts",
     "db:local:reset": "tsx scripts/reset-local-db.ts"

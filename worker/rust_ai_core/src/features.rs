@@ -645,9 +645,6 @@ mod tests {
 
         let features = GameFeatures::from_game_state(&state);
 
-        // Check that feature extraction completed successfully
-        // Note: Exact feature indices depend on the feature extraction implementation
-        // This test verifies the feature extraction works with piece positions
         assert_eq!(features.features.len(), SIZE);
 
         // Verify that some features reflect the piece positions
@@ -674,9 +671,6 @@ mod tests {
 
         let features = GameFeatures::from_game_state(&state);
 
-        // Check board occupancy features (features 28-48)
-        // Note: Board occupancy is computed from the board state, not directly from piece positions
-        // This test verifies the feature extraction completes successfully
         assert_eq!(features.features.len(), SIZE);
     }
 

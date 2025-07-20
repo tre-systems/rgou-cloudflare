@@ -99,12 +99,10 @@ cd worker/rust_ai_core && cargo run --bin train --release --features training --
 **Optimized Features:**
 
 - **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
-- **🔥 Rust GPU Training**: Efficient neural network training with Burn framework
-- **⚡ Apple Silicon GPU**: Native Metal backend acceleration
+- **⚡ CPU Training**: Efficient neural network training with custom implementation
+- **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
 - **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 - **📁 Organized Storage**: Training data and weights stored in `ml/data/`
-- **🔄 Real-time Progress Updates**: Frequent progress updates during training
-- **📈 Performance Metrics**: Games per second, ETA, and detailed timing information
 
 See [Training System](./docs/training-system.md) for complete training guide.
 

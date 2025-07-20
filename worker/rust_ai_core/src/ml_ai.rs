@@ -368,11 +368,10 @@ mod tests {
         state2.player1_pieces[0].square = 5; // Different piece position
         let response2 = ai.get_best_move(&state2);
 
-        // Should give different responses for different states
-        // Note: If both evaluations are 0.0, that's acceptable for untrained networks
-        // The important thing is that the AI handles different states correctly
-        assert!(response1.r#move.is_some() || response2.r#move.is_some(), 
-                "At least one state should have valid moves");
+        assert!(
+            response1.r#move.is_some() || response2.r#move.is_some(),
+            "At least one state should have valid moves"
+        );
     }
 
     #[test]
@@ -396,8 +395,6 @@ mod tests {
                 .iter()
                 .any(|e| e.move_type == "capture");
 
-            // Note: This might not always be true depending on the current weights
-            // but the structure should be correct
             assert!(!response.diagnostics.move_evaluations.is_empty());
         } else {
             // If no valid moves, that's also acceptable
@@ -424,8 +421,6 @@ mod tests {
             .iter()
             .any(|e| e.move_type == "rosette");
 
-        // Note: This might not always be true depending on the current weights
-        // but the structure should be correct
         assert!(!response.diagnostics.move_evaluations.is_empty());
     }
 

@@ -47,6 +47,9 @@ pub struct Trainer {
 
 impl Trainer {
     pub fn new(config: TrainingConfig) -> Self {
+        // Configure optimal thread pool for training
+        Self::configure_thread_pool();
+
         let value_config = NetworkConfig {
             input_size: 150,
             hidden_sizes: vec![256, 128, 64, 32],
@@ -66,6 +69,38 @@ impl Trainer {
         }
     }
 
+    fn configure_thread_pool() {
+        let total_cores = std::thread::available_parallelism()
+            .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
+            .get();
+
+        // Always use 8 performance cores on Apple Silicon for optimal performance
+        let num_cores = if total_cores >= 8 {
+            if total_cores == 10 {
+                println!(
+                    "🍎 Apple Silicon detected: Using 8 performance cores out of {} total cores",
+                    total_cores
+                );
+            } else {
+                println!(
+                    "🚀 High-core system detected: Using 8 cores out of {} total cores",
+                    total_cores
+                );
+            }
+            8
+        } else {
+            println!("Available CPU cores: {}", total_cores);
+            total_cores
+        };
+
+        // Configure rayon thread pool for optimal performance
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(num_cores)
+            .stack_size(8 * 1024 * 1024) // 8MB stack size for deep recursion
+            .build_global()
+            .unwrap_or_else(|_| println!("Warning: Could not set thread pool size"));
+    }
+
     pub fn generate_training_data(&self) -> Vec<TrainingSample> {
         println!("=== Rust Data Generation ===");
         println!(
@@ -78,16 +113,8 @@ impl Trainer {
             .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
             .get();
 
-        let num_cores = if total_cores == 10 {
-            println!(
-                "🍎 Apple Silicon detected: Using 8 performance cores out of {} total cores",
-                total_cores
-            );
-            8
-        } else {
-            println!("Available CPU cores: {}", total_cores);
-            total_cores
-        };
+        // Use the same core count logic as configured in constructor
+        let num_cores = if total_cores >= 8 { 8 } else { total_cores };
 
         let progress_interval = if self.config.num_games >= 1000 {
             50
@@ -99,11 +126,6 @@ impl Trainer {
 
         println!("📈 Progress updates every {} games", progress_interval);
         println!("🎮 Starting game generation...");
-
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(num_cores)
-            .build_global()
-            .unwrap_or_else(|_| println!("Warning: Could not set thread pool size"));
 
         let completed_games = std::sync::atomic::AtomicUsize::new(0);
 
@@ -253,7 +275,6 @@ impl Trainer {
         let start_time = std::time::Instant::now();
         let last_progress_time = std::sync::Mutex::new(start_time);
 
-
         let split_idx =
             (training_data.len() as f32 * (1.0 - self.config.validation_split)) as usize;
         let train_data = &training_data[..split_idx];
@@ -282,7 +303,6 @@ impl Trainer {
 
             let epoch_time = epoch_start.elapsed();
             loss_history.push((train_loss, val_loss));
-
 
             let current_time = std::time::Instant::now();
             let mut last_time = last_progress_time.lock().unwrap();
@@ -317,7 +337,6 @@ impl Trainer {
                     eta_minutes
                 );
 
-
                 if loss_history.len() >= 3 {
                     let recent_train_trend = loss_history[loss_history.len() - 3..]
                         .iter()
@@ -348,7 +367,6 @@ impl Trainer {
                 *last_time = current_time;
             }
 
-
             if val_loss < best_val_loss {
                 best_val_loss = val_loss;
                 patience_counter = 0;
@@ -369,12 +387,14 @@ impl Trainer {
         }
 
         let training_time = start_time.elapsed().as_secs_f64();
-        
+
         println!("🎉 === Training Complete ===");
         println!("⏱️  Total training time: {:.2} seconds", training_time);
         println!("📊 Final validation loss: {:.4}", best_val_loss);
-        println!("📈 Loss improvement: {:.2}%", 
-            ((loss_history[0].1 - best_val_loss) / loss_history[0].1 * 100.0).max(0.0));
+        println!(
+            "📈 Loss improvement: {:.2}%",
+            ((loss_history[0].1 - best_val_loss) / loss_history[0].1 * 100.0).max(0.0)
+        );
         println!("═══════════════════════════════════════════════════════════════");
 
         TrainingMetadata {
@@ -436,19 +456,20 @@ impl Trainer {
     }
 
     fn validate_epoch(&self, data: &[TrainingSample]) -> f32 {
-        let mut total_loss = 0.0;
+        let total_loss: f32 = data
+            .par_iter()
+            .map(|sample| {
+                let features = ndarray::Array1::from_vec(sample.features.clone());
+                let value_output = self.value_network.forward(&features);
+                let policy_output = self.policy_network.forward(&features);
 
-        for sample in data {
-            let features = ndarray::Array1::from_vec(sample.features.clone());
-            let value_output = self.value_network.forward(&features);
-            let policy_output = self.policy_network.forward(&features);
+                let value_loss = (value_output[0] - sample.value_target).powi(2);
+                let policy_target = ndarray::Array1::from_vec(sample.policy_target.clone());
+                let policy_loss = self.cross_entropy_loss(&policy_output, &policy_target);
 
-            let value_loss = (value_output[0] - sample.value_target).powi(2);
-            let policy_target = ndarray::Array1::from_vec(sample.policy_target.clone());
-            let policy_loss = self.cross_entropy_loss(&policy_output, &policy_target);
-
-            total_loss += value_loss + policy_loss;
-        }
+                value_loss + policy_loss
+            })
+            .sum();
 
         total_loss / data.len() as f32
     }

@@ -457,8 +457,7 @@ mod tests {
         assert!(output_changed || loss_decreased, 
                 "Training should either change output or decrease loss");
 
-        // Note: Loss might increase due to learning dynamics, but output should change
-        // This is a more reliable test than loss comparison
+
     }
 
     #[test]

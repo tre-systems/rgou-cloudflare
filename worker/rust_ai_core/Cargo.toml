@@ -22,7 +22,6 @@ name = "train"
 path = "src/bin/train.rs"
 
 
-
 [features]
 default = []
 wasm = [
@@ -32,12 +31,7 @@ wasm = [
     "dep:js-sys",
     "dep:web-sys",
 ]
-training = [
-    "dep:burn",
-    "dep:burn-wgpu", 
-    "dep:burn-train",
-    "dep:burn-derive",
-]
+training = []
 slow_tests = []
 
 [dependencies]
@@ -55,12 +49,6 @@ lazy_static = "1.4"
 ndarray = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 rayon = "1.8"
-
-# Training dependencies (only when training feature is enabled)
-burn = { version = "0.18.0", features = ["train", "autodiff", "wgpu"], optional = true }
-burn-wgpu = { version = "0.18.0", features = ["metal"], optional = true }
-burn-train = { version = "0.18.0", optional = true }
-burn-derive = { version = "0.18.0", optional = true }
 
 [profile.release]
 opt-level = 3

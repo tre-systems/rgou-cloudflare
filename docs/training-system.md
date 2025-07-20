@@ -1,19 +1,19 @@
 # Training System
 
-_Comprehensive guide to the pure Rust training system with Apple Silicon GPU support._
+_Comprehensive guide to the pure Rust training system with optimized CPU parallel processing._
 
 ## Overview
 
-The project uses a **pure Rust training system** with **Apple Silicon GPU acceleration** via the Burn framework. This eliminates all Python dependencies and provides superior performance.
+The project uses a **pure Rust training system** with **optimized CPU parallel processing**. This eliminates all Python dependencies and provides excellent performance through efficient use of all available CPU cores.
 
 ### Key Features
 
 - ✅ **Pure Rust implementation** - No Python dependencies
-- ✅ **Apple Silicon GPU support** - Metal backend via Burn WGPU
+- ✅ **Optimized CPU parallel processing** - Uses all available cores efficiently
 - ✅ **Feature-based separation** - Training code excluded from WASM
 - ✅ **Single source of truth** - Same code for training and inference
-- ✅ **Automatic differentiation** - Built-in autodiff support
 - ✅ **Cross-platform** - Works on macOS, Linux, Windows
+- ✅ **Apple Silicon optimization** - Uses 8 performance cores on M1/M2/M3
 
 ## Architecture
 
@@ -22,19 +22,8 @@ The project uses a **pure Rust training system** with **Apple Silicon GPU accele
 The system uses **feature flags** to keep training code completely separate from the WASM bundle:
 
 ```toml
-# Training dependencies (only when training feature is enabled)
-burn = { version = "0.18.0", features = ["train", "autodiff", "wgpu"], optional = true }
-burn-wgpu = { version = "0.18.0", features = ["metal"], optional = true }
-burn-train = { version = "0.18.0", optional = true }
-burn-derive = { version = "0.18.0", optional = true }
-
 [features]
-training = [
-    "dep:burn",
-    "dep:burn-wgpu",
-    "dep:burn-train",
-    "dep:burn-derive",
-]
+training = []
 ```
 
 ### Size Comparison
@@ -42,7 +31,7 @@ training = [
 | Build Type           | Size      | Training Code   |
 | -------------------- | --------- | --------------- |
 | **WASM (optimized)** | **223KB** | ✅ **Excluded** |
-| **Training (full)**  | ~150MB    | ✅ **Included** |
+| **Training (full)**  | ~50MB     | ✅ **Included** |
 
 **WASM size reduction: 99.85% smaller!**
 
@@ -51,7 +40,6 @@ training = [
 ### Prerequisites
 
 - **Rust & Cargo** - Latest stable version
-- **Apple Silicon Mac** - For GPU acceleration (M1/M2/M3)
 - **wasm-pack** - For WASM builds: `cargo install wasm-pack --version 0.12.1 --locked`
 
 ### Training Commands
@@ -63,8 +51,11 @@ npm run train:ml:test
 # Standard training (1000 games, 50 epochs)
 npm run train:ml
 
+# Fast training (500 games, 25 epochs)
+npm run train:ml:fast
+
 # Production training (5000 games, 100 epochs)
-npm run train:ml:v5
+npm run train:ml:production
 
 # Custom training
 cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 2000 75 0.001 32 4 custom_weights.json
@@ -99,8 +90,8 @@ The system extracts 150 features from game state:
 
 ### Phase 1: Data Generation
 
-- **Rust parallel processing** - Uses all CPU cores
-- **Apple Silicon optimization** - Uses performance cores only
+- **Rust parallel processing** - Uses all CPU cores efficiently
+- **Apple Silicon optimization** - Uses 8 performance cores on M1/M2/M3
 - **Game simulation** - Generates training games with expectiminimax AI
 - **Feature extraction** - Extracts features from each position
 - **Real-time progress** - Updates every game with core utilization
@@ -109,6 +100,7 @@ The system extracts 150 features from game state:
 
 - **Sequential gradient descent** - Standard ML training approach
 - **Dual networks** - Separate value and policy networks
+- **Parallel validation** - Uses all cores for validation phase
 - **Progress monitoring** - Updates with loss trends
 - **Early stopping** - Automatic stopping when no improvement
 - **Validation split** - 20% validation data for overfitting detection
@@ -170,9 +162,9 @@ The training system provides comprehensive real-time feedback:
 
 ### Training Performance
 
-- **Data generation**: ~6,600 samples/second across 8 cores
+- **Data generation**: ~8,300 samples/second across 8 cores
 - **Training speed**: ~2-3 hours for 100 epochs (5000 games)
-- **Memory efficient**: Optimized for M1/M2/M3 chips
+- **Memory efficient**: Optimized for modern CPUs
 - **Parallel processing**: Uses all available cores
 - **Progress monitoring**: Real-time updates
 
@@ -183,60 +175,21 @@ The training system provides comprehensive real-time feedback:
 - **Memory usage**: ~2.8MB for ML models
 - **Browser compatibility**: Works in all modern browsers
 
-## Model Management
+## Core Utilization
 
-### Current Models
+### Apple Silicon Optimization
 
-| Model      | Win Rate vs EMM-3 | Training Time | Parameters | Status                  |
-| ---------- | ----------------- | ------------- | ---------- | ----------------------- |
-| **v2**     | **44%**           | 2h            | 164K       | ✅ **Best Performance** |
-| **Fast**   | 36%               | 1h            | 164K       | Competitive             |
-| **v4**     | 32%               | 1h 53m        | 164K       | ⚠️ Needs Improvement    |
-| **Hybrid** | 30%               | 3h            | 164K       | ⚠️ Needs Improvement    |
-| **v5**     | TBD               | TBD           | 164K       | In development          |
+The system automatically detects Apple Silicon and optimizes core usage:
 
-### Model Comparison
+- **M1/M2/M3 Macs**: Uses 8 performance cores out of 10 total cores
+- **High-core systems**: Uses 8 cores for optimal performance
+- **Other systems**: Uses all available cores
 
-- **v2 Model**: **Best performing model** (July 2025) - **44% win rate vs EMM-3** - **Production Ready** ✅
-- **Fast Model**: Competitive model (100 inputs) - **36% win rate vs EMM-3**
-- **v4 Model**: Latest production model (July 2025) - **32% win rate vs EMM-3** - **Needs Improvement** ⚠️
-- **Hybrid Model**: Hybrid architecture model - **30% win rate vs EMM-3** - **Needs Improvement** ⚠️
+### Thread Pool Configuration
 
-### Loading Weights
-
-```bash
-# Load best performing model (v2)
-npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
-
-# Load fast model
-npm run load:ml-weights ml/data/weights/ml_ai_weights_fast.json
-
-# Load latest v4 model
-npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_v4.json
-
-# Load hybrid model
-npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_hybrid.json
-```
-
-### Training Data Organization
-
-```
-ml/data/
-├── training/       # Generated training data
-├── weights/        # Trained model weights
-└── genetic_params/ # Genetic algorithm parameters
-```
-
-## Training Configuration
-
-| Parameter         | Default | Description                           |
-| ----------------- | ------- | ------------------------------------- |
-| `--num-games`     | 1000    | Number of training games to generate  |
-| `--epochs`        | 50      | Training epochs                       |
-| `--depth`         | 3       | Expectiminimax depth for expert moves |
-| `--batch-size`    | auto    | GPU batch size (auto-detected)        |
-| `--learning-rate` | 0.001   | Learning rate                         |
-| `--verbose`       | false   | Detailed logging                      |
+- **Stack size**: 8MB per thread for deep recursion support
+- **Thread count**: Optimized based on system capabilities
+- **Load balancing**: Efficient work distribution across cores
 
 ## Key Improvements Needed
 
@@ -281,20 +234,14 @@ npm run test:rust
 ### ✅ Completed
 
 - **v5 EMM-4 Training**: Training new model with Expectiminimax depth 4 for stronger play
-- **Apple Silicon Optimization**: Uses only performance cores (8/10) for intensive work
+- **Apple Silicon Optimization**: Uses 8 performance cores for intensive work
 - **Improved Progress Tracking**: Atomic completion counter with core identification
 - **Fixed Game Simulation**: Corrected turn counting and value target calculation
-- **Pure Rust Architecture**: Rust data generation + Rust GPU training
-- **GPU Detection**: Automatic device selection with validation
+- **Pure Rust Architecture**: Rust data generation + Rust CPU training
+- **Parallel Validation**: Uses all cores for validation phase
 - **Comprehensive Logging**: Real-time progress tracking
 - **Clean Exit**: Proper resource cleanup and exit handling
 - **Organized Storage**: Project-based training data organization
-
-## GPU Training Support
-
-- **Apple Silicon (M1/M2/M3)**: Metal Performance Shaders (MPS) - 10-20x speedup
-- **NVIDIA GPUs**: CUDA acceleration
-- **Fallback**: CPU training if GPU unavailable
 
 ## Move Selection
 
@@ -307,91 +254,27 @@ For each valid move:
 
 ## Why Use ML Instead of Search?
 
-- **Speed**: Moves selected in milliseconds without deep search
-- **Unique Playstyle**: Strategies learned from data, not hand-coded
-- **Efficiency**: Runs efficiently in browser via WebAssembly
+### Advantages
 
-## Mac Optimization
+- **Speed**: Neural network inference is much faster than search
+- **Memory**: No need to store search trees
+- **Scalability**: Can handle complex positions without exponential growth
+- **Learning**: Improves with more training data
 
-### System Requirements
+### Trade-offs
 
-- macOS 12.3+
-- Rust (latest stable)
-- Apple Silicon (M1/M2/M3) or Intel Mac with Metal support
+- **Training time**: Requires significant training data and time
+- **Black box**: Less interpretable than search-based approaches
+- **Quality**: May not reach the same level as deep search
 
-### Key Optimizations
+## TODO
 
-- **GPU Acceleration (MPS)**: Uses Metal for neural network training (3-5x faster than CPU-only)
-- **Parallel Processing**: Uses all CPU cores for data generation and training
-- **Memory Optimization**: Efficient batch processing and GPU memory management
+### Future Enhancements
 
-### Environment Setup
-
-```bash
-# Optimal threading for Apple Silicon
-export OMP_NUM_THREADS=$(sysctl -n hw.ncpu)
-export MKL_NUM_THREADS=$(sysctl -n hw.ncpu)
-export NUMEXPR_NUM_THREADS=$(sysctl -n hw.ncpu)
-export VECLIB_MAXIMUM_THREADS=$(sysctl -n hw.ncpu)
-```
-
-### Rust Compilation Optimization
-
-```toml
-[profile.release]
-opt-level = 3
-lto = "fat"
-codegen-units = 1
-panic = "abort"
-strip = true
-```
-
-### Preventing Sleep During Training
-
-Training automatically uses `caffeinate -i` to keep Mac awake. If running manually:
-
-```bash
-caffeinate -i cargo run --bin train --release --features training
-```
-
-### Performance Expectations
-
-- **10-core Mac**: ~1000 games/min, 2-4GB RAM
-- **Training time**: 2-4 hours for 10k games/300 epochs
-
-## Monitoring Training Status
-
-### Quick Status Check
-
-```bash
-# Check if training is running
-ps aux | grep train | grep -v grep
-
-# Check output files
-ls -lh ml/data/weights/ml_ai_weights_*.json*
-
-# Check recent activity
-ls -lt ml/data/weights/ | head -5
-
-# Check CPU usage
-top -o cpu
-```
-
-### Status Indicators
-
-- **Training Running**: Rust process with high CPU usage
-- **Training Complete**: Large weights file exists with recent timestamp
-- **Check Terminal**: Look for progress output in training terminal
-
-### Troubleshooting
-
-| Issue               | Solution                                                            |
-| ------------------- | ------------------------------------------------------------------- |
-| MPS not available   | Check Metal support: `cargo run --bin test_gpu --features training` |
-| Memory issues       | Reduce batch size in training configuration                         |
-| Rust build failures | `cargo clean && cargo build --release`                              |
-
-## Related Documentation
-
-- [AI System](./ai-system.md) - Classic expectiminimax AI
-- [Architecture Overview](./architecture-overview.md) - System design
+- **GPU Training**: Implement GPU acceleration for faster training
+  - Consider frameworks like Burn, tch-rs, or custom CUDA/Metal implementation
+  - Focus on Apple Silicon Metal backend for optimal performance
+  - Maintain compatibility with existing CPU training pipeline
+- **Advanced Architectures**: Experiment with transformer-based models
+- **Self-Play Training**: Implement reinforcement learning through self-play
+- **Model Compression**: Optimize model size for faster inference

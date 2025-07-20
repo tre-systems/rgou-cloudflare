@@ -1,30 +1,35 @@
 # TODO
 
-## 🚀 This Week (High Priority)
+## High Priority
 
-### Code Quality
+- [ ] Fix WASM weight persistence issues
+- [ ] Improve ML AI performance vs Classic AI
+- [ ] Add comprehensive end-to-end tests
+- [ ] Optimize neural network architecture
 
-- [ ] **Reduce production logging noise** - Add environment-based controls in AI services
+## Medium Priority
 
-### Documentation
+- [ ] Implement GPU training acceleration
+  - Consider frameworks like Burn, tch-rs, or custom CUDA/Metal implementation
+  - Focus on Apple Silicon Metal backend for optimal performance
+  - Maintain compatibility with existing CPU training pipeline
+- [ ] Add self-play reinforcement learning
+- [ ] Implement Monte Carlo Tree Search on top of neural network
+- [ ] Optimize feature engineering (review 150 features)
 
-- [ ] **Add visual architecture diagram** - Show client-side vs server-side components
+## Low Priority
 
-## 📅 Next 2 Weeks (Medium Priority)
+- [ ] Add sound effects for game interactions
+- [ ] Implement game replay functionality
+- [ ] Add multiplayer support
+- [ ] Create mobile app version
 
-### Security & Infrastructure
+## Completed ✅
 
-- [ ] **Enable GitHub Dependabot alerts** - Proactive vulnerability detection
-- [ ] **Add CodeQL analysis** - Automated security scanning
-
-### ML Training
-
-- [ ] **Create continuous evaluation script** - Automated AI performance testing
-
-## 🔄 Ongoing (Lower Priority)
-
-### ML Improvements
-
-- [ ] **Fix training loss function** - Remove softmax from PolicyNetwork definition
-- [ ] **Enhanced training data generation** - Add `simulate_complete_game()` in Rust
-- [ ] **Better value targets** - Use Classic AI evaluation function
+- [x] Pure Rust training system
+- [x] Apple Silicon optimization (8 performance cores)
+- [x] Parallel data generation
+- [x] Comprehensive progress monitoring
+- [x] WebAssembly deployment
+- [x] Database integration
+- [x] PWA support

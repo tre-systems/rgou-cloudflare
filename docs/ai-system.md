@@ -73,11 +73,11 @@ The ML AI offers a different kind of challenge, with a playstyle developed from 
 
 ### Training System
 
-The project uses a **pure Rust architecture** with **Apple Silicon GPU acceleration**:
+The project uses a **pure Rust architecture** with **optimized CPU parallel processing**:
 
 1. **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
-2. **🔥 Rust GPU Training**: Efficient neural network training with Burn framework
-3. **⚡ Apple Silicon Optimization**: Uses Metal backend for GPU acceleration
+2. **⚡ CPU Training**: Efficient neural network training with custom implementation
+3. **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
 4. **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
 See [Training System](./training-system.md) for complete training guide.
