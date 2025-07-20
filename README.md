@@ -17,11 +17,10 @@ A modern web implementation of the ancient Royal Game of Ur (2500 BCE) with dual
 
 ## ✨ Features
 
-- **Dual AI System**: Classic expectiminimax (53.6% win rate) + Neural network (50% win rate)
-- **Browser-Native**: All AI runs locally via WebAssembly - no server calls
+- **Dual AI System**: Classic expectiminimax + Neural network
+- **Browser-Native**: All AI runs locally via WebAssembly
 - **Offline Support**: PWA with full offline gameplay
 - **Modern UI**: Responsive design with animations and sound effects
-- **Game Statistics**: Track performance and save games to database
 
 ## 🚀 Quick Start
 
@@ -30,6 +29,8 @@ A modern web implementation of the ancient Royal Game of Ur (2500 BCE) with dual
 - **Node.js 20+** ([Download](https://nodejs.org/)) - Required for Next.js 15
 - **Rust & Cargo** ([Install](https://www.rust-lang.org/tools/install)) - For WebAssembly compilation
 - **wasm-pack**: `cargo install wasm-pack --version 0.12.1 --locked` - For WASM builds
+
+**Note**: This project was developed on an M1 Mac. While it should work on other platforms, some optimizations (especially for ML training) are specifically tuned for Apple Silicon.
 
 ### Development Setup
 
@@ -68,8 +69,8 @@ See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
 
 The project features two distinct AI opponents:
 
-- **Classic AI**: Expectiminimax algorithm with alpha-beta pruning (instant speed)
-- **ML AI**: Neural network trained through self-play (<1ms/move)
+- **Classic AI**: Expectiminimax algorithm with alpha-beta pruning
+- **ML AI**: Neural network trained through self-play
 
 Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-system.md) and [ML AI System](./docs/ml-ai-system.md) for details.
 
@@ -114,16 +115,6 @@ See [Testing Strategy](./docs/testing-strategy.md) for detailed testing informat
 
 The project evolved from hybrid client/server AI to pure client-side execution for optimal performance and offline capability. See [Architecture Overview](./docs/architecture-overview.md) for detailed system design.
 
-## 📊 Performance
-
-| AI Type                | Win Rate  | Speed     | Use Case                |
-| ---------------------- | --------- | --------- | ----------------------- |
-| **Classic AI (EMM-1)** | **53.6%** | Instant   | **Production gameplay** |
-| ML AI                  | 50.0%     | <1ms/move | Alternative playstyle   |
-| Heuristic AI           | 50.8%     | Instant   | Educational baseline    |
-
-See [AI Performance](./docs/ai-performance.md) for detailed analysis.
-
 ## 📚 Documentation
 
 ### Core System
@@ -153,14 +144,6 @@ See [AI Performance](./docs/ai-performance.md) for detailed analysis.
 - **Deployment**: Pin exact dependency versions for Cloudflare compatibility
 
 See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `npm run check`
-5. Submit a pull request
 
 ## 📄 License
 

@@ -313,11 +313,11 @@ fn order_moves(&self, state: &GameState, moves: &[u8]) -> Vec<u8> {
 
 ### 2. Performance vs Quality Trade-offs
 
-**Finding**: Depth 1 provides the best performance/quality ratio for this game.
+**Finding**: Depth 3 provides the best performance/quality ratio for this game.
 
 **Implication**: Deeper search doesn't always provide proportional benefits.
 
-**Application**: Use depth 1 for production, depth 2 as alternative.
+**Application**: Use depth 3 for production.
 
 ### 3. ML AI Training Insights
 

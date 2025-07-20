@@ -34,12 +34,6 @@ This directory contains all documentation for the Royal Game of Ur project, orga
 - **Current System**: Documents that describe the current implementation and are actively maintained
 - **Historical**: Documents that preserve historical information for reference but are not actively updated
 
-### Categories
-
-- **Core System**: Main system components and architecture
-- **Development & Operations**: Tools, processes, and operational concerns
-- **Historical**: Past experiments and findings
-
 ## Maintenance Guidelines
 
 ### Current System Documentation
