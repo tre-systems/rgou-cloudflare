@@ -40,7 +40,7 @@ const loadWasm = (): Promise<void> => {
 
       // Try to initialize the WASM module
       try {
-        const wasmUrl = `${self.location.origin}/wasm/rgou_ai_core_bg.wasm`;
+        const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
         console.log(`AI Worker: Initializing WASM with URL: ${wasmUrl}`);
 
         // Add more specific error handling for the WASM initialization

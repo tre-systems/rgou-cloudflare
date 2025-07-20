@@ -45,7 +45,7 @@ const loadMLWasm = (): Promise<void> => {
       }
 
       try {
-        const wasmUrl = `${self.location.origin}/wasm/rgou_ai_core_bg.wasm`;
+        const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
         console.log(`ML AI Worker: Initializing ML WASM with URL: ${wasmUrl}`);
 
         await mlWasmModule.default(wasmUrl);
@@ -170,7 +170,11 @@ self.addEventListener(
             const weights = event.data.weights as {
               value_weights: number[];
               policy_weights: number[];
-              value_network_config?: { input_size: number; hidden_sizes: number[]; output_size: number };
+              value_network_config?: {
+                input_size: number;
+                hidden_sizes: number[];
+                output_size: number;
+              };
               policy_network_config?: {
                 input_size: number;
                 hidden_sizes: number[];
