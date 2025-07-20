@@ -74,46 +74,64 @@ impl Trainer {
         );
 
         let start_time = std::time::Instant::now();
-        let num_cores = std::thread::available_parallelism()
+        let total_cores = std::thread::available_parallelism()
             .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
             .get();
-        println!("Available CPU cores: {}", num_cores);
 
-        // Calculate progress intervals for better logging
-        let progress_interval = if self.config.num_games >= 1000 {
-            50 // Every 50 games for large datasets
-        } else if self.config.num_games >= 100 {
-            10 // Every 10 games for medium datasets
+        let num_cores = if total_cores == 10 {
+            println!(
+                "🍎 Apple Silicon detected: Using 8 performance cores out of {} total cores",
+                total_cores
+            );
+            8
         } else {
-            1 // Every game for small datasets
+            println!("Available CPU cores: {}", total_cores);
+            total_cores
+        };
+
+        let progress_interval = if self.config.num_games >= 1000 {
+            50
+        } else if self.config.num_games >= 100 {
+            10
+        } else {
+            1
         };
 
         println!("Progress updates every {} games", progress_interval);
         println!("Starting game generation...");
 
-        // Use rayon for parallel processing
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(num_cores)
+            .build_global()
+            .unwrap_or_else(|_| println!("Warning: Could not set thread pool size"));
+
+        let completed_games = std::sync::atomic::AtomicUsize::new(0);
+
         let training_data: Vec<TrainingSample> = (0..self.config.num_games)
             .into_par_iter()
-            .map(|game_id| {
-                // More frequent progress updates
-                if game_id % progress_interval == 0 {
+            .map(|_game_id| {
+                let completed =
+                    completed_games.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+
+                if completed % progress_interval == 0 {
                     let elapsed = start_time.elapsed();
                     let games_per_sec = if elapsed.as_secs() > 0 {
-                        game_id as f64 / elapsed.as_secs_f64()
+                        completed as f64 / elapsed.as_secs_f64()
                     } else {
                         0.0
                     };
                     let eta_secs = if games_per_sec > 0.0 {
-                        (self.config.num_games - game_id) as f64 / games_per_sec
+                        (self.config.num_games - completed) as f64 / games_per_sec
                     } else {
                         0.0
                     };
 
+                    let core_id = (completed % num_cores) + 1;
+
                     println!(
-                        "🎮 Generated {}/{} games ({:.1}%) - {:.1} games/sec - ETA: {:.0}s",
-                        game_id,
-                        self.config.num_games,
-                        (game_id as f64 / self.config.num_games as f64) * 100.0,
+                        "🎮 Core {}: {:.1}% - {:.1} games/sec - ETA: {:.0}s",
+                        core_id,
+                        (completed as f64 / self.config.num_games as f64) * 100.0,
                         games_per_sec,
                         eta_secs
                     );
@@ -164,11 +182,9 @@ impl Trainer {
                 continue;
             }
 
-            // Get expert move from expectiminimax AI
             let (expert_move, _) = ai.get_best_move(&game_state, self.config.depth);
 
             if let Some(move_idx) = expert_move {
-                // Create training sample for this position
                 let features = GameFeatures::from_game_state(&game_state);
                 let value_target = self.calculate_value_target(&game_state);
                 let policy_target = self.create_policy_target(&game_state, move_idx);
@@ -179,12 +195,12 @@ impl Trainer {
                     policy_target,
                 });
 
-                // Make the move
                 if game_state.make_move(move_idx).is_err() {
-                    break;
+                    turn_count += 1;
+                } else {
+                    turn_count += 1;
                 }
             } else {
-                // No valid expert move, skip this turn
                 turn_count += 1;
             }
         }
@@ -208,18 +224,15 @@ impl Trainer {
     }
 
     fn calculate_value_target(&self, game_state: &GameState) -> f32 {
-        // Use expectiminimax evaluation as target
         let mut ai = AI::new();
-        let (_, move_evaluations) = ai.get_best_move(game_state, 3);
+        let (_, move_evaluations) = ai.get_best_move(game_state, self.config.depth);
 
-        // Get the best evaluation from move evaluations
         let evaluation = if let Some(best_move) = move_evaluations.first() {
             best_move.score
         } else {
             0.0
         };
 
-        // Normalize to [-1, 1] range
         let normalized = (evaluation / 10000.0).max(-1.0).min(1.0);
         normalized
     }

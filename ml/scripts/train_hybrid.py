@@ -50,8 +50,14 @@ def setup_logging(log_level=logging.INFO):
 def get_optimal_workers():
     """Get optimal number of workers for maximum CPU utilization"""
     cpu_count = multiprocessing.cpu_count()
-    optimal_workers = min(cpu_count, 16)
-    logging.info(f"⚡ Using {optimal_workers} workers out of {cpu_count} CPU cores")
+    
+    if cpu_count == 10:
+        optimal_workers = 8
+        logging.info(f"🍎 Apple Silicon detected: Using {optimal_workers} performance cores out of {cpu_count} total cores")
+    else:
+        optimal_workers = min(cpu_count, 16)
+        logging.info(f"⚡ Using {optimal_workers} workers out of {cpu_count} CPU cores")
+    
     return optimal_workers
 
 def set_random_seeds(seed: int = 42):

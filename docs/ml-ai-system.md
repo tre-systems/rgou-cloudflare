@@ -22,12 +22,12 @@ The ML AI is a neural network agent that learns to play by imitating the Classic
 
 ## Current Performance
 
-- **v2 Model**: **44% win rate vs Classic AI (EMM-3)** - **Best Performance** ✅
-- **Fast Model**: 36% win rate vs Classic AI (EMM-3) - **Competitive**
-- **v4 Model**: 32% win rate vs Classic AI (EMM-3) - **Needs Improvement** ⚠️
-- **Hybrid Model**: 30% win rate vs Classic AI (EMM-3) - **Needs Improvement** ⚠️
+- **v2 Model**: **40% win rate vs Classic AI (EMM-3)** - **Best Performance** ✅
+- **Fast Model**: 20% win rate vs Classic AI (EMM-3) - **Needs Improvement** ⚠️
+- **v4 Model**: 20% win rate vs Classic AI (EMM-3) - **Needs Improvement** ⚠️
+- **Hybrid Model**: 30% win rate vs Classic AI (EMM-3) - **Competitive**
 - **Speed**: <1ms per move
-- **Status**: v2 model significantly outperforms newer models, suggesting training regression in recent approaches
+- **Status**: v2 model still performs best, but all models need improvement vs EMM-4
 
 ## Latest Training Results (v4 Model)
 
@@ -55,9 +55,9 @@ The ML AI is a neural network agent that learns to play by imitating the Classic
 
 The project uses a **hybrid Rust+Python architecture** for optimal performance:
 
-1. **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
+1. **🦀 Rust Data Generation**: Fast parallel game simulation using performance cores only
 2. **🔥 Python GPU Training**: Efficient neural network training with PyTorch
-3. **⚡ Maximum CPU Utilization**: Uses all available cores for data generation
+3. **⚡ Optimized CPU Usage**: Uses only performance cores on Apple Silicon for intensive work
 4. **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
 ## Quick Training
@@ -80,10 +80,11 @@ python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbo
 
 - **🚀 GPU Acceleration**: Apple MPS, NVIDIA CUDA, or CPU fallback
 - **📁 Organized Storage**: Training data and weights in `~/Desktop/rgou-training-data/`
-- **📊 Progress Logging**: Real-time batch and epoch progress updates (every 500 batches)
+- **📊 Progress Logging**: Real-time core-based progress updates with completion tracking
 - **⏱️ Early Stopping**: Prevents overfitting with validation monitoring
 - **🧹 Clean Exit**: Proper cleanup and resource management
 - **💤 Caffeinate**: Prevents system sleep during long training runs
+- **🍎 Apple Silicon Optimization**: Uses only performance cores for intensive work
 
 ## Training Configuration
 
@@ -173,10 +174,11 @@ npm run test:rust
 
 ### ✅ Completed
 
-- **v4 Production Model**: Successfully trained with excellent validation performance
-- **Reduced Logging Frequency**: Batch progress every 500 batches instead of 10
+- **v5 EMM-4 Training**: Training new model with Expectiminimax depth 4 for stronger play
+- **Apple Silicon Optimization**: Uses only performance cores (8/10) for intensive work
+- **Improved Progress Tracking**: Atomic completion counter with core identification
+- **Fixed Game Simulation**: Corrected turn counting and value target calculation
 - **Hybrid Architecture**: Rust data generation + Python GPU training
-- **Maximum CPU Utilization**: Parallel processing with rayon
 - **GPU Detection**: Automatic device selection with validation
 - **Comprehensive Logging**: Real-time progress tracking
 - **Clean Exit**: Proper resource cleanup and exit handling
