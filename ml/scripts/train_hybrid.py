@@ -106,6 +106,7 @@ class GameFeatures:
         features = np.zeros(GameFeatures.SIZE, dtype=np.float32)
         idx = 0
 
+        # Piece positions for player 1 (7 features)
         for piece in game_state["player1_pieces"]:
             square = piece["square"]
             if square >= 0 and square < 20:
@@ -116,6 +117,7 @@ class GameFeatures:
                 features[idx] = -1.0
             idx += 1
 
+        # Piece positions for player 2 (7 features)
         for piece in game_state["player2_pieces"]:
             square = piece["square"]
             if square >= 0 and square < 20:
@@ -126,6 +128,7 @@ class GameFeatures:
                 features[idx] = -1.0
             idx += 1
 
+        # Board occupancy (20 features)
         for square in game_state["board"]:
             if square is None:
                 features[idx] = 0.0
@@ -133,6 +136,7 @@ class GameFeatures:
                 features[idx] = 1.0 if square["player"] == "player1" else -1.0
             idx += 1
 
+        # Strategic features
         features[idx] = GameFeatures._rosette_control_score(game_state)
         idx += 1
         features[idx] = GameFeatures._pieces_on_board_count(game_state, "player1")
@@ -151,6 +155,94 @@ class GameFeatures:
         idx += 1
         features[idx] = GameFeatures._safety_score(game_state, "player2")
         idx += 1
+        features[idx] = GameFeatures._center_lane_control(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._center_lane_control(game_state, "player2")
+        idx += 1
+
+        # Current player (1 feature)
+        features[idx] = 1.0 if game_state["current_player"] == "player1" else -1.0
+        idx += 1
+
+        # Dice roll (1 feature)
+        features[idx] = game_state.get("dice_roll", 0) / 4.0
+        idx += 1
+
+        # Valid moves count (1 feature)
+        valid_moves = game_state.get("valid_moves", [])
+        features[idx] = len(valid_moves) / 7.0
+        idx += 1
+
+        # Capture opportunities (2 features)
+        features[idx] = GameFeatures._capture_opportunities(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._capture_opportunities(game_state, "player2")
+        idx += 1
+
+        # Vulnerability to capture (2 features)
+        features[idx] = GameFeatures._vulnerability_to_capture(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._vulnerability_to_capture(game_state, "player2")
+        idx += 1
+
+        # Progress towards finish (2 features)
+        features[idx] = GameFeatures._progress_towards_finish(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._progress_towards_finish(game_state, "player2")
+        idx += 1
+
+        # Advanced strategic features
+        features[idx] = GameFeatures._mobility_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._mobility_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._development_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._development_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._tactical_opportunities(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._tactical_opportunities(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._rosette_safety_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._rosette_safety_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._center_control_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._center_control_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._piece_coordination_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._piece_coordination_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._attack_pressure_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._attack_pressure_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._defensive_structure_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._defensive_structure_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._endgame_evaluation(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._endgame_evaluation(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._time_advantage_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._time_advantage_score(game_state, "player2")
+        idx += 1
+        features[idx] = GameFeatures._material_balance_score(game_state)
+        idx += 1
+        features[idx] = GameFeatures._positional_advantage_score(game_state, "player1")
+        idx += 1
+        features[idx] = GameFeatures._positional_advantage_score(game_state, "player2")
+        idx += 1
+
+        # Fill remaining features with zeros
+        while idx < GameFeatures.SIZE:
+            features[idx] = 0.0
+            idx += 1
 
         return features
 
@@ -204,6 +296,155 @@ class GameFeatures:
             if piece["square"] in safe_squares:
                 score += 1
         return score
+
+    @staticmethod
+    def _center_lane_control(game_state: Dict[str, Any], player: str) -> float:
+        center_squares = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        score = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] in center_squares:
+                score += 1
+        return score
+
+    @staticmethod
+    def _capture_opportunities(game_state: Dict[str, Any], player: str) -> float:
+        opportunities = 0
+        opponent = "player2" if player == "player1" else "player1"
+        
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                for opp_piece in game_state[f"{opponent}_pieces"]:
+                    if opp_piece["square"] >= 0 and opp_piece["square"] < 20:
+                        if piece["square"] == opp_piece["square"]:
+                            opportunities += 1
+        return opportunities
+
+    @staticmethod
+    def _vulnerability_to_capture(game_state: Dict[str, Any], player: str) -> float:
+        vulnerability = 0
+        opponent = "player2" if player == "player1" else "player1"
+        
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                for opp_piece in game_state[f"{opponent}_pieces"]:
+                    if opp_piece["square"] >= 0 and opp_piece["square"] < 20:
+                        if piece["square"] == opp_piece["square"]:
+                            vulnerability += 1
+        return vulnerability
+
+    @staticmethod
+    def _progress_towards_finish(game_state: Dict[str, Any], player: str) -> float:
+        total_progress = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                total_progress += piece["square"]
+            elif piece["square"] == 20:
+                total_progress += 20
+        return total_progress / 140.0  # Normalize by max possible progress
+
+    @staticmethod
+    def _mobility_score(game_state: Dict[str, Any], player: str) -> float:
+        valid_moves = game_state.get("valid_moves", [])
+        return len(valid_moves) / 7.0
+
+    @staticmethod
+    def _development_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces_on_board = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                pieces_on_board += 1
+        return pieces_on_board / 7.0
+
+    @staticmethod
+    def _tactical_opportunities(game_state: Dict[str, Any], player: str) -> float:
+        opportunities = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                # Check if piece can capture or reach rosette
+                if piece["square"] in [0, 7, 13, 15, 16]:
+                    opportunities += 1
+        return opportunities
+
+    @staticmethod
+    def _rosette_safety_score(game_state: Dict[str, Any], player: str) -> float:
+        rosette_squares = [0, 7, 13, 15, 16]
+        score = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] in rosette_squares:
+                score += 1
+        return score / 5.0
+
+    @staticmethod
+    def _center_control_score(game_state: Dict[str, Any], player: str) -> float:
+        center_squares = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+        score = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] in center_squares:
+                score += 1
+        return score / 13.0
+
+    @staticmethod
+    def _piece_coordination_score(game_state: Dict[str, Any], player: str) -> float:
+        pieces = game_state[f"{player}_pieces"]
+        coordination = 0
+        for i, piece1 in enumerate(pieces):
+            for j, piece2 in enumerate(pieces):
+                if i != j and piece1["square"] >= 0 and piece2["square"] >= 0:
+                    distance = abs(piece1["square"] - piece2["square"])
+                    if distance <= 3:
+                        coordination += 1
+        return coordination / 42.0  # Normalize by max possible pairs
+
+    @staticmethod
+    def _attack_pressure_score(game_state: Dict[str, Any], player: str) -> float:
+        pressure = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 15:  # Close to finish
+                pressure += 1
+        return pressure / 7.0
+
+    @staticmethod
+    def _defensive_structure_score(game_state: Dict[str, Any], player: str) -> float:
+        defense = 0
+        rosette_squares = [0, 7, 13, 15, 16]
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] in rosette_squares:
+                defense += 1
+        return defense / 7.0
+
+    @staticmethod
+    def _endgame_evaluation(game_state: Dict[str, Any], player: str) -> float:
+        finished_pieces = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] == 20:
+                finished_pieces += 1
+        return finished_pieces / 7.0
+
+    @staticmethod
+    def _time_advantage_score(game_state: Dict[str, Any], player: str) -> float:
+        total_progress = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                total_progress += piece["square"]
+            elif piece["square"] == 20:
+                total_progress += 20
+        return total_progress / 140.0
+
+    @staticmethod
+    def _material_balance_score(game_state: Dict[str, Any]) -> float:
+        p1_pieces = len([p for p in game_state["player1_pieces"] if p["square"] != -1])
+        p2_pieces = len([p for p in game_state["player2_pieces"] if p["square"] != -1])
+        return (p1_pieces - p2_pieces) / 14.0
+
+    @staticmethod
+    def _positional_advantage_score(game_state: Dict[str, Any], player: str) -> float:
+        total_position = 0
+        for piece in game_state[f"{player}_pieces"]:
+            if piece["square"] >= 0 and piece["square"] < 20:
+                total_position += piece["square"]
+            elif piece["square"] == 20:
+                total_position += 20
+        return total_position / 140.0
 
 class ValueNetwork(nn.Module):
     def __init__(self, input_size: int = 150, dropout_rate: float = 0.2):

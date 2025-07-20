@@ -116,7 +116,7 @@ export class MLAIService {
       console.log('ML AI Service: No init promise, starting initialization');
       this.init();
       console.log('ML AI Service: Starting to load default weights');
-      this.loadDefaultWeights();
+      await this.loadDefaultWeights();
     }
     console.log('ML AI Service: Waiting for init promise...');
     await this.initPromise;

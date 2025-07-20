@@ -35,12 +35,7 @@ export function initializeGame(): GameState {
 }
 
 export function rollDice(): number {
-  // Correct distribution for 4 tetrahedral dice (0-4)
-  // Roll 0: 1/16 (all 0s)
-  // Roll 1: 4/16 (one 1, three 0s)
-  // Roll 2: 6/16 (two 1s, two 0s)
-  // Roll 3: 4/16 (three 1s, one 0)
-  // Roll 4: 1/16 (all 1s)
+  
   const probabilities = [1 / 16, 4 / 16, 6 / 16, 4 / 16, 1 / 16];
   const random = Math.random();
 
@@ -52,7 +47,7 @@ export function rollDice(): number {
     }
   }
 
-  // Fallback (should never happen with exact probabilities)
+  
   return 2;
 }
 
