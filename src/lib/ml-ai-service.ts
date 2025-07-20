@@ -156,7 +156,7 @@ export class MLAIService {
 
     await promise;
     this.weightsLoaded = true;
-    console.log('ML AI Service: Weights loaded successfully');
+    console.log('ML AI Service: Weights loaded successfully, weightsLoaded flag set to true');
   }
 
   async getAIMove(gameState: GameState): Promise<MLResponse> {
@@ -173,13 +173,17 @@ export class MLAIService {
       gameState.player2Pieces.map(p => ({ square: p.square }))
     );
 
-    if (!this.weightsLoaded) {
-      console.warn('ML AI Service: Weights not loaded, using untrained networks');
-    }
-
     try {
       const startTime = performance.now();
       await this.ensureWorkerReady();
+
+      console.log('ML AI Service: Worker ready, weights loaded status:', this.weightsLoaded);
+      if (!this.weightsLoaded) {
+        console.warn('ML AI Service: Weights not loaded, using untrained networks');
+      } else {
+        console.log('ML AI Service: Using trained neural network weights');
+      }
+
       const messageId = this.messageCounter++;
       const promise = new Promise<MLResponse>((resolve, reject) => {
         this.pendingRequests.set(messageId, { type: 'getAIMove', resolve, reject });

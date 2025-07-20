@@ -196,7 +196,9 @@ self.addEventListener(
 
             mlWasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
             weightsLoaded = true;
-            console.log('ML AI Worker: Weights loaded successfully into WASM');
+            console.log(
+              'ML AI Worker: Weights loaded successfully into WASM, weightsLoaded flag set to true'
+            );
             self.postMessage({ type: 'success', id, response: { status: 'weights_loaded' } });
           } else {
             throw new Error('No weights provided');
@@ -206,10 +208,13 @@ self.addEventListener(
         case 'getAIMove':
           if (event.data.gameState) {
             console.log('ML AI Worker: === AI MOVE REQUEST ===');
+            console.log('ML AI Worker: Weights loaded status:', weightsLoaded);
             logGameStateAnalysis(event.data.gameState);
 
             if (!weightsLoaded) {
               console.warn('ML AI Worker: Weights not loaded, using untrained networks');
+            } else {
+              console.log('ML AI Worker: Using trained neural network weights');
             }
 
             const startTime = performance.now();
