@@ -73,7 +73,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         "generate_data" => {
             // Data generation only mode (for hybrid training)
-            let config_file = args.get(2).ok_or("Config file required for generate_data")?;
+            let config_file = args
+                .get(2)
+                .ok_or("Config file required for generate_data")?;
 
             let config_content = std::fs::read_to_string(config_file)?;
             let config: TrainingConfig = serde_json::from_str(&config_content)?;
@@ -88,20 +90,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let trainer = Trainer::new(config.clone());
 
-            println!("\nGenerating training data...");
+            println!("\n🎮 Starting game generation and data preparation...");
             let training_data = trainer.generate_training_data();
 
             // Save training data for Python to use
+            println!("\n💾 Saving training data...");
             let output_data = serde_json::to_string_pretty(&training_data)?;
             std::fs::write(&config.output_file, output_data)?;
 
             let generation_time = start_time.elapsed();
 
             println!("\n=== Data Generation Complete ===");
-            println!("Generation time: {:.2} seconds", generation_time.as_secs_f64());
-            println!("Samples generated: {}", training_data.len());
-            println!("Data saved to: {}", config.output_file);
-            println!("===============================");
+            println!(
+                "Generation time: {:.2} seconds",
+                generation_time.as_secs_f64()
+            );
+            println!("Generated {} training samples", training_data.len());
+            println!("Output saved to: {}", config.output_file);
+            println!("================================");
         }
 
         _ => {

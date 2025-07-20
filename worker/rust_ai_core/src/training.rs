@@ -66,35 +66,85 @@ impl Trainer {
         }
     }
 
-        pub fn generate_training_data(&self) -> Vec<TrainingSample> {
+    pub fn generate_training_data(&self) -> Vec<TrainingSample> {
         println!("=== Rust Data Generation ===");
-        println!("Generating {} training games using all CPU cores...", self.config.num_games);
-        
+        println!(
+            "Generating {} training games using all CPU cores...",
+            self.config.num_games
+        );
+
         let start_time = std::time::Instant::now();
-        let num_cores = std::thread::available_parallelism().unwrap_or(std::num::NonZeroUsize::new(1).unwrap()).get();
+        let num_cores = std::thread::available_parallelism()
+            .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
+            .get();
         println!("Available CPU cores: {}", num_cores);
-        
+
+        // Calculate progress intervals for better logging
+        let progress_interval = if self.config.num_games >= 1000 {
+            50 // Every 50 games for large datasets
+        } else if self.config.num_games >= 100 {
+            10 // Every 10 games for medium datasets
+        } else {
+            1 // Every game for small datasets
+        };
+
+        println!("Progress updates every {} games", progress_interval);
+        println!("Starting game generation...");
+
         // Use rayon for parallel processing
         let training_data: Vec<TrainingSample> = (0..self.config.num_games)
             .into_par_iter()
             .map(|game_id| {
-                if game_id % 100 == 0 {
-                    println!("Generated {}/{} games", game_id, self.config.num_games);
+                // More frequent progress updates
+                if game_id % progress_interval == 0 {
+                    let elapsed = start_time.elapsed();
+                    let games_per_sec = if elapsed.as_secs() > 0 {
+                        game_id as f64 / elapsed.as_secs_f64()
+                    } else {
+                        0.0
+                    };
+                    let eta_secs = if games_per_sec > 0.0 {
+                        (self.config.num_games - game_id) as f64 / games_per_sec
+                    } else {
+                        0.0
+                    };
+
+                    println!(
+                        "🎮 Generated {}/{} games ({:.1}%) - {:.1} games/sec - ETA: {:.0}s",
+                        game_id,
+                        self.config.num_games,
+                        (game_id as f64 / self.config.num_games as f64) * 100.0,
+                        games_per_sec,
+                        eta_secs
+                    );
                 }
-                
+
                 let mut ai = AI::new();
                 self.simulate_game(&mut ai)
             })
             .flatten()
             .collect();
-        
+
         let generation_time = start_time.elapsed();
         println!("=== Data Generation Complete ===");
-        println!("Generation time: {:.2} seconds", generation_time.as_secs_f64());
+        println!(
+            "Generation time: {:.2} seconds",
+            generation_time.as_secs_f64()
+        );
         println!("Generated {} training samples", training_data.len());
-        println!("Average time per game: {:.3} seconds", generation_time.as_secs_f64() / self.config.num_games as f64);
-        println!("Samples per second: {:.0}", training_data.len() as f64 / generation_time.as_secs_f64());
-        
+        println!(
+            "Average time per game: {:.3} seconds",
+            generation_time.as_secs_f64() / self.config.num_games as f64
+        );
+        println!(
+            "Samples per second: {:.0}",
+            training_data.len() as f64 / generation_time.as_secs_f64()
+        );
+        println!(
+            "Average samples per game: {:.1}",
+            training_data.len() as f64 / self.config.num_games as f64
+        );
+
         training_data
     }
 
@@ -157,18 +207,18 @@ impl Trainer {
         4 // Fallback
     }
 
-        fn calculate_value_target(&self, game_state: &GameState) -> f32 {
+    fn calculate_value_target(&self, game_state: &GameState) -> f32 {
         // Use expectiminimax evaluation as target
         let mut ai = AI::new();
         let (_, move_evaluations) = ai.get_best_move(game_state, 3);
-        
+
         // Get the best evaluation from move evaluations
         let evaluation = if let Some(best_move) = move_evaluations.first() {
             best_move.score
         } else {
             0.0
         };
-        
+
         // Normalize to [-1, 1] range
         let normalized = (evaluation / 10000.0).max(-1.0).min(1.0);
         normalized
@@ -268,7 +318,7 @@ impl Trainer {
         total_loss / num_batches as f32
     }
 
-        fn train_batch(&mut self, batch: &[TrainingSample]) -> f32 {
+    fn train_batch(&mut self, batch: &[TrainingSample]) -> f32 {
         let mut total_loss = 0.0;
 
         for sample in batch {
@@ -279,12 +329,12 @@ impl Trainer {
 
             // Calculate losses
             let value_loss = (value_output[0] - sample.value_target).powi(2);
-            
+
             let policy_target = ndarray::Array1::from_vec(sample.policy_target.clone());
             let policy_loss = self.cross_entropy_loss(&policy_output, &policy_target);
-            
+
             total_loss += value_loss + policy_loss;
-            
+
             // Simple weight update (this is a simplified approach)
             // In a real implementation, we would use proper backpropagation
             // For now, we'll just calculate the loss for monitoring

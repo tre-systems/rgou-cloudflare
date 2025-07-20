@@ -61,7 +61,7 @@ def set_random_seeds(seed: int = 42):
     logging.info(f"🎲 Random seeds set to {seed}")
 
 def get_device():
-    """Get the best available device with validation"""
+    """Get the best available device with validation - requires GPU on M1 Mac"""
     if torch.backends.mps.is_available():
         try:
             # Test MPS functionality
@@ -71,9 +71,9 @@ def get_device():
             logging.info("🍎 Using Apple Metal Performance Shaders (MPS)")
             return device
         except Exception as e:
-            logging.warning(f"⚠️  MPS available but failed test: {e}")
-            logging.warning("⚠️  Falling back to CPU")
-            return torch.device("cpu")
+            logging.error(f"❌ MPS available but failed test: {e}")
+            logging.error("❌ This may be a PyTorch/MPS compatibility issue")
+            raise RuntimeError("MPS GPU failed to initialize")
     elif torch.cuda.is_available():
         try:
             device = torch.device("cuda")
@@ -82,12 +82,13 @@ def get_device():
             logging.info(f"🚀 Using CUDA GPU: {torch.cuda.get_device_name()}")
             return device
         except Exception as e:
-            logging.warning(f"⚠️  CUDA available but failed test: {e}")
-            logging.warning("⚠️  Falling back to CPU")
-            return torch.device("cpu")
+            logging.error(f"❌ CUDA available but failed test: {e}")
+            raise RuntimeError("CUDA GPU failed to initialize")
     else:
-        logging.warning("⚠️  No GPU available, using CPU (training will be slow)")
-        return torch.device("cpu")
+        logging.error("❌ No GPU available!")
+        logging.error("❌ This training system requires GPU acceleration")
+        logging.error("❌ On M1 Mac, ensure PyTorch with MPS support is installed")
+        raise RuntimeError("No GPU available - training requires GPU acceleration")
 
 def get_optimal_batch_size(device):
     if str(device) == "cpu":
@@ -109,9 +110,9 @@ class GameFeatures:
         # Piece positions for player 1 (7 features)
         for piece in game_state["player1_pieces"]:
             square = piece["square"]
-            if square >= 0 and square < 20:
-                features[idx] = square / 20.0
-            elif square == 20:
+            if square >= 0 and square < 21:
+                features[idx] = square / 21.0
+            elif square == 21:
                 features[idx] = 1.0
             else:
                 features[idx] = -1.0
@@ -120,15 +121,15 @@ class GameFeatures:
         # Piece positions for player 2 (7 features)
         for piece in game_state["player2_pieces"]:
             square = piece["square"]
-            if square >= 0 and square < 20:
-                features[idx] = square / 20.0
-            elif square == 20:
+            if square >= 0 and square < 21:
+                features[idx] = square / 21.0
+            elif square == 21:
                 features[idx] = 1.0
             else:
                 features[idx] = -1.0
             idx += 1
 
-        # Board occupancy (20 features)
+        # Board occupancy (21 features)
         for square in game_state["board"]:
             if square is None:
                 features[idx] = 0.0
@@ -263,7 +264,7 @@ class GameFeatures:
     def _pieces_on_board_count(game_state: Dict[str, Any], player: str) -> float:
         count = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 count += 1
         return count
 
@@ -271,7 +272,7 @@ class GameFeatures:
     def _finished_pieces_count(game_state: Dict[str, Any], player: str) -> float:
         count = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] == 20:
+            if piece["square"] == 21:
                 count += 1
         return count
 
@@ -282,7 +283,7 @@ class GameFeatures:
         valid_pieces = 0
         
         for piece in pieces:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 total_score += piece["square"]
                 valid_pieces += 1
         
@@ -312,9 +313,9 @@ class GameFeatures:
         opponent = "player2" if player == "player1" else "player1"
         
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 for opp_piece in game_state[f"{opponent}_pieces"]:
-                    if opp_piece["square"] >= 0 and opp_piece["square"] < 20:
+                    if opp_piece["square"] >= 0 and opp_piece["square"] < 21:
                         if piece["square"] == opp_piece["square"]:
                             opportunities += 1
         return opportunities
@@ -325,9 +326,9 @@ class GameFeatures:
         opponent = "player2" if player == "player1" else "player1"
         
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 for opp_piece in game_state[f"{opponent}_pieces"]:
-                    if opp_piece["square"] >= 0 and opp_piece["square"] < 20:
+                    if opp_piece["square"] >= 0 and opp_piece["square"] < 21:
                         if piece["square"] == opp_piece["square"]:
                             vulnerability += 1
         return vulnerability
@@ -336,11 +337,11 @@ class GameFeatures:
     def _progress_towards_finish(game_state: Dict[str, Any], player: str) -> float:
         total_progress = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 total_progress += piece["square"]
-            elif piece["square"] == 20:
-                total_progress += 20
-        return total_progress / 140.0  # Normalize by max possible progress
+            elif piece["square"] == 21:
+                total_progress += 21
+        return total_progress / 147.0  # Normalize by max possible progress
 
     @staticmethod
     def _mobility_score(game_state: Dict[str, Any], player: str) -> float:
@@ -351,7 +352,7 @@ class GameFeatures:
     def _development_score(game_state: Dict[str, Any], player: str) -> float:
         pieces_on_board = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 pieces_on_board += 1
         return pieces_on_board / 7.0
 
@@ -359,7 +360,7 @@ class GameFeatures:
     def _tactical_opportunities(game_state: Dict[str, Any], player: str) -> float:
         opportunities = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 # Check if piece can capture or reach rosette
                 if piece["square"] in [0, 7, 13, 15, 16]:
                     opportunities += 1
@@ -416,7 +417,7 @@ class GameFeatures:
     def _endgame_evaluation(game_state: Dict[str, Any], player: str) -> float:
         finished_pieces = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] == 20:
+            if piece["square"] == 21:
                 finished_pieces += 1
         return finished_pieces / 7.0
 
@@ -424,11 +425,11 @@ class GameFeatures:
     def _time_advantage_score(game_state: Dict[str, Any], player: str) -> float:
         total_progress = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 total_progress += piece["square"]
-            elif piece["square"] == 20:
-                total_progress += 20
-        return total_progress / 140.0
+            elif piece["square"] == 21:
+                total_progress += 21
+        return total_progress / 147.0
 
     @staticmethod
     def _material_balance_score(game_state: Dict[str, Any]) -> float:
@@ -440,11 +441,11 @@ class GameFeatures:
     def _positional_advantage_score(game_state: Dict[str, Any], player: str) -> float:
         total_position = 0
         for piece in game_state[f"{player}_pieces"]:
-            if piece["square"] >= 0 and piece["square"] < 20:
+            if piece["square"] >= 0 and piece["square"] < 21:
                 total_position += piece["square"]
-            elif piece["square"] == 20:
-                total_position += 20
-        return total_position / 140.0
+            elif piece["square"] == 21:
+                total_position += 21
+        return total_position / 147.0
 
 class ValueNetwork(nn.Module):
     def __init__(self, input_size: int = 150, dropout_rate: float = 0.2):
@@ -566,23 +567,41 @@ def generate_training_data_rust(num_games: int, depth: int) -> List[Dict[str, An
         json.dump(config, f, indent=2)
     
     logging.info(f"📄 Rust config saved to: {config_file}")
+    logging.info(f"🎯 Configuration: {num_games} games, depth {depth}")
     
-    # Run Rust data generation with comprehensive logging
+    # Run Rust data generation with real-time output
     generation_start = time.time()
     logging.info("🚀 Starting Rust data generation...")
+    logging.info("📊 Progress updates will appear below:")
     
-    result = subprocess.run(
+    # Use subprocess.Popen for real-time output
+    process = subprocess.Popen(
         [rust_bin, "generate_data", str(config_file)],
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         text=True,
-        cwd="worker/rust_ai_core"
+        cwd="worker/rust_ai_core",
+        bufsize=1,
+        universal_newlines=True
     )
     
+    # Read output in real-time
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            # Clean up the output and log it
+            output = output.strip()
+            if output:
+                logging.info(f"🦀 {output}")
+    
+    # Wait for process to complete
+    return_code = process.poll()
     generation_time = time.time() - generation_start
     
-    if result.returncode != 0:
-        logging.error(f"❌ Rust data generation failed: {result.stderr}")
-        logging.error(f"📄 Rust stdout: {result.stdout}")
+    if return_code != 0:
+        logging.error(f"❌ Rust data generation failed with return code: {return_code}")
         raise RuntimeError("Rust data generation failed")
     
     # Load the generated data
@@ -599,11 +618,13 @@ def generate_training_data_rust(num_games: int, depth: int) -> List[Dict[str, An
         config_file.unlink(missing_ok=True)
         output_file.unlink(missing_ok=True)
         
-        logging.info(f"✅ Rust data generation completed in {generation_time:.2f} seconds")
-        logging.info(f"📂 Data loading completed in {load_time:.2f} seconds")
+        logging.info("✅ Data preparation phase completed successfully!")
         logging.info(f"📊 Generated {len(training_data)} training samples")
-        logging.info(f"⏱️  Average time per game: {generation_time / num_games:.3f} seconds")
+        logging.info(f"⏱️  Generation time: {generation_time:.2f} seconds")
+        logging.info(f"📂 Data loading time: {load_time:.2f} seconds")
+        logging.info(f"🎮 Average time per game: {generation_time / num_games:.3f} seconds")
         logging.info(f"🚀 Samples per second: {len(training_data) / generation_time:.0f}")
+        logging.info(f"📈 Average samples per game: {len(training_data) / num_games:.1f}")
         
         # Save a copy to the data directory
         data_file = training_dir / "data" / f"training_data_{timestamp}.json"
@@ -840,14 +861,6 @@ def main():
     
     # Check GPU availability early
     device = get_device()
-    if str(device) == "cpu":
-        logging.error("❌ No GPU available for training!")
-        logging.error("❌ Training will be extremely slow on CPU")
-        logging.error("❌ Please ensure PyTorch with GPU support is installed")
-        logging.error("❌ For Apple Silicon: pip install torch torchvision torchaudio")
-        logging.error("❌ For NVIDIA: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118")
-        raise RuntimeError("No GPU available for training")
-    
     logging.info("🎯 TRAINING CONFIGURATION")
     logging.info(f"🎮 Games: {args.num_games}")
     logging.info(f"🔄 Epochs: {args.epochs}")
@@ -861,6 +874,14 @@ def main():
     try:
         # Phase 1: Generate training data using Rust (fast)
         training_data = generate_training_data_rust(args.num_games, args.depth)
+        
+        # Clear transition message
+        logging.info("=" * 60)
+        logging.info("🚀 TRANSITIONING TO TRAINING PHASE")
+        logging.info("=" * 60)
+        logging.info(f"📊 Data preparation completed: {len(training_data)} samples ready")
+        logging.info(f"🔥 Starting neural network training on {device}")
+        logging.info("=" * 60)
         
         # Phase 2: Train networks using Python+GPU (efficient)
         value_network, policy_network = train_networks_gpu(

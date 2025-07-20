@@ -97,11 +97,14 @@ python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbo
 ```
 
 **Optimized Features:**
+
 - **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
 - **🔥 Python GPU Training**: Efficient neural network training with PyTorch
 - **⚡ Maximum CPU Utilization**: Uses all available cores for data generation
 - **📊 Comprehensive Logging**: Detailed logs saved to `~/Desktop/rgou-training-data/logs/`
 - **📁 Organized Storage**: Training data and weights stored in `~/Desktop/rgou-training-data/`
+- **🔄 Real-time Progress Updates**: Frequent progress updates during data preparation
+- **📈 Performance Metrics**: Games per second, ETA, and detailed timing information
 
 See [ML AI System](./docs/ml-ai-system.md) for complete training guide.
 

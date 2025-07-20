@@ -29,6 +29,8 @@ python ml/scripts/train_hybrid.py --num-games 1000 --epochs 50 --depth 3 --verbo
 - **⚡ Maximum CPU Utilization**: Uses all available cores for data generation
 - **📊 Comprehensive Logging**: Detailed logs saved to `~/Desktop/rgou-training-data/logs/`
 - **📁 Organized Storage**: Training data and weights stored in `~/Desktop/rgou-training-data/`
+- **🔄 Real-time Progress Updates**: Frequent progress updates during data preparation
+- **📈 Performance Metrics**: Games per second, ETA, and detailed timing information
 
 ## 🏗️ Architecture
 
@@ -97,10 +99,12 @@ python ml/scripts/train_hybrid.py \
 
 All training runs include comprehensive logging:
 
-- Real-time progress updates
-- Performance metrics (time per game, samples per second)
-- CPU and GPU utilization
-- Training and validation loss curves
-- Early stopping notifications
+- **Real-time progress updates** during data preparation (every 1-50 games depending on dataset size)
+- **Individual game completion** notifications with sample counts
+- **Performance metrics** (time per game, samples per second, ETA)
+- **CPU and GPU utilization** information
+- **Training and validation loss** curves with epoch progress
+- **Early stopping** notifications
+- **Clear phase transitions** between data preparation and training
 
 Logs are saved to `~/Desktop/rgou-training-data/logs/` with timestamps.
