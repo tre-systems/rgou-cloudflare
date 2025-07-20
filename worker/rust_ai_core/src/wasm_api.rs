@@ -150,7 +150,7 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
 
     let start_time = js_sys::Date::now();
     let game_state = convert_request_to_game_state(&game_state_request);
-    let ai_depth = 3;
+    let ai_depth = 4;
     let mut ai = AI::new();
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
     let evaluation = game_state.evaluate();
