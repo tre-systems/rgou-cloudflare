@@ -474,8 +474,8 @@ def train_networks_gpu(
             
             train_loss += value_loss.item() + policy_loss.item()
             
-            # Progress logging every 10 batches or at the end
-            if batch_idx % 10 == 0 or batch_idx == train_batches - 1:
+            # Progress logging every 500 batches or at the end
+            if batch_idx % 500 == 0 or batch_idx == train_batches - 1:
                 progress = (batch_idx + 1) / train_batches * 100
                 current_loss = train_loss / (batch_idx + 1)
                 logging.info(f"  📊 Batch {batch_idx+1}/{train_batches} ({progress:.1f}%) - Loss: {current_loss:.6}")

@@ -71,9 +71,10 @@ The project features two distinct AI opponents:
 
 - **Classic AI**: Expectiminimax algorithm with alpha-beta pruning
 - **ML AI**: Neural network trained through self-play
-  - **Hybrid Model**: 55% win rate vs Classic AI - Production Ready
-  - **v2 Model**: 30% win rate vs Classic AI
-  - **Fast Model**: 10% win rate vs Classic AI
+  - **v2 Model**: **44% win rate vs Classic AI** - **Best Performance** ✅
+  - **Fast Model**: 36% win rate vs Classic AI - **Competitive**
+  - **v4 Model**: 32% win rate vs Classic AI - **Needs Improvement** ⚠️
+  - **Hybrid Model**: 30% win rate vs Classic AI - **Needs Improvement** ⚠️
 
 Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-system.md) and [ML AI System](./docs/ml-ai-system.md) for details.
 

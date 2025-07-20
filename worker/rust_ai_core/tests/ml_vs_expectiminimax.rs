@@ -14,6 +14,7 @@ const ML_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_fast.json";
 const ML_V2_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v2.json";
 const ML_V3_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v3.json";
 const ML_HYBRID_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_hybrid.json";
+const ML_V4_WEIGHTS_FILE: &str = "ml/data/weights/ml_ai_weights_v4.json";
 
 #[derive(Debug, Clone)]
 struct GameResult {
@@ -158,6 +159,34 @@ fn load_ml_hybrid_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::
         .parent()
         .unwrap()
         .join("ml/data/weights/ml_ai_weights_hybrid.json");
+    let content = std::fs::read_to_string(weights_path)?;
+    let weights: serde_json::Value = serde_json::from_str(&content)?;
+
+    let value_weights: Vec<f32> = weights["value_weights"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap() as f32)
+        .collect();
+
+    let policy_weights: Vec<f32> = weights["policy_weights"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_f64().unwrap() as f32)
+        .collect();
+
+    Ok((value_weights, policy_weights))
+}
+
+fn load_ml_v4_weights() -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let weights_path = std::path::Path::new(manifest_dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ml/data/weights/ml_ai_weights_v4.json");
     let content = std::fs::read_to_string(weights_path)?;
     let weights: serde_json::Value = serde_json::from_str(&content)?;
 
@@ -826,7 +855,7 @@ fn test_ml_vs_expectiminimax_depth_comparison() {
 
     // Fixed dice sequence for reproducible results
     let fixed_dice = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4];
-    let num_games = 100; // 100 games per depth for better statistics
+    let num_games = 100;
 
     let depths = [2, 3, 4];
     let mut results = Vec::new();
@@ -2062,6 +2091,183 @@ fn test_ml_hybrid_vs_expectiminimax_ai() {
         println!("• Add to the main test matrix");
     } else {
         println!("• Retrain ML-hybrid AI with more games or epochs");
+        println!("• Experiment with different network architectures");
+        println!("• Try self-play training for further improvement");
+    }
+}
+
+#[test]
+fn test_ml_v4_vs_expectiminimax_ai() {
+    println!("🤖 ML-v4 vs Expectiminimax AI Test");
+    println!("===================================");
+
+    // Load v4 weights
+    let (value_weights, policy_weights) =
+        load_ml_v4_weights().expect("Failed to load ML-v4 weights");
+
+    let mut ml_v4_ai = MLAI::new();
+    ml_v4_ai.load_pretrained(&value_weights, &policy_weights);
+    let mut expectiminimax_ai = AI::new();
+
+    let num_games = num_games();
+    let mut ml_wins = 0;
+    let mut expectiminimax_wins = 0;
+    let mut total_moves = 0;
+    let mut ml_total_time = 0;
+    let mut expectiminimax_total_time = 0;
+    let mut ml_moves = 0;
+    let mut expectiminimax_moves = 0;
+    let mut ml_first_wins = 0;
+    let mut ml_second_wins = 0;
+
+    println!(
+        "Loading ML-v4 AI weights from {}",
+        ML_V4_WEIGHTS_FILE
+    );
+    println!(
+        "Starting {} games: ML-v4 AI vs Expectiminimax AI",
+        num_games
+    );
+
+    for game in 1..=num_games {
+        let ml_plays_first = game % 2 == 1;
+        let result = play_game_ml_vs_expectiminimax(
+            &mut ml_v4_ai,
+            &mut expectiminimax_ai,
+            ml_plays_first,
+        );
+
+        total_moves += result.moves_played;
+        ml_total_time += result.ml_ai_total_time_ms;
+        expectiminimax_total_time += result.expectiminimax_ai_total_time_ms;
+        ml_moves += result.ml_ai_moves;
+        expectiminimax_moves += result.expectiminimax_ai_moves;
+
+        match result.winner {
+            Player::Player1 => {
+                if ml_plays_first {
+                    ml_wins += 1;
+                    ml_first_wins += 1;
+                } else {
+                    expectiminimax_wins += 1;
+                }
+            }
+            Player::Player2 => {
+                if ml_plays_first {
+                    expectiminimax_wins += 1;
+                } else {
+                    ml_wins += 1;
+                    ml_second_wins += 1;
+                }
+            }
+        }
+
+        if game % 10 == 0 {
+            println!(
+                "  Game {}: ML-v4 wins: {}, EMM wins: {}",
+                game, ml_wins, expectiminimax_wins
+            );
+        }
+    }
+
+    let ml_win_rate = (ml_wins as f64 / num_games as f64) * 100.0;
+    let avg_moves = total_moves as f64 / num_games as f64;
+
+    println!("\n======================================================================");
+    println!("📊 ML-v4 AI vs EXPECTIMINIMAX AI RESULTS");
+    println!("======================================================================");
+    println!("Total games: {}", num_games);
+    println!("ML-v4 AI wins: {} ({:.1}%)", ml_wins, ml_win_rate);
+    println!(
+        "Expectiminimax AI wins: {} ({:.1}%)",
+        expectiminimax_wins,
+        100.0 - ml_win_rate
+    );
+    println!("Average moves per game: {:.1}", avg_moves);
+    println!(
+        "Average time per move - ML-v4 AI: {:.1}ms",
+        ml_total_time as f64 / ml_moves as f64
+    );
+    println!(
+        "Average time per move - EMM: {:.1}ms",
+        expectiminimax_total_time as f64 / expectiminimax_moves as f64
+    );
+    println!(
+        "Total moves made - ML-v4 AI: {}, EMM: {}",
+        ml_moves, expectiminimax_moves
+    );
+    println!(
+        "ML-v4 AI wins playing first: {} / {}",
+        ml_first_wins,
+        (num_games + 1) / 2
+    );
+    println!(
+        "ML-v4 AI wins playing second: {} / {}",
+        ml_second_wins,
+        num_games / 2
+    );
+
+    println!("\n📈 PERFORMANCE ANALYSIS:");
+    println!("------------------------------");
+    if expectiminimax_total_time > 0 && ml_total_time > 0 {
+        let speed_factor = expectiminimax_total_time as f64 / ml_total_time as f64;
+        println!("EMM is {:.1}x slower than ML-v4 AI", speed_factor);
+    }
+
+    if ml_win_rate > 55.0 {
+        println!("✅ ML-v4 AI significantly outperforms Expectiminimax AI");
+    } else if ml_win_rate > 50.0 {
+        println!("✅ ML-v4 AI shows clear advantage over Expectiminimax AI");
+    } else if ml_win_rate > 45.0 {
+        println!("⚠️  ML-v4 AI shows moderate advantage over Expectiminimax AI");
+    } else if ml_win_rate > 35.0 {
+        println!("📊 ML-v4 AI and Expectiminimax AI are closely matched");
+    } else {
+        println!("❌ Expectiminimax AI outperforms ML-v4 AI");
+    }
+
+    println!("\n🎯 STRATEGIC INSIGHTS:");
+    println!("-------------------------");
+    if ml_first_wins > ml_second_wins {
+        println!("• ML-v4 AI performs better when playing first");
+    } else if ml_second_wins > ml_first_wins {
+        println!("• ML-v4 AI performs better when playing second");
+    } else {
+        println!("• ML-v4 AI performance is balanced regardless of turn order");
+    }
+
+    if avg_moves < 120.0 {
+        println!("• Games are relatively short, suggesting decisive play");
+    } else if avg_moves > 150.0 {
+        println!("• Games are long, suggesting defensive play");
+    } else {
+        println!("• Games have moderate length, balanced play");
+    }
+
+    println!("\n🔍 RECOMMENDATIONS:");
+    println!("--------------------");
+    if ml_win_rate > 55.0 {
+        println!("✅ ML-v4 AI shows excellent performance");
+        println!("   Ready for production use");
+    } else if ml_win_rate > 45.0 {
+        println!("✅ ML-v4 AI shows strong performance");
+        println!("   Consider using for competitive play");
+    } else if ml_win_rate > 40.0 {
+        println!("⚠️  ML-v4 AI shows competitive performance");
+        println!("   May need further training for optimal results");
+    } else {
+        println!("❌ ML-v4 AI needs improvement");
+        println!("   Consider retraining with more data or better parameters");
+    }
+
+    println!("\n🚀 NEXT STEPS:");
+    println!("---------------");
+    if ml_win_rate > 50.0 {
+        println!("• ML-v4 AI is ready for production use");
+        println!("• Consider replacing previous ML versions");
+        println!("• Add to the main test matrix");
+    } else {
+        println!("• Retrain ML-v4 AI with more games or epochs");
         println!("• Experiment with different network architectures");
         println!("• Try self-play training for further improvement");
     }

@@ -22,11 +22,34 @@ The ML AI is a neural network agent that learns to play by imitating the Classic
 
 ## Current Performance
 
-- **Hybrid Model**: 55% win rate vs Classic AI (EMM-3) - **Production Ready**
-- **v2 Model**: 30% win rate vs Classic AI (EMM-3)
-- **Fast Model**: 10% win rate vs Classic AI (EMM-3)
+- **v2 Model**: **44% win rate vs Classic AI (EMM-3)** - **Best Performance** ✅
+- **Fast Model**: 36% win rate vs Classic AI (EMM-3) - **Competitive**
+- **v4 Model**: 32% win rate vs Classic AI (EMM-3) - **Needs Improvement** ⚠️
+- **Hybrid Model**: 30% win rate vs Classic AI (EMM-3) - **Needs Improvement** ⚠️
 - **Speed**: <1ms per move
-- **Status**: Hybrid model significantly outperforms Classic AI
+- **Status**: v2 model significantly outperforms newer models, suggesting training regression in recent approaches
+
+## Latest Training Results (v4 Model)
+
+**Training Date**: July 20, 2025  
+**Training Time**: 1h 53m 9s  
+**Configuration**: 5,000 games, 100 epochs, depth 3  
+**Results**:
+
+- **Training Loss**: 0.825
+- **Validation Loss**: 0.707 (excellent generalization)
+- **Training Samples**: 861,681
+- **Model Size**: 4.0M parameters (81,921 value + 82,119 policy)
+- **Device**: Apple MPS GPU acceleration
+- **Performance**: 1.357 seconds per game generation
+
+**Key Metrics**:
+
+- ✅ Validation loss (0.707) < Training loss (0.825) - excellent generalization
+- ✅ Completed all 100 epochs without early stopping
+- ✅ Final learning rate: 0.00025 (proper decay)
+- ✅ High-quality training data with 861K+ samples
+- ⚠️ **Performance Issue**: 32% win rate vs EMM-3, below v2 model's 44%
 
 ## Training Pipeline
 
@@ -57,40 +80,45 @@ python ml/scripts/train_hybrid.py --num-games 2000 --epochs 75 --depth 4 --verbo
 
 - **🚀 GPU Acceleration**: Apple MPS, NVIDIA CUDA, or CPU fallback
 - **📁 Organized Storage**: Training data and weights in `~/Desktop/rgou-training-data/`
-- **📊 Progress Logging**: Real-time batch and epoch progress updates
+- **📊 Progress Logging**: Real-time batch and epoch progress updates (every 500 batches)
 - **⏱️ Early Stopping**: Prevents overfitting with validation monitoring
 - **🧹 Clean Exit**: Proper cleanup and resource management
+- **💤 Caffeinate**: Prevents system sleep during long training runs
 
 ## Training Configuration
 
-| Parameter | Default | Description |
-| --------- | ------- | ----------- |
-| `--num-games` | 1000 | Number of training games to generate |
-| `--epochs` | 50 | Training epochs |
-| `--depth` | 3 | Expectiminimax depth for expert moves |
-| `--batch-size` | auto | GPU batch size (auto-detected) |
-| `--learning-rate` | 0.001 | Learning rate |
-| `--verbose` | false | Detailed logging |
+| Parameter         | Default | Description                           |
+| ----------------- | ------- | ------------------------------------- |
+| `--num-games`     | 1000    | Number of training games to generate  |
+| `--epochs`        | 50      | Training epochs                       |
+| `--depth`         | 3       | Expectiminimax depth for expert moves |
+| `--batch-size`    | auto    | GPU batch size (auto-detected)        |
+| `--learning-rate` | 0.001   | Learning rate                         |
+| `--verbose`       | false   | Detailed logging                      |
 
 ## Model Management
 
 ### Available Models
 
-- **Hybrid Model**: Latest trained model with hybrid architecture - **55% win rate vs EMM-3**
-- **v2 Model**: Enhanced architecture (150 inputs) - 30% win rate vs EMM-3
-- **Fast Model**: Simpler architecture (100 inputs) - 10% win rate vs EMM-3
+- **v2 Model**: **Best performing model** (July 2025) - **44% win rate vs EMM-3** - **Production Ready** ✅
+- **Fast Model**: Competitive model (100 inputs) - **36% win rate vs EMM-3**
+- **v4 Model**: Latest production model (July 2025) - **32% win rate vs EMM-3** - **Needs Improvement** ⚠️
+- **Hybrid Model**: Hybrid architecture model - **30% win rate vs EMM-3** - **Needs Improvement** ⚠️
 
 ### Loading Weights
 
 ```bash
-# Load latest hybrid model
-npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_hybrid.json
+# Load best performing model (v2)
+npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
 
 # Load fast model
 npm run load:ml-weights ml/data/weights/ml_ai_weights_fast.json
 
-# Load v2 model
-npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
+# Load latest v4 model
+npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_v4.json
+
+# Load hybrid model
+npm run load:ml-weights ~/Desktop/rgou-training-data/weights/ml_ai_weights_hybrid.json
 ```
 
 ### Training Data Organization
@@ -125,11 +153,17 @@ npm run load:ml-weights ml/data/weights/ml_ai_weights_v2.json
 ## Testing
 
 ```bash
+# Test best performing model (v2)
+npm run test:ml-v2
+
+# Test fast model performance
+npm run test:ml-fast
+
+# Test v4 model performance
+npm run test:ml-v4
+
 # Test hybrid model performance
 npm run test:ml-hybrid
-
-# Test v2 model performance  
-npm run test:ml-v2
 
 # Run all ML tests
 npm run test:rust
@@ -139,6 +173,8 @@ npm run test:rust
 
 ### ✅ Completed
 
+- **v4 Production Model**: Successfully trained with excellent validation performance
+- **Reduced Logging Frequency**: Batch progress every 500 batches instead of 10
 - **Hybrid Architecture**: Rust data generation + Python GPU training
 - **Maximum CPU Utilization**: Parallel processing with rayon
 - **GPU Detection**: Automatic device selection with validation

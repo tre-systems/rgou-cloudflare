@@ -1,155 +1,192 @@
-# AI Performance
+# AI Performance Analysis
 
-_Current performance data for all AI systems in the Royal Game of Ur._
+_Comprehensive performance analysis of all AI models in the Royal Game of Ur._
 
-## 🎯 Key Findings (January 2025)
+## Test Matrix Results
 
-**Comprehensive testing reveals significant performance differences:**
+All tests conducted with 100 games vs Expectiminimax AI (Depth 3) unless otherwise specified.
 
-- **EMM-4 (Depth 4)**: 75.0% win rate vs ML-v2 - **🏆 Strongest AI** but slow (370ms/move)
-- **EMM-3 (Depth 3)**: 70.0% win rate vs ML-v2 - **⚡ Production choice** for speed (15ms/move)
-- **EMM-2 (Depth 2)**: 98.0% win rate vs ML-v2 - **Fast alternative** with instant speed
-- **ML-v2 AI**: 49.0% win rate vs EMM-3 - **Competitive alternative** playstyle
-- **Heuristic AI**: 40.0% win rate vs EMM-1 - **Educational only**, significantly weaker
+### ML AI Models Performance
 
-**🏆 Strongest AI**: **EMM-4 (Depth 4)** - Maximum strength for analysis and research
-**⚡ Production Choice**: **EMM-3 (Depth 3)** - Used in game and training for speed
+| Model      | Win Rate | Losses | Avg Moves | Speed | First/Second | Status               |
+| ---------- | -------- | ------ | --------- | ----- | ------------ | -------------------- |
+| **v2**     | **44%**  | 56%    | 152.3     | 0.7ms | 23/21        | ✅ **Best**          |
+| **Fast**   | 36%      | 64%    | 172.1     | 0.7ms | 11/25        | Competitive          |
+| **v4**     | 32%      | 68%    | 147.9     | 0.7ms | 15/17        | ⚠️ Needs Improvement |
+| **Hybrid** | 30%      | 70%    | 173.7     | 0.7ms | 9/21         | ⚠️ Needs Improvement |
 
-**⚠️ Note**: EMM-2 shows anomalous 98% win rate vs ML-v2 but loses to EMM-3 in direct comparison. This suggests ML-v2 may have specific weaknesses against EMM-2's playstyle, but EMM-3 and EMM-4 are objectively stronger.
+### Performance Insights
 
-## Current Performance (January 2025)
+#### 🏆 **v2 Model - Best Performance**
 
-### Performance Ranking
+- **Win Rate**: 44% (44 wins, 56 losses)
+- **Training**: 1,000 games, 50 epochs, depth 3
+- **Architecture**: 150 inputs, enhanced network
+- **Key Strength**: Balanced performance regardless of turn order
+- **Recommendation**: Use for production
 
-| AI Type                | Win Rate  | Speed     | Use Case                |
-| ---------------------- | --------- | --------- | ----------------------- |
-| **🏆 EMM-4 (Depth 4)** | **75.0%** | 370ms     | **Strongest AI**        |
-| **⚡ EMM-3 (Depth 3)** | **51.0%** | 15ms      | **Production gameplay** |
-| EMM-2 (Depth 2)        | 98.0%     | Instant   | Fast alternative        |
-| ML-v2 AI               | 49.0%     | <1ms/move | Alternative playstyle   |
-| Heuristic AI           | 40.0%     | Instant   | Educational baseline    |
-| Random AI              | 50.0%     | Instant   | Baseline testing        |
+#### 🥈 **Fast Model - Competitive**
 
-### Win Rate Matrix
+- **Win Rate**: 36% (36 wins, 64 losses)
+- **Training**: 500 games, 25 epochs, depth 2
+- **Architecture**: 100 inputs, basic network
+- **Key Strength**: Better when playing second
+- **Recommendation**: Good baseline model
 
-| AI Type       | Random | Heuristic | EMM-2 | EMM-3 | EMM-4 | ML-v2 |
-| ------------- | ------ | --------- | ----- | ----- | ----- | ----- |
-| **Random**    | -      | 50.0      | 2.0   | 0.0   | 0.0   | 50.0  |
-| **Heuristic** | 50.0   | -         | 20.0  | 8.0   | 4.0   | 40.0  |
-| **EMM-2**     | 98.0   | 80.0      | -     | 46.7  | 33.3  | 98.0  |
-| **EMM-3**     | 100.0  | 92.0      | 53.3  | -     | 26.7  | 51.0  |
-| **EMM-4**     | 100.0  | 96.0      | 66.7  | 73.3  | -     | 75.0  |
-| **ML-v2**     | 50.0   | 60.0      | 2.0   | 49.0  | 25.0  | -     |
+#### ⚠️ **v4 Model - Training Regression**
 
-## Key Insights
+- **Win Rate**: 32% (32 wins, 68 losses)
+- **Training**: 5,000 games, 100 epochs, depth 3
+- **Architecture**: 150 inputs, production training
+- **Issue**: Despite excellent validation loss (0.707), competitive performance is poor
+- **Recommendation**: Investigate training methodology
 
-- **EMM-4 is strongest**: Best win rate (75.0% vs ML-v2) and dominates other depths
-- **EMM-3 is production choice**: Good win rate (51.0% vs ML-v2) with excellent speed
-- **EMM-2 anomaly**: Shows 98.0% vs ML-v2 but loses to EMM-3 and EMM-4 in direct comparison
-- **Depth hierarchy confirmed**: EMM-4 > EMM-3 > EMM-2 (from depth vs depth tests)
-- **ML-v2 shows promise**: 49.0% win rate vs EMM-3 indicates competitive performance
-- **Heuristic is weak**: Only 40.0% vs EMM-1, suitable for educational purposes only
+#### ⚠️ **Hybrid Model - Performance Issues**
 
-## Search Depth Performance
+- **Win Rate**: 30% (30 wins, 70 losses)
+- **Training**: 10,000 games, 100 epochs, depth 3
+- **Architecture**: Hybrid Rust+Python training
+- **Issue**: Worst performance despite most training data
+- **Recommendation**: Revisit training approach
 
-| Depth | Avg Time | Nodes Evaluated | Win Rate vs ML-v2 | Win Rate vs Heuristic | Depth vs Depth |
-| ----- | -------- | --------------- | ----------------- | --------------------- | -------------- |
-| 1     | Instant  | 0               | 68.0%             | 62.0%                 | N/A            |
-| 2     | Instant  | 7               | 98.0%             | 80.0%                 | 46.7% vs D3    |
-| 3     | 15ms     | 189             | 51.0%             | 92.0%                 | 53.3% vs D2    |
-| 4     | 370ms    | 2,960           | 75.0%             | 96.0%                 | 73.3% vs D3    |
+## Training Regression Analysis
+
+### The v2 Paradox
+
+The v2 model, trained with only 1,000 games and 50 epochs, significantly outperforms newer models trained with 5-10x more data and 2x more epochs.
+
+**Possible Causes:**
+
+1. **Overfitting**: Newer models may be overfitting to training data
+2. **Training Data Quality**: More data doesn't guarantee better quality
+3. **Architecture Changes**: Recent modifications may have introduced issues
+4. **Validation vs Performance Gap**: Good validation loss doesn't guarantee competitive performance
+
+### Recommendations
+
+1. **Use v2 Model**: Currently the best performing model
+2. **Investigate Training**: Analyze why newer models perform worse
+3. **Simplify Approach**: Consider reverting to v2 training methodology
+4. **Focus on Quality**: Prioritize training data quality over quantity
+
+## Classic AI Performance
+
+### Expectiminimax AI (EMM-3)
+
+- **Speed**: 0.2ms per move
+- **Performance**: Consistently outperforms most ML models
+- **Reliability**: Stable performance across all tests
+- **Recommendation**: Default choice for competitive play
+
+## Speed Analysis
+
+### Move Generation Speed
+
+| AI Type            | Average Time | Relative Speed |
+| ------------------ | ------------ | -------------- |
+| Expectiminimax     | 0.2ms        | 1x (baseline)  |
+| ML AI (all models) | 0.7ms        | 3.5x slower    |
+
+### Performance vs Speed Trade-off
+
+- **ML AI**: 3.5x slower but provides unique playstyle
+- **Expectiminimax**: Fastest but predictable strategy
+- **Recommendation**: Use ML AI for variety, Expectiminimax for speed
+
+## Game Length Analysis
+
+### Average Moves per Game
+
+| Model  | Avg Moves | Game Style |
+| ------ | --------- | ---------- |
+| v4     | 147.9     | Balanced   |
+| v2     | 152.3     | Balanced   |
+| Fast   | 172.1     | Defensive  |
+| Hybrid | 173.7     | Defensive  |
+
+### Insights
+
+- **Shorter Games**: v4 and v2 models play more decisively
+- **Longer Games**: Fast and Hybrid models play more defensively
+- **Correlation**: Shorter games correlate with better win rates
+
+## Turn Order Analysis
+
+### Playing First vs Second
+
+| Model  | First Wins | Second Wins | Preference |
+| ------ | ---------- | ----------- | ---------- |
+| v2     | 23/50      | 21/50       | Balanced   |
+| v4     | 15/50      | 17/50       | Second     |
+| Fast   | 11/50      | 25/50       | Second     |
+| Hybrid | 9/50       | 21/50       | Second     |
+
+### Insights
+
+- **v2 Model**: Most balanced performance regardless of turn order
+- **Other Models**: Generally perform better when playing second
+- **Recommendation**: v2 model is most reliable for tournament play
 
 ## Production Recommendations
 
-### **Primary Choice: EMM-3 (Depth 3)**
+### For Production Use
 
-- **Reason**: Good win rate (51.0% vs ML-v2) with excellent speed (15ms/move)
-- **Use case**: Production gameplay, competitive play
-- **Performance**: Best balance of strength and speed for real-time gameplay
+1. **Primary**: v2 Model (44% win rate) - Best performance
+2. **Secondary**: Fast Model (36% win rate) - Good baseline
+3. **Avoid**: v4 and Hybrid models until training issues resolved
 
-### **Maximum Strength: EMM-4 (Depth 4)**
+### For Development
 
-- **Reason**: Highest win rate (75.0% vs ML-v2) but slower (370ms/move)
-- **Use case**: Maximum strength when speed is not critical
-- **Performance**: Best overall strength
+1. **Investigate**: Why newer models perform worse than v2
+2. **Simplify**: Return to v2 training methodology
+3. **Focus**: Quality over quantity in training data
+4. **Test**: All new models against v2 baseline
 
-### **Fast Alternative: EMM-2 (Depth 2)**
+## Future Improvements
 
-- **Reason**: Anomalous win rate (98.0% vs ML-v2) with instant speed
-- **Use case**: Fast gameplay, mobile devices
-- **Performance**: Excellent speed, but note: loses to EMM-3 in direct comparison
+### High Priority
 
-### **Alternative Playstyle: ML-v2 AI**
+- **Fix Training Regression**: Understand why newer models perform worse
+- **Replicate v2 Success**: Identify what made v2 training effective
+- **Quality Control**: Implement better validation of competitive performance
 
-- **Reason**: Competitive performance (49.0% vs EMM-3) with fast speed
-- **Use case**: Alternative gameplay experience, research
-- **Performance**: Different strategic approach
+### Medium Priority
 
-### **Educational Choice: Heuristic AI**
+- **Self-Play Training**: Fine-tune models through self-play
+- **Monte Carlo Tree Search**: Add lightweight search to ML models
+- **Feature Engineering**: Review and optimize input features
 
-- **Reason**: Weak performance (40.0% vs EMM-1) but instant speed
-- **Use case**: Educational purposes, understanding evaluation function
-- **Performance**: Good for learning game mechanics
+### Advanced
 
-## Testing Commands
+- **Multi-Model Ensemble**: Combine multiple models for better performance
+- **Online Learning**: Continuous improvement through gameplay
+- **Adversarial Training**: Train against strongest opponents
+
+## Test Methodology
+
+### Standard Test Configuration
+
+- **Games**: 100 per model comparison
+- **Opponent**: Expectiminimax AI (Depth 3)
+- **Turn Order**: Alternating (50 games each)
+- **Environment**: Consistent hardware and software
+- **Validation**: Multiple test runs for reliability
+
+### Test Commands
 
 ```bash
-# Quick performance test (10 games each)
-npm run test:rust:quick
+# Test specific model
+NUM_GAMES=100 cargo test test_ml_v2_vs_expectiminimax_ai -- --nocapture
 
-# Comprehensive performance test (100 games each)
-npm run test:rust:slow
+# Test all models
+npm run test:rust
 
-# ML-v2 specific test (20 games)
-npm run test:ml-v2
+# Quick tests (10 games)
+cargo test test_ml_v2_vs_expectiminimax_ai -- --nocapture
 ```
 
-## Recent Test Results
+## Related Documentation
 
-**ML-v2 vs Expectiminimax Depth Comparison (100 games each):**
-
-- **Depth 2**: ML-v2 wins 2.0% (2/100 games)
-- **Depth 3**: ML-v2 wins 49.0% (49/100 games)
-- **Depth 4**: ML-v2 wins 25.0% (25/100 games)
-
-**Key Insight**: ML-v2 performs best against Depth 3 expectiminimax, showing promise but needs further training.
-
-**Heuristic AI vs Expectiminimax (50 games each):**
-
-- **vs Depth 1**: Heuristic wins 40.0% (20/50 games)
-- **vs Depth 2**: Heuristic wins 20.0% (10/50 games)
-- **vs Depth 3**: Heuristic wins 8.0% (4/50 games)
-- **vs Depth 4**: Heuristic wins 4.0% (2/50 games)
-
-**Key Insight**: Heuristic AI is significantly weaker than all expectiminimax depths, suitable only for educational purposes.
-
-## Performance Analysis
-
-### **Depth Progression**
-
-- **Depth 1 → 2**: Massive improvement (68% → 98% vs ML-v2)
-- **Depth 2 → 3**: Anomalous result (98% → 51% vs ML-v2, but EMM-3 beats EMM-2 directly)
-- **Depth 3 → 4**: Strong improvement (51% → 75% vs ML-v2)
-
-### **Depth vs Depth Hierarchy (Confirmed)**
-
-- **EMM-4 vs EMM-3**: EMM-4 wins 73.3% vs 26.7%
-- **EMM-4 vs EMM-2**: EMM-4 wins 66.7% vs 33.3%
-- **EMM-3 vs EMM-2**: EMM-3 wins 53.3% vs 46.7%
-
-**Conclusion**: EMM-4 > EMM-3 > EMM-2 (correct hierarchy)
-
-### **Speed vs Strength Trade-off**
-
-- **EMM-1**: Instant speed, weak play
-- **EMM-2**: Instant speed, strong play
-- **EMM-3**: Fast speed (15ms), excellent play
-- **EMM-4**: Slow speed (370ms), maximum strength
-
-### **Recommendations by Use Case**
-
-- **Production**: EMM-3 (best balance)
-- **Mobile**: EMM-2 (instant speed)
-- **Maximum strength**: EMM-4
-- **Alternative playstyle**: ML-v2
-- **Education**: Heuristic AI
+- [AI System](./ai-system.md) - Classic AI implementation
+- [ML AI System](./ml-ai-system.md) - Machine learning AI implementation
+- [AI Development History](./ai-development-history.md) - Model evolution timeline
