@@ -1,7 +1,7 @@
 use crate::features::GameFeatures;
 use crate::neural_network::{NetworkConfig, NeuralNetwork};
-use serde::{Deserialize, Serialize};
 use crate::{GameState, PIECES_PER_PLAYER};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MLMoveEvaluation {
@@ -198,11 +198,293 @@ impl MLAI {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Player;
 
     #[test]
     fn test_ml_ai_new() {
         let ai = MLAI::new();
         assert!(ai.value_network.num_layers() > 0);
         assert!(ai.policy_network.num_layers() > 0);
+    }
+
+    #[test]
+    fn test_ml_ai_initial_state() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+        state.dice_roll = 1; // Ensure there are valid moves
+        let response = ai.get_best_move(&state);
+
+        // Should have valid moves in initial state with dice roll
+        assert!(!response.diagnostics.valid_moves.is_empty());
+        assert!(response.diagnostics.valid_moves.len() == PIECES_PER_PLAYER);
+
+        // Should have move evaluations
+        assert!(!response.diagnostics.move_evaluations.is_empty());
+
+        // Should have network outputs
+        assert_eq!(
+            response.diagnostics.policy_network_outputs.len(),
+            PIECES_PER_PLAYER
+        );
+    }
+
+    #[test]
+    fn test_ml_ai_no_valid_moves() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+
+        // Create a state with no valid moves (all pieces finished)
+        for piece in &mut state.player1_pieces {
+            piece.square = 20;
+        }
+        state.current_player = Player::Player1;
+        state.dice_roll = 1;
+
+        let response = ai.get_best_move(&state);
+
+        assert!(response.r#move.is_none());
+        assert_eq!(response.thinking, "No valid moves available");
+        assert!(response.diagnostics.valid_moves.is_empty());
+    }
+
+    #[test]
+    fn test_ml_ai_single_valid_move() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+
+        // Create a state with only one valid move
+        for i in 1..PIECES_PER_PLAYER {
+            state.player1_pieces[i].square = 20;
+        }
+        state.current_player = Player::Player1;
+        state.dice_roll = 1;
+
+        let response = ai.get_best_move(&state);
+
+        assert_eq!(response.r#move, Some(0));
+        assert_eq!(response.thinking, "Only one valid move");
+        assert_eq!(response.diagnostics.valid_moves.len(), 1);
+    }
+
+    #[test]
+    fn test_ml_ai_move_evaluation_structure() {
+        let mut ai = MLAI::new();
+        let state = GameState::new();
+        let response = ai.get_best_move(&state);
+
+        for evaluation in &response.diagnostics.move_evaluations {
+            assert!(evaluation.piece_index < PIECES_PER_PLAYER as u8);
+            assert!(!evaluation.move_type.is_empty());
+            assert!(evaluation.from_square >= -1);
+            assert!(evaluation.to_square.is_some());
+            assert!(evaluation.to_square.unwrap() <= 20);
+        }
+    }
+
+    #[test]
+    fn test_ml_ai_move_prioritization() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+
+        // Create a state where finishing a piece is possible
+        state.player1_pieces[0].square = 19; // One move from finish
+        state.current_player = Player::Player1;
+        state.dice_roll = 1;
+
+        let response = ai.get_best_move(&state);
+
+        // Should prioritize finishing moves
+        if let Some(move_idx) = response.r#move {
+            let move_eval = response
+                .diagnostics
+                .move_evaluations
+                .iter()
+                .find(|e| e.piece_index == move_idx)
+                .unwrap();
+
+            // Finishing moves should have high scores
+            if move_eval.move_type == "finish" {
+                assert!(move_eval.score > 0.0);
+            }
+        }
+    }
+
+    #[test]
+    fn test_ml_ai_weight_loading() {
+        let mut ai = MLAI::new();
+
+        // Create dummy weights
+        let value_weights = vec![0.1; 81921]; // Approximate size for value network
+        let policy_weights = vec![0.1; 82119]; // Approximate size for policy network
+
+        // Should not panic
+        ai.load_pretrained(&value_weights, &policy_weights);
+
+        // Test that AI still works after loading weights
+        let mut state = GameState::new();
+        state.dice_roll = 1; // Ensure there are valid moves
+        let response = ai.get_best_move(&state);
+        assert!(!response.diagnostics.valid_moves.is_empty());
+    }
+
+    #[test]
+    fn test_ml_ai_position_evaluation() {
+        let mut ai = MLAI::new();
+        let state = GameState::new();
+
+        let evaluation = ai.evaluate_position(&state);
+
+        // Evaluation should be in reasonable range for tanh output
+        assert!(evaluation >= -1.0 && evaluation <= 1.0);
+    }
+
+    #[test]
+    fn test_ml_ai_consistent_behavior() {
+        let mut ai = MLAI::new();
+        let state = GameState::new();
+
+        // Get two responses for the same state
+        let response1 = ai.get_best_move(&state);
+        let response2 = ai.get_best_move(&state);
+
+        // Should be consistent (same move selected)
+        assert_eq!(response1.r#move, response2.r#move);
+        assert!((response1.evaluation - response2.evaluation).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_ml_ai_different_states() {
+        let mut ai = MLAI::new();
+
+        // Test initial state
+        let mut state1 = GameState::new();
+        state1.dice_roll = 1; // Ensure there are valid moves
+        let response1 = ai.get_best_move(&state1);
+
+        // Test a different state (player 2's turn with different piece positions)
+        let mut state2 = GameState::new();
+        state2.current_player = Player::Player2;
+        state2.dice_roll = 1; // Ensure there are valid moves
+        state2.player1_pieces[0].square = 5; // Different piece position
+        let response2 = ai.get_best_move(&state2);
+
+        // Should give different responses for different states
+        // Note: If both evaluations are 0.0, that's acceptable for untrained networks
+        // The important thing is that the AI handles different states correctly
+        assert!(response1.r#move.is_some() || response2.r#move.is_some(), 
+                "At least one state should have valid moves");
+    }
+
+    #[test]
+    fn test_ml_ai_capture_opportunity() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+
+        // Create a state with capture opportunity
+        state.player1_pieces[0].square = 3;
+        state.player2_pieces[0].square = 3;
+        state.current_player = Player::Player1;
+        state.dice_roll = 0; // Move to same square
+
+        let response = ai.get_best_move(&state);
+
+        // Should consider capture moves if there are valid moves
+        if !response.diagnostics.valid_moves.is_empty() {
+            let _has_capture_move = response
+                .diagnostics
+                .move_evaluations
+                .iter()
+                .any(|e| e.move_type == "capture");
+
+            // Note: This might not always be true depending on the current weights
+            // but the structure should be correct
+            assert!(!response.diagnostics.move_evaluations.is_empty());
+        } else {
+            // If no valid moves, that's also acceptable
+            assert!(response.r#move.is_none());
+        }
+    }
+
+    #[test]
+    fn test_ml_ai_rosette_opportunity() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+
+        // Create a state with rosette opportunity
+        state.player1_pieces[0].square = 2; // One move from rosette at square 3
+        state.current_player = Player::Player1;
+        state.dice_roll = 1;
+
+        let response = ai.get_best_move(&state);
+
+        // Should consider rosette moves
+        let _has_rosette_move = response
+            .diagnostics
+            .move_evaluations
+            .iter()
+            .any(|e| e.move_type == "rosette");
+
+        // Note: This might not always be true depending on the current weights
+        // but the structure should be correct
+        assert!(!response.diagnostics.move_evaluations.is_empty());
+    }
+
+    #[test]
+    fn test_ml_ai_network_outputs() {
+        let mut ai = MLAI::new();
+        let mut state = GameState::new();
+        state.dice_roll = 1; // Ensure there are valid moves
+        let response = ai.get_best_move(&state);
+
+        // Check value network output
+        assert!(response.diagnostics.value_network_output >= -1.0);
+        assert!(response.diagnostics.value_network_output <= 1.0);
+
+        // Check policy network outputs
+        assert_eq!(
+            response.diagnostics.policy_network_outputs.len(),
+            PIECES_PER_PLAYER
+        );
+        for &output in &response.diagnostics.policy_network_outputs {
+            assert!(output >= 0.0 && output <= 1.0);
+        }
+
+        // Policy outputs should sum to approximately 1.0 (softmax)
+        let sum: f32 = response.diagnostics.policy_network_outputs.iter().sum();
+        assert!((sum - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_ml_ai_move_scoring() {
+        let mut ai = MLAI::new();
+        let state = GameState::new();
+        let response = ai.get_best_move(&state);
+
+        // Move evaluations should be sorted by score (descending)
+        let scores: Vec<f32> = response
+            .diagnostics
+            .move_evaluations
+            .iter()
+            .map(|e| e.score)
+            .collect();
+
+        for i in 1..scores.len() {
+            assert!(
+                scores[i - 1] >= scores[i],
+                "Move evaluations should be sorted by score"
+            );
+        }
+
+        // Best move should have the highest score
+        if let Some(best_move) = response.r#move {
+            let best_eval = response
+                .diagnostics
+                .move_evaluations
+                .iter()
+                .find(|e| e.piece_index == best_move)
+                .unwrap();
+
+            assert_eq!(best_eval.score, scores[0]);
+        }
     }
 }

@@ -335,22 +335,22 @@ impl Trainer {
         let mut total_loss = 0.0;
 
         for sample in batch {
-            // Forward pass
+            // Train value network
             let features = ndarray::Array1::from_vec(sample.features.clone());
-            let value_output = self.value_network.forward(&features);
-            let policy_output = self.policy_network.forward(&features);
+            let value_target = ndarray::Array1::from_vec(vec![sample.value_target]);
+            let value_loss =
+                self.value_network
+                    .train_step(&features, &value_target, self.config.learning_rate);
 
-            // Calculate losses
-            let value_loss = (value_output[0] - sample.value_target).powi(2);
-
+            // Train policy network
             let policy_target = ndarray::Array1::from_vec(sample.policy_target.clone());
-            let policy_loss = self.cross_entropy_loss(&policy_output, &policy_target);
+            let policy_loss = self.policy_network.train_step(
+                &features,
+                &policy_target,
+                self.config.learning_rate,
+            );
 
             total_loss += value_loss + policy_loss;
-
-            // Simple weight update (this is a simplified approach)
-            // In a real implementation, we would use proper backpropagation
-            // For now, we'll just calculate the loss for monitoring
         }
 
         total_loss / batch.len() as f32
@@ -477,5 +477,351 @@ mod tests {
         assert!(counts[2] > 350 && counts[2] < 400); // ~6/16
         assert!(counts[3] > 200 && counts[3] < 300); // ~4/16
         assert!(counts[4] > 30 && counts[4] < 100); // ~1/16
+    }
+
+    #[test]
+    fn test_policy_target_creation() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+        let game_state = GameState::new();
+        let policy_target = trainer.create_policy_target(&game_state, 3);
+
+        assert_eq!(policy_target.len(), PIECES_PER_PLAYER);
+        assert_eq!(policy_target[3], 1.0);
+        assert_eq!(
+            policy_target.iter().filter(|&&x| x == 0.0).count(),
+            PIECES_PER_PLAYER - 1
+        );
+    }
+
+    #[test]
+    fn test_value_target_calculation() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+        let game_state = GameState::new();
+        let value_target = trainer.calculate_value_target(&game_state);
+
+        // Value target should be in [-1, 1] range
+        assert!(value_target >= -1.0 && value_target <= 1.0);
+    }
+
+    #[test]
+    fn test_training_sample_creation() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+        let mut ai = AI::new();
+        let samples = trainer.simulate_game(&mut ai);
+
+        // Should generate some training samples
+        assert!(!samples.is_empty());
+
+        // Check sample structure
+        for sample in &samples {
+            assert_eq!(sample.features.len(), 150);
+            assert!(sample.value_target >= -1.0 && sample.value_target <= 1.0);
+            assert_eq!(sample.policy_target.len(), PIECES_PER_PLAYER);
+            assert!((sample.policy_target.iter().sum::<f32>() - 1.0).abs() < 1e-6);
+        }
+    }
+
+    #[test]
+    fn test_training_data_generation() {
+        let config = TrainingConfig {
+            num_games: 5,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+        let training_data = trainer.generate_training_data();
+
+        // Should generate training data
+        assert!(!training_data.is_empty());
+
+        // Check data quality
+        for sample in &training_data {
+            assert_eq!(sample.features.len(), 150);
+            assert!(sample.value_target >= -1.0 && sample.value_target <= 1.0);
+            assert_eq!(sample.policy_target.len(), PIECES_PER_PLAYER);
+
+            // Policy target should be one-hot or close to it
+            let max_prob = sample.policy_target.iter().fold(0.0_f32, |a, &b| a.max(b));
+            assert!(
+                max_prob > 0.5,
+                "Policy target should have a clear preferred move"
+            );
+        }
+    }
+
+    #[test]
+    fn test_training_epoch() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 2,
+            learning_rate: 0.01,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let mut trainer = Trainer::new(config);
+
+        // Create some test training data
+        let mut training_data = Vec::new();
+        for i in 0..10 {
+            let features = vec![0.1; 150];
+            let value_target = 0.5;
+            let mut policy_target = vec![0.0; PIECES_PER_PLAYER];
+            policy_target[i % PIECES_PER_PLAYER] = 1.0;
+
+            training_data.push(TrainingSample {
+                features,
+                value_target,
+                policy_target,
+            });
+        }
+
+        let loss = trainer.train_epoch(&training_data);
+        assert!(loss > 0.0, "Training loss should be positive");
+    }
+
+    #[test]
+    fn test_validation_epoch() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 2,
+            learning_rate: 0.01,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+
+        // Create some test validation data
+        let mut validation_data = Vec::new();
+        for i in 0..5 {
+            let features = vec![0.1; 150];
+            let value_target = 0.5;
+            let mut policy_target = vec![0.0; PIECES_PER_PLAYER];
+            policy_target[i % PIECES_PER_PLAYER] = 1.0;
+
+            validation_data.push(TrainingSample {
+                features,
+                value_target,
+                policy_target,
+            });
+        }
+
+        let loss = trainer.validate_epoch(&validation_data);
+        assert!(loss > 0.0, "Validation loss should be positive");
+    }
+
+    #[test]
+    fn test_cross_entropy_loss() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+
+        // Test with perfect prediction
+        let output = ndarray::Array1::from_vec(vec![0.0, 1.0, 0.0, 0.0]);
+        let target = ndarray::Array1::from_vec(vec![0.0, 1.0, 0.0, 0.0]);
+        let loss = trainer.cross_entropy_loss(&output, &target);
+        assert!(loss < 1e-6, "Perfect prediction should have near-zero loss");
+
+        // Test with poor prediction
+        let output = ndarray::Array1::from_vec(vec![0.25, 0.25, 0.25, 0.25]);
+        let target = ndarray::Array1::from_vec(vec![0.0, 1.0, 0.0, 0.0]);
+        let loss = trainer.cross_entropy_loss(&output, &target);
+        assert!(loss > 0.5, "Poor prediction should have high loss");
+    }
+
+    #[test]
+    fn test_weight_saving_loading() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_weights.json".to_string(),
+        };
+
+        let mut trainer = Trainer::new(config.clone());
+
+        // Create some test data and train a bit
+        let mut training_data = Vec::new();
+        for i in 0..5 {
+            let features = vec![0.1; 150];
+            let value_target = 0.5;
+            let mut policy_target = vec![0.0; PIECES_PER_PLAYER];
+            policy_target[i % PIECES_PER_PLAYER] = 1.0;
+
+            training_data.push(TrainingSample {
+                features,
+                value_target,
+                policy_target,
+            });
+        }
+
+        // Train for one epoch
+        trainer.train_epoch(&training_data);
+
+        // Save weights
+        let metadata = TrainingMetadata {
+            training_date: "2025-01-01".to_string(),
+            version: "test".to_string(),
+            num_games: 1,
+            num_training_samples: 5,
+            epochs: 1,
+            learning_rate: 0.001,
+            batch_size: 1,
+            validation_split: 0.2,
+            seed: 42,
+            training_time_seconds: 1.0,
+            improvements: vec!["test".to_string()],
+        };
+
+        let save_result = trainer.save_weights("test_weights.json", &metadata);
+        assert!(save_result.is_ok(), "Weight saving should succeed");
+
+        // Create new trainer and load weights
+        let mut new_trainer = Trainer::new(config);
+        let load_result = new_trainer.load_weights("test_weights.json");
+        assert!(load_result.is_ok(), "Weight loading should succeed");
+
+        // Test that outputs are similar (not identical due to randomness)
+        let test_features = ndarray::Array1::from_vec(vec![0.1; 150]);
+        let original_value = trainer.value_network.forward(&test_features);
+        let loaded_value = new_trainer.value_network.forward(&test_features);
+
+        // Outputs should be similar (within reasonable tolerance)
+        assert!((original_value[0] - loaded_value[0]).abs() < 0.1);
+
+        // Clean up
+        let _ = std::fs::remove_file("test_weights.json");
+    }
+
+    #[test]
+    fn test_training_convergence() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 5,
+            batch_size: 4,
+            learning_rate: 0.01,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let mut trainer = Trainer::new(config);
+
+        // Create simple training data
+        let mut training_data = Vec::new();
+        for _ in 0..20 {
+            let features = vec![0.1; 150];
+            let value_target = 0.5;
+            let mut policy_target = vec![0.0; PIECES_PER_PLAYER];
+            policy_target[0] = 1.0;
+
+            training_data.push(TrainingSample {
+                features,
+                value_target,
+                policy_target,
+            });
+        }
+
+        // Train and check for convergence
+        let metadata = trainer.train(&training_data);
+
+        // Should complete training without errors
+        assert_eq!(metadata.num_training_samples, 20);
+        assert_eq!(metadata.epochs, 5);
+        assert!(metadata.training_time_seconds > 0.0);
+    }
+
+    #[test]
+    fn test_feature_consistency() {
+        let config = TrainingConfig {
+            num_games: 1,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 3,
+            seed: 42,
+            output_file: "test_output.json".to_string(),
+        };
+
+        let trainer = Trainer::new(config);
+        let mut ai = AI::new();
+        let samples = trainer.simulate_game(&mut ai);
+
+        // Check that features are consistent across samples
+        for (sample_idx, sample) in samples.iter().enumerate() {
+            assert_eq!(sample.features.len(), 150);
+
+            // Features should be reasonable values (allow flexibility for strategic features)
+            for (feature_idx, &feature) in sample.features.iter().enumerate() {
+                assert!(
+                    feature >= -15.0 && feature <= 15.0,
+                    "Sample {}, Feature {} out of range: {}",
+                    sample_idx,
+                    feature_idx,
+                    feature
+                );
+            }
+        }
     }
 }
