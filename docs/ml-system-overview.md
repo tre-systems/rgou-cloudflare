@@ -32,12 +32,11 @@ ml/
 │   ├── train_pytorch.py        # Main PyTorch training script
 │   ├── train-pytorch.sh        # Shell wrapper with caffeinate
 │   └── load_pytorch_weights.py # Weight conversion utility
-├── weights/                     # Trained model weights
-│   └── *.json                  # Weight files (gitignored)
-└── data/                        # Training data and configuration
-    ├── training/               # Training datasets
-    ├── genetic_params/         # Genetic algorithm parameters
-    └── weights/                # Legacy weights (moved to parent)
+├── data/                        # Training data and configuration
+│   ├── training/               # Training datasets
+│   ├── genetic_params/         # Genetic algorithm parameters
+│   └── weights/                # Legacy weights (moved to parent)
+└── data/weights/                # All trained model weights
 ```
 
 ## Quick Start Commands
@@ -87,10 +86,10 @@ cd worker/rust_ai_core && cargo run --bin train --release --features training --
 
 ```bash
 # Convert PyTorch weights to Rust format
-python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v1.json --test
+python3 ml/scripts/load_pytorch_weights.py ml/data/weights/ml_ai_weights_v1.json --test
 
 # Load weights for browser use
-npm run load:ml-weights ml/weights/ml_ai_weights_v1_rust.json
+npm run load:ml-weights ml/data/weights/ml_ai_weights_v1_rust.json
 ```
 
 ## Model Performance Matrix
@@ -275,7 +274,7 @@ Rust Game Simulation → JSON Training Data → PyTorch DataLoader → GPU Train
 - **`ml/scripts/load_pytorch_weights.py`** - Weight conversion utility
 - **Rust data generation** - Leverages existing `worker/rust_ai_core/src/bin/train.rs`
 - **Training data directory** - `~/Desktop/rgou-training-data/` for all temporary files
-- **Weights directory** - `ml/weights/` for all trained model weights
+- **Weights directory** - `ml/data/weights/` for all trained model weights
 
 ### Rust Training System
 

@@ -11,12 +11,11 @@ ml/
 │   ├── train_pytorch.py   # Main PyTorch training script
 │   ├── train-pytorch.sh   # Shell wrapper with caffeinate
 │   └── load_pytorch_weights.py # Weight conversion utility
-├── weights/               # Trained model weights
-│   └── *.json            # Weight files (gitignored)
-└── data/                  # Training data and configuration
-    ├── training/          # Training datasets
-    ├── genetic_params/    # Genetic algorithm parameters
-    └── weights/           # Legacy weights (moved to parent)
+├── data/                  # Training data and configuration
+│   ├── weights/               # Trained model weights
+│   ├── training/          # Training datasets
+│   ├── genetic_params/    # Genetic algorithm parameters
+│   └── weights/           # Legacy weights (moved to parent)
 ```
 
 ## Training Scripts
@@ -45,15 +44,15 @@ Convert PyTorch weights to Rust-compatible format:
 
 ```bash
 # Convert and test
-python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v1.json --test
+python3 ml/scripts/load_pytorch_weights.py ml/data/weights/ml_ai_weights_v1.json --test
 
 # Convert with custom output
-python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v1.json rust_weights.json
+python3 ml/scripts/load_pytorch_weights.py ml/data/weights/ml_ai_weights_v1.json rust_weights.json
 ```
 
 ## Weights Directory
 
-All trained model weights are stored in `ml/weights/`:
+All trained model weights are stored in `ml/data/weights/`:
 
 - **PyTorch weights** - Direct output from PyTorch training
 - **Rust weights** - Converted weights compatible with Rust inference

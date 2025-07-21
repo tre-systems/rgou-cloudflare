@@ -106,7 +106,7 @@ npm run train:pytorch:production
 npm run train:pytorch:v5
 
 # Convert PyTorch weights for Rust use
-python3 ml/scripts/load_pytorch_weights.py ml/weights/ml_ai_weights_v5.json --test
+python3 ml/scripts/load_pytorch_weights.py ml/data/weights/ml_ai_weights_v5.json --test
 ```
 
 **PyTorch Features:**
