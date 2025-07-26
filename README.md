@@ -143,6 +143,22 @@ cd worker/rust_ai_core && cargo run --bin train --release --features training --
 - **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
 - **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
 
+### 🧬 Genetic Parameter Evolution
+
+Optimize the expectiminimax AI parameters using genetic algorithms:
+
+```bash
+# Evolve genetic parameters (tournament style)
+npm run evolve:genetic-params
+```
+
+**Evolution Features:**
+
+- **🧬 Genetic Algorithm**: Tournament-style evolution of AI parameters
+- **⚡ Optimized Performance**: Uses all available CPU cores efficiently
+- **🍎 Apple Silicon Tuned**: Optimized for M1/M2/M3 Macs
+- **📊 Comprehensive Testing**: Validates evolved parameters with extensive game testing
+
 See [ML System Overview](./docs/ml-system-overview.md) for complete training guide.
 
 ## 🧪 Testing
@@ -166,6 +182,37 @@ npm run db:setup
 
 See [Testing Strategy](./docs/testing-strategy.md) for detailed testing information.
 
+## 📋 Available Scripts
+
+The project includes a comprehensive set of npm scripts for development, testing, training, and deployment. For a complete reference with detailed explanations, see **[Scripts Reference](./docs/scripts-reference.md)**.
+
+### 🚀 Quick Start Commands
+
+```bash
+# Development
+npm run dev              # Start development server
+npm run build           # Build for production
+npm run check           # Run all tests and checks
+
+# Training
+npm run train:quick     # Quick ML training
+npm run train:production # Production ML training
+
+# Testing
+npm run test:ai-comparison:fast  # Quick AI comparison
+npm run test:e2e        # End-to-end tests
+```
+
+### 📚 Script Categories
+
+- **Development**: Build, dev server, code quality
+- **Testing**: Unit tests, e2e tests, AI comparison tests
+- **Machine Learning**: Training scripts for both Rust and PyTorch backends
+- **Database**: Migration and setup commands
+- **Infrastructure**: WASM builds, deployment tools
+
+See **[Scripts Reference](./docs/scripts-reference.md)** for the complete list with detailed explanations and usage examples.
+
 ## 🏗️ Architecture
 
 - **Frontend**: Next.js with React, TypeScript, Tailwind CSS
@@ -186,6 +233,7 @@ The project evolved from hybrid client/server AI to pure client-side execution f
 
 ### Development
 
+- **[Scripts Reference](./docs/scripts-reference.md)** - Complete npm scripts documentation
 - **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
 - **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
 - **[TODO](./docs/TODO.md)** - Consolidated task list and improvements
