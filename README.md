@@ -149,15 +149,15 @@ The evolution script uses a robust genetic algorithm with:
 - **Generations:** 50 generations
 - **Games per evaluation:** 100 games per individual
 - **Post-evolution validation:** 1000 games to confirm improvement
-- **Quality threshold:** Only saves parameters if they win >55% vs defaults
+- **Quality threshold:** Only saves parameters if they significantly outperform defaults
 
 ### Current Results (July 2025)
 
 **Evolved Parameters Performance:**
 
-- **Win rate vs defaults:** 61% (significant improvement)
+- **Significant improvement** over default parameters
 - **Evolution time:** ~42 minutes
-- **Validation confirmed:** 1000-game test showed 69.4% win rate
+- **Validation confirmed:** 1000-game test confirms significant improvement
 
 **Key Parameter Changes:**
 

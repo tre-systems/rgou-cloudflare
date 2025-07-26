@@ -131,13 +131,15 @@ python3 ml/scripts/convert_weights.py input.json --format rust --output rust_wei
 
 ### Current Models
 
-| Model          | Win Rate vs EMM-3 | Training Games | Epochs | Status                     |
-| -------------- | ----------------- | -------------- | ------ | -------------------------- |
-| **PyTorch V5** | **63.3%**         | 2000           | 100    | ✅ **Best ML Performance** |
-| **ML-V2**      | **60.4%**         | 1000           | 50     | ✅ **Strong Performance**  |
-| **ML-Fast**    | **59.3%**         | 1000           | 50     | ✅ **Good Performance**    |
-| **ML-V4**      | **56.7%**         | 5000           | 100    | ✅ **Good Performance**    |
-| **ML-Fast**    | **51.1%**         | 500            | 25     | ⚠️ **Needs Improvement**   |
+| Model          | Training Games | Epochs | Status                     |
+| -------------- | -------------- | ------ | -------------------------- |
+| **PyTorch V5** | 2000           | 100    | ✅ **Latest Model** |
+| **ML-V2**      | 1000           | 50     | ✅ **Strong Performance**  |
+| **ML-Fast**    | 1000           | 50     | ✅ **Good Performance**    |
+| **ML-V4**      | 5000           | 100    | ✅ **Good Performance**    |
+| **ML-Hybrid**  | 1000           | 50     | ✅ **Hybrid Approach**   |
+
+For detailed performance metrics, see [AI-MATRIX-RESULTS.md](../docs/AI-MATRIX-RESULTS.md).
 
 ## 🧬 Genetic Parameter Evolution
 
@@ -157,14 +159,16 @@ npm run validate:genetic-params
 - **Generations:** 50 generations
 - **Games per evaluation:** 100 games per individual
 - **Evolution time:** ~42 minutes
-- **Quality threshold:** Only saves parameters if they win >55% vs defaults
+- **Quality threshold:** Only saves parameters if they significantly outperform defaults
 
 ### Current Results
 
 **Evolved Parameters Performance:**
 
-- **Win rate vs defaults:** 61% (significant improvement)
-- **Validation confirmed:** 1000-game test showed 69.4% win rate
+- **Significant improvement** over default parameters
+- **Validation confirmed:** 1000-game test confirms improvement
+
+For detailed performance metrics, see [AI-MATRIX-RESULTS.md](../docs/AI-MATRIX-RESULTS.md).
 
 ## 🔧 Troubleshooting
 

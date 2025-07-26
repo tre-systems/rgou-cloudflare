@@ -45,7 +45,7 @@ The evaluation function uses evolved genetic parameters optimized through a gene
 - `capture_bonus`: 49 (increased from 35)
 - `center_lane_bonus`: 4 (increased from 2)
 
-**Performance**: Evolved parameters achieve 61% win rate against default parameters.
+**Performance**: Evolved parameters significantly outperform default parameters.
 
 ### Search Depth Optimization
 
@@ -257,7 +257,7 @@ npm run train:rust -- --num-games 500 --epochs 25
 
 **July 2025 - PyTorch V5 Breakthrough**:
 - First ML model competitive with strongest classic AI (EMM-4)
-- 44% win rate vs EMM-4 with 8.1x speed advantage
+- Strong performance vs EMM-4 with significant speed advantage
 - Represents breakthrough in ML AI development
 
 **July 2025 - Pure Rust Training Migration**:
@@ -267,7 +267,7 @@ npm run train:rust -- --num-games 500 --epochs 25
 
 **2024 - Genetic Parameter Evolution**:
 - Evolved genetic parameters through 50 generations
-- 61% win rate improvement over default parameters
+- Significant improvement over default parameters
 - All classic AI now uses evolved parameters by default
 
 ### Lessons Learned
@@ -321,7 +321,7 @@ cargo test test_genetic_params_comparison -- --nocapture
 The AI system provides a comprehensive suite of opponents ranging from educational baselines to competitive neural networks. The Classic AI offers reliable, strong play while the ML AI demonstrates the potential of modern machine learning approaches. Both systems run efficiently in the browser, providing instant responses and enabling true offline play.
 
 **Current Recommendations**:
-- **Production**: EMM-3 (Depth 3) for best overall performance
+- **Production**: EMM-3 (Depth 3) for best overall performance (see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md))
 - **ML Research**: PyTorch V5 and ML-Hybrid for advanced AI development
 - **Educational**: Heuristic AI for understanding game strategy
 - **Baseline**: Random AI for performance comparisons 

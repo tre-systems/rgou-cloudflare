@@ -89,7 +89,7 @@ The evolution script uses a robust genetic algorithm with:
 - **Generations:** 50 generations
 - **Games per evaluation:** 100 games per individual
 - **Post-evolution validation:** 1000 games to confirm improvement
-- **Quality threshold:** Only saves parameters if they win >55% vs defaults
+- **Quality threshold:** Only saves parameters if they significantly outperform defaults
 
 ### Current Results (July 2025)
 

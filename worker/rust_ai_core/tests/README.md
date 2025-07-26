@@ -174,18 +174,9 @@ cargo test test_genetic_params_comparison
 
 ## 📈 Test Results
 
-### **Performance Benchmarks** (Latest Results)
+### **Performance Benchmarks**
 
-| AI Type             | Win Rate  | Speed   | Status              |
-| ------------------- | --------- | ------- | ------------------- |
-| **EMM-3 (Depth 3)** | **71.8%** | 17.1ms  | ✅ **Best Overall** |
-| **PyTorch V5**      | **63.3%** | 65.0ms  | ✅ **Best ML**      |
-| **ML-V2**           | **60.4%** | 58.5ms  | ✅ **Strong ML**    |
-| **ML-Fast**         | **59.3%** | 65.5ms  | ✅ **Good ML**      |
-| **ML-V4**           | **56.7%** | 56.0ms  | ✅ **Good ML**      |
-| **EMM-2 (Depth 2)** | **56.4%** | 0.1ms   | ✅ **Fast**         |
-| **Heuristic**       | **35.6%** | Instant | 📚 **Educational**  |
-| **Random**          | **~3%**   | Instant | 🧪 **Baseline**     |
+For the latest detailed performance results, see [AI-MATRIX-RESULTS.md](../../docs/AI-MATRIX-RESULTS.md).
 
 ### **Speed Categories**
 
@@ -197,7 +188,7 @@ cargo test test_genetic_params_comparison
 
 Based on test results:
 
-- **Production**: EMM-3 (Depth 3) - Best overall performance
+- **Production**: EMM-3 (Depth 3) - Best overall performance (see [AI-MATRIX-RESULTS.md](../../docs/AI-MATRIX-RESULTS.md))
 - **Real-time**: EMM-1/2 - Very fast and suitable for interactive play
 - **ML Alternative**: PyTorch V5 - Strong ML performance
 - **Educational**: Heuristic AI - Good for understanding game strategy
