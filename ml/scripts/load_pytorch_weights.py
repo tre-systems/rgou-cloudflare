@@ -11,11 +11,28 @@ from typing import Dict, Any, List
 import torch
 import torch.nn as nn
 
+def load_network_config() -> Dict[str, Any]:
+    """Load unified network configuration"""
+    config_path = Path("ml/config/training.json")
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            return config["network_architecture"]
+    else:
+        # Fallback to default configuration
+        return {
+            "input_size": 150,
+            "hidden_sizes": [256, 128, 64, 32],
+            "value_output_size": 1,
+            "policy_output_size": 7
+        }
+
 class ValueNetwork(nn.Module):
-    def __init__(self, input_size: int = 150, hidden_sizes: List[int] = None):
+    def __init__(self, network_config: Dict[str, Any]):
         super().__init__()
-        if hidden_sizes is None:
-            hidden_sizes = [256, 128, 64, 32]
+        input_size = network_config["input_size"]
+        hidden_sizes = network_config["hidden_sizes"]
+        output_size = network_config["value_output_size"]
         
         layers = []
         prev_size = input_size
@@ -28,7 +45,7 @@ class ValueNetwork(nn.Module):
             ])
             prev_size = hidden_size
         
-        layers.append(nn.Linear(prev_size, 1))
+        layers.append(nn.Linear(prev_size, output_size))
         
         self.network = nn.Sequential(*layers)
         
@@ -36,10 +53,11 @@ class ValueNetwork(nn.Module):
         return torch.tanh(self.network(x))
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_size: int = 150, output_size: int = 7, hidden_sizes: List[int] = None):
+    def __init__(self, network_config: Dict[str, Any]):
         super().__init__()
-        if hidden_sizes is None:
-            hidden_sizes = [256, 128, 64, 32]
+        input_size = network_config["input_size"]
+        hidden_sizes = network_config["hidden_sizes"]
+        output_size = network_config["policy_output_size"]
         
         layers = []
         prev_size = input_size
@@ -102,9 +120,12 @@ def test_weights_compatibility(weights_data: Dict[str, Any]):
     print("🧪 Testing weight compatibility...")
     
     try:
+        # Load network configuration
+        network_config = load_network_config()
+        
         # Create networks
-        value_network = ValueNetwork()
-        policy_network = PolicyNetwork()
+        value_network = ValueNetwork(network_config)
+        policy_network = PolicyNetwork(network_config)
         
         # Load weights
         value_idx = 0

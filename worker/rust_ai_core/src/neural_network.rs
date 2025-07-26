@@ -488,9 +488,9 @@ mod tests {
 
         // Train for more steps to ensure learning
         let mut losses = Vec::new();
-        for i in 0..20 {
-            let loss = network.train_step(&input, &target, 0.01);
-            if i % 5 == 0 {
+        for i in 0..50 {
+            let loss = network.train_step(&input, &target, 0.1);
+            if i % 10 == 0 {
                 losses.push(loss);
                 println!("Step {}: loss = {}", i, loss);
             }

@@ -37,12 +37,15 @@ class TrainingConfig:
     temp_data_file: str = "temp_training_data.json"
     
     def __post_init__(self):
+        # Load unified configuration
+        self.unified_config = self.load_unified_config()
+        
         # Ensure training data directory exists
         self.training_data_dir = Path.home() / "Desktop" / "rgou-training-data"
         self.training_data_dir.mkdir(parents=True, exist_ok=True)
         
         # Ensure weights directory exists
-        self.weights_dir = Path.cwd() / "ml" / "weights"
+        self.weights_dir = Path.cwd() / "ml" / "data" / "weights"
         self.weights_dir.mkdir(parents=True, exist_ok=True)
         
         # Update temp file path to use training data directory
@@ -51,12 +54,30 @@ class TrainingConfig:
         # Update output file path to use weights directory
         if not self.output_file.startswith('/') and not self.output_file.startswith('./'):
             self.output_file = str(self.weights_dir / self.output_file)
+    
+    def load_unified_config(self) -> Dict[str, Any]:
+        """Load unified training configuration"""
+        config_path = Path("ml/config/training.json")
+        if config_path.exists():
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        else:
+            # Fallback to default configuration
+            return {
+                "network_architecture": {
+                    "input_size": 150,
+                    "hidden_sizes": [256, 128, 64, 32],
+                    "value_output_size": 1,
+                    "policy_output_size": 7
+                }
+            }
 
 class ValueNetwork(nn.Module):
-    def __init__(self, input_size: int = 150, hidden_sizes: List[int] = None):
+    def __init__(self, network_config: Dict[str, Any]):
         super().__init__()
-        if hidden_sizes is None:
-            hidden_sizes = [256, 128, 64, 32]
+        input_size = network_config["input_size"]
+        hidden_sizes = network_config["hidden_sizes"]
+        output_size = network_config["value_output_size"]
         
         layers = []
         prev_size = input_size
@@ -69,7 +90,7 @@ class ValueNetwork(nn.Module):
             ])
             prev_size = hidden_size
         
-        layers.append(nn.Linear(prev_size, 1))
+        layers.append(nn.Linear(prev_size, output_size))
         
         self.network = nn.Sequential(*layers)
         
@@ -77,10 +98,11 @@ class ValueNetwork(nn.Module):
         return torch.tanh(self.network(x))
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_size: int = 150, output_size: int = 7, hidden_sizes: List[int] = None):
+    def __init__(self, network_config: Dict[str, Any]):
         super().__init__()
-        if hidden_sizes is None:
-            hidden_sizes = [256, 128, 64, 32]
+        input_size = network_config["input_size"]
+        hidden_sizes = network_config["hidden_sizes"]
+        output_size = network_config["policy_output_size"]
         
         layers = []
         prev_size = input_size
@@ -104,7 +126,7 @@ class PyTorchTrainer:
     def __init__(self, config: TrainingConfig):
         self.config = config
         
-        # Detect best available device
+        # Detect best available device - REQUIRE GPU acceleration
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
             logger.info(f"🎮 Using CUDA GPU: {torch.cuda.get_device_name()}")
@@ -112,14 +134,17 @@ class PyTorchTrainer:
             self.device = torch.device('mps')
             logger.info("🍎 Using Apple Metal Performance Shaders (MPS)")
         else:
-            self.device = torch.device('cpu')
-            logger.warning("💻 Using CPU - no GPU acceleration available")
+            logger.error("❌ GPU acceleration required for PyTorch training!")
+            logger.error("   CUDA or Apple Metal (MPS) must be available.")
+            logger.error("   Please install PyTorch with GPU support or use Rust backend instead.")
+            raise RuntimeError("GPU acceleration required for PyTorch training")
         
         logger.info(f"Using device: {self.device}")
         
-        # Initialize networks
-        self.value_network = ValueNetwork().to(self.device)
-        self.policy_network = PolicyNetwork().to(self.device)
+        # Initialize networks using unified configuration
+        network_config = config.unified_config["network_architecture"]
+        self.value_network = ValueNetwork(network_config).to(self.device)
+        self.policy_network = PolicyNetwork(network_config).to(self.device)
         
         # Initialize optimizers
         self.value_optimizer = optim.Adam(self.value_network.parameters(), lr=config.learning_rate)
@@ -428,23 +453,12 @@ class PyTorchTrainer:
         for param in self.policy_network.parameters():
             policy_weights.extend(param.data.cpu().numpy().flatten().tolist())
         
-        # Create weights data
+        # Create weights data using unified configuration
         weights_data = {
             "value_weights": value_weights,
             "policy_weights": policy_weights,
             "metadata": metadata,
-            "network_config": {
-                "value_network": {
-                    "input_size": 150,
-                    "hidden_sizes": [256, 128, 64, 32],
-                    "output_size": 1
-                },
-                "policy_network": {
-                    "input_size": 150,
-                    "hidden_sizes": [256, 128, 64, 32],
-                    "output_size": 7
-                }
-            }
+            "network_config": self.config.unified_config["network_architecture"]
         }
         
         # Save to file
