@@ -87,8 +87,8 @@ The project features two distinct AI opponents:
 - **ML AI**: Neural network trained through self-play
   - **EMM-Depth3**: **77.8% win rate** - **Best Overall Performance** ✅
   - **ML-Fast**: **63.9% win rate** - **Best ML Performance** ✅
-  - **ML-V4**: **61.1% win rate** - **Strong ML Performance** ✅
-  - **ML-Hybrid**: **61.1% win rate** - **Strong ML Performance** ✅
+  - **ML-V2**: **60.4% win rate** - **Strong ML Performance** ✅
+  - **ML-Fast**: **59.3% win rate** - **Good ML Performance** ✅
 
 Both AIs run entirely in the browser via WebAssembly. See [AI-SYSTEM.md](./docs/AI-SYSTEM.md) for details.
 

@@ -133,10 +133,10 @@ python3 ml/scripts/convert_weights.py input.json --format rust --output rust_wei
 
 | Model          | Win Rate vs EMM-3 | Training Games | Epochs | Status                     |
 | -------------- | ----------------- | -------------- | ------ | -------------------------- |
-| **PyTorch V5** | **60.0%**         | 2000           | 100    | ✅ **Best ML Performance** |
-| **ML-Hybrid**  | **60.0%**         | 2000           | 100    | ✅ **Best ML Performance** |
-| **ML-V4**      | **58.9%**         | 5000           | 100    | ✅ **Strong Performance**  |
-| **ML-V2**      | **55.6%**         | 1000           | 50     | ✅ **Good Performance**    |
+| **PyTorch V5** | **63.3%**         | 2000           | 100    | ✅ **Best ML Performance** |
+| **ML-V2**      | **60.4%**         | 1000           | 50     | ✅ **Strong Performance**  |
+| **ML-Fast**    | **59.3%**         | 1000           | 50     | ✅ **Good Performance**    |
+| **ML-V4**      | **56.7%**         | 5000           | 100    | ✅ **Good Performance**    |
 | **ML-Fast**    | **51.1%**         | 500            | 25     | ⚠️ **Needs Improvement**   |
 
 ## 🧬 Genetic Parameter Evolution

@@ -178,12 +178,12 @@ cargo test test_genetic_params_comparison
 
 | AI Type             | Win Rate  | Speed   | Status              |
 | ------------------- | --------- | ------- | ------------------- |
-| **EMM-3 (Depth 3)** | **75.6%** | 15.6ms  | ✅ **Best Overall** |
-| **PyTorch V5**      | **60.0%** | 54.8ms  | ✅ **Best ML**      |
-| **ML-Hybrid**       | **60.0%** | 52.1ms  | ✅ **Best ML**      |
-| **ML-V4**           | **58.9%** | 50.7ms  | ✅ **Strong**       |
-| **EMM-2 (Depth 2)** | **51.1%** | Instant | ✅ **Fast**         |
-| **ML-V2**           | **55.6%** | 53.5ms  | ✅ **Good**         |
+| **EMM-3 (Depth 3)** | **71.8%** | 17.1ms  | ✅ **Best Overall** |
+| **PyTorch V5**      | **63.3%** | 65.0ms  | ✅ **Best ML**      |
+| **ML-V2**           | **60.4%** | 58.5ms  | ✅ **Strong ML**    |
+| **ML-Fast**         | **59.3%** | 65.5ms  | ✅ **Good ML**      |
+| **ML-V4**           | **56.7%** | 56.0ms  | ✅ **Good ML**      |
+| **EMM-2 (Depth 2)** | **56.4%** | 0.1ms   | ✅ **Fast**         |
 | **Heuristic**       | **35.6%** | Instant | 📚 **Educational**  |
 | **Random**          | **~3%**   | Instant | 🧪 **Baseline**     |
 

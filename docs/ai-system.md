@@ -87,10 +87,10 @@ The ML AI offers a different challenge with playstyle developed from observing t
 
 | Model | Win Rate vs EMM-3 | Training Games | Epochs | Status |
 |-------|------------------|----------------|--------|--------|
-| **PyTorch V5** | **60.0%** | 2000 | 100 | ✅ **Best ML Performance** |
-| **ML-Hybrid** | **60.0%** | 2000 | 100 | ✅ **Best ML Performance** |
-| **ML-V4** | **58.9%** | 5000 | 100 | ✅ **Strong Performance** |
-| **ML-V2** | **55.6%** | 1000 | 50 | ✅ **Good Performance** |
+| **PyTorch V5** | **63.3%** | 2000 | 100 | ✅ **Best ML Performance** |
+| **ML-V2** | **60.4%** | 1000 | 50 | ✅ **Strong Performance** |
+| **ML-Fast** | **59.3%** | 1000 | 50 | ✅ **Good Performance** |
+| **ML-V4** | **56.7%** | 5000 | 100 | ✅ **Good Performance** |
 | **ML-Fast** | **51.1%** | 500 | 25 | ⚠️ **Needs Improvement** |
 
 ## Performance Analysis (July 2025)
@@ -112,10 +112,10 @@ Based on comprehensive testing of 450+ games across all AI types:
 
 | Model | Win Rate | Speed | Status |
 |-------|----------|-------|--------|
-| **ML-Hybrid** | **60.0%** | 52.1ms | ✅ **Best ML Performance** |
-| **PyTorch V5** | **60.0%** | 54.8ms | ✅ **Best ML Performance** |
-| **ML-V4** | **58.9%** | 50.7ms | ✅ **Strong Performance** |
-| **ML-V2** | **55.6%** | 53.5ms | ✅ **Good Performance** |
+| **PyTorch V5** | **63.3%** | 65.0ms | ✅ **Best ML Performance** |
+| **ML-V2** | **60.4%** | 58.5ms | ✅ **Strong Performance** |
+| **ML-Fast** | **59.3%** | 65.5ms | ✅ **Good Performance** |
+| **ML-V4** | **56.7%** | 56.0ms | ✅ **Good Performance** |
 | **ML-Fast** | **51.1%** | 58.4ms | ⚠️ **Needs Improvement** |
 
 ### Speed Analysis
@@ -137,7 +137,7 @@ Based on comprehensive testing of 450+ games across all AI types:
 
 - **Primary Choice**: EMM-3 (Depth 3) - Best overall performance (75.6% win rate)
 - **Fast Alternative**: EMM-1/2 (Depth 1/2) - Instant speed with good performance
-- **ML AI Options**: ML-Hybrid or PyTorch V5 - Competitive performance (60% win rate)
+- **ML AI Options**: PyTorch V5 - Best ML performance (63.3% win rate) or ML-V2 - Strong performance (60.4% win rate)
 - **Educational**: Heuristic AI - Good for learning game mechanics
 - **Baseline**: Random AI - For testing and comparison
 
