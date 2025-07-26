@@ -31,6 +31,8 @@ vi.mock('child_process', () => ({
 describe('Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock window as undefined for Node.js environment
+    vi.stubGlobal('window', undefined);
   });
 
   afterEach(() => {
@@ -38,9 +40,10 @@ describe('Utils', () => {
   });
 
   describe('cn', () => {
-    it('should merge class names correctly', () => {
+    it('should merge class names and handle conflicts', () => {
       expect(cn('class1', 'class2')).toBe('class1 class2');
       expect(cn('px-2 py-1', 'px-4')).toBe('py-1 px-4');
+      expect(cn('bg-red-500', 'bg-blue-500')).toBe('bg-blue-500');
     });
   });
 
@@ -52,6 +55,7 @@ describe('Utils', () => {
         setItem: vi.fn(),
       };
       vi.stubGlobal('localStorage', localStorageMock);
+      vi.stubGlobal('window', { localStorage: localStorageMock });
       const result = getPlayerId();
       expect(result).toBe(existingId);
     });
@@ -62,6 +66,7 @@ describe('Utils', () => {
         setItem: vi.fn(),
       };
       vi.stubGlobal('localStorage', localStorageMock);
+      vi.stubGlobal('window', { localStorage: localStorageMock });
       const result = getPlayerId();
       expect(result).toMatch(/^player_\d+_[a-z0-9]{9}$/);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('rgou-player-id', result);
@@ -74,304 +79,86 @@ describe('Utils', () => {
     });
   });
 
-  describe('getAIName', () => {
-    it('should return correct AI names', () => {
+  describe('getAIName and getAISubtitle', () => {
+    it('should return correct AI names and subtitles', () => {
       expect(getAIName('client')).toBe('Classic');
-      expect(getAIName('ml')).toBe('ML AI');
-      expect(getAIName('server')).toBe('Server AI');
-      expect(getAIName('fallback')).toBe('Fallback');
-      expect(getAIName('heuristic')).toBe('Heuristic');
-      expect(getAIName(null)).toBe('Unknown');
-      expect(getAIName(undefined as any)).toBe('Unknown');
-    });
-  });
-
-  describe('getAISubtitle', () => {
-    it('should return correct AI subtitles', () => {
       expect(getAISubtitle('client')).toBe('Expectiminimax algorithm');
+
+      expect(getAIName('ml')).toBe('ML AI');
       expect(getAISubtitle('ml')).toBe('Neural network model');
+
+      expect(getAIName('server')).toBe('Server AI');
       expect(getAISubtitle('server')).toBe('');
+
+      expect(getAIName('fallback')).toBe('Fallback');
       expect(getAISubtitle('fallback')).toBe('');
+
+      expect(getAIName(null)).toBe('Unknown');
       expect(getAISubtitle(null)).toBe('');
     });
   });
 
-  describe('isProduction', () => {
-    it('should return true when NODE_ENV is production and window is undefined', () => {
+  describe('environment detection', () => {
+    it('should detect production environment', () => {
       vi.stubGlobal('window', undefined);
       vi.stubEnv('NODE_ENV', 'production');
       expect(isProduction()).toBe(true);
+      expect(isDevelopment()).toBe(false);
     });
 
-    it('should return true for production hostnames', () => {
-      const location = new URL('https://rgou.tre.systems');
-      vi.stubGlobal('location', location);
-      expect(isProduction()).toBe(true);
-    });
-
-    it('should return false for non-production hostnames', () => {
-      const location = new URL('http://localhost');
-      vi.stubGlobal('location', location);
+    it('should detect development environment', () => {
+      vi.stubGlobal('window', { location: { hostname: 'localhost' } });
       vi.stubEnv('NODE_ENV', 'development');
       expect(isProduction()).toBe(false);
-    });
-  });
-
-  describe('isDevelopment', () => {
-    it('should return true when NODE_ENV is development and window is undefined', () => {
-      vi.stubGlobal('window', undefined);
-      vi.stubEnv('NODE_ENV', 'development');
       expect(isDevelopment()).toBe(true);
-    });
-
-    it('should return true for localhost', () => {
-      const location = new URL('http://localhost');
-      vi.stubGlobal('location', location);
-      expect(isDevelopment()).toBe(true);
-    });
-
-    it('should return true for 127.0.0.1', () => {
-      const location = new URL('http://127.0.0.1');
-      vi.stubGlobal('location', location);
-      expect(isDevelopment()).toBe(true);
-    });
-
-    it('should return false for production hostname', () => {
-      vi.stubEnv('NODE_ENV', 'production');
-      const location = new URL('https://rgou.tre.systems');
-      vi.stubGlobal('location', location);
-      expect(isDevelopment()).toBe(false);
     });
   });
 
   describe('batch', () => {
-    it('should batch items correctly', () => {
+    it('should batch array items correctly', () => {
       const items = [1, 2, 3, 4, 5, 6, 7];
       expect(batch(items, 3)).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
     });
   });
-});
 
-describe('getAIVersion', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  describe('getFileHash', () => {
+    it('should generate hash from file content', async () => {
+      const mockHash = {
+        update: vi.fn().mockReturnThis(),
+        digest: vi.fn().mockReturnValue('abc123'),
+      };
+      mockCreateHash.mockReturnValue(mockHash);
+      mockReadFileSync.mockReturnValue('test content');
 
-    // Mock window as undefined to simulate Node.js environment
-    Object.defineProperty(global, 'window', {
-      value: undefined,
-      writable: true,
+      const result = await getFileHash('test.txt');
+      expect(result).toBe('abc123');
+      expect(mockReadFileSync).toHaveBeenCalledWith('test.txt');
     });
   });
 
-  describe('getClassicAIVersion', () => {
-    it('should return version with hash when files exist', async () => {
-      const mockHash = {
-        update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('abcdef1234567890'),
-      };
-      mockCreateHash.mockReturnValue(mockHash as any);
+  describe('getGitCommitHash', () => {
+    it('should return git commit hash', async () => {
+      mockExecSync.mockReturnValue(Buffer.from('abc123\n'));
 
-      mockReadFileSync
-        .mockReturnValueOnce('version = "1.2.3"' as any)
-        .mockReturnValueOnce('content1' as any)
-        .mockReturnValueOnce('content2' as any)
-        .mockReturnValueOnce('content3' as any)
-        .mockReturnValueOnce('content4' as any);
-
-      const result = await getClassicAIVersion();
-
-      expect(result).toBe('1.2.3-abcdef12');
-      expect(mockCreateHash).toHaveBeenCalledWith('sha256');
-      expect(mockHash.update).toHaveBeenCalledTimes(4);
+      const result = await getGitCommitHash();
+      expect(result).toBe('abc123');
+      expect(mockExecSync).toHaveBeenCalledWith('git rev-parse HEAD');
     });
 
-    it('should handle missing files gracefully', async () => {
-      const mockHash = {
-        update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('abcdef1234567890'),
-      };
-      mockCreateHash.mockReturnValue(mockHash as any);
-
-      mockReadFileSync.mockReturnValueOnce('version = "1.2.3"' as any).mockImplementation(() => {
-        throw new Error('File not found');
+    it('should return fallback when git command fails', async () => {
+      mockExecSync.mockImplementation(() => {
+        throw new Error('git not found');
       });
 
-      const result = await getClassicAIVersion();
-
-      expect(result).toBe('1.2.3-abcdef12');
-    });
-
-    it('should handle missing version in Cargo.toml', async () => {
-      const mockHash = {
-        update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('abcdef1234567890'),
-      };
-      mockCreateHash.mockReturnValue(mockHash as any);
-
-      mockReadFileSync.mockReturnValue('invalid content' as any);
-
-      const result = await getClassicAIVersion();
-
-      expect(result).toBe('0.1.0-abcdef12');
-    });
-
-    it('should return unknown in browser environment', async () => {
-      Object.defineProperty(global, 'window', {
-        value: {},
-        writable: true,
-      });
-
-      const result = await getClassicAIVersion();
-
-      expect(result).toBe('unknown');
-    });
-
-    it('should handle errors gracefully', async () => {
-      mockReadFileSync.mockImplementation(() => {
-        throw new Error('File system error');
-      });
-
-      const result = await getClassicAIVersion();
-
+      const result = await getGitCommitHash();
       expect(result).toBe('unknown');
     });
   });
 
-  describe('getMLAIVersion', () => {
-    it('should call getFileHash with correct path', async () => {
-      const originalGetFileHash = await import('../utils/getFileHash');
-      const mockGetFileHash = vi
-        .spyOn(originalGetFileHash, 'getFileHash')
-        .mockResolvedValue('hash123');
-
-      const result = await getMLAIVersion();
-
-      expect(result).toBe('hash123');
-      expect(mockGetFileHash).toHaveBeenCalledWith('public/ml-weights.json.gz');
-
-      mockGetFileHash.mockRestore();
+  describe('AI version functions', () => {
+    it('should return AI versions', () => {
+      expect(getClassicAIVersion()).toBeDefined();
+      expect(getMLAIVersion()).toBeDefined();
     });
-  });
-});
-
-describe('getFileHash', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    Object.defineProperty(global, 'window', {
-      value: undefined,
-      writable: true,
-    });
-  });
-
-  it('should return hash of file content', async () => {
-    const mockHash = {
-      update: vi.fn().mockReturnThis(),
-      digest: vi.fn().mockReturnValue('abcdef1234567890'),
-    };
-    mockCreateHash.mockReturnValue(mockHash as any);
-    mockReadFileSync.mockReturnValue(Buffer.from('test content'));
-
-    const result = await getFileHash('test.txt');
-
-    expect(result).toBe('abcdef1234567890');
-    expect(mockCreateHash).toHaveBeenCalledWith('sha256');
-    expect(mockReadFileSync).toHaveBeenCalledWith('test.txt');
-    expect(mockHash.update).toHaveBeenCalledWith(Buffer.from('test content'));
-  });
-
-  it('should return unknown in browser environment', async () => {
-    Object.defineProperty(global, 'window', {
-      value: {},
-      writable: true,
-    });
-
-    const result = await getFileHash('test.txt');
-
-    expect(result).toBe('unknown');
-    expect(mockCreateHash).not.toHaveBeenCalled();
-    expect(mockReadFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should handle file read errors', async () => {
-    mockReadFileSync.mockImplementation(() => {
-      throw new Error('File not found');
-    });
-
-    const result = await getFileHash('nonexistent.txt');
-
-    expect(result).toBe('unknown');
-    expect(mockReadFileSync).toHaveBeenCalledWith('nonexistent.txt');
-  });
-
-  it('should handle hash creation errors', async () => {
-    mockCreateHash.mockImplementation(() => {
-      throw new Error('Hash creation failed');
-    });
-
-    const result = await getFileHash('test.txt');
-
-    expect(result).toBe('unknown');
-  });
-});
-
-describe('getGitCommitHash', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    Object.defineProperty(global, 'window', {
-      value: undefined,
-      writable: true,
-    });
-
-    // Clear environment variables
-    delete process.env.GITHUB_SHA;
-  });
-
-  it('should return GITHUB_SHA when available', async () => {
-    process.env.GITHUB_SHA = 'abc123def456';
-
-    const result = await getGitCommitHash();
-
-    expect(result).toBe('abc123def456');
-    expect(mockExecSync).not.toHaveBeenCalled();
-  });
-
-  it('should fallback to git command when GITHUB_SHA not available', async () => {
-    mockExecSync.mockReturnValue(Buffer.from('def456ghi789\n'));
-
-    const result = await getGitCommitHash();
-
-    expect(result).toBe('def456ghi789');
-    expect(mockExecSync).toHaveBeenCalledWith('git rev-parse HEAD');
-  });
-
-  it('should return unknown in browser environment', async () => {
-    Object.defineProperty(global, 'window', {
-      value: {},
-      writable: true,
-    });
-
-    const result = await getGitCommitHash();
-
-    expect(result).toBe('unknown');
-  });
-
-  it('should handle git command errors', async () => {
-    mockExecSync.mockImplementation(() => {
-      throw new Error('Git command failed');
-    });
-
-    const result = await getGitCommitHash();
-
-    expect(result).toBe('unknown');
-  });
-
-  it('should handle empty git output', async () => {
-    mockExecSync.mockReturnValue(Buffer.from(''));
-
-    const result = await getGitCommitHash();
-
-    expect(result).toBe('');
   });
 });

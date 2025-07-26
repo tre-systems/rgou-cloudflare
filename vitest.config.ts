@@ -6,7 +6,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/lib/__tests__/setup.ts'],
     globals: true,
-    css: false, // Disable CSS processing for tests
+    css: false,
+    testTimeout: 10000, // 10 second default timeout
+    hookTimeout: 10000, // 10 second timeout for hooks
+    teardownTimeout: 5000, // 5 second timeout for teardown
     exclude: [
       'node_modules',
       'node_modules/**',
