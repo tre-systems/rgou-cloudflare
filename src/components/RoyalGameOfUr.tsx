@@ -263,14 +263,13 @@ export default function RoyalGameOfUr() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub Repository"
-        className="fixed bottom-4 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity"
+        className="fixed bottom-5 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity"
         data-testid="github-link"
       >
         <Github className="w-6 h-6" />
       </a>
       <AnimatedBackground />
       <div className="relative min-h-screen w-full flex items-center justify-center p-4 pb-24">
-        {/* Only show Pop Out Game button if not in standalone PWA mode */}
         {!isStandalone && (
           <div className="hidden md:block absolute top-4 right-4 z-50">
             <button
@@ -427,7 +426,7 @@ export default function RoyalGameOfUr() {
                 href="https://ko-fi.com/N4N31DPNUS"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+                className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
               >
                 <Image
                   width={145}
