@@ -35,13 +35,6 @@ impl AIType {
         }
     }
 
-    fn is_ml(&self) -> bool {
-        matches!(
-            self,
-            AIType::MLFast | AIType::MLV2 | AIType::MLV4 | AIType::MLHybrid | AIType::MLPyTorchV5
-        )
-    }
-
     fn weights_file(&self) -> Option<&'static str> {
         match self {
             AIType::MLFast => Some("../../ml/data/weights/ml_ai_weights_fast.json"),
@@ -52,22 +45,13 @@ impl AIType {
             _ => None,
         }
     }
-
-    fn depth(&self) -> Option<u8> {
-        match self {
-            AIType::EMMDepth1 => Some(1),
-            AIType::EMMDepth2 => Some(2),
-            AIType::EMMDepth3 => Some(3),
-            AIType::EMMDepth4 => Some(4),
-            _ => None,
-        }
-    }
 }
 
-// AI Player trait for unified interface
+// AI Player trait for unified interface with reset capability
 trait AIPlayer {
     fn get_move(&mut self, game_state: &GameState) -> Option<usize>;
     fn name(&self) -> &str;
+    fn reset(&mut self);
 }
 
 // Random AI implementation
@@ -86,6 +70,10 @@ impl AIPlayer for RandomAI {
 
     fn name(&self) -> &str {
         "Random"
+    }
+
+    fn reset(&mut self) {
+        // Random AI doesn't need reset
     }
 }
 
@@ -120,6 +108,10 @@ impl AIPlayer for HeuristicAI {
     fn name(&self) -> &str {
         "Heuristic"
     }
+
+    fn reset(&mut self) {
+        // Heuristic AI doesn't need reset
+    }
 }
 
 // Expectiminimax AI implementation
@@ -151,6 +143,10 @@ impl AIPlayer for ExpectiminimaxAI {
             4 => "EMM-Depth4",
             _ => "EMM-Unknown",
         }
+    }
+
+    fn reset(&mut self) {
+        self.ai.clear_transposition_table();
     }
 }
 
@@ -190,6 +186,10 @@ impl AIPlayer for MLAIPlayer {
 
     fn name(&self) -> &str {
         &self.name
+    }
+
+    fn reset(&mut self) {
+        // ML AI doesn't need reset - weights are stateless
     }
 }
 
@@ -236,7 +236,7 @@ fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn s
     Ok((value_weights, policy_weights))
 }
 
-// Game result structure
+// Enhanced game result structure
 #[derive(Debug)]
 struct GameResult {
     winner: Player,
@@ -245,9 +245,11 @@ struct GameResult {
     ai2_time_ms: u64,
     ai1_moves: u32,
     ai2_moves: u32,
+    p1_finished_pieces: usize,
+    p2_finished_pieces: usize,
 }
 
-// Play a game between two AI players
+// Play a game between two AI players with enhanced tracking
 fn play_game(
     ai1: &mut Box<dyn AIPlayer>,
     ai2: &mut Box<dyn AIPlayer>,
@@ -269,21 +271,21 @@ fn play_game(
             continue;
         }
 
-        let (best_move, duration) = if game_state.current_player == Player::Player1 {
+        let best_move = if game_state.current_player == Player::Player1 {
             if ai1_plays_first {
                 let start = Instant::now();
                 let move_result = ai1.get_move(&game_state);
                 let duration = start.elapsed();
                 ai1_time_ms += duration.as_millis() as u64;
                 ai1_moves += 1;
-                (move_result, duration)
+                move_result
             } else {
                 let start = Instant::now();
                 let move_result = ai2.get_move(&game_state);
                 let duration = start.elapsed();
                 ai2_time_ms += duration.as_millis() as u64;
                 ai2_moves += 1;
-                (move_result, duration)
+                move_result
             }
         } else {
             if ai1_plays_first {
@@ -292,18 +294,16 @@ fn play_game(
                 let duration = start.elapsed();
                 ai2_time_ms += duration.as_millis() as u64;
                 ai2_moves += 1;
-                (move_result, duration)
+                move_result
             } else {
                 let start = Instant::now();
                 let move_result = ai1.get_move(&game_state);
                 let duration = start.elapsed();
                 ai1_time_ms += duration.as_millis() as u64;
                 ai1_moves += 1;
-                (move_result, duration)
+                move_result
             }
         };
-
-
 
         if let Some(move_index) = best_move {
             if game_state.make_move(move_index as u8).is_err() {
@@ -318,35 +318,24 @@ fn play_game(
         moves_played += 1;
     }
 
-    let winner = if game_state
+    let p1_finished = game_state
         .player1_pieces
         .iter()
         .filter(|p| p.square == 20)
-        .count()
-        == 7
-    {
-        Player::Player1
-    } else if game_state
+        .count();
+    let p2_finished = game_state
         .player2_pieces
         .iter()
         .filter(|p| p.square == 20)
-        .count()
-        == 7
-    {
+        .count();
+
+    let winner = if p1_finished >= 7 {
+        Player::Player1
+    } else if p2_finished >= 7 {
         Player::Player2
     } else {
         // Game ended without clear winner (max moves reached)
-        if game_state
-            .player1_pieces
-            .iter()
-            .filter(|p| p.square == 20)
-            .count()
-            > game_state
-                .player2_pieces
-                .iter()
-                .filter(|p| p.square == 20)
-                .count()
-        {
+        if p1_finished > p2_finished {
             Player::Player1
         } else {
             Player::Player2
@@ -360,6 +349,8 @@ fn play_game(
         ai2_time_ms,
         ai1_moves,
         ai2_moves,
+        p1_finished_pieces: p1_finished,
+        p2_finished_pieces: p2_finished,
     }
 }
 
@@ -400,6 +391,62 @@ struct MatrixResult {
     avg_moves: f64,
     ai1_avg_time_ms: f64,
     ai2_avg_time_ms: f64,
+}
+
+// Enhanced recommendations generation
+fn generate_recommendations(
+    ai_performance: &HashMap<String, f64>,
+    ai_speeds: &HashMap<String, f64>,
+) -> Vec<String> {
+    let mut recommendations = Vec::new();
+
+    // Find best performing AI
+    if let Some((best_ai, win_rate)) = ai_performance
+        .iter()
+        .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+    {
+        if *win_rate > 70.0 {
+            recommendations.push(format!(
+                "{} shows excellent performance ({:.1}% avg win rate) and is ready for production",
+                best_ai, win_rate
+            ));
+        } else if *win_rate > 60.0 {
+            recommendations.push(format!(
+                "{} shows good performance ({:.1}% avg win rate) and could be used in production",
+                best_ai, win_rate
+            ));
+        } else {
+            recommendations.push(format!(
+                "{} shows moderate performance ({:.1}% avg win rate), consider further training",
+                best_ai, win_rate
+            ));
+        }
+    }
+
+    // Find fastest AI
+    if let Some((fastest_ai, avg_time)) = ai_speeds
+        .iter()
+        .min_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+    {
+        if *avg_time < 1.0 {
+            recommendations.push(format!(
+                "{} is very fast ({:.1}ms/move) and suitable for real-time play",
+                fastest_ai, avg_time
+            ));
+        } else if *avg_time < 10.0 {
+            recommendations.push(format!(
+                "{} is fast ({:.1}ms/move) and suitable for interactive play",
+                fastest_ai, avg_time
+            ));
+        }
+    }
+
+    // General recommendations
+    recommendations.push("Use EMM-Depth3 for best performance/speed balance".to_string());
+    recommendations.push("Use Random AI for baseline testing".to_string());
+    recommendations.push("Use Heuristic AI for educational purposes".to_string());
+
+    recommendations
 }
 
 #[test]
@@ -483,7 +530,7 @@ fn test_ai_matrix() {
             let mut ai1_total_time = 0;
             let mut ai2_total_time = 0;
 
-            // Play games
+            // Play games with periodic AI state reset
             for game in 0..num_games {
                 let ai1_first = game % 2 == 0; // Alternate who goes first
                 let result = play_game(&mut ai1, &mut ai2, ai1_first);
@@ -502,6 +549,12 @@ fn test_ai_matrix() {
                     ai1_wins += 1;
                 } else {
                     ai2_wins += 1;
+                }
+
+                // Reset AI state periodically to prevent memory buildup
+                if (game + 1) % 20 == 0 {
+                    ai1.reset();
+                    ai2.reset();
                 }
 
                 if game % 10 == 0 && num_games > 10 {
@@ -676,21 +729,14 @@ fn test_ai_matrix() {
     }
     println!();
 
-    // Recommendations
+    // Enhanced recommendations
     println!("💡 RECOMMENDATIONS:");
     println!("{}", "-".repeat(40));
 
-    if let Some((best_ai, _)) = sorted_performance.first() {
-        println!("• Best performing AI: {} (ready for production)", best_ai);
+    let recommendations = generate_recommendations(&ai_performance, &ai_speeds);
+    for recommendation in &recommendations {
+        println!("• {}", recommendation);
     }
-
-    if let Some((fastest_ai, _)) = sorted_speeds.first() {
-        println!("• Fastest AI: {} (suitable for real-time play)", fastest_ai);
-    }
-
-    println!("• Use EMM-Depth3 for best performance/speed balance");
-    println!("• Use Random AI for baseline testing");
-    println!("• Use Heuristic AI for educational purposes");
     println!();
 
     println!("🎉 AI Matrix test completed successfully!");
