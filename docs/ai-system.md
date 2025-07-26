@@ -196,6 +196,41 @@ The AI matrix test generates comprehensive results including:
 - Speed analysis and categorization
 - Detailed configuration and timing information
 
+### **1. ai_matrix_test.rs** (Most Important)
+
+**Purpose**: Comprehensive AI comparison and performance evaluation
+
+**What it tests**:
+
+- Full matrix comparison of all AI types
+- Performance rankings and win rate analysis
+- Speed analysis with move timing
+- Enhanced recommendations based on performance data
+
+**Key Features**:
+
+- **🍎 Apple Silicon Optimization**: Automatically detects M1/M2/M3 Macs and uses all 8 performance cores
+- **🚀 Parallel Execution**: All AI match combinations run simultaneously using rayon
+- **⚡ Performance**: 60+ games per second with full CPU utilization
+- **📊 Real-time Progress**: Shows parallel match execution with core utilization
+
+**Quick run**:
+
+```bash
+# Default (10 games per match) - Now runs in parallel!
+cargo test test_ai_matrix -- --nocapture
+
+# More games (50 per match) - Much faster with parallelization
+NUM_GAMES=50 cargo test test_ai_matrix -- --nocapture
+```
+
+**Performance Improvements**:
+
+- **Before**: Sequential execution using 1 core
+- **After**: Parallel execution using all 8 performance cores
+- **Speed**: 60+ games/second vs. ~10 games/second previously
+- **CPU Utilization**: 100% of performance cores vs. ~12% previously
+
 ## Training System
 
 ### Data Generation

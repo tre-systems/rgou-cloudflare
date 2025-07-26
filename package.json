@@ -50,7 +50,7 @@
     "db:setup": "npm run db:local:reset",
     "evolve:genetic-params": "cd worker/rust_ai_core && caffeinate cargo run --release --bin evolve_params",
     "validate:genetic-params": "cd worker/rust_ai_core && caffeinate cargo test test_genetic_params_comparison -- --nocapture",
-    "test:ai-matrix:md": "cd worker/rust_ai_core && NUM_GAMES=20 cargo test test_ai_matrix -- --nocapture | node ../../scripts/format-ai-matrix-md.cjs"
+    "test:ai-matrix:md": "cd worker/rust_ai_core && NUM_GAMES=50 cargo test test_ai_matrix -- --nocapture | node ../../scripts/format-ai-matrix-md.cjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",

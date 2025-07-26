@@ -1,6 +1,47 @@
+use rayon::prelude::*;
 use rgou_ai_core::{dice, genetic_params::GeneticParams, ml_ai::MLAI, GameState, Player, AI};
 use std::collections::HashMap;
 use std::time::Instant;
+
+fn optimize_cpu_usage() {
+    // Detect Apple Silicon and optimize thread pool
+    if cfg!(target_os = "macos") {
+        // On Apple Silicon, use performance cores
+        let num_cores = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(8);
+
+        // Use 80% of available cores to leave some for system
+        let optimal_threads = (num_cores as f64 * 0.8) as usize;
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(optimal_threads)
+            .stack_size(8 * 1024 * 1024) // 8MB stack for deep recursion
+            .build_global()
+            .unwrap_or_else(|_| {
+                println!("Warning: Could not set optimal thread count, using default");
+            });
+
+        println!(
+            "🍎 Apple Silicon detected: Using {} threads ({} cores available)",
+            optimal_threads, num_cores
+        );
+    } else {
+        // On other platforms, use all available cores
+        let num_cores = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4);
+
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(num_cores)
+            .stack_size(8 * 1024 * 1024)
+            .build_global()
+            .unwrap_or_else(|_| {
+                println!("Warning: Could not set optimal thread count, using default");
+            });
+
+        println!("🖥️  Using {} threads for parallel processing", num_cores);
+    }
+}
 
 fn get_evolved_params() -> GeneticParams {
     GeneticParams::load_from_file("ml/data/genetic_params/evolved.json")
@@ -400,6 +441,7 @@ fn generate_recommendations(
 
 #[test]
 fn test_ai_matrix() {
+    optimize_cpu_usage();
     println!("🤖 AI Matrix Test - Comprehensive AI Comparison");
     println!("{}", "=".repeat(60));
 
@@ -442,33 +484,53 @@ fn test_ai_matrix() {
     }
     println!();
 
-    let mut results = Vec::new();
-    let mut total_games = 0;
-    let start_time = Instant::now();
-
-    // Test each AI against every other AI
+    // Create all match combinations
+    let mut match_combinations = Vec::new();
     for (i, ai_type1) in ai_types.iter().enumerate() {
         for (j, ai_type2) in ai_types.iter().enumerate() {
             if i >= j {
                 continue; // Skip self-matches and duplicate matches
             }
+            match_combinations.push((ai_type1.clone(), ai_type2.clone()));
+        }
+    }
 
+    println!("🎯 Running {} AI match combinations in parallel...", match_combinations.len());
+
+    let start_time = Instant::now();
+
+    // Parallelize match execution
+    let results: Vec<MatrixResult> = match_combinations
+        .into_par_iter()
+        .map(|(ai_type1, ai_type2)| {
             println!("🏆 Testing {} vs {}", ai_type1.name(), ai_type2.name());
 
-            // Create AI players
-            let mut ai1 = match create_ai_player(ai_type1) {
+            // Create AI players for this match
+            let mut ai1 = match create_ai_player(&ai_type1) {
                 Ok(ai) => ai,
                 Err(e) => {
                     println!("  ❌ Failed to create {}: {}", ai_type1.name(), e);
-                    continue;
+                    return MatrixResult {
+                        ai1: ai_type1.name().to_string(),
+                        ai2: ai_type2.name().to_string(),
+                        ai1_win_rate: 0.0,
+                        ai1_avg_time_ms: 0.0,
+                        ai2_avg_time_ms: 0.0,
+                    };
                 }
             };
 
-            let mut ai2 = match create_ai_player(ai_type2) {
+            let mut ai2 = match create_ai_player(&ai_type2) {
                 Ok(ai) => ai,
                 Err(e) => {
                     println!("  ❌ Failed to create {}: {}", ai_type2.name(), e);
-                    continue;
+                    return MatrixResult {
+                        ai1: ai_type1.name().to_string(),
+                        ai2: ai_type2.name().to_string(),
+                        ai1_win_rate: 0.0,
+                        ai1_avg_time_ms: 0.0,
+                        ai2_avg_time_ms: 0.0,
+                    };
                 }
             };
 
@@ -520,32 +582,38 @@ fn test_ai_matrix() {
             let ai1_avg_time = ai1_total_time as f64 / num_games as f64;
             let ai2_avg_time = ai2_total_time as f64 / num_games as f64;
 
-            results.push(MatrixResult {
+            MatrixResult {
                 ai1: ai_type1.name().to_string(),
                 ai2: ai_type2.name().to_string(),
                 ai1_win_rate,
                 ai1_avg_time_ms: ai1_avg_time,
                 ai2_avg_time_ms: ai2_avg_time,
-            });
+            }
+        })
+        .collect();
 
-            total_games += num_games;
+    let total_games = results.len() * num_games as usize;
+    let _duration = start_time.elapsed();
 
-            println!(
-                "  {} wins: {:.1}%, {} wins: {:.1}%",
-                ai_type1.name(),
-                ai1_win_rate,
-                ai_type2.name(),
-                100.0 - ai1_win_rate
-            );
-            println!(
-                "  Average time: {} {:.1}ms, {} {:.1}ms",
-                ai_type1.name(),
-                ai1_avg_time,
-                ai_type2.name(),
-                ai2_avg_time
-            );
-            println!();
-        }
+    // Print individual match results
+    for result in &results {
+        println!(
+            "  {} vs {}: {} wins {:.1}%, {} wins {:.1}%",
+            result.ai1,
+            result.ai2,
+            result.ai1,
+            result.ai1_win_rate,
+            result.ai2,
+            100.0 - result.ai1_win_rate
+        );
+        println!(
+            "  Average time: {} {:.1}ms, {} {:.1}ms",
+            result.ai1,
+            result.ai1_avg_time_ms,
+            result.ai2,
+            result.ai2_avg_time_ms
+        );
+        println!();
     }
 
     let duration = start_time.elapsed();
