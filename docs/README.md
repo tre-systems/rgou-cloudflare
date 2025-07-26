@@ -141,3 +141,10 @@ When updating documentation:
 - `checking-training-status.md` → Consolidated into `ml-system-overview.md`
 - `mac-optimization-guide.md` → Consolidated into `ml-system-overview.md`
 - `game-statistics.md` → Consolidated into `architecture-overview.md`
+
+## Testing and Quality
+
+- All Rust doc tests are fast and reliable (minimal config, no long-running examples)
+- All unit, integration, and doc tests pass as of this commit
+- High test coverage is maintained (see coverage report)
+- E2E tests (Playwright) are robust and verify real database saves

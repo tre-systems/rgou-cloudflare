@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   GameStateSchema,
-  PlayerSchema,
-  PiecePositionSchema,
   MoveRecordSchema,
   GameActionSchema,
 } from '../schemas';
