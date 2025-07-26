@@ -24,7 +24,8 @@ vi.mock('crypto', () => ({
   createHash: mockCreateHash,
 }));
 
-vi.mock('child_process', () => ({
+// Mock the dynamic import of child_process
+vi.mock('child_process', async () => ({
   execSync: mockExecSync,
 }));
 
@@ -33,6 +34,8 @@ describe('Utils', () => {
     vi.clearAllMocks();
     // Mock window as undefined for Node.js environment
     vi.stubGlobal('window', undefined);
+    // Clear any existing environment variables
+    delete process.env.GITHUB_SHA;
   });
 
   afterEach(() => {
