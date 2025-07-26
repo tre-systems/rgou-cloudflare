@@ -2,21 +2,52 @@
 
 This directory contains all machine learning related components for the Royal Game of Ur AI system.
 
-## 🚀 Performance Optimizations
+## 🚀 Quick Start
 
-### 🍎 Intelligent CPU Optimization
+### For Newcomers
+
+If you're new to the project and want to try ML training:
+
+```bash
+# 1. Install Python dependencies
+pip install -r requirements.txt
+
+# 2. Quick test training (5 minutes)
+npm run train:quick
+
+# 3. Standard training (30 minutes)
+npm run train:pytorch
+
+# 4. Check results
+ls ml/data/weights/
+```
+
+### Prerequisites
+
+- **Python 3.8+** with pip
+- **Rust & Cargo** (for data generation)
+- **GPU** (recommended for PyTorch training)
+  - **Apple Silicon**: Apple Metal (MPS) support
+  - **NVIDIA**: CUDA support
+  - **CPU-only**: Use Rust backend instead
+
+## 🍎 Performance Optimizations
+
+### Intelligent CPU Optimization
+
 The ML system automatically detects your system architecture and optimizes CPU utilization:
 
 - **Apple Silicon (M1/M2/M3)**: Uses all 8 performance cores, leaves efficiency cores for system tasks
-- **High-core systems (16+)**: Uses most cores but leaves 2 for system responsiveness  
+- **High-core systems (16+)**: Uses most cores but leaves 2 for system responsiveness
 - **Standard systems**: Uses all available cores for maximum performance
 
-### 🔥 GPU Acceleration
+### GPU Acceleration
+
 - **PyTorch training**: **REQUIRES** GPU acceleration (CUDA or Apple Metal)
 - **Rust training**: Uses optimized CPU parallelization
 - **Auto-detection**: Automatically selects the best backend for your system
 
-## Structure
+## 📁 Structure
 
 ```
 ml/
@@ -34,25 +65,24 @@ ml/
 │   └── genetic_params/    # Genetic algorithm parameters
 ```
 
-## Unified Training System
+## 🧠 Training System
 
 The ML training system has been consolidated into a single, unified interface that supports both Rust and PyTorch backends:
 
-### Quick Start
+### Quick Start Commands
 
 ```bash
 # Auto-detect best backend and use default settings
 npm run train
 
-# Quick test training
+# Quick test training (100 games, 10 epochs)
 npm run train:quick
 
-# Production training
-npm run train:production
-
-# Use specific backend
-npm run train:rust
+# Standard training (1000 games, 50 epochs)
 npm run train:pytorch
+
+# Production training (2000 games, 100 epochs)
+npm run train:pytorch:production
 ```
 
 ### Advanced Usage
@@ -82,12 +112,12 @@ npm run train:pytorch
 
 ### Performance Characteristics
 
-| Backend | CPU Usage | GPU Usage | Best For |
-|---------|-----------|-----------|----------|
-| PyTorch | 1 core + GPU | **Required** | High-performance training with GPU |
-| Rust | All performance cores | None | CPU-optimized training, no GPU required |
+| Backend | CPU Usage             | GPU Usage    | Best For                                |
+| ------- | --------------------- | ------------ | --------------------------------------- |
+| PyTorch | 1 core + GPU          | **Required** | High-performance training with GPU      |
+| Rust    | All performance cores | None         | CPU-optimized training, no GPU required |
 
-## Weight Management
+## 📊 Model Management
 
 ### Converting Weights
 
@@ -97,62 +127,84 @@ npm run load:ml-weights ml/data/weights/my_weights.json --copy-to-public
 
 # Convert between formats
 python3 ml/scripts/convert_weights.py input.json --format rust --output rust_weights.json
-
-# Validate weights
-python3 ml/scripts/convert_weights.py input.json --validate
 ```
 
-### Weight Formats
+### Current Models
 
-- **unified**: Standard format used by the application
-- **pytorch**: PyTorch-specific format
-- **rust**: Rust-specific format
+| Model          | Win Rate vs EMM-3 | Training Games | Epochs | Status                     |
+| -------------- | ----------------- | -------------- | ------ | -------------------------- |
+| **PyTorch V5** | **60.0%**         | 2000           | 100    | ✅ **Best ML Performance** |
+| **ML-Hybrid**  | **60.0%**         | 2000           | 100    | ✅ **Best ML Performance** |
+| **ML-V4**      | **58.9%**         | 5000           | 100    | ✅ **Strong Performance**  |
+| **ML-V2**      | **55.6%**         | 1000           | 50     | ✅ **Good Performance**    |
+| **ML-Fast**    | **51.1%**         | 500            | 25     | ⚠️ **Needs Improvement**   |
 
-## Configuration
+## 🧬 Genetic Parameter Evolution
 
-All training parameters are centralized in `ml/config/training.json`:
+You can evolve and validate the genetic parameters for the classic AI:
 
-```json
-{
-  "network_architecture": {
-    "input_size": 150,
-    "hidden_sizes": [256, 128, 64, 32],
-    "value_output_size": 1,
-    "policy_output_size": 7
-  },
-  "training_defaults": {
-    "num_games": 1000,
-    "epochs": 50,
-    "batch_size": 32,
-    "learning_rate": 0.001
-  }
-}
+```bash
+# Evolve new genetic parameters
+npm run evolve:genetic-params
+
+# Validate evolved parameters
+npm run validate:genetic-params
 ```
 
-## Features
+### Evolution Process
 
-- **🎯 Unified Interface** - Single training script for all backends
-- **🎮 GPU Acceleration** - Automatic CUDA/MPS detection with PyTorch
-- **🦀 Rust Integration** - Seamless integration with existing Rust system
-- **📁 Organized Storage** - Clear separation of scripts, weights, and data
-- **⚡ Fast Training** - Optimized backends with shared configuration
-- **🔄 Easy Conversion** - Automatic weight format conversion
-- **🧪 Validation** - Built-in weight validation and testing
+- **Population size:** 50 individuals
+- **Generations:** 50 generations
+- **Games per evaluation:** 100 games per individual
+- **Evolution time:** ~42 minutes
+- **Quality threshold:** Only saves parameters if they win >55% vs defaults
 
-## Integration
+### Current Results
 
-The ML system integrates with the main application:
+**Evolved Parameters Performance:**
 
-1. **Train** using unified script: `npm run train`
-2. **Convert** weights: `npm run load:ml-weights`
-3. **Use** in game via the existing Rust inference system
+- **Win rate vs defaults:** 61% (significant improvement)
+- **Validation confirmed:** 1000-game test showed 69.4% win rate
 
-## Migration from Old System
+## 🔧 Troubleshooting
 
-The old training scripts have been deprecated in favor of the unified system:
+### Common Issues
 
-- `train-pytorch.sh` → `train.sh --backend pytorch`
-- `train-ml.sh` → `train.sh --backend rust`
-- `load-ml-weights.ts` → `convert_weights.py`
+**GPU Not Found:**
 
-See [ML System Overview](../docs/ml-system-overview.md) for detailed usage instructions.
+```bash
+# Check if PyTorch can see your GPU
+python3 -c "import torch; print(torch.cuda.is_available())"
+python3 -c "import torch; print(torch.backends.mps.is_available())"
+```
+
+**Training Too Slow:**
+
+```bash
+# Use Rust backend for CPU-only training
+npm run train:rust:quick
+
+# Or reduce training parameters
+./ml/scripts/train.sh --num-games 100 --epochs 10
+```
+
+**Out of Memory:**
+
+```bash
+# Reduce batch size
+./ml/scripts/train.sh --batch-size 16
+
+# Use smaller model
+./ml/scripts/train.sh --preset quick
+```
+
+### Performance Tips
+
+1. **Use GPU**: PyTorch training is 10-50x faster with GPU
+2. **Apple Silicon**: Native Metal backend provides excellent performance
+3. **Batch Size**: Larger batch sizes are faster but use more memory
+4. **Games vs Epochs**: More games generally better than more epochs
+
+## 📚 Further Reading
+
+See [AI-SYSTEM.md](../docs/AI-SYSTEM.md) for detailed usage instructions and technical details about the AI system.

@@ -504,7 +504,7 @@ fn test_ai_matrix() {
                     ai2.reset();
                 }
 
-                if game % 10 == 0 && num_games > 10 {
+                if game % 20 == 0 && num_games > 20 {
                     println!(
                         "    Game {}: {} wins: {}, {} wins: {}",
                         game + 1,
@@ -668,7 +668,14 @@ fn test_ai_matrix() {
     println!("💡 RECOMMENDATIONS:");
     println!("{}", "-".repeat(40));
 
-    let recommendations = generate_recommendations(&ai_performance, &ai_speeds);
+    // Calculate average win rates for recommendations
+    let mut ai_avg_performance = HashMap::new();
+    for (ai_name, total_win_rate) in &ai_performance {
+        let avg_win_rate = *total_win_rate / (ai_types.len() - 1) as f64;
+        ai_avg_performance.insert(ai_name.clone(), avg_win_rate);
+    }
+
+    let recommendations = generate_recommendations(&ai_avg_performance, &ai_speeds);
     for recommendation in &recommendations {
         println!("• {}", recommendation);
     }

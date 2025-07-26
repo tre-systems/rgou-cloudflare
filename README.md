@@ -22,6 +22,17 @@ A modern web implementation of the ancient Royal Game of Ur (2500 BCE) with dual
 - **Offline Support**: PWA with full offline gameplay
 - **Modern UI**: Responsive design with animations and sound effects
 
+## 📚 Documentation
+
+- **[docs/README.md](./docs/README.md)** – Documentation index and quick reference
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** – System design, components, deployment, and infrastructure
+- **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** – Complete AI system guide (Classic AI, ML AI, testing, history)
+- **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** – Development workflow, testing, troubleshooting, best practices
+- **[GAME-GUIDE.md](./docs/GAME-GUIDE.md)** – Game rules, strategy, historical context, and user info
+- **[TODO.md](./docs/TODO.md)** – Project TODOs and improvements
+- **[ml/README.md](./ml/README.md)** – Machine learning quick start, training, and troubleshooting
+- **[worker/rust_ai_core/tests/README.md](./worker/rust_ai_core/tests/README.md)** – Rust AI core test suite and instructions
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -45,6 +56,9 @@ npm install
 # Set up local database
 npm run db:setup
 
+# Build WASM assets (required for AI to work)
+npm run build:wasm-assets
+
 # Start development server
 npm run dev
 ```
@@ -55,7 +69,7 @@ The game will open at http://localhost:3000
 
 - The first run may take longer as it builds WebAssembly assets
 - If you encounter WASM build issues, run: `npm run build:wasm-assets`
-- For ML training, you'll need Rust and Apple Silicon Mac (see [ML System Overview](./docs/ml-system-overview.md))
+- For ML training, you'll need Rust and Apple Silicon Mac (see [AI-SYSTEM.md](./docs/AI-SYSTEM.md))
 
 ### Common Setup Issues
 
@@ -63,20 +77,22 @@ The game will open at http://localhost:3000
 - **Database Issues**: Run `npm run db:setup` to set up local SQLite
 - **Dependency Issues**: Try `npm run nuke` to reset the environment
 
-See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed solutions.
 
 ## 🤖 AI System
 
 The project features two distinct AI opponents:
 
-- **Classic AI**: Expectiminimax algorithm with alpha-beta pruning
+- **Classic AI**: Expectiminimax algorithm with evolved genetic parameters
 - **ML AI**: Neural network trained through self-play
-  - **v2 Model**: **44% win rate vs Classic AI** - **Best Performance** ✅
-  - **Fast Model**: 36% win rate vs Classic AI - **Competitive**
-  - **v4 Model**: 32% win rate vs Classic AI - **Needs Improvement** ⚠️
-  - **Hybrid Model**: 30% win rate vs Classic AI - **Needs Improvement** ⚠️
+  - **EMM-Depth3**: **77.8% win rate** - **Best Overall Performance** ✅
+  - **ML-Fast**: **63.9% win rate** - **Best ML Performance** ✅
+  - **ML-V4**: **61.1% win rate** - **Strong ML Performance** ✅
+  - **ML-Hybrid**: **61.1% win rate** - **Strong ML Performance** ✅
 
-Both AIs run entirely in the browser via WebAssembly. See [AI System](./docs/ai-system.md) for details.
+Both AIs run entirely in the browser via WebAssembly. See [AI-SYSTEM.md](./docs/AI-SYSTEM.md) for details.
+
+**📊 Latest Performance Results**: For comprehensive AI comparison data, win rates, speed analysis, and recommendations, see [AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md).
 
 ## 🧠 Machine Learning
 
@@ -90,172 +106,187 @@ Fast GPU-accelerated training using PyTorch with Rust data generation:
 # Install PyTorch dependencies
 pip install -r requirements.txt
 
-# Quick test
-npm run train:pytorch:test
+# Quick test (100 games, 10 epochs)
+npm run train:pytorch:quick
 
-# Standard training
+# Standard training (1000 games, 50 epochs)
 npm run train:pytorch
 
-# Fast training
-npm run train:pytorch:fast
-
-# Production training
+# Production training (2000 games, 100 epochs)
 npm run train:pytorch:production
-
-# v5 training (2000 games, 100 epochs, ~30 min)
-npm run train:pytorch:v5
-
-# Convert PyTorch weights for Rust use
-python3 ml/scripts/load_pytorch_weights.py ml/data/weights/ml_ai_weights_v5.json --test
 ```
 
-**PyTorch Features:**
+### 🦀 Rust Training (CPU Only)
 
-- **🎮 GPU Acceleration**: Automatic CUDA/MPS detection and utilization
-- **🦀 Rust Data Generation**: Fast parallel game simulation using all CPU cores
-- **⚡ Optimized Training**: PyTorch's highly optimized neural network operations
-- **📊 Advanced Features**: Dropout, Adam optimizer, early stopping
-- **🔄 Seamless Integration**: Weights automatically compatible with Rust system
-- **📁 Organized Storage**: Training data stored in `~/Desktop/rgou-training-data/`
-
-### 🦀 Rust Training (Legacy)
-
-Pure Rust training system for maximum compatibility:
+Pure Rust training system with optimized CPU parallelization:
 
 ```bash
-# Quick test
+# Quick test (100 games, 10 epochs)
 npm run train:rust:quick
 
-# Standard training
+# Standard training (1000 games, 50 epochs)
 npm run train:rust
 
-# Production training
+# Production training (2000 games, 100 epochs)
 npm run train:rust:production
-
-# Custom training
-cd worker/rust_ai_core && cargo run --bin train --release --features training -- train 2000 75 0.001 32 4 custom_weights.json
 ```
 
-**Rust Features:**
+**Note**: PyTorch training requires GPU acceleration (CUDA or Apple Metal). Rust training works on any system but is slower.
 
-- **🦀 Pure Rust**: No external dependencies
-- **⚡ CPU Training**: Efficient neural network training with custom implementation
-- **🍎 Apple Silicon Optimization**: Uses 8 performance cores on M1/M2/M3
-- **📊 Comprehensive Logging**: Detailed progress tracking and performance metrics
+## 🧬 Genetic Parameter Evolution
 
-### 🧬 Genetic Parameter Evolution
-
-Optimize the expectiminimax AI parameters using genetic algorithms:
+You can evolve and validate the genetic parameters for the classic AI:
 
 ```bash
-# Evolve genetic parameters (tournament style)
+# Evolve new genetic parameters (runs Rust evolution, saves to ml/data/genetic_params/evolved.json)
 npm run evolve:genetic-params
+
+# Validate evolved parameters against default (runs 100 games, prints win rates)
+npm run validate:genetic-params
 ```
 
-**Evolution Features:**
+### Evolution Process
 
-- **🧬 Genetic Algorithm**: Tournament-style evolution of AI parameters
-- **⚡ Optimized Performance**: Uses all available CPU cores efficiently
-- **🍎 Apple Silicon Tuned**: Optimized for M1/M2/M3 Macs
-- **📊 Comprehensive Testing**: Validates evolved parameters with extensive game testing
+The evolution script uses a robust genetic algorithm with:
 
-See [ML System Overview](./docs/ml-system-overview.md) for complete training guide.
+- **Population size:** 50 individuals
+- **Generations:** 50 generations
+- **Games per evaluation:** 100 games per individual
+- **Post-evolution validation:** 1000 games to confirm improvement
+- **Quality threshold:** Only saves parameters if they win >55% vs defaults
+
+### Current Results (July 2025)
+
+**Evolved Parameters Performance:**
+
+- **Win rate vs defaults:** 61% (significant improvement)
+- **Evolution time:** ~42 minutes
+- **Validation confirmed:** 1000-game test showed 69.4% win rate
+
+**Key Parameter Changes:**
+
+- `win_score`: 10000 → 8354 (-1646)
+- `finished_piece_value`: 1000 → 638 (-362)
+- `position_weight`: 15 → 30 (+15)
+- `rosette_control_bonus`: 40 → 61 (+21)
+- `capture_bonus`: 35 → 49 (+14)
+
+The evolved parameters significantly outperform the defaults and are now used in production.
 
 ## 🧪 Testing
 
+The project includes comprehensive testing:
+
 ```bash
-# Run all tests
+# Run all tests (lint, type-check, unit tests, e2e tests)
 npm run check
 
-# Quick tests (10 games)
-npm run test:rust:quick
+# Run unit tests only
+npm run test
 
-# Comprehensive tests (100 games)
-npm run test:rust:slow
-
-# End-to-end tests (includes database setup)
+# Run end-to-end tests
 npm run test:e2e
 
-# Set up database for development/testing
-npm run db:setup
+# Run AI comparison tests
+npm run test:ai-comparison:fast
 ```
 
-See [Testing Strategy](./docs/testing-strategy.md) for detailed testing information.
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed testing information.
 
 ## 📋 Available Scripts
 
-The project includes a comprehensive set of npm scripts for development, testing, training, and deployment. For a complete reference with detailed explanations, see **[Scripts Reference](./docs/scripts-reference.md)**.
+The project includes a comprehensive set of npm scripts for development, testing, training, and deployment. For a complete reference with detailed explanations, see **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)**.
 
 ### 🚀 Quick Start Commands
 
 ```bash
-# Development
-npm run dev              # Start development server
-npm run build           # Build for production
-npm run check           # Run all tests and checks
-
-# Training
-npm run train:quick     # Quick ML training
-npm run train:production # Production ML training
-
-# Testing
-npm run test:ai-comparison:fast  # Quick AI comparison
-npm run test:e2e        # End-to-end tests
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run check        # Run all tests and checks
+npm run nuke         # Reset environment (clean install)
 ```
 
-### 📚 Script Categories
+### 🧠 AI Development Commands
 
-- **Development**: Build, dev server, code quality
-- **Testing**: Unit tests, e2e tests, AI comparison tests
-- **Machine Learning**: Training scripts for both Rust and PyTorch backends
-- **Database**: Migration and setup commands
-- **Infrastructure**: WASM builds, deployment tools
+```bash
+npm run train:quick              # Quick ML training
+npm run train:pytorch:production # Production PyTorch training
+npm run evolve:genetic-params    # Evolve AI parameters
+npm run test:ai-comparison:fast  # Test AI performance
+```
 
-See **[Scripts Reference](./docs/scripts-reference.md)** for the complete list with detailed explanations and usage examples.
+### 🏗️ Build Commands
+
+```bash
+npm run build:wasm-assets        # Build WebAssembly modules
+npm run build:cf                 # Build for Cloudflare deployment
+npm run generate:sw              # Generate service worker
+```
+
+### 🗄️ Database Commands
+
+```bash
+npm run db:setup                 # Setup local database
+npm run migrate:local            # Apply local migrations
+npm run migrate:d1               # Apply production migrations
+```
+
+### 🧪 Testing Commands
+
+```bash
+npm run test                     # Run unit tests
+npm run test:e2e                 # Run end-to-end tests
+npm run test:coverage            # Run tests with coverage
+npm run test:ai-comparison:fast  # Quick AI comparison
+```
+
+See **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** for the complete list with detailed explanations and usage examples.
 
 ## 🏗️ Architecture
 
-- **Frontend**: Next.js with React, TypeScript, Tailwind CSS
-- **AI Engine**: Rust compiled to WebAssembly (client-side only)
-- **Database**: Cloudflare D1 with Drizzle ORM
-- **Deployment**: Cloudflare Pages with GitHub Actions
+The project evolved from hybrid client/server AI to pure client-side execution for optimal performance and offline capability. See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed system design.
 
-The project evolved from hybrid client/server AI to pure client-side execution for optimal performance and offline capability. See [Architecture Overview](./docs/architecture-overview.md) for detailed system design.
+### Key Components
+
+- **Frontend**: Next.js with React, TypeScript, Tailwind CSS
+- **AI Engine**: Rust compiled to WebAssembly
+- **Database**: Cloudflare D1 (production), SQLite (development)
+- **Deployment**: Cloudflare Pages with GitHub Actions
 
 ## 📚 Documentation
 
-### Core System
+### Core Documentation
 
-- **[Architecture Overview](./docs/architecture-overview.md)** - System design and components
-- **[AI System](./docs/ai-system.md)** - Classic expectiminimax AI and ML AI implementation
-- **[ML System Overview](./docs/ml-system-overview.md)** - Complete ML system guide with PyTorch and Rust training
-- **[Game Rules and Strategy](./docs/game-rules-strategy.md)** - Game rules and strategic concepts
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System design, components, deployment, and infrastructure
+- **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** - Complete AI system guide including Classic AI, ML AI, testing, and development history
+- **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** - Development workflow, testing strategies, troubleshooting, and best practices
+- **[GAME-GUIDE.md](./docs/GAME-GUIDE.md)** - Game rules, strategy, historical context, and user information
 
-### Development
+### Additional Files
 
-- **[Scripts Reference](./docs/scripts-reference.md)** - Complete npm scripts documentation
-- **[Testing Strategy](./docs/testing-strategy.md)** - Testing approach and methodology
-- **[Troubleshooting Guide](./docs/troubleshooting.md)** - Common issues and solutions
-- **[TODO](./docs/TODO.md)** - Consolidated task list and improvements
-
-### Infrastructure
-
-- **[Cloudflare Worker Infrastructure](./docs/cloudflare-worker-infrastructure.md)** - Preserved server-side infrastructure
-
-### Historical
-
-- **[AI Development History](./docs/ai-development-history.md)** - Historical experiments and findings
+- **[TODO.md](./docs/TODO.md)** - Consolidated task list and improvements
 
 ## 🔧 Troubleshooting
 
-**Common Issues:**
+### Common Issues
 
-- **WASM Build**: Run `npm run build:wasm-assets` before `npm run check`
-- **ML Training**: Ensure GPU available, use `--reuse-games` for faster iteration
+- **WASM Build Failures**: Run `npm run build:wasm-assets`
+- **Database Issues**: Run `npm run db:setup`
+- **Dependency Issues**: Try `npm run nuke`
 - **Deployment**: Pin exact dependency versions for Cloudflare compatibility
 
-See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed solutions.
 
 ## 📄 License
 
-Open source. See [LICENSE](LICENSE).
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read the documentation and ensure all tests pass before submitting a pull request.
+
+## 🙏 Acknowledgments
+
+- **Irving Finkel** - British Museum curator who reconstructed the game rules
+- **RoyalUr.net** - Comprehensive game analysis and strategy
+- **Rust Community** - Excellent WebAssembly tooling and ecosystem

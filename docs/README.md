@@ -4,69 +4,39 @@ This directory contains comprehensive documentation for the Royal Game of Ur pro
 
 ## 📚 Documentation Structure
 
-### Core System
+### Core Documentation
 
-- **[Architecture Overview](./architecture-overview.md)** - System design, components, and game statistics
-- **[AI System](./ai-system.md)** - Classic expectiminimax AI and ML AI implementation with performance data
-- **[ML System Overview](./ml-system-overview.md)** - Complete ML system guide with training, performance matrix, and model comparisons
-- **[Game Rules and Strategy](./game-rules-strategy.md)** - Game rules and strategic concepts
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design, components, deployment, and infrastructure
+- **[AI-SYSTEM.md](./AI-SYSTEM.md)** - Complete AI system guide including Classic AI, ML AI, testing, and development history
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Development workflow, testing strategies, troubleshooting, and best practices
+- **[GAME-GUIDE.md](./GAME-GUIDE.md)** - Game rules, strategy, historical context, and user information
 
-### Development
+### Additional Files
 
-- **[Testing Strategy](./testing-strategy.md)** - Testing approach and methodology
-- **[Troubleshooting Guide](./troubleshooting.md)** - Common issues and solutions
-- **[TODO](./TODO.md)** - Consolidated task list and improvements
-
-### Infrastructure
-
-- **[Cloudflare Worker Infrastructure](./cloudflare-worker-infrastructure.md)** - Preserved server-side infrastructure
-
-### Historical
-
-- **[AI Development History](./ai-development-history.md)** - Historical experiments and findings
+- **[TODO.md](./TODO.md)** - Consolidated task list and improvements
 
 ## 🎯 Quick Reference
 
 ### For New Developers
 
-1. Start with [Architecture Overview](./architecture-overview.md) to understand the system
-2. Read [AI System](./ai-system.md) for AI implementation details
-3. Check [Game Rules and Strategy](./game-rules-strategy.md) for game mechanics
-4. Use [Troubleshooting Guide](./troubleshooting.md) for common issues
+1. Start with [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the system design
+2. Read [AI-SYSTEM.md](./AI-SYSTEM.md) for comprehensive AI implementation details
+3. Check [GAME-GUIDE.md](./GAME-GUIDE.md) for game mechanics and strategy
+4. Use [DEVELOPMENT.md](./DEVELOPMENT.md) for development workflow and troubleshooting
 
 ### For AI Development
 
-1. Review [AI Development History](./ai-development-history.md) for historical context
-2. Study [ML System Overview](./ml-system-overview.md) for ML training
-3. Check [AI System](./ai-system.md) for current performance data
+1. Review [AI-SYSTEM.md](./AI-SYSTEM.md) for complete AI system information
+2. Check [DEVELOPMENT.md](./DEVELOPMENT.md) for training and testing procedures
 
 ### For Testing
 
-1. Read [Testing Strategy](./testing-strategy.md) for testing approach
-2. Use [Troubleshooting Guide](./troubleshooting.md) for test issues
+1. Read [DEVELOPMENT.md](./DEVELOPMENT.md) for comprehensive testing strategies
+2. Use the troubleshooting section for common issues
 
 ## 📊 Performance Summary
 
-### Classic AI Performance
-
-| AI Type                | Win Rate  | Search Depth | Speed   | Notes                        |
-| ---------------------- | --------- | ------------ | ------- | ---------------------------- |
-| **Classic AI (EMM-3)** | **75.6%** | 3-ply        | 15.6ms  | **Best overall performance** |
-| **Classic AI (EMM-2)** | **51.1%** | 2-ply        | Instant | Strong alternative           |
-| **Classic AI (EMM-1)** | **46.7%** | 1-ply        | Instant | Fast baseline                |
-| Heuristic AI           | **35.6%** | N/A          | Instant | Educational baseline         |
-
-### ML AI Models Performance
-
-| Model             | Win Rate  | Speed  | Status                     |
-| ----------------- | --------- | ------ | -------------------------- |
-| **ML-Hybrid**     | **60.0%** | 52.1ms | ✅ **Best ML Performance** |
-| **ML-PyTorch-V5** | **60.0%** | 54.8ms | ✅ **Best ML Performance** |
-| **ML-V4**         | **58.9%** | 50.7ms | ✅ **Strong Performance**  |
-| **ML-V2**         | **55.6%** | 53.5ms | ✅ **Good Performance**    |
-| **ML-Fast**       | **51.1%** | 58.4ms | ⚠️ **Needs Improvement**   |
-
-**Note:** All Classic AI variants now use evolved genetic parameters that provide a 61% win rate improvement over the original default parameters.
+For the latest, detailed AI performance results (win rates, speed, and recommendations), see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md). All stats are generated automatically by the AI matrix test and kept up to date.
 
 ## 🚀 Latest Training Options
 
@@ -74,15 +44,12 @@ This directory contains comprehensive documentation for the Royal Game of Ur pro
 
 ```bash
 # Quick test (100 games, 10 epochs)
-npm run train:pytorch:test
+npm run train:pytorch:quick
 
 # Standard training (1000 games, 50 epochs)
 npm run train:pytorch
 
-# Fast training (500 games, 25 epochs)
-npm run train:pytorch:fast
-
-# Production training (2000 games, 75 epochs)
+# Production training (2000 games, 100 epochs)
 npm run train:pytorch:production
 
 # v5 training (2000 games, 100 epochs, ~30 min)
@@ -92,13 +59,13 @@ npm run train:pytorch:v5
 ### Rust Training (Legacy)
 
 ```bash
-# Quick test (100 games, 5 epochs)
+# Quick test (100 games, 10 epochs)
 npm run train:rust:quick
 
 # Standard training (1000 games, 50 epochs)
 npm run train:rust
 
-# Production training (5000 games, 100 epochs)
+# Production training (2000 games, 100 epochs)
 npm run train:rust:production
 ```
 
@@ -144,47 +111,42 @@ The evolved parameters significantly outperform the defaults and are now used in
 
 ## 🔄 Recent Updates
 
+- **July 2025**: Consolidated documentation into 4 comprehensive files
 - **July 2025**: Successful genetic parameter evolution - evolved parameters achieve 61% win rate vs defaults
-- **July 2025**: PyTorch V5 model achieves 49% win rate against expectiminimax AI
-- **July 2025**: Consolidated ML test matrix into ML system overview
-- **July 2025**: Updated AI system with latest performance data
-- **July 2025**: PyTorch V5 training configuration (2000 games, 100 epochs, ~30 min)
-- **July 2025**: Consolidated ML documentation into single comprehensive guide
-- **July 2025**: Removed redundant training documentation files
-- **July 2025**: Updated AI development history with recent developments
-- **July 2025**: Integrated Mac optimization and training monitoring into ML system overview
-- **July 2025**: Added game statistics to architecture overview
+- **July 2025**: PyTorch V5 model achieves 60% win rate against Classic AI
+- **July 2025**: Pure Rust training migration with 10-20x performance improvements
+- **July 2025**: Apple Silicon GPU optimization for ML training
 
 ## 📝 Contributing
 
 When updating documentation:
 
 1. Keep information concise and to the point
-2. Consolidate related information in single files
-3. Update cross-references when moving content
-4. Maintain historical records in [AI Development History](./ai-development-history.md)
-5. Update this README when adding new documentation
+2. Update the appropriate consolidated file
+3. Maintain cross-references between documents
+4. Update this README when adding new documentation
 
 ## 📁 File Organization
 
 ### Consolidated Files
 
-- **ML System Overview**: Combined PyTorch training, Rust training, system architecture, and model performance matrix
-- **AI System**: Combined Classic AI and ML AI information with latest performance data
-- **Architecture Overview**: Includes game statistics and database schema
-- **Testing Strategy**: Includes AI performance testing and test configuration
+- **ARCHITECTURE.md**: System design, components, deployment, database, and infrastructure
+- **AI-SYSTEM.md**: Complete AI system including Classic AI, ML AI, testing, training, and development history
+- **DEVELOPMENT.md**: Development workflow, testing strategies, troubleshooting, and best practices
+- **GAME-GUIDE.md**: Game rules, strategy, historical context, and user information
 
-### Removed Files
+### Removed Files (Consolidated)
 
-- `ml-test-matrix.md` → Consolidated into `ml-system-overview.md`
-- `pytorch-training.md` → Consolidated into `ml-system-overview.md`
-- `training-system.md` → Consolidated into `ml-system-overview.md`
-- `ml-ai-system.md` → Consolidated into `ai-system.md`
-- `ai-performance.md` → Consolidated into `ai-system.md` and `testing-strategy.md`
-- `test-configuration-guide.md` → Consolidated into `testing-strategy.md`
-- `checking-training-status.md` → Consolidated into `ml-system-overview.md`
-- `mac-optimization-guide.md` → Consolidated into `ml-system-overview.md`
-- `game-statistics.md` → Consolidated into `architecture-overview.md`
+- `architecture-overview.md` → Consolidated into `ARCHITECTURE.md`
+- `ai-system.md` → Consolidated into `AI-SYSTEM.md`
+- `ml-system-overview.md` → Consolidated into `AI-SYSTEM.md`
+- `testing-strategy.md` → Consolidated into `DEVELOPMENT.md`
+- `ai-testing-strategy.md` → Consolidated into `AI-SYSTEM.md`
+- `cloudflare-worker-infrastructure.md` → Consolidated into `ARCHITECTURE.md`
+- `scripts-reference.md` → Consolidated into `DEVELOPMENT.md`
+- `game-rules-strategy.md` → Consolidated into `GAME-GUIDE.md`
+- `troubleshooting.md` → Consolidated into `DEVELOPMENT.md`
+- `ai-development-history.md` → Consolidated into `AI-SYSTEM.md`
 
 ## Testing and Quality
 

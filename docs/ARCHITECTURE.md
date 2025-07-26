@@ -1,6 +1,6 @@
 # Architecture Overview
 
-This document details the architecture of the Royal Game of Ur project, focusing on its AI engine, frontend, and deployment.
+This document details the architecture of the Royal Game of Ur project, focusing on its AI engine, frontend, deployment, and infrastructure.
 
 ## What Makes This Special?
 
@@ -13,22 +13,14 @@ This implementation stands out for several reasons:
 - **Performance**: Rust-compiled AI provides desktop-level performance in the browser
 - **Evolutionary Architecture**: Successfully migrated from hybrid client/server AI to pure client-side execution
 
-## Principles
+## Core Principles
 
-- High performance: Rust and WebAssembly for AI
-- Offline capability: Fully playable without internet
-- Seamless UX: Modern, responsive UI
-- Maintainability: Clear separation of UI, logic, and AI
+- **High Performance**: Rust and WebAssembly for AI
+- **Offline Capability**: Fully playable without internet
+- **Seamless UX**: Modern, responsive UI
+- **Maintainability**: Clear separation of UI, logic, and AI
 
-## Core Components
-
-1. **Next.js Frontend**: React app for UI and game state
-2. **AI (WebAssembly)**: Rust AI logic compiled to Wasm for browser (Classic AI and ML AI)
-3. **Database**: Cloudflare D1, Drizzle ORM
-
-The shared Rust AI core (`worker/rust_ai_core`) contains all game rules, evaluation, and expectiminimax search. Both Classic AI and ML AI use this for identical strategy, running locally in the browser.
-
-For AI algorithm details, see [AI System](./ai-system.md). For ML AI, see [ML System Overview](./ml-system-overview.md).
+## System Architecture
 
 ### Frontend (`src/`)
 
@@ -69,7 +61,9 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 - Server-side AI endpoints (`/ai-move`, `/health`) are inactive but available
 - Architecture supports easy reactivation if server-side features are needed
 
-### Data Flow: AI Turn
+## Data Flow
+
+### AI Turn Processing
 
 1. `RoyalGameOfUr.tsx` detects AI turn
 2. Calls `makeAIMove` in `game-store.ts`
@@ -85,60 +79,21 @@ The project has evolved from a hybrid client/server architecture to a pure clien
 4. Game saved to DB
 5. Completion overlay shows stats
 
-## Database
+## Database System
 
-- **Local**: SQLite (`local.db`), Drizzle ORM
-- **Production**: Cloudflare D1, Drizzle ORM
-- **Schema**: See `src/lib/db/schema.ts`
+### Local Development
 
-### Game Statistics
+- **Database**: SQLite (`local.db`)
+- **ORM**: Drizzle ORM
+- **Setup**: `npm run db:local:reset`
 
-The game includes comprehensive statistics tracking that records game outcomes and provides performance insights.
+### Production
 
-#### Features
+- **Database**: Cloudflare D1
+- **ORM**: Drizzle ORM
+- **Migrations**: `npm run migrate:d1`
 
-- **Win/Loss Tracking**: Automatic recording of game outcomes
-- **Win Rate Calculation**: Percentage of games won
-- **Local Storage**: Statistics persist across browser sessions
-- **Database Integration**: Games saved to database for analytics
-- **Real-time Updates**: Statistics update immediately after game completion
-
-#### Implementation
-
-**Local Statistics Store**:
-
-Statistics managed using Zustand with persistent storage:
-
-```typescript
-// src/lib/stats-store.ts
-export const useStatsStore = create<StatsStore>()(
-  persist(
-    (set, get) => ({
-      stats: {
-        wins: 0,
-        losses: 0,
-        gamesPlayed: 0,
-      },
-      actions: {
-        incrementWins: () => {
-          /* ... */
-        },
-        incrementLosses: () => {
-          /* ... */
-        },
-      },
-    }),
-    {
-      name: 'rgou-stats-storage',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
-```
-
-**Database Schema**:
-
-Games automatically saved to database upon completion:
+### Schema
 
 ```typescript
 // src/lib/db/schema.ts
@@ -156,33 +111,31 @@ export const games = sqliteTable('games', {
 });
 ```
 
-#### Data Flow
+### Game Statistics
 
-**Game Completion Flow**:
+The game includes comprehensive statistics tracking:
 
-1. **Game Ends**: `gameState.gameStatus` becomes 'finished'
-2. **Statistics Update**: Local stats incremented via `useStatsStore`
-3. **Database Save**: Game data posted to server via `saveGame` action
-4. **UI Update**: Statistics panel shows updated win/loss counts
+**Features**:
 
-**Environment Handling**:
+- **Win/Loss Tracking**: Automatic recording of game outcomes
+- **Win Rate Calculation**: Percentage of games won
+- **Local Storage**: Statistics persist across browser sessions
+- **Database Integration**: Games saved to database for analytics
+- **Real-time Updates**: Statistics update immediately after game completion
 
-- **Local Development**: SQLite database (`local.db`)
-- **Production**: Cloudflare D1 database
-- **Testing**: E2E tests verify database saves work correctly
+**Implementation**:
 
-#### Privacy
-
-- **Player ID**: Generated using `nanoid()` for anonymous tracking
-- **Local Storage**: Statistics remain on user's device
-- **Database**: Only game outcomes and metadata stored
-- **No Personal Data**: No names, emails, or identifying information
+- Statistics managed using Zustand with persistent storage
+- Games automatically saved to database upon completion
+- Privacy-focused: Player ID generated using `nanoid()` for anonymous tracking
 
 ## Deployment
 
-- **Frontend**: Next.js on Cloudflare Pages
-- **Database**: Cloudflare D1
-- **Automation**: GitHub Actions workflow
+### Frontend Deployment
+
+- **Platform**: Next.js on Cloudflare Pages
+- **Build**: `npm run build:cf`
+- **Domain**: `https://rgou.tre.systems`
 
 ### WASM Security Headers
 
@@ -195,10 +148,62 @@ Set in `public/_headers`:
   Cross-Origin-Resource-Policy: same-origin
 ```
 
-## Development vs Production UI
+## Preserved Server Infrastructure
+
+### Cloudflare Worker (`worker/src/lib.rs`)
+
+**Status**: Inactive (preserved for future use)
+
+**Available Endpoints**:
+
+- `POST /ai-move` - Server-side AI computation
+- `GET /health` - Health check endpoint
+
+**Potential Future Use Cases**:
+
+1. **Server-Side Validation**: Validate client moves in multiplayer
+2. **Analytics**: Collect AI performance metrics
+3. **Multiplayer Support**: Centralized AI for unreliable clients
+4. **AI Model Distribution**: Dynamic AI selection based on device capabilities
+
+**Reactivation**:
+
+```bash
+cd worker
+wrangler deploy
+```
+
+### Performance Considerations
+
+**Server-Side AI Advantages**:
+
+- Consistent performance across devices
+- Reduced client load
+- Centralized control
+
+**Server-Side AI Disadvantages**:
+
+- Network latency
+- Infrastructure costs
+- Offline limitations
+- Scalability concerns
+
+**Current Decision**: Client-side AI exclusively for performance, offline capability, and cost efficiency.
+
+## Development vs Production
+
+### Development Environment
 
 - **Dev-only tools**: AI diagnostics, AI toggle, reset/test buttons (only on localhost)
-- **Production**: Clean UI, Classic AI default
+- **Local database**: SQLite for development
+- **Debug features**: Enhanced logging and diagnostics
+
+### Production Environment
+
+- **Clean UI**: No development tools
+- **Classic AI default**: Most reliable AI opponent
+- **Cloudflare D1**: Production database
+- **Optimized builds**: Minified and optimized assets
 
 ## Summary
 
@@ -208,3 +213,4 @@ Set in `public/_headers`:
 - Full offline and online support
 - Comprehensive statistics tracking
 - Privacy-focused data collection
+- Preserved server infrastructure for future use cases
