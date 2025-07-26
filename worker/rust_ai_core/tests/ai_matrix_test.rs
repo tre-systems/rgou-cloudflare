@@ -50,7 +50,6 @@ impl AIType {
 // AI Player trait for unified interface with reset capability
 trait AIPlayer {
     fn get_move(&mut self, game_state: &GameState) -> Option<usize>;
-    fn name(&self) -> &str;
     fn reset(&mut self);
 }
 
@@ -66,10 +65,6 @@ impl AIPlayer for RandomAI {
             let random_index = (dice::roll_dice() as usize) % valid_moves.len();
             Some(valid_moves[random_index] as usize)
         }
-    }
-
-    fn name(&self) -> &str {
-        "Random"
     }
 
     fn reset(&mut self) {
@@ -105,10 +100,6 @@ impl AIPlayer for HeuristicAI {
         Some(best_move as usize)
     }
 
-    fn name(&self) -> &str {
-        "Heuristic"
-    }
-
     fn reset(&mut self) {
         // Heuristic AI doesn't need reset
     }
@@ -135,16 +126,6 @@ impl AIPlayer for ExpectiminimaxAI {
         best_move.map(|m| m as usize)
     }
 
-    fn name(&self) -> &str {
-        match self.depth {
-            1 => "EMM-Depth1",
-            2 => "EMM-Depth2",
-            3 => "EMM-Depth3",
-            4 => "EMM-Depth4",
-            _ => "EMM-Unknown",
-        }
-    }
-
     fn reset(&mut self) {
         self.ai.clear_transposition_table();
     }
@@ -153,7 +134,6 @@ impl AIPlayer for ExpectiminimaxAI {
 // ML AI implementation
 struct MLAIPlayer {
     ai: MLAI,
-    name: String,
 }
 
 impl MLAIPlayer {
@@ -171,10 +151,7 @@ impl MLAIPlayer {
         let mut ai = MLAI::new();
         ai.load_pretrained(&value_weights, &policy_weights);
 
-        Ok(Self {
-            ai,
-            name: ai_type.name().to_string(),
-        })
+        Ok(Self { ai })
     }
 }
 
@@ -182,10 +159,6 @@ impl AIPlayer for MLAIPlayer {
     fn get_move(&mut self, game_state: &GameState) -> Option<usize> {
         let response = self.ai.get_best_move(game_state);
         response.r#move.map(|m| m as usize)
-    }
-
-    fn name(&self) -> &str {
-        &self.name
     }
 
     fn reset(&mut self) {
@@ -240,13 +213,8 @@ fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn s
 #[derive(Debug)]
 struct GameResult {
     winner: Player,
-    moves_played: u32,
     ai1_time_ms: u64,
     ai2_time_ms: u64,
-    ai1_moves: u32,
-    ai2_moves: u32,
-    p1_finished_pieces: usize,
-    p2_finished_pieces: usize,
 }
 
 // Play a game between two AI players with enhanced tracking
@@ -259,8 +227,6 @@ fn play_game(
     let mut moves_played = 0;
     let mut ai1_time_ms = 0;
     let mut ai2_time_ms = 0;
-    let mut ai1_moves = 0;
-    let mut ai2_moves = 0;
     let max_moves = 200; // Prevent infinite games
 
     while !game_state.is_game_over() && moves_played < max_moves {
@@ -277,14 +243,12 @@ fn play_game(
                 let move_result = ai1.get_move(&game_state);
                 let duration = start.elapsed();
                 ai1_time_ms += duration.as_millis() as u64;
-                ai1_moves += 1;
                 move_result
             } else {
                 let start = Instant::now();
                 let move_result = ai2.get_move(&game_state);
                 let duration = start.elapsed();
                 ai2_time_ms += duration.as_millis() as u64;
-                ai2_moves += 1;
                 move_result
             }
         } else {
@@ -293,14 +257,12 @@ fn play_game(
                 let move_result = ai2.get_move(&game_state);
                 let duration = start.elapsed();
                 ai2_time_ms += duration.as_millis() as u64;
-                ai2_moves += 1;
                 move_result
             } else {
                 let start = Instant::now();
                 let move_result = ai1.get_move(&game_state);
                 let duration = start.elapsed();
                 ai1_time_ms += duration.as_millis() as u64;
-                ai1_moves += 1;
                 move_result
             }
         };
@@ -344,13 +306,8 @@ fn play_game(
 
     GameResult {
         winner,
-        moves_played,
         ai1_time_ms,
         ai2_time_ms,
-        ai1_moves,
-        ai2_moves,
-        p1_finished_pieces: p1_finished,
-        p2_finished_pieces: p2_finished,
     }
 }
 
@@ -383,12 +340,7 @@ fn create_ai_player(ai_type: &AIType) -> Result<Box<dyn AIPlayer>, Box<dyn std::
 struct MatrixResult {
     ai1: String,
     ai2: String,
-    ai1_wins: u32,
-    ai2_wins: u32,
-    draws: u32,
-    total_games: u32,
     ai1_win_rate: f64,
-    avg_moves: f64,
     ai1_avg_time_ms: f64,
     ai2_avg_time_ms: f64,
 }
@@ -525,8 +477,6 @@ fn test_ai_matrix() {
 
             let mut ai1_wins = 0;
             let mut ai2_wins = 0;
-            let draws = 0;
-            let mut total_moves = 0;
             let mut ai1_total_time = 0;
             let mut ai2_total_time = 0;
 
@@ -535,7 +485,7 @@ fn test_ai_matrix() {
                 let ai1_first = game % 2 == 0; // Alternate who goes first
                 let result = play_game(&mut ai1, &mut ai2, ai1_first);
 
-                total_moves += result.moves_played;
+                // Track moves for statistics
                 ai1_total_time += result.ai1_time_ms;
                 ai2_total_time += result.ai2_time_ms;
 
@@ -570,19 +520,13 @@ fn test_ai_matrix() {
             }
 
             let ai1_win_rate = (ai1_wins as f64 / num_games as f64) * 100.0;
-            let avg_moves = total_moves as f64 / num_games as f64;
             let ai1_avg_time = ai1_total_time as f64 / num_games as f64;
             let ai2_avg_time = ai2_total_time as f64 / num_games as f64;
 
             results.push(MatrixResult {
                 ai1: ai_type1.name().to_string(),
                 ai2: ai_type2.name().to_string(),
-                ai1_wins,
-                ai2_wins,
-                draws,
-                total_games: num_games,
                 ai1_win_rate,
-                avg_moves,
                 ai1_avg_time_ms: ai1_avg_time,
                 ai2_avg_time_ms: ai2_avg_time,
             });
@@ -590,18 +534,12 @@ fn test_ai_matrix() {
             total_games += num_games;
 
             println!(
-                "  {} wins: {} ({:.1}%)",
+                "  {} wins: {:.1}%, {} wins: {:.1}%",
                 ai_type1.name(),
-                ai1_wins,
-                ai1_win_rate
-            );
-            println!(
-                "  {} wins: {} ({:.1}%)",
+                ai1_win_rate,
                 ai_type2.name(),
-                ai2_wins,
                 100.0 - ai1_win_rate
             );
-            println!("  Average moves: {:.1}", avg_moves);
             println!(
                 "  Average time: {} {:.1}ms, {} {:.1}ms",
                 ai_type1.name(),
