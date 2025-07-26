@@ -1,8 +1,12 @@
-use rgou_ai_core::{dice, ml_ai::MLAI, GameState, Player, AI};
+use rgou_ai_core::{dice, genetic_params::GeneticParams, ml_ai::MLAI, GameState, Player, AI};
 use std::collections::HashMap;
 use std::time::Instant;
 
-// AI Types for testing
+fn get_evolved_params() -> GeneticParams {
+    GeneticParams::load_from_file("ml/data/genetic_params/evolved.json")
+        .unwrap_or_else(|_| GeneticParams::default())
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum AIType {
     Random,
@@ -47,13 +51,11 @@ impl AIType {
     }
 }
 
-// AI Player trait for unified interface with reset capability
 trait AIPlayer {
     fn get_move(&mut self, game_state: &GameState) -> Option<usize>;
     fn reset(&mut self);
 }
 
-// Random AI implementation
 struct RandomAI;
 
 impl AIPlayer for RandomAI {
@@ -72,7 +74,6 @@ impl AIPlayer for RandomAI {
     }
 }
 
-// Heuristic AI implementation
 struct HeuristicAI;
 
 impl AIPlayer for HeuristicAI {
@@ -105,7 +106,6 @@ impl AIPlayer for HeuristicAI {
     }
 }
 
-// Expectiminimax AI implementation
 struct ExpectiminimaxAI {
     ai: AI,
     depth: u8,
@@ -131,7 +131,6 @@ impl AIPlayer for ExpectiminimaxAI {
     }
 }
 
-// ML AI implementation
 struct MLAIPlayer {
     ai: MLAI,
 }
@@ -166,7 +165,6 @@ impl AIPlayer for MLAIPlayer {
     }
 }
 
-// Simple position evaluation for heuristic AI
 fn evaluate_position(game_state: &GameState, player: Player) -> f32 {
     let mut score = 0.0;
 
@@ -187,7 +185,6 @@ fn evaluate_position(game_state: &GameState, player: Player) -> f32 {
     score
 }
 
-// Load ML weights
 fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(weights_file)?;
     let data: serde_json::Value = serde_json::from_str(&content)?;
@@ -209,7 +206,6 @@ fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn s
     Ok((value_weights, policy_weights))
 }
 
-// Enhanced game result structure
 #[derive(Debug)]
 struct GameResult {
     winner: Player,
@@ -217,13 +213,14 @@ struct GameResult {
     ai2_time_ms: u64,
 }
 
-// Play a game between two AI players with enhanced tracking
 fn play_game(
     ai1: &mut Box<dyn AIPlayer>,
     ai2: &mut Box<dyn AIPlayer>,
     ai1_plays_first: bool,
 ) -> GameResult {
-    let mut game_state = GameState::new();
+    // Use evolved parameters for the game state
+    let evolved_params = get_evolved_params();
+    let mut game_state = GameState::with_genetic_params(evolved_params);
     let mut moves_played = 0;
     let mut ai1_time_ms = 0;
     let mut ai2_time_ms = 0;

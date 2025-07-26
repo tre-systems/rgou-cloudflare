@@ -50,7 +50,9 @@
     "evolve:genetic-params": "cd worker/rust_ai_core && caffeinate cargo run --release --bin evolve_params",
     "load:ml-weights": "./ml/scripts/load-weights.sh",
     "db:local:reset": "tsx scripts/reset-local-db.ts",
-    "db:setup": "npm run db:local:reset"
+    "db:setup": "npm run db:local:reset",
+    "evolve:genetic-params": "cd worker/rust_ai_core && caffeinate cargo run --release --bin evolve_params",
+    "validate:genetic-params": "cd worker/rust_ai_core && caffeinate cargo test test_genetic_params_comparison -- --nocapture"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",

@@ -1,4 +1,4 @@
-use super::{GameState, HeuristicAI, PiecePosition, Player, AI};
+use super::{genetic_params::GeneticParams, GameState, HeuristicAI, PiecePosition, Player, AI};
 use crate::{dice, ml_ai::MLAI, MoveEvaluation};
 use js_sys;
 use lazy_static::lazy_static;
@@ -10,6 +10,17 @@ lazy_static! {
     static ref ML_AI_INSTANCE: Mutex<Option<MLAI>> = Mutex::new(None);
     static ref CLASSIC_AI_INSTANCE: Mutex<Option<AI>> = Mutex::new(None);
     static ref HEURISTIC_AI_INSTANCE: Mutex<Option<HeuristicAI>> = Mutex::new(None);
+    static ref EVOLVED_PARAMS: Mutex<Option<GeneticParams>> = Mutex::new(None);
+}
+
+fn get_genetic_params() -> GeneticParams {
+    let mut evolved_params = EVOLVED_PARAMS.lock().unwrap();
+    if evolved_params.is_none() {
+        *evolved_params = GeneticParams::load_from_file("ml/data/genetic_params/evolved.json").ok();
+    }
+    evolved_params
+        .clone()
+        .unwrap_or_else(GeneticParams::default)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -100,7 +111,8 @@ pub struct Timings {
 }
 
 pub fn convert_request_to_game_state(request: &GameStateRequest) -> GameState {
-    let mut game_state = GameState::new();
+    let genetic_params = get_genetic_params();
+    let mut game_state = GameState::with_genetic_params(genetic_params);
 
     game_state.current_player = if request.current_player == "Player1" {
         Player::Player1
