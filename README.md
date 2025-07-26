@@ -86,17 +86,9 @@ The project features two distinct AI opponents:
 - **Classic AI**: Expectiminimax algorithm with evolved genetic parameters
 - **ML AI**: Neural network trained through self-play
 
-**🏆 Current Performance Rankings** (from latest AI matrix test):
-
-1. **ML-Fast**: **75.0% win rate** - **Best Overall Performance** ✅
-2. **EMM-Depth3**: **72.2% win rate** - **Best Classic AI** ✅
-3. **ML-V2**: **69.4% win rate** - **Strong ML Performance** ✅
-4. **ML-PyTorch-V5**: **58.3% win rate** - **Latest ML Model** ✅
-5. **ML-Hybrid**: **55.6% win rate** - **Hybrid Approach** ✅
-
 Both AIs run entirely in the browser via WebAssembly. See [AI-SYSTEM.md](./docs/AI-SYSTEM.md) for details.
 
-**📊 Latest Performance Results**: For comprehensive AI comparison data, win rates, speed analysis, and recommendations, see [AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md).
+**📊 Performance Results**: For comprehensive AI comparison data, win rates, speed analysis, and recommendations, see [AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md).
 
 ## 🧠 Machine Learning
 

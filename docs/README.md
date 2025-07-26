@@ -95,9 +95,11 @@ The evolution script uses a robust genetic algorithm with:
 
 **Evolved Parameters Performance:**
 
-- **Win rate vs defaults:** 61% (significant improvement)
+- **Significant improvement** over default parameters
 - **Evolution time:** ~42 minutes
-- **Validation confirmed:** 1000-game test showed 69.4% win rate
+- **Validation confirmed:** 1000-game test confirms improvement
+
+For detailed performance metrics, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md).
 
 **Key Parameter Changes:**
 
@@ -112,8 +114,8 @@ The evolved parameters significantly outperform the defaults and are now used in
 ## 🔄 Recent Updates
 
 - **July 2025**: Consolidated documentation into 4 comprehensive files
-- **July 2025**: Successful genetic parameter evolution - evolved parameters achieve 61% win rate vs defaults
-- **July 2025**: PyTorch V5 model achieves 60% win rate against Classic AI
+- **July 2025**: Successful genetic parameter evolution - evolved parameters significantly outperform defaults
+- **July 2025**: PyTorch V5 model achieves strong performance against Classic AI
 - **July 2025**: Pure Rust training migration with 10-20x performance improvements
 - **July 2025**: Apple Silicon GPU optimization for ML training
 

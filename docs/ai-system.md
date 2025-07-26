@@ -85,61 +85,23 @@ The ML AI offers a different challenge with playstyle developed from observing t
 
 ### Model Variants
 
-| Model | Win Rate vs EMM-3 | Training Games | Epochs | Status |
-|-------|------------------|----------------|--------|--------|
-| **PyTorch V5** | **63.3%** | 2000 | 100 | ✅ **Best ML Performance** |
-| **ML-V2** | **60.4%** | 1000 | 50 | ✅ **Strong Performance** |
-| **ML-Fast** | **59.3%** | 1000 | 50 | ✅ **Good Performance** |
-| **ML-V4** | **56.7%** | 5000 | 100 | ✅ **Good Performance** |
-| **ML-Fast** | **51.1%** | 500 | 25 | ⚠️ **Needs Improvement** |
+| Model | Training Games | Epochs | Status |
+|-------|----------------|--------|--------|
+| **PyTorch V5** | 2000 | 100 | ✅ **Latest Model** |
+| **ML-V2** | 1000 | 50 | ✅ **Strong Performance** |
+| **ML-Fast** | 1000 | 50 | ✅ **Good Performance** |
+| **ML-V4** | 5000 | 100 | ✅ **Good Performance** |
+| **ML-Hybrid** | 1000 | 50 | ✅ **Hybrid Approach** |
 
-## Performance Analysis (July 2025)
+## Performance Analysis
 
 > **For the latest, detailed AI performance results, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md).**
 
-Based on comprehensive testing of 450+ games across all AI types:
-
-### Classic AI Performance
-
-| AI Type | Win Rate | Search Depth | Speed | Notes |
-|---------|----------|--------------|-------|-------|
-| **EMM-Depth3** | **75.6%** | 3-ply | 15.6ms | **Best overall performance** |
-| **EMM-Depth2** | **51.1%** | 2-ply | Instant | Strong alternative |
-| **EMM-Depth1** | **46.7%** | 1-ply | Instant | Fast baseline |
-| **Heuristic** | **35.6%** | N/A | Instant | Educational baseline |
-
-### ML AI Performance
-
-| Model | Win Rate | Speed | Status |
-|-------|----------|-------|--------|
-| **PyTorch V5** | **63.3%** | 65.0ms | ✅ **Best ML Performance** |
-| **ML-V2** | **60.4%** | 58.5ms | ✅ **Strong Performance** |
-| **ML-Fast** | **59.3%** | 65.5ms | ✅ **Good Performance** |
-| **ML-V4** | **56.7%** | 56.0ms | ✅ **Good Performance** |
-| **ML-Fast** | **51.1%** | 58.4ms | ⚠️ **Needs Improvement** |
-
-### Speed Analysis
-
-| AI Type | Average Time | Category |
-|---------|--------------|----------|
-| EMM-Depth1 | 0.0ms | Very Fast |
-| EMM-Depth2 | 0.0ms | Very Fast |
-| Heuristic | 0.0ms | Very Fast |
-| Random | 0.0ms | Very Fast |
-| EMM-Depth3 | 15.6ms | Moderate |
-| ML-V4 | 50.7ms | Slow |
-| ML-Hybrid | 52.1ms | Slow |
-| ML-V2 | 53.5ms | Slow |
-| PyTorch V5 | 54.8ms | Slow |
-| ML-Fast | 58.4ms | Slow |
-
-### Production Recommendations
-
-- **Primary Choice**: EMM-3 (Depth 3) - Best overall performance (75.6% win rate)
-- **Fast Alternative**: EMM-1/2 (Depth 1/2) - Instant speed with good performance
-- **ML AI Options**: PyTorch V5 - Best ML performance (63.3% win rate) or ML-V2 - Strong performance (60.4% win rate)
-- **Educational**: Heuristic AI - Good for learning game mechanics
-- **Baseline**: Random AI - For testing and comparison
+The AI matrix test provides comprehensive performance analysis including:
+- Win rates across all AI combinations
+- Speed analysis and recommendations
+- Production recommendations
+- Detailed performance metrics
 
 ## AI Testing Strategy
 
