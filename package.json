@@ -28,7 +28,7 @@
     "test:ai-comparison:comprehensive": "NUM_GAMES=100 INCLUDE_SLOW_TESTS=true ./scripts/test-ai-comparison.sh",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test --reporter=line",
+    "test:e2e": "npm run db:local:reset && playwright test --reporter=line",
     "test:e2e:ui": "playwright test --ui",
     "deps": "npx npm-check-updates",
     "deps:update": "npx npm-check-updates -u && npm run nuke",
@@ -43,7 +43,8 @@
     "train:test": "./ml/scripts/train.sh --preset quick --backend pytorch",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "load:ml-weights": "./ml/scripts/load-weights.sh",
-    "db:local:reset": "tsx scripts/reset-local-db.ts"
+    "db:local:reset": "tsx scripts/reset-local-db.ts",
+    "db:setup": "npm run db:local:reset"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0",

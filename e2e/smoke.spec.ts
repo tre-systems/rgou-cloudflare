@@ -1,6 +1,16 @@
 import { test, expect, Page } from '@playwright/test';
 import Database from 'better-sqlite3';
 import { existsSync } from 'fs';
+import { execSync } from 'child_process';
+
+// Ensure database is set up before running tests
+test.beforeAll(async () => {
+  const dbPath = 'local.db';
+  if (!existsSync(dbPath)) {
+    console.log('Database not found, setting up...');
+    execSync('npm run db:local:reset', { stdio: 'inherit' });
+  }
+});
 
 async function startGame(page: Page, mode: 'classic' | 'ml' | 'watch' = 'classic') {
   await page.goto('/');
@@ -17,7 +27,13 @@ async function waitForGameCompletion(page: Page) {
 async function verifyDatabaseSave(expectedGameType: string, expectedWinner: string = 'player1') {
   const dbPath = 'local.db';
   if (!existsSync(dbPath)) {
-    throw new Error(`Database file not found: ${dbPath}`);
+    console.error(`Database file not found: ${dbPath}`);
+    console.log('Attempting to set up database...');
+    execSync('npm run db:local:reset', { stdio: 'inherit' });
+    
+    if (!existsSync(dbPath)) {
+      throw new Error(`Database file still not found after setup: ${dbPath}`);
+    }
   }
 
   const db = new Database(dbPath);
@@ -33,7 +49,11 @@ async function verifyDatabaseSave(expectedGameType: string, expectedWinner: stri
       .get();
 
     if (!tableExists) {
-      throw new Error('Games table does not exist in database');
+      console.error('Games table does not exist in database');
+      console.log('Available tables:');
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+      console.log(tables);
+      throw new Error('Games table does not exist in database. Run "npm run db:local:reset" to set up the database.');
     }
 
     // Get the most recent game

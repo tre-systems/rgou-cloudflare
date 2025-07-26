@@ -43,7 +43,7 @@ cd rgou-cloudflare
 npm install
 
 # Set up local database
-npm run migrate:local
+npm run db:setup
 
 # Start development server
 npm run dev
@@ -60,7 +60,7 @@ The game will open at http://localhost:3000
 ### Common Setup Issues
 
 - **WASM Build Failures**: Ensure wasm-pack version 0.12.1 is installed
-- **Database Issues**: Run `npm run migrate:local` to set up local SQLite
+- **Database Issues**: Run `npm run db:setup` to set up local SQLite
 - **Dependency Issues**: Try `npm run nuke` to reset the environment
 
 See [Troubleshooting Guide](./docs/troubleshooting.md) for detailed solutions.
@@ -157,8 +157,11 @@ npm run test:rust:quick
 # Comprehensive tests (100 games)
 npm run test:rust:slow
 
-# End-to-end tests
+# End-to-end tests (includes database setup)
 npm run test:e2e
+
+# Set up database for development/testing
+npm run db:setup
 ```
 
 See [Testing Strategy](./docs/testing-strategy.md) for detailed testing information.

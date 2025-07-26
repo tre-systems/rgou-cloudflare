@@ -19,6 +19,8 @@ export default defineConfig({
     },
   ],
 
+  globalSetup: './e2e/global-setup.ts',
+
   webServer: {
     command: 'NODE_ENV=development PORT=3005 npm run dev',
     url: 'http://localhost:3005',
