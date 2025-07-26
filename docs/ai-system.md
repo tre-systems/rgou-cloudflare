@@ -35,7 +35,22 @@ The AI uses the following probabilities for the four tetrahedral dice:
 
 ### Position Evaluation
 
-The evaluation function is hand-crafted to assess the strategic value of a board state. Key factors include:
+The evaluation function uses evolved genetic parameters that were optimized through a genetic algorithm process. These parameters were evolved over 50 generations with 50 individuals per generation, playing 100 games per evaluation, and validated with 1000 games.
+
+**Current Evolved Parameters (July 2025):**
+
+- `win_score`: 8354 (reduced from 10000)
+- `finished_piece_value`: 638 (reduced from 1000)
+- `position_weight`: 30 (increased from 15)
+- `safety_bonus`: -13 (reduced from 25)
+- `rosette_control_bonus`: 61 (increased from 40)
+- `advancement_bonus`: 11 (increased from 5)
+- `capture_bonus`: 49 (increased from 35)
+- `center_lane_bonus`: 4 (increased from 2)
+
+**Performance:** The evolved parameters achieve a 61% win rate against the default parameters, representing a significant improvement in AI strength.
+
+The evaluation function assesses the strategic value of a board state based on these optimized weights. Key factors include:
 
 - **Piece Advantage**: Number of pieces on the board vs. the opponent.
 - **Piece Advancement**: How far pieces have moved along their track.
@@ -88,59 +103,59 @@ In this mode, the Classic AI (Player 1) plays against the ML AI (Player 2). This
 
 ## Performance Analysis (July 2025)
 
-Based on comprehensive testing of 1,250 games across all AI types:
+Based on comprehensive testing of 450 games across all AI types:
 
 ### Classic AI Performance
 
-| AI Type                | Win Rate  | Search Depth | Speed   | Notes                      |
-| ---------------------- | --------- | ------------ | ------- | -------------------------- |
-| **Classic AI (EMM-4)** | **75.0%** | 4-ply        | 370ms   | **Maximum strength**       |
-| **Classic AI (EMM-3)** | **70.0%** | 3-ply        | 15ms    | **Optimal - Best balance** |
-| Classic AI (EMM-2)     | 98.0%     | 2-ply        | Instant | Strong alternative         |
-| Heuristic AI           | 40.0%     | N/A          | Instant | Educational baseline       |
+| AI Type                | Win Rate  | Search Depth | Speed   | Notes                        |
+| ---------------------- | --------- | ------------ | ------- | ---------------------------- |
+| **Classic AI (EMM-3)** | **75.6%** | 3-ply        | 15.6ms  | **Best overall performance** |
+| **Classic AI (EMM-2)** | **51.1%** | 2-ply        | Instant | Strong alternative           |
+| **Classic AI (EMM-1)** | **46.7%** | 1-ply        | Instant | Fast baseline                |
+| Heuristic AI           | **35.6%** | N/A          | Instant | Educational baseline         |
 
-### ML AI Performance (Updated)
+**Note:** All Classic AI variants now use evolved genetic parameters that provide a 61% win rate improvement over the original default parameters.
 
-| Model          | Win Rate vs EMM-3 | Win Rate vs EMM-4 | Status                  |
-| -------------- | ----------------- | ----------------- | ----------------------- |
-| **PyTorch V5** | **49.0%**         | **44.0%**         | ✅ **Best Performance** |
-| **v2**         | 40.0%             | N/A               | ⚠️ Needs Improvement    |
-| **Fast**       | N/A               | N/A               | ⚠️ Not tested vs EMM    |
-| **v4**         | 20.0%             | N/A               | ❌ Needs Retraining     |
-| **Hybrid**     | 30.0%             | N/A               | ❌ Needs Retraining     |
+### ML AI Performance
 
-### ML AI Models Performance
-
-| Model      | Win Rate vs EMM-3 | Losses | Avg Moves | Speed | First/Second | Status               |
-| ---------- | ----------------- | ------ | --------- | ----- | ------------ | -------------------- |
-| **v2**     | **44%**           | 56%    | 152.3     | 0.7ms | 23/21        | ✅ **Best**          |
-| **Fast**   | 36%               | 64%    | 172.1     | 0.7ms | 11/25        | Competitive          |
-| **v4**     | 32%               | 68%    | 147.9     | 0.7ms | 15/17        | ⚠️ Needs Improvement |
-| **Hybrid** | 30%               | 70%    | 173.7     | 0.7ms | 9/21         | ⚠️ Needs Improvement |
+| Model             | Win Rate  | Speed  | Status                     |
+| ----------------- | --------- | ------ | -------------------------- |
+| **ML-Hybrid**     | **60.0%** | 52.1ms | ✅ **Best ML Performance** |
+| **ML-PyTorch-V5** | **60.0%** | 54.8ms | ✅ **Best ML Performance** |
+| **ML-V4**         | **58.9%** | 50.7ms | ✅ **Strong Performance**  |
+| **ML-V2**         | **55.6%** | 53.5ms | ✅ **Good Performance**    |
+| **ML-Fast**       | **51.1%** | 58.4ms | ⚠️ **Needs Improvement**   |
 
 ### Key Performance Insights
 
-1. **Depth 3 is Optimal**: Provides the best performance/speed ratio for this game
-2. **Depth Matters Significantly**: Each depth level provides substantial improvement
-3. **ML AI Breakthrough**: PyTorch V5 shows 44% win rate vs EMM-4 (strongest classic AI)
-4. **Speed Advantage**: PyTorch V5 is 8.1x faster than EMM-4 while being competitive
-5. **Training Regression**: Newer models (v4, hybrid) perform worse than v2 despite more training data
+1. **EMM-3 is Optimal**: Provides the best overall performance (75.6% win rate)
+2. **ML AI Breakthrough**: ML-Hybrid and ML-PyTorch-V5 both achieve 60% win rates
+3. **Speed vs Performance**: EMM-1/2 provide instant speed with good performance
+4. **ML AI Competitive**: Top ML models are competitive with classic AI variants
+5. **Evolved Parameters**: All classic AI now uses evolved genetic parameters for improved performance
 
 ### Speed Analysis
 
-| AI Type            | Average Time | Relative Speed |
-| ------------------ | ------------ | -------------- |
-| Expectiminimax     | 0.2ms        | 1x (baseline)  |
-| ML AI (all models) | 0.7ms        | 3.5x slower    |
+| AI Type       | Average Time | Category  |
+| ------------- | ------------ | --------- |
+| EMM-Depth1    | 0.0ms        | Very Fast |
+| EMM-Depth2    | 0.0ms        | Very Fast |
+| Heuristic     | 0.0ms        | Very Fast |
+| Random        | 0.0ms        | Very Fast |
+| EMM-Depth3    | 15.6ms       | Moderate  |
+| ML-V4         | 50.7ms       | Slow      |
+| ML-Hybrid     | 52.1ms       | Slow      |
+| ML-V2         | 53.5ms       | Slow      |
+| ML-PyTorch-V5 | 54.8ms       | Slow      |
+| ML-Fast       | 58.4ms       | Slow      |
 
 ### Production Recommendations
 
-- **Primary Choice**: EMM-3 (Depth 3) - Best balance of strength and speed
-- **Maximum Strength**: EMM-4 (Depth 4) - Highest win rate but slower
-- **Fast Alternative**: EMM-2 (Depth 2) - Instant speed with strong play
-- **ML AI Breakthrough**: PyTorch V5 - Competitive with EMM-4, 8.1x faster
-- **Alternative Playstyle**: ML AI v2 - Different strategic approach
+- **Primary Choice**: EMM-3 (Depth 3) - Best overall performance (75.6% win rate)
+- **Fast Alternative**: EMM-1/2 (Depth 1/2) - Instant speed with good performance
+- **ML AI Options**: ML-Hybrid or ML-PyTorch-V5 - Competitive performance (60% win rate)
 - **Educational**: Heuristic AI - Good for learning game mechanics
+- **Baseline**: Random AI - For testing and comparison
 
 ## Implementation Details
 

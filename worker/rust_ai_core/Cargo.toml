@@ -21,6 +21,10 @@ path = "src/main.rs"
 name = "train"
 path = "src/bin/train.rs"
 
+[[bin]]
+name = "evolve_params"
+path = "src/bin/evolve_params.rs"
+
 
 [features]
 default = []

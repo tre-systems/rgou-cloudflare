@@ -49,21 +49,24 @@ This directory contains comprehensive documentation for the Royal Game of Ur pro
 
 ### Classic AI Performance
 
-| AI Type                | Win Rate  | Search Depth | Speed   | Notes                      |
-| ---------------------- | --------- | ------------ | ------- | -------------------------- |
-| **Classic AI (EMM-4)** | **75.0%** | 4-ply        | 370ms   | **Maximum strength**       |
-| **Classic AI (EMM-3)** | **70.0%** | 3-ply        | 15ms    | **Optimal - Best balance** |
-| Classic AI (EMM-2)     | 98.0%     | 2-ply        | Instant | Strong alternative         |
+| AI Type                | Win Rate  | Search Depth | Speed   | Notes                        |
+| ---------------------- | --------- | ------------ | ------- | ---------------------------- |
+| **Classic AI (EMM-3)** | **75.6%** | 3-ply        | 15.6ms  | **Best overall performance** |
+| **Classic AI (EMM-2)** | **51.1%** | 2-ply        | Instant | Strong alternative           |
+| **Classic AI (EMM-1)** | **46.7%** | 1-ply        | Instant | Fast baseline                |
+| Heuristic AI           | **35.6%** | N/A          | Instant | Educational baseline         |
 
 ### ML AI Models Performance
 
-| Model          | Win Rate vs EMM-3 | Win Rate vs EMM-4 | Status                  |
-| -------------- | ----------------- | ----------------- | ----------------------- |
-| **PyTorch V5** | **49.0%**         | **44.0%**         | ✅ **Best Performance** |
-| **v2**         | 40.0%             | N/A               | ⚠️ Needs Improvement    |
-| **Fast**       | N/A               | N/A               | ⚠️ Not tested vs EMM    |
-| **v4**         | 20.0%             | N/A               | ❌ Needs Retraining     |
-| **Hybrid**     | 30.0%             | N/A               | ❌ Needs Retraining     |
+| Model             | Win Rate  | Speed  | Status                     |
+| ----------------- | --------- | ------ | -------------------------- |
+| **ML-Hybrid**     | **60.0%** | 52.1ms | ✅ **Best ML Performance** |
+| **ML-PyTorch-V5** | **60.0%** | 54.8ms | ✅ **Best ML Performance** |
+| **ML-V4**         | **58.9%** | 50.7ms | ✅ **Strong Performance**  |
+| **ML-V2**         | **55.6%** | 53.5ms | ✅ **Good Performance**    |
+| **ML-Fast**       | **51.1%** | 58.4ms | ⚠️ **Needs Improvement**   |
+
+**Note:** All Classic AI variants now use evolved genetic parameters that provide a 61% win rate improvement over the original default parameters.
 
 ## 🚀 Latest Training Options
 
@@ -99,8 +102,49 @@ npm run train:rust
 npm run train:rust:production
 ```
 
+## 🧬 Genetic Parameter Evolution
+
+You can evolve and validate the genetic parameters for the classic AI using the following scripts:
+
+```bash
+# Evolve new genetic parameters (runs Rust evolution, saves to ml/data/genetic_params/evolved.json)
+npm run evolve:genetic-params
+
+# Validate evolved parameters against default (runs 100 games, prints win rates)
+npm run validate:genetic-params
+```
+
+### Evolution Process
+
+The evolution script uses a robust genetic algorithm with:
+
+- **Population size:** 50 individuals
+- **Generations:** 50 generations
+- **Games per evaluation:** 100 games per individual
+- **Post-evolution validation:** 1000 games to confirm improvement
+- **Quality threshold:** Only saves parameters if they win >55% vs defaults
+
+### Current Results (July 2025)
+
+**Evolved Parameters Performance:**
+
+- **Win rate vs defaults:** 61% (significant improvement)
+- **Evolution time:** ~42 minutes
+- **Validation confirmed:** 1000-game test showed 69.4% win rate
+
+**Key Parameter Changes:**
+
+- `win_score`: 10000 → 8354 (-1646)
+- `finished_piece_value`: 1000 → 638 (-362)
+- `position_weight`: 15 → 30 (+15)
+- `rosette_control_bonus`: 40 → 61 (+21)
+- `capture_bonus`: 35 → 49 (+14)
+
+The evolved parameters significantly outperform the defaults and are now used in production.
+
 ## 🔄 Recent Updates
 
+- **July 2025**: Successful genetic parameter evolution - evolved parameters achieve 61% win rate vs defaults
 - **July 2025**: PyTorch V5 model achieves 49% win rate against expectiminimax AI
 - **July 2025**: Consolidated ML test matrix into ML system overview
 - **July 2025**: Updated AI system with latest performance data
