@@ -2,7 +2,7 @@
 
 import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Brain, Cpu, Eye } from 'lucide-react';
+import { ExternalLink, Brain, Cpu, Eye, Github } from 'lucide-react';
 import Image from 'next/image';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
@@ -16,16 +16,6 @@ import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
 import ModeSelectionCard from './ModeSelectionCard';
 
 const MODE_OPTIONS = [
-  // Dont delete this, it's a placeholder for the heuristic AI
-  // {
-  //   key: 'heuristic',
-  //   label: 'Heuristic AI',
-  //   description: 'A fast and competitive AI using immediate position evaluation.',
-  //   subtitle: 'Immediate evaluation only',
-  //   icon: Cpu,
-  //   colorClass: 'text-green-400',
-  //   borderColorClass: 'border-green-400/30 hover:border-green-400/60',
-  // },
   {
     key: 'classic',
     label: 'Classic AI',
@@ -268,8 +258,18 @@ export default function RoyalGameOfUr() {
 
   return (
     <>
+      <a
+        href="https://github.com/rgilks/rgou-cloudflare"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="GitHub Repository"
+        className="fixed bottom-4 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity"
+        data-testid="github-link"
+      >
+        <Github className="w-6 h-6" />
+      </a>
       <AnimatedBackground />
-      <div className="relative min-h-screen w-full flex items-center justify-center p-4">
+      <div className="relative min-h-screen w-full flex items-center justify-center p-4 pb-24">
         {/* Only show Pop Out Game button if not in standalone PWA mode */}
         {!isStandalone && (
           <div className="hidden md:block absolute top-4 right-4 z-50">
@@ -423,7 +423,12 @@ export default function RoyalGameOfUr() {
             transition={{ delay: 1, duration: 0.6 }}
           >
             <p className="text-center">
-              <a href="https://ko-fi.com/N4N31DPNUS" target="_blank" rel="noopener noreferrer">
+              <a
+                href="https://ko-fi.com/N4N31DPNUS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+              >
                 <Image
                   width={145}
                   height={36}
