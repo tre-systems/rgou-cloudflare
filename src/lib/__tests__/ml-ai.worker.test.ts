@@ -1,19 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the WASM loading
-vi.mock('./ml-ai.worker', () => ({
-  default: vi.fn(),
-}));
-
 describe('ML AI Worker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should handle responses without timings gracefully', () => {
-    // This test verifies that the worker can handle responses that don't include timings
-    // without throwing errors
-
     const responseWithoutTimings = {
       move: 0,
       evaluation: 0.5,
@@ -40,7 +32,6 @@ describe('ML AI Worker', () => {
 
     const response = transformMLResponse(JSON.stringify(responseWithoutTimings));
 
-    // These should not throw errors
     expect(response.timings).toBeDefined();
     expect(response.timings).toEqual({});
     expect(response.timings?.aiMoveCalculation).toBeUndefined();

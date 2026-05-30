@@ -8,8 +8,6 @@ const resetStatsStore = () => {
       losses: 0,
       gamesPlayed: 0,
     },
-    // The actions are not part of the persisted state, so we don't need to reset them
-    // as they are defined on creation. However, to be safe in tests, we can re-link them.
     actions: useStatsStore.getState().actions,
   });
 };
@@ -158,8 +156,6 @@ describe('StatsStore', () => {
       expect(stats.losses).toBe(6); // 1, 2, 4, 5, 7, 8
     });
   });
-
-  // Removed selector tests that call useGameStats and useStatsActions directly, as these cannot be tested outside a React environment.
 
   describe('persistence', () => {
     it('should restore stats from localStorage', () => {

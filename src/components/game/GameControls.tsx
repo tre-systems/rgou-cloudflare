@@ -26,10 +26,8 @@ export default function GameControls({
     <>
       <hr className="my-4 border-white/10" />
       <div className="flex items-center justify-between w-full">
-        {/* Dice on the far left */}
         <div className="flex items-center">{diceElement}</div>
 
-        {/* Dev-only controls in the middle */}
         {isDevelopment() && (
           <div className="flex items-center space-x-2">
             <motion.button
@@ -54,7 +52,6 @@ export default function GameControls({
           </div>
         )}
 
-        {/* Main controls on the far right */}
         <div className="flex items-center space-x-2">
           <motion.button
             onClick={onShowHowToPlay}

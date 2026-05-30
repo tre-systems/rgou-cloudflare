@@ -35,7 +35,6 @@ export function initializeGame(): GameState {
 }
 
 export function rollDice(): number {
-  
   const probabilities = [1 / 16, 4 / 16, 6 / 16, 4 / 16, 1 / 16];
   const random = Math.random();
 
@@ -47,7 +46,6 @@ export function rollDice(): number {
     }
   }
 
-  
   return 2;
 }
 
@@ -201,12 +199,6 @@ export function makeMove(
 export function processDiceRoll(gameState: GameState, providedRoll?: number): GameState {
   const diceRoll = providedRoll !== undefined ? providedRoll : rollDice();
   const validMoves = getValidMoves({ ...gameState, diceRoll });
-
-  if (diceRoll === 0) {
-    console.log('Zero roll detected.');
-  } else if (validMoves.length === 0) {
-    console.log(`No valid moves for roll ${diceRoll}.`);
-  }
 
   return {
     ...gameState,

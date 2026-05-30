@@ -209,7 +209,7 @@ export default function GameDice({ gameState }: GameDiceProps) {
           </motion.svg>
         ))}
         <motion.span
-          className="font-bold tracking-wider text-center select-none"
+          className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
           style={{
             textShadow: '0 0 10px #FFD600, 0 0 2px #fff',
             lineHeight: '1',

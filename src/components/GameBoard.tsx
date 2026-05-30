@@ -197,18 +197,16 @@ export default function GameBoard({
         transition={{ duration: 0.5 }}
         data-testid="game-board"
       >
-        {PlayerArea && (
-          <PlayerArea
-            player="player2"
-            pieces={gameState.player2Pieces}
-            isCurrentPlayer={gameState.currentPlayer === 'player2'}
-            isAI={watchMode || true}
-            aiType={aiSourceP2}
-            isStartMoveValid={false}
-            validMoves={gameState.validMoves}
-            onPieceClick={onPieceClick}
-          />
-        )}
+        <PlayerArea
+          player="player2"
+          pieces={gameState.player2Pieces}
+          isCurrentPlayer={gameState.currentPlayer === 'player2'}
+          isAI={true}
+          aiType={aiSourceP2}
+          isStartMoveValid={false}
+          validMoves={gameState.validMoves}
+          onPieceClick={onPieceClick}
+        />
         <motion.div
           ref={boardRef}
           className="glass mystical-glow rounded-xl p-4 relative"
@@ -270,25 +268,23 @@ export default function GameBoard({
             diceElement={<GameDice gameState={gameState} />}
           />
         </motion.div>
-        {PlayerArea && (
-          <PlayerArea
-            player="player1"
-            pieces={gameState.player1Pieces}
-            isCurrentPlayer={gameState.currentPlayer === 'player1'}
-            isAI={watchMode}
-            aiType={watchMode ? aiSourceP1 : null}
-            isStartMoveValid={
-              gameState.currentPlayer === 'player1' &&
-              gameState.validMoves.some(
-                moveIndex =>
-                  gameState.player1Pieces[moveIndex] &&
-                  gameState.player1Pieces[moveIndex].square === -1
-              )
-            }
-            validMoves={gameState.validMoves}
-            onPieceClick={onPieceClick}
-          />
-        )}
+        <PlayerArea
+          player="player1"
+          pieces={gameState.player1Pieces}
+          isCurrentPlayer={gameState.currentPlayer === 'player1'}
+          isAI={watchMode}
+          aiType={watchMode ? aiSourceP1 : null}
+          isStartMoveValid={
+            gameState.currentPlayer === 'player1' &&
+            gameState.validMoves.some(
+              moveIndex =>
+                gameState.player1Pieces[moveIndex] &&
+                gameState.player1Pieces[moveIndex].square === -1
+            )
+          }
+          validMoves={gameState.validMoves}
+          onPieceClick={onPieceClick}
+        />
       </motion.div>
     </>
   );

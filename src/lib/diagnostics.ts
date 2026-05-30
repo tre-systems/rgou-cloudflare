@@ -36,15 +36,12 @@ export const calculateGamePhase = (piecePositions: PiecePositions): GamePhase =>
   return 'Opening';
 };
 
-
 export const calculateBoardControl = (gameState: GameState): number => {
   let control = 0;
-  
   control +=
     gameState.player1Pieces.filter(p => p.square >= 0 && p.square < 20).length -
     gameState.player2Pieces.filter(p => p.square >= 0 && p.square < 20).length;
 
-  
   control += gameState.player1Pieces.filter(p => p.square > 4 && p.square < 13).length * 0.5;
   control -= gameState.player2Pieces.filter(p => p.square > 4 && p.square < 13).length * 0.5;
 

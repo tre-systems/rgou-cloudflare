@@ -8,27 +8,24 @@ export default function NetworkStatus() {
   const [showStatus, setShowStatus] = useState(false);
 
   useEffect(() => {
+    setIsOnline(navigator.onLine);
+
+    let timer: ReturnType<typeof setTimeout>;
+
     const updateOnlineStatus = () => {
-      const online = navigator.onLine;
-      setIsOnline(online);
-
-      // Show status briefly when going offline/online
+      setIsOnline(navigator.onLine);
       setShowStatus(true);
-      const timer = setTimeout(() => setShowStatus(false), 3000);
-
-      return () => clearTimeout(timer);
+      clearTimeout(timer);
+      timer = setTimeout(() => setShowStatus(false), 3000);
     };
 
-    // Set initial status
-    updateOnlineStatus();
-
-    // Listen for online/offline events
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 
     return () => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
+      clearTimeout(timer);
     };
   }, []);
 

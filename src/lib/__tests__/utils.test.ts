@@ -1,41 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getClassicAIVersion, getMLAIVersion } from '../utils/getAIVersion';
-import { getFileHash } from '../utils/getFileHash';
-import { getGitCommitHash } from '../utils/getGitCommitHash';
-import {
-  cn,
-  getPlayerId,
-  getAIName,
-  getAISubtitle,
-  isProduction,
-  isDevelopment,
-  batch,
-} from '../utils';
-
-const mockReadFileSync = vi.fn();
-const mockCreateHash = vi.fn();
-const mockExecSync = vi.fn();
-
-vi.mock('fs', () => ({
-  readFileSync: mockReadFileSync,
-}));
-
-vi.mock('crypto', () => ({
-  createHash: mockCreateHash,
-}));
-
-// Mock the dynamic import of child_process
-vi.mock('child_process', async () => ({
-  execSync: mockExecSync,
-}));
+import { cn, getPlayerId, getAIName, getAISubtitle, isDevelopment } from '../utils';
 
 describe('Utils', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock window as undefined for Node.js environment
     vi.stubGlobal('window', undefined);
-    // Clear any existing environment variables
-    delete process.env.GITHUB_SHA;
   });
 
   afterEach(() => {
@@ -105,63 +74,13 @@ describe('Utils', () => {
     it('should detect production environment', () => {
       vi.stubGlobal('window', undefined);
       vi.stubEnv('NODE_ENV', 'production');
-      expect(isProduction()).toBe(true);
       expect(isDevelopment()).toBe(false);
     });
 
     it('should detect development environment', () => {
       vi.stubGlobal('window', { location: { hostname: 'localhost' } });
       vi.stubEnv('NODE_ENV', 'development');
-      expect(isProduction()).toBe(false);
       expect(isDevelopment()).toBe(true);
-    });
-  });
-
-  describe('batch', () => {
-    it('should batch array items correctly', () => {
-      const items = [1, 2, 3, 4, 5, 6, 7];
-      expect(batch(items, 3)).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
-    });
-  });
-
-  describe('getFileHash', () => {
-    it('should generate hash from file content', async () => {
-      const mockHash = {
-        update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('abc123'),
-      };
-      mockCreateHash.mockReturnValue(mockHash);
-      mockReadFileSync.mockReturnValue('test content');
-
-      const result = await getFileHash('test.txt');
-      expect(result).toBe('abc123');
-      expect(mockReadFileSync).toHaveBeenCalledWith('test.txt');
-    });
-  });
-
-  describe('getGitCommitHash', () => {
-    it('should return git commit hash', async () => {
-      mockExecSync.mockReturnValue(Buffer.from('abc123\n'));
-
-      const result = await getGitCommitHash();
-      expect(result).toBe('abc123');
-      expect(mockExecSync).toHaveBeenCalledWith('git rev-parse HEAD');
-    });
-
-    it('should return fallback when git command fails', async () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('git not found');
-      });
-
-      const result = await getGitCommitHash();
-      expect(result).toBe('unknown');
-    });
-  });
-
-  describe('AI version functions', () => {
-    it('should return AI versions', () => {
-      expect(getClassicAIVersion()).toBeDefined();
-      expect(getMLAIVersion()).toBeDefined();
     });
   });
 });

@@ -54,6 +54,8 @@ export default function AnimatedBackground() {
       particles.push(createParticle());
     }
 
+    let animationFrameId: number;
+
     const animate = () => {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -95,13 +97,14 @@ export default function AnimatedBackground() {
         ctx.restore();
       }
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 

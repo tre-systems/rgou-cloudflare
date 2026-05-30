@@ -7,18 +7,11 @@ interface MLWasmModule {
   init_ml_ai: () => void;
   load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
   get_ml_ai_move: (gameState: unknown) => string;
-  evaluate_ml_position: (gameState: unknown) => string;
-  get_ml_ai_info: () => string;
-  roll_dice_ml: () => number;
 }
 
 let mlWasmModule: MLWasmModule;
 let mlWasmReady: Promise<void> | null = null;
 let weightsLoaded = false;
-const networkConfig: {
-  value?: { input_size: number; hidden_sizes: number[]; output_size: number };
-  policy?: { input_size: number; hidden_sizes: number[]; output_size: number };
-} = {};
 
 const loadMLWasm = (): Promise<void> => {
   if (mlWasmReady) return mlWasmReady;
@@ -80,26 +73,7 @@ self.addEventListener(
             const weights = event.data.weights as {
               value_weights: number[];
               policy_weights: number[];
-              value_network_config?: {
-                input_size: number;
-                hidden_sizes: number[];
-                output_size: number;
-              };
-              policy_network_config?: {
-                input_size: number;
-                hidden_sizes: number[];
-                output_size: number;
-              };
             };
-
-            if (weights.value_weights) {
-              networkConfig.value = weights.value_network_config;
-            }
-
-            if (weights.policy_weights) {
-              networkConfig.policy = weights.policy_network_config;
-            }
-
             mlWasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
             weightsLoaded = true;
             self.postMessage({ type: 'success', id, response: { status: 'weights_loaded' } });
@@ -111,45 +85,14 @@ self.addEventListener(
         case 'getAIMove':
           if (event.data.gameState) {
             if (!weightsLoaded) {
-              console.warn('ML AI Worker: Weights not loaded, using untrained networks');
+              console.warn('ML AI Worker: weights not loaded, using untrained networks');
             }
-
-            const startTime = performance.now();
             const request = transformGameStateToRequest(event.data.gameState);
             const responseJson = mlWasmModule.get_ml_ai_move(request);
-            const wasmTime = performance.now() - startTime;
-
-            console.log(`ML AI Worker: Move calculated in ${wasmTime.toFixed(2)}ms`);
-            const response = transformMLResponse(responseJson);
-
-            self.postMessage({ type: 'success', id, response });
+            self.postMessage({ type: 'success', id, response: transformMLResponse(responseJson) });
           } else {
             throw new Error('No game state provided');
           }
-          break;
-
-        case 'evaluatePosition':
-          if (event.data.gameState) {
-            const request = transformGameStateToRequest(event.data.gameState);
-            const responseJson = mlWasmModule.evaluate_ml_position(request);
-            const response = JSON.parse(responseJson);
-
-            self.postMessage({ type: 'success', id, response });
-          } else {
-            throw new Error('No game state provided');
-          }
-          break;
-
-        case 'getInfo':
-          const infoJson = mlWasmModule.get_ml_ai_info();
-          const info = JSON.parse(infoJson);
-
-          self.postMessage({ type: 'success', id, response: info });
-          break;
-
-        case 'rollDice':
-          const diceRoll = mlWasmModule.roll_dice_ml();
-          self.postMessage({ type: 'success', id, response: diceRoll });
           break;
 
         default:

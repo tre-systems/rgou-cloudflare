@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Player } from '@/lib/types';
 
@@ -80,7 +79,9 @@ export default function VictoryCelebration({ position, player }: VictoryCelebrat
       />
 
       <motion.div
-        className={`absolute w-1 h-20 -translate-x-0.5 -translate-y-10 bg-gradient-to-b from-${colors.primary.replace('text-', '')} to-transparent`}
+        className={`absolute w-1 h-20 -translate-x-0.5 -translate-y-10 bg-gradient-to-b to-transparent ${
+          isPlayer1 ? 'from-green-400' : 'from-pink-400'
+        }`}
         initial={{ scaleY: 0, opacity: 1 }}
         animate={{ scaleY: [0, 1, 0], opacity: [1, 1, 0] }}
         transition={{ duration: 0.8, delay: 0.3 }}
