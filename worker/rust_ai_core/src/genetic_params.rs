@@ -30,6 +30,13 @@ impl Default for GeneticParams {
 }
 
 impl GeneticParams {
+    // Embedded at compile time so the evolved weights ship in the browser (WASM)
+    // build, which has no filesystem. Falls back to defaults if parsing fails.
+    pub fn evolved() -> Self {
+        const EVOLVED_JSON: &str = include_str!("../../../ml/data/genetic_params/evolved.json");
+        serde_json::from_str(EVOLVED_JSON).unwrap_or_default()
+    }
+
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(path)?;
         let params: GeneticParams = serde_json::from_str(&content)?;
@@ -155,6 +162,15 @@ mod tests {
         assert_eq!(params.advancement_bonus, 5);
         assert_eq!(params.capture_bonus, 35);
         assert_eq!(params.center_lane_bonus, 2);
+    }
+
+    #[test]
+    fn test_evolved_params_are_embedded() {
+        let evolved = GeneticParams::evolved();
+        assert_eq!(evolved.win_score, 8354);
+        assert_eq!(evolved.position_weight, 30);
+        assert_eq!(evolved.rosette_control_bonus, 61);
+        assert_ne!(evolved.win_score, GeneticParams::default().win_score);
     }
 
     #[test]
