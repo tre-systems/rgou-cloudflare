@@ -44,7 +44,7 @@ fn optimize_cpu_usage() {
 }
 
 fn get_evolved_params() -> GeneticParams {
-    GeneticParams::load_from_file("ml/data/genetic_params/evolved.json")
+    GeneticParams::load_from_file("../../ml/data/genetic_params/evolved.json")
         .unwrap_or_else(|_| GeneticParams::default())
 }
 

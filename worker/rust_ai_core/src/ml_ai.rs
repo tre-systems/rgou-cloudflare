@@ -33,6 +33,12 @@ pub struct MLAI {
     policy_network: NeuralNetwork,
 }
 
+impl Default for MLAI {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MLAI {
     pub fn new() -> Self {
         let value_config = NetworkConfig {

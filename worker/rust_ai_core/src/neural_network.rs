@@ -182,27 +182,6 @@ impl NeuralNetwork {
         weights
     }
 
-    pub fn save_weights(&self) -> Vec<f32> {
-        self.get_weights()
-    }
-
-    pub fn load_weights_from_file(
-        &mut self,
-        filename: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let content = std::fs::read_to_string(filename)?;
-        let weights: Vec<f32> = serde_json::from_str(&content)?;
-        self.load_weights(&weights);
-        Ok(())
-    }
-
-    pub fn save_weights_to_file(&self, filename: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let weights = self.get_weights();
-        let content = serde_json::to_string(&weights)?;
-        std::fs::write(filename, content)?;
-        Ok(())
-    }
-
     pub fn num_layers(&self) -> usize {
         self.layers.len()
     }
@@ -218,7 +197,7 @@ impl NeuralNetwork {
         let mut linear_outputs = Vec::new();
 
         for layer in &self.layers {
-            let (activated, linear) = layer.forward_with_cache(&activations.last().unwrap());
+            let (activated, linear) = layer.forward_with_cache(activations.last().unwrap());
             activations.push(activated);
             linear_outputs.push(linear);
         }
@@ -419,15 +398,12 @@ mod tests {
         let input = Array1::from_vec(vec![1.0, 2.0]);
         let original_output = network.forward(&input);
 
-        // Save weights
-        let weights = network.save_weights();
+        let weights = network.get_weights();
         assert!(!weights.is_empty());
 
-        // Create new network and load weights
         let mut new_network = NeuralNetwork::new(config);
         new_network.load_weights(&weights);
 
-        // Verify outputs are identical
         let new_output = new_network.forward(&input);
         assert!((original_output[0] - new_output[0]).abs() < 1e-6);
     }

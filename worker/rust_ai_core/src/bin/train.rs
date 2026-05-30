@@ -26,12 +26,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .unwrap_or_else(|| "ml_ai_weights_rust.json".to_string());
 
             println!("=== Rust ML AI Training ===");
-            println!("Games: {}", num_games);
-            println!("Epochs: {}", epochs);
-            println!("Learning Rate: {}", learning_rate);
-            println!("Batch Size: {}", batch_size);
-            println!("Search Depth: {}", depth);
-            println!("Output: {}", output_file);
+            println!("Games: {num_games}");
+            println!("Epochs: {epochs}");
+            println!("Learning Rate: {learning_rate}");
+            println!("Batch Size: {batch_size}");
+            println!("Search Depth: {depth}");
+            println!("Output: {output_file}");
             println!("==========================");
 
             let start_time = Instant::now();
@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 metadata.training_time_seconds
             );
             println!("Samples generated: {}", metadata.num_training_samples);
-            println!("Weights saved to: {}", output_file);
+            println!("Weights saved to: {output_file}");
             println!("========================");
         }
 
@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         _ => {
-            println!("Unknown command: {}", command);
+            println!("Unknown command: {command}");
             println!("Available commands: train, generate_data");
         }
     }

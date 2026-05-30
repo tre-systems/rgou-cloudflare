@@ -2,7 +2,7 @@ use rgou_ai_core::{dice, genetic_params::GeneticParams, ml_ai::MLAI, GameState, 
 use std::time::Instant;
 
 fn get_evolved_params() -> GeneticParams {
-    GeneticParams::load_from_file("ml/data/genetic_params/evolved.json")
+    GeneticParams::load_from_file("../../ml/data/genetic_params/evolved.json")
         .unwrap_or_else(|_| GeneticParams::default())
 }
 
@@ -14,7 +14,7 @@ fn test_ml_vs_expectiminimax_ai() {
     let evolved_params = get_evolved_params();
     println!("Using evolved parameters for EMM AI: {:?}", evolved_params);
 
-    let weights_file = "ml/data/weights/ml_ai_weights_v2.json";
+    let weights_file = "../../ml/data/weights/ml_ai_weights_v2.json";
     let weights_path = std::path::Path::new(weights_file);
 
     if !weights_path.exists() {

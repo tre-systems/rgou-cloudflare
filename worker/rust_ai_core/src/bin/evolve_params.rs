@@ -27,8 +27,7 @@ fn optimize_cpu_usage() {
                 println!("Warning: Could not set optimal thread count, using default");
             });
         println!(
-            "🍎 Apple Silicon detected: Using {} threads ({} cores available)",
-            optimal_threads, num_cores
+            "🍎 Apple Silicon detected: Using {optimal_threads} threads ({num_cores} cores available)"
         );
     } else {
         let num_cores = std::thread::available_parallelism()
@@ -41,7 +40,7 @@ fn optimize_cpu_usage() {
             .unwrap_or_else(|_| {
                 println!("Warning: Could not set optimal thread count, using default");
             });
-        println!("🖥️  Using {} threads for parallel processing", num_cores);
+        println!("🖥️  Using {num_cores} threads for parallel processing");
     }
 }
 
@@ -213,7 +212,7 @@ fn main() {
         let gen_duration = gen_start.elapsed();
 
         println!("  ⏱️  Generation time: {:.2}s", gen_duration.as_secs_f64());
-        println!("  🏆 Best score vs defaults: {:.2}", top_score);
+        println!("  🏆 Best score vs defaults: {top_score:.2}");
         println!(
             "  📊 Average score: {:.2}",
             scored.iter().map(|(s, _)| s).sum::<f64>() / scored.len() as f64
@@ -243,8 +242,8 @@ fn main() {
 
     println!("\n🎉 === Evolution Complete ===");
     println!("⏱️  Total time: {:.2}s", total_duration.as_secs_f64());
-    println!("🏆 Best win rate vs defaults: {:.2}", best_score);
-    println!("🔧 Best parameters: {:#?}", best_params);
+    println!("🏆 Best win rate vs defaults: {best_score:.2}");
+    println!("🔧 Best parameters: {best_params:#?}");
 
     // Post-evolution validation
     println!("\n🔬 Validating best evolved parameters against default with 1000 games...");
@@ -262,7 +261,7 @@ fn main() {
             serde_json::to_string_pretty(&best_params).unwrap(),
         )
         .unwrap();
-        println!("💾 Saved best parameters to {}", out_path);
+        println!("💾 Saved best parameters to {out_path}");
     } else {
         println!("⚠️  Evolved parameters did not outperform default by a significant margin. Not saving.");
     }

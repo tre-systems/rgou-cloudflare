@@ -53,6 +53,12 @@ pub struct GameState {
     pub genetic_params: GeneticParams,
 }
 
+impl Default for GameState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GameState {
     pub fn new() -> Self {
         GameState {
@@ -240,7 +246,7 @@ impl GameState {
                     if Self::is_rosette(piece.square as u8) {
                         strategic_score += self.genetic_params.safety_bonus;
                     }
-                    if track_pos >= 4 && track_pos <= 11 {
+                    if (4..=11).contains(&track_pos) {
                         strategic_score += self.genetic_params.advancement_bonus
                             + self.genetic_params.center_lane_bonus;
                     }
@@ -351,6 +357,12 @@ pub struct AI {
 
 pub struct HeuristicAI {
     pub nodes_evaluated: u32,
+}
+
+impl Default for AI {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AI {
@@ -518,11 +530,9 @@ impl AI {
                     best_value = value;
                     best_move = m;
                 }
-            } else {
-                if value < best_value {
-                    best_value = value;
-                    best_move = m;
-                }
+            } else if value < best_value {
+                best_value = value;
+                best_move = m;
             }
         }
 
@@ -641,6 +651,9 @@ impl AI {
         best_score
     }
 
+    // depth bounds the quiescence recursion to a fixed ply count; clippy's
+    // only_used_in_recursion is a false positive for this search limit
+    #[allow(clippy::only_used_in_recursion)]
     fn quiescence_search(
         &mut self,
         state: &GameState,
@@ -742,6 +755,12 @@ impl AI {
     }
 }
 
+impl Default for HeuristicAI {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HeuristicAI {
     pub fn new() -> Self {
         HeuristicAI { nodes_evaluated: 0 }
@@ -808,11 +827,9 @@ impl HeuristicAI {
                         best_score = score;
                         best_move = Some(piece_index);
                     }
-                } else {
-                    if score < best_score {
-                        best_score = score;
-                        best_move = Some(piece_index);
-                    }
+                } else if score < best_score {
+                    best_score = score;
+                    best_move = Some(piece_index);
                 }
             }
         }
