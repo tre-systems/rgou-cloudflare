@@ -37,7 +37,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            worker/target/
+            worker/rust_ai_core/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/deploy.yml') }}
 
       - name: Cache node modules
