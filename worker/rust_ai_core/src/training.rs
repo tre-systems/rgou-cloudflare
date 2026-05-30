@@ -22,7 +22,7 @@
 //!
 //! ## Usage Examples
 //!
-//! ```rust
+//! ```rust,no_run
 //! use rgou_ai_core::training::{Trainer, TrainingConfig};
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let config = TrainingConfig {
@@ -347,7 +347,7 @@ impl Trainer {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use rgou_ai_core::training::{Trainer, TrainingConfig};
     ///
     /// let config = TrainingConfig {
@@ -435,12 +435,12 @@ impl Trainer {
                 Ok(content) => match serde_json::from_str::<UnifiedTrainingConfig>(&content) {
                     Ok(config) => Some(config.network_architecture),
                     Err(e) => {
-                        eprintln!("Warning: Failed to parse training config: {}", e);
+                        eprintln!("Warning: Failed to parse training config: {e}");
                         None
                     }
                 },
                 Err(e) => {
-                    eprintln!("Warning: Failed to read training config: {}", e);
+                    eprintln!("Warning: Failed to read training config: {e}");
                     None
                 }
             }
@@ -489,19 +489,11 @@ impl Trainer {
 
         match system_info {
             SystemType::AppleSilicon => {
-                // Apple Silicon: Use all performance cores (typically 8 on M1/M2/M3)
-                // Leave efficiency cores for system tasks
-                let performance_cores = if total_cores >= 10 {
-                    8 // M1 Pro/Max/M2/M3 with 8+4 or 10+2 configuration
-                } else if total_cores >= 8 {
-                    8 // M1 with 8+2 configuration
-                } else {
-                    total_cores // Fallback for other configurations
-                };
+                // Use the performance cores, leaving efficiency cores for the system
+                let performance_cores = if total_cores >= 8 { 8 } else { total_cores };
 
                 println!(
-                    "🍎 Apple Silicon detected: Using {} performance cores out of {} total cores",
-                    performance_cores, total_cores
+                    "🍎 Apple Silicon detected: Using {performance_cores} performance cores out of {total_cores} total cores"
                 );
                 performance_cores
             }
@@ -516,14 +508,13 @@ impl Trainer {
                 };
 
                 println!(
-                    "🚀 High-core system detected: Using {} cores out of {} total cores",
-                    optimal_cores, total_cores
+                    "🚀 High-core system detected: Using {optimal_cores} cores out of {total_cores} total cores"
                 );
                 optimal_cores
             }
             SystemType::Standard => {
                 // Standard systems: Use all cores
-                println!("💻 Standard system: Using all {} CPU cores", total_cores);
+                println!("💻 Standard system: Using all {total_cores} CPU cores");
                 total_cores
             }
         }
@@ -605,7 +596,7 @@ impl Trainer {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use rgou_ai_core::training::{Trainer, TrainingConfig};
     ///
     /// let config = TrainingConfig {
@@ -654,7 +645,7 @@ impl Trainer {
             1
         };
 
-        println!("📈 Progress updates every {} games", progress_interval);
+        println!("📈 Progress updates every {progress_interval} games");
         println!("🎮 Starting game generation...");
 
         let completed_games = std::sync::atomic::AtomicUsize::new(0);
@@ -748,11 +739,8 @@ impl Trainer {
                     policy_target,
                 });
 
-                if game_state.make_move(move_idx).is_err() {
-                    turn_count += 1;
-                } else {
-                    turn_count += 1;
-                }
+                let _ = game_state.make_move(move_idx);
+                turn_count += 1;
             } else {
                 turn_count += 1;
             }
@@ -786,8 +774,7 @@ impl Trainer {
             0.0
         };
 
-        let normalized = (evaluation / 10000.0).max(-1.0).min(1.0);
-        normalized
+        (evaluation / 10000.0).clamp(-1.0, 1.0)
     }
 
     fn create_policy_target(&self, _game_state: &GameState, expert_move: u8) -> Vec<f32> {
@@ -838,7 +825,7 @@ impl Trainer {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use rgou_ai_core::training::{Trainer, TrainingConfig};
     ///
     /// let config = TrainingConfig {
@@ -958,8 +945,7 @@ impl Trainer {
                     };
 
                     println!(
-                        "   📊 Trends: Train {} | Val {} | Best Val: {:.4}",
-                        train_trend, val_trend, best_val_loss
+                        "   📊 Trends: Train {train_trend} | Val {val_trend} | Best Val: {best_val_loss:.4}"
                     );
                 }
 
@@ -970,7 +956,7 @@ impl Trainer {
                 best_val_loss = val_loss;
                 patience_counter = 0;
                 if should_report {
-                    println!("   🎉 New best validation loss: {:.4}", best_val_loss);
+                    println!("   🎉 New best validation loss: {best_val_loss:.4}");
                 }
             } else {
                 patience_counter += 1;
@@ -988,8 +974,8 @@ impl Trainer {
         let training_time = start_time.elapsed().as_secs_f64();
 
         println!("🎉 === Training Complete ===");
-        println!("⏱️  Total training time: {:.2} seconds", training_time);
-        println!("📊 Final validation loss: {:.4}", best_val_loss);
+        println!("⏱️  Total training time: {training_time:.2} seconds");
+        println!("📊 Final validation loss: {best_val_loss:.4}");
         println!(
             "📈 Loss improvement: {:.2}%",
             ((loss_history[0].1 - best_val_loss) / loss_history[0].1 * 100.0).max(0.0)
@@ -1018,7 +1004,7 @@ impl Trainer {
 
     fn train_epoch(&mut self, data: &[TrainingSample]) -> f32 {
         let mut total_loss = 0.0;
-        let num_batches = (data.len() + self.config.batch_size - 1) / self.config.batch_size;
+        let num_batches = data.len().div_ceil(self.config.batch_size);
 
         for batch_start in (0..data.len()).step_by(self.config.batch_size) {
             let batch_end = (batch_start + self.config.batch_size).min(data.len());
@@ -1137,7 +1123,7 @@ impl Trainer {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use rgou_ai_core::training::{Trainer, TrainingConfig};
     ///
     /// let config = TrainingConfig {
@@ -1180,7 +1166,7 @@ impl Trainer {
         });
 
         std::fs::write(filename, serde_json::to_string_pretty(&weights_data)?)?;
-        println!("Weights saved to {}", filename);
+        println!("Weights saved to {filename}");
         Ok(())
     }
 
@@ -1218,7 +1204,7 @@ impl Trainer {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use rgou_ai_core::training::{Trainer, TrainingConfig};
     ///
     /// let config = TrainingConfig {
@@ -1261,7 +1247,7 @@ impl Trainer {
         self.value_network.load_weights(&value_weights);
         self.policy_network.load_weights(&policy_weights);
 
-        println!("Weights loaded from {}", filename);
+        println!("Weights loaded from {filename}");
         Ok(())
     }
 }

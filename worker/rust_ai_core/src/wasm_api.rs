@@ -30,6 +30,12 @@ pub struct SearchCache {
     pub last_nodes_evaluated: u64,
 }
 
+impl Default for SearchCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SearchCache {
     pub fn new() -> Self {
         SearchCache {
@@ -197,7 +203,7 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
     };
 
     let response_json = serde_json::to_string(&response)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
 
     Ok(JsValue::from_str(&response_json))
 }
@@ -205,7 +211,7 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
 #[wasm_bindgen]
 pub fn get_ml_ai_info() -> Result<JsValue, JsValue> {
     let info = serde_json::to_string(&"ML AI Neural Network - Trained on Royal Game of Ur")
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&info))
 }
 
@@ -226,7 +232,7 @@ pub fn init_ml_ai() -> Result<JsValue, JsValue> {
     *instance = Some(ml_ai);
 
     let response = serde_json::to_string(&"ML AI initialized")
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&response))
 }
 
@@ -250,7 +256,7 @@ pub fn load_ml_weights(
     }
 
     let response = serde_json::to_string(&"ML weights loaded")
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&response))
 }
 
@@ -267,7 +273,7 @@ pub fn get_ml_ai_move(game_state_request_js: JsValue) -> Result<JsValue, JsValue
         let ml_response = ml_ai.get_best_move(&game_state);
 
         let response_json = serde_json::to_string(&ml_response)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
 
         Ok(JsValue::from_str(&response_json))
     } else {
@@ -290,7 +296,7 @@ pub fn evaluate_ml_position(game_state_request_js: JsValue) -> Result<JsValue, J
         let evaluation = ml_ai.evaluate_position(&game_state);
 
         let response_json = serde_json::to_string(&evaluation)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
 
         Ok(JsValue::from_str(&response_json))
     } else {
@@ -310,7 +316,7 @@ pub fn init_classic_ai() -> Result<JsValue, JsValue> {
     *cache = SearchCache::new();
 
     let response = serde_json::to_string(&"Classic AI initialized with persistent instance")
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&response))
 }
 
@@ -327,7 +333,7 @@ pub fn clear_classic_ai_cache() -> Result<JsValue, JsValue> {
     *cache = SearchCache::new();
 
     let response = serde_json::to_string(&"Classic AI cache cleared")
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&response))
 }
 
@@ -405,7 +411,7 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
     };
 
     let response_json = serde_json::to_string(&response)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
 
     Ok(JsValue::from_str(&response_json))
 }
@@ -417,7 +423,7 @@ pub fn init_heuristic_ai() -> Result<JsValue, JsValue> {
     *instance = Some(heuristic_ai);
 
     let response = serde_json::to_string(&"Heuristic AI initialized")
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&response))
 }
 
@@ -468,7 +474,7 @@ pub fn get_heuristic_ai_move(game_state_request_js: JsValue) -> Result<JsValue, 
     };
 
     let response_json = serde_json::to_string(&response)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
 
     Ok(JsValue::from_str(&response_json))
 }

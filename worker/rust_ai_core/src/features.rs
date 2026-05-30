@@ -198,8 +198,8 @@ impl GameFeatures {
         }
 
         // Normalize features to ensure they're in reasonable bounds
-        for i in 0..SIZE {
-            features[i] = features[i].max(-10.0).min(10.0);
+        for f in features.iter_mut() {
+            *f = f.clamp(-10.0, 10.0);
         }
 
         GameFeatures { features }
@@ -444,11 +444,10 @@ impl GameFeatures {
 
         let mut safety_score = 0.0;
         for piece in pieces {
-            if piece.square >= 0 && piece.square < BOARD_SIZE as i8 {
-                if ROSETTE_SQUARES.contains(&(piece.square as u8)) {
+            if piece.square >= 0 && piece.square < BOARD_SIZE as i8
+                && ROSETTE_SQUARES.contains(&(piece.square as u8)) {
                     safety_score += 1.0;
                 }
-            }
         }
         safety_score / PIECES_PER_PLAYER as f32
     }

@@ -2,7 +2,7 @@ use rgou_ai_core::{dice, genetic_params::GeneticParams, GameState, AI};
 use std::time::Instant;
 
 fn get_evolved_params() -> GeneticParams {
-    GeneticParams::load_from_file("ml/data/genetic_params/evolved.json")
+    GeneticParams::load_from_file("../../ml/data/genetic_params/evolved.json")
         .unwrap_or_else(|_| GeneticParams::default())
 }
 

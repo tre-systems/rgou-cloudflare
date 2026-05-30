@@ -43,31 +43,6 @@ pub fn roll_dice_with_rng<R: Rng>(rng: &mut R) -> u8 {
     2
 }
 
-/// Generate multiple dice rolls with the correct distribution
-pub fn roll_dice_multiple(count: usize) -> Vec<u8> {
-    let mut rng = rand::thread_rng();
-    (0..count).map(|_| roll_dice_with_rng(&mut rng)).collect()
-}
-
-/// Generate multiple dice rolls using a provided RNG
-pub fn roll_dice_multiple_with_rng<R: Rng>(rng: &mut R, count: usize) -> Vec<u8> {
-    (0..count).map(|_| roll_dice_with_rng(rng)).collect()
-}
-
-/// Validate that a dice roll is within the valid range (0-4)
-pub fn is_valid_dice_roll(roll: u8) -> bool {
-    roll <= 4
-}
-
-/// Get the probability of a specific dice roll
-pub fn get_dice_probability(roll: u8) -> f32 {
-    if roll <= 4 {
-        DICE_PROBABILITIES[roll as usize]
-    } else {
-        0.0
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -120,42 +95,11 @@ mod tests {
     }
 
     #[test]
-    fn test_is_valid_dice_roll() {
-        assert!(is_valid_dice_roll(0));
-        assert!(is_valid_dice_roll(1));
-        assert!(is_valid_dice_roll(2));
-        assert!(is_valid_dice_roll(3));
-        assert!(is_valid_dice_roll(4));
-        assert!(!is_valid_dice_roll(5));
-        assert!(!is_valid_dice_roll(255));
-    }
-
-    #[test]
-    fn test_get_dice_probability() {
-        assert_eq!(get_dice_probability(0), 1.0 / 16.0);
-        assert_eq!(get_dice_probability(1), 4.0 / 16.0);
-        assert_eq!(get_dice_probability(2), 6.0 / 16.0);
-        assert_eq!(get_dice_probability(3), 4.0 / 16.0);
-        assert_eq!(get_dice_probability(4), 1.0 / 16.0);
-        assert_eq!(get_dice_probability(5), 0.0);
-    }
-
-    #[test]
-    fn test_roll_dice_multiple() {
-        let rolls = roll_dice_multiple(100);
-        assert_eq!(rolls.len(), 100);
-
-        for &roll in &rolls {
-            assert!(is_valid_dice_roll(roll));
-        }
-    }
-
-    #[test]
     fn test_roll_dice_with_rng() {
         let mut rng = rand::thread_rng();
         for _ in 0..1000 {
             let roll = roll_dice_with_rng(&mut rng);
-            assert!(is_valid_dice_roll(roll));
+            assert!(roll <= 4);
         }
     }
 }
