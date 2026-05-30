@@ -14,13 +14,11 @@ lazy_static! {
 }
 
 fn get_genetic_params() -> GeneticParams {
-    let mut evolved_params = EVOLVED_PARAMS.lock().unwrap();
-    if evolved_params.is_none() {
-        *evolved_params = GeneticParams::load_from_file("ml/data/genetic_params/evolved.json").ok();
-    }
-    evolved_params
+    EVOLVED_PARAMS
+        .lock()
+        .unwrap()
+        .get_or_insert_with(GeneticParams::evolved)
         .clone()
-        .unwrap_or_else(GeneticParams::default)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
