@@ -76,41 +76,40 @@ export default function PlayerArea({
               'rounded-md p-1 transition-all duration-300',
               isStartMoveValid && 'ring-2 ring-green-400 animate-pulse'
             )}
-            data-testid={player === 'player1' ? 'player1-start-area' : 'player2-start-area'}
+            data-testid={`${player}-start-area`}
           >
             <p className={cn('text-xs text-white/70 font-semibold mb-1 text-center')}>START</p>
             <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
-              {pieces.map((p, i) =>
-                p.square === -1 ? (
+              {pieces.map((p, i) => {
+                const isPieceClickable = validMoves.includes(i) && player === 'player1';
+                return p.square === -1 ? (
                   <motion.div
                     key={i}
                     className="w-5 h-5"
                     whileHover={{ scale: 1.05 }}
-                    onClick={() =>
-                      validMoves.includes(i) && player === 'player1' && onPieceClick(i)
-                    }
+                    onClick={() => isPieceClickable && onPieceClick(i)}
                     data-testid={`${player}-start-piece-${i}`}
                   >
                     <GamePiece
                       player={player}
-                      isClickable={validMoves.includes(i) && player === 'player1'}
+                      isClickable={isPieceClickable}
                       isBeingCaptured={false}
                       isFinishing={false}
                     />
                   </motion.div>
                 ) : (
                   <div key={i} className="w-5 h-5 opacity-20 rounded-full border border-white/20" />
-                )
-              )}
+                );
+              })}
             </div>
           </div>
 
           <div className="rounded-md p-1">
             <p className="text-xs text-white/70 font-semibold mb-1 text-center">FINISH</p>
             <div
-              id={player === 'player1' ? 'player1-finish-area' : 'player2-finish-area'}
+              id={`${player}-finish-area`}
               className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1"
-              data-testid={player === 'player1' ? 'player1-finish-area' : 'player2-finish-area'}
+              data-testid={`${player}-finish-area`}
             >
               {Array(7)
                 .fill(0)

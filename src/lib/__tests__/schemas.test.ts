@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GameStateSchema, MoveRecordSchema, GameActionSchema } from '../schemas';
+import { GameStateSchema, MoveRecordSchema } from '../schemas';
 
 describe('Schemas', () => {
   describe('GameStateSchema', () => {
@@ -80,31 +80,6 @@ describe('Schemas', () => {
       };
 
       expect(() => MoveRecordSchema.parse(captureMove)).not.toThrow();
-    });
-  });
-
-  describe('GameActionSchema', () => {
-    it('should validate roll dice action', () => {
-      const rollAction = {
-        type: 'ROLL_DICE' as const,
-      };
-
-      expect(() => GameActionSchema.parse(rollAction)).not.toThrow();
-    });
-
-    it('should validate make move action', () => {
-      const moveAction = {
-        type: 'MAKE_MOVE' as const,
-        move: {
-          pieceIndex: 0,
-          diceRoll: 4,
-          player: 'player1' as const,
-          newSquare: 0,
-          moveType: 'rosette' as const,
-        },
-      };
-
-      expect(() => GameActionSchema.parse(moveAction)).not.toThrow();
     });
   });
 });

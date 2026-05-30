@@ -30,7 +30,7 @@ async function verifyDatabaseSave(expectedGameType: string, expectedWinner: stri
     console.error(`Database file not found: ${dbPath}`);
     console.log('Attempting to set up database...');
     execSync('npm run db:local:reset', { stdio: 'inherit' });
-    
+
     if (!existsSync(dbPath)) {
       throw new Error(`Database file still not found after setup: ${dbPath}`);
     }
@@ -53,7 +53,9 @@ async function verifyDatabaseSave(expectedGameType: string, expectedWinner: stri
       console.log('Available tables:');
       const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
       console.log(tables);
-      throw new Error('Games table does not exist in database. Run "npm run db:local:reset" to set up the database.');
+      throw new Error(
+        'Games table does not exist in database. Run "npm run db:local:reset" to set up the database.'
+      );
     }
 
     // Get the most recent game
@@ -125,27 +127,20 @@ test.describe('Game Interactions', () => {
     const diceButton = page.getByTestId('roll-dice');
     await expect(diceButton).toBeVisible();
 
-    // Click the dice to roll
     await diceButton.click();
-
-    // Wait a moment for the roll to complete
     await page.waitForTimeout(500);
 
-    // The dice should still be visible after rolling
     await expect(diceButton).toBeVisible();
   });
 
   test('can make a move when dice roll allows', async ({ page }) => {
-    // Roll dice
     await page.getByTestId('roll-dice').click();
     await page.waitForTimeout(500);
 
-    // Try to click on a piece to move it
     const pieces = page.locator('[data-testid^="player1-piece-"]');
     const pieceCount = await pieces.count();
     if (pieceCount > 0) {
       await pieces.first().click();
-      // Should see some change in game state
       await expect(page.getByTestId('game-status-text')).not.toBeEmpty();
     }
   });
@@ -154,11 +149,9 @@ test.describe('Game Interactions', () => {
     const soundToggle = page.getByTestId('sound-toggle');
     await expect(soundToggle).toBeVisible();
 
-    // Click to toggle
     await soundToggle.click();
     await page.waitForTimeout(100);
 
-    // Should still be visible after toggle
     await expect(soundToggle).toBeVisible();
   });
 
@@ -174,10 +167,7 @@ test.describe('Game Interactions', () => {
 
 test.describe('Game Completion and Database Saves', () => {
   async function simulateGameWin(page: Page) {
-    // Use the dev button to create a near-winning state
     await page.getByTestId('create-near-winning-state').click();
-
-    // Wait for the state to be created
     await page.waitForTimeout(500);
 
     // Roll dice to get a value that will complete the game
@@ -186,7 +176,6 @@ test.describe('Game Completion and Database Saves', () => {
       store.actions.processDiceRoll(2); // Roll 2 to move the last piece from square 12 to finish
     });
 
-    // Wait for the dice roll to process
     await page.waitForTimeout(500);
 
     // Make the winning move
@@ -195,7 +184,6 @@ test.describe('Game Completion and Database Saves', () => {
       store.actions.makeMove(6); // Move the last piece
     });
 
-    // Wait for game completion
     await waitForGameCompletion(page);
   }
 

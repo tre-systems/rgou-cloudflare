@@ -79,6 +79,7 @@ worker/rust_ai_core/ml_ai_weights.json
 worker/rust_ai_core/test_weights.json
 
 public/ml-weights.json
+public/sw.js
 ml/scripts/target/
 ml/scripts/pkg/
 

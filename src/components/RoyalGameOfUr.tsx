@@ -53,7 +53,14 @@ function isStandalonePWA() {
 
 export default function RoyalGameOfUr() {
   const gameState = useGameState();
-  const { processDiceRoll, endTurn, makeMove, makeAIMove, reset } = useGameActions();
+  const {
+    processDiceRoll,
+    endTurn,
+    makeMove,
+    makeAIMove,
+    reset,
+    createNearWinningState: createNearWinningStateAction,
+  } = useGameActions();
   const aiThinking = useGameStore(state => state.aiThinking);
   const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
   const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
@@ -190,8 +197,7 @@ export default function RoyalGameOfUr() {
   };
 
   const createNearWinningState = () => {
-    const { actions } = useGameStore.getState();
-    actions.createNearWinningState();
+    createNearWinningStateAction();
   };
 
   const handleOverlaySelect = (mode: 'heuristic' | 'classic' | 'ml' | 'watch') => {
@@ -406,7 +412,6 @@ export default function RoyalGameOfUr() {
               watchMode={selectedMode === 'watch'}
               aiSourceP1={aiSourceP1}
               aiSourceP2={aiSourceP2}
-              data-testid="game-board-component"
             />
           )}
 

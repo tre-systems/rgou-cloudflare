@@ -14,8 +14,8 @@ export const PiecePositionSchema = z
     square: z.number(),
     player: PlayerSchema,
   })
-  .refine(val => val.square === -1 || val.square === 20 || (val.square >= 0 && val.square < 21), {
-    message: 'square must be -1 (start), 0-20 (board), or 20 (finished)',
+  .refine(val => val.square === -1 || (val.square >= 0 && val.square <= 20), {
+    message: 'square must be -1 (start) or 0-20',
     path: ['square'],
   });
 export type PiecePosition = z.infer<typeof PiecePositionSchema>;
@@ -45,15 +45,6 @@ export const GameStateSchema = z.object({
 });
 export type GameState = z.infer<typeof GameStateSchema>;
 
-export const MoveSchema = z.object({
-  pieceIndex: z.number(),
-  diceRoll: z.number(),
-  player: PlayerSchema,
-  newSquare: z.number(),
-  moveType: MoveTypeSchema.nullable(),
-});
-export type Move = z.infer<typeof MoveSchema>;
-
 export const GameStatsSchema = z.object({
   wins: z.number(),
   losses: z.number(),
@@ -63,14 +54,6 @@ export type GameStats = z.infer<typeof GameStatsSchema>;
 
 export const GameModeSchema = z.enum(['play', 'watch']);
 export type GameMode = z.infer<typeof GameModeSchema>;
-
-export const GameActionSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('ROLL_DICE') }),
-  z.object({ type: z.literal('MAKE_MOVE'), move: MoveSchema }),
-  z.object({ type: z.literal('RESET_GAME') }),
-  z.object({ type: z.literal('AI_MOVE'), move: MoveSchema }),
-]);
-export type GameAction = z.infer<typeof GameActionSchema>;
 
 export const MoveEvaluationSchema = z.object({
   pieceIndex: z.number(),

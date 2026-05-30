@@ -100,20 +100,11 @@ export const useGameStore = create<GameStore>()(
             return;
           }
 
-          console.log('GameStore: Starting AI move with source:', aiSource);
-          console.log('GameStore: Current game state:', {
-            currentPlayer: gameState.currentPlayer,
-            diceRoll: gameState.diceRoll,
-            validMoves: gameState.validMoves,
-            canMove: gameState.canMove,
-          });
-
           if (gameState.validMoves.length === 0) {
-            console.log('GameStore: No valid moves, switching turn');
             set(state => {
               state.gameState = processDiceRoll({
                 ...state.gameState,
-                currentPlayer: 'player1',
+                currentPlayer: state.gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
                 diceRoll: null,
                 canMove: false,
                 validMoves: [],
@@ -133,9 +124,7 @@ export const useGameStore = create<GameStore>()(
             let aiResponse;
 
             if (aiSource === 'ml') {
-              console.log('GameStore: Using ML AI service');
               const mlResponse = await mlAiService.getAIMove(gameState);
-              console.log('GameStore: ML AI response received:', mlResponse);
               aiResponse = {
                 move: mlResponse.move,
                 evaluation: Math.round(mlResponse.evaluation * 1000),
@@ -159,22 +148,16 @@ export const useGameStore = create<GameStore>()(
                 },
                 aiType: 'ml' as const,
               };
-              console.log('GameStore: Processed ML AI response:', aiResponse);
             } else if (aiSource === 'heuristic') {
-              console.log('GameStore: Using Heuristic AI service');
               const heuristicResponse = await wasmAiService.getHeuristicAIMove(gameState);
-              console.log('GameStore: Heuristic AI response received:', heuristicResponse);
               aiResponse = { ...heuristicResponse, aiType: 'heuristic' as const };
             } else {
-              console.log('GameStore: Using WASM AI service for', aiSource);
               const wasmResponse = await wasmAiService.getAIMove(gameState);
-              console.log('GameStore: WASM AI response received:', wasmResponse);
               aiResponse = { ...wasmResponse, aiType: 'client' as const };
             }
 
             const duration = performance.now() - startTime;
 
-            console.log('GameStore: Setting AI diagnostics:', aiResponse);
             set(state => {
               state.lastAIMoveDuration = duration;
               state.lastAIDiagnostics = aiResponse;
@@ -183,12 +166,10 @@ export const useGameStore = create<GameStore>()(
             const { move: aiMove } = aiResponse;
 
             if (aiMove === null || aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
-              console.log('GameStore: Invalid AI move, using fallback');
               if (gameState.validMoves.length > 0) {
                 actions.makeMove(gameState.validMoves[0]);
               }
             } else {
-              console.log('GameStore: Making AI move:', aiMove);
               actions.makeMove(aiMove);
             }
           } catch (error) {
@@ -285,7 +266,7 @@ export const useGameStore = create<GameStore>()(
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<GameStore>;
         if (version < LATEST_VERSION || !state || !state.gameState) {
-          return { gameState: initializeGame() };
+          return { gameState: { ...initializeGame(), startTime: Date.now() } };
         }
         return { gameState: state.gameState };
       },
@@ -295,8 +276,6 @@ export const useGameStore = create<GameStore>()(
     }
   )
 );
-
-export const useGameStoreActions = () => useGameStore(state => state.actions);
 
 export const useGameState = () => useGameStore(state => state.gameState);
 export const useGameActions = () => useGameStore(state => state.actions);

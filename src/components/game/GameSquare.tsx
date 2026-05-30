@@ -77,7 +77,7 @@ export default function GameSquare({
               player={piece.player}
               isClickable={isClickable}
               isBeingCaptured={false}
-              isFinishing={isFinishing || false}
+              isFinishing={isFinishing}
             />
           </motion.div>
         )}

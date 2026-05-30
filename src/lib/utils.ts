@@ -15,7 +15,7 @@ export function getPlayerId(): string {
   let playerId = localStorage.getItem(PLAYER_ID_KEY);
 
   if (!playerId) {
-    playerId = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    playerId = `player_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     localStorage.setItem(PLAYER_ID_KEY, playerId);
   }
 
@@ -57,15 +57,6 @@ export function getAISubtitle(
   }
 }
 
-export const isProduction = () => {
-  if (typeof window === 'undefined') {
-    return process.env.NODE_ENV === 'production';
-  }
-
-  const hostname = window.location.hostname;
-  return hostname === 'rgou.tre.systems' || hostname === 'www.rgou.tre.systems';
-};
-
 export const isDevelopment = () => {
   if (typeof window === 'undefined') {
     return process.env.NODE_ENV === 'development';
@@ -76,11 +67,3 @@ export const isDevelopment = () => {
     hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development'
   );
 };
-
-export function batch<T>(array: T[], size: number): T[][] {
-  const batched: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    batched.push(array.slice(i, i + size));
-  }
-  return batched;
-}

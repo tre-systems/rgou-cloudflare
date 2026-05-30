@@ -216,26 +216,4 @@ describe('UI Store', () => {
       expect(state.howToPlayOpen).toBe(false);
     });
   });
-
-  describe('type safety', () => {
-    it('should only accept valid mode values', () => {
-      const { setSelectedMode } = useUIStore.getState().actions;
-
-      setSelectedMode('classic');
-      setSelectedMode('ml');
-      setSelectedMode('watch');
-      setSelectedMode(null);
-    });
-
-    it('should only accept valid AI source values', () => {
-      const { setAiSourceP1, setAiSourceP2 } = useUIStore.getState().actions;
-
-      setAiSourceP1('client');
-      setAiSourceP1('ml');
-      setAiSourceP1(null);
-
-      setAiSourceP2('client');
-      setAiSourceP2('ml');
-    });
-  });
 });

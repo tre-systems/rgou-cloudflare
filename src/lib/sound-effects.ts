@@ -1,4 +1,3 @@
-
 class SoundEffects {
   private audioContext: AudioContext | null = null;
   private enabled = true;
@@ -61,7 +60,6 @@ class SoundEffects {
   }
 
   async diceRoll() {
-    
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
         this.playTone(200 + Math.random() * 100, 0.1, 'square', 0.05);
@@ -70,39 +68,31 @@ class SoundEffects {
   }
 
   async pieceMove() {
-    
     await this.playTone(523.25, 0.2, 'sine', 0.08); // C5
   }
 
   async pieceCapture() {
-    
     await this.playTone(220, 0.3, 'sawtooth', 0.1); // A3
     setTimeout(() => this.playTone(174.61, 0.4, 'sawtooth', 0.08), 100); // F3
   }
 
   async rosetteLanding() {
-    
     const frequencies = [523.25, 659.25, 783.99]; // C5-E5-G5 chord
     await this.playChord(frequencies, 0.5, 'sine', 0.06);
   }
 
   async pieceFinish() {
-    if (!this.enabled) return;
-
-    
     const melody = [523.25, 659.25, 783.99]; // C5-E5-G5 ascending
     melody.forEach((freq, i) => {
       setTimeout(() => this.playTone(freq, 0.25, 'sine', 0.12), i * 120);
     });
 
-    
     setTimeout(() => {
       this.playChord([523.25, 659.25, 783.99], 0.8, 'sine', 0.08);
     }, 360);
   }
 
   async gameWin() {
-    
     const melody = [523.25, 659.25, 783.99, 1046.5]; // C5-E5-G5-C6
     melody.forEach((freq, i) => {
       setTimeout(() => this.playTone(freq, 0.3, 'sine', 0.1), i * 200);
@@ -110,7 +100,6 @@ class SoundEffects {
   }
 
   async gameLoss() {
-    
     const melody = [523.25, 493.88, 440, 392]; // C5-B4-A4-G4 descending
     melody.forEach((freq, i) => {
       setTimeout(() => this.playTone(freq, 0.4, 'sine', 0.08), i * 150);
@@ -118,7 +107,6 @@ class SoundEffects {
   }
 
   async aiThinking() {
-    
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
         this.playTone(400 + i * 50, 0.1, 'sine', 0.03);
@@ -127,7 +115,6 @@ class SoundEffects {
   }
 
   async buttonClick() {
-    
     await this.playTone(800, 0.1, 'square', 0.05);
   }
 

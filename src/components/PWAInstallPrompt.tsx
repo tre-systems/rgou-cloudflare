@@ -22,11 +22,13 @@ export default function PWAInstallPrompt() {
 
     checkInstalled();
 
+    let promptTimeoutId: ReturnType<typeof setTimeout>;
+
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setDeferredPrompt(e);
 
-      setTimeout(() => {
+      promptTimeoutId = setTimeout(() => {
         if (!localStorage.getItem('pwa-install-dismissed')) {
           setShowPrompt(true);
         }
@@ -45,6 +47,7 @@ export default function PWAInstallPrompt() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      clearTimeout(promptTimeoutId);
     };
   }, []);
 
@@ -53,13 +56,7 @@ export default function PWAInstallPrompt() {
 
     try {
       await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-
-      if (outcome === 'accepted') {
-        console.log('PWA installation accepted');
-      } else {
-        console.log('PWA installation dismissed');
-      }
+      await deferredPrompt.userChoice;
     } catch (error) {
       console.error('Error during PWA installation:', error);
     }
