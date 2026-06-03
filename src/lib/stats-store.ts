@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { GameStats } from './schemas';
+import { getBrowserStorage } from './persist-storage';
 
 type StatsStore = {
   stats: GameStats;
@@ -43,7 +44,7 @@ export const useStatsStore = create<StatsStore>()(
     }),
     {
       name: 'rgou-stats-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(getBrowserStorage),
       partialize: state => ({ stats: state.stats }),
     }
   )
