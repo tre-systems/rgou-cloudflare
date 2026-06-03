@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const MAX_SAVE_GAME_HISTORY = 512;
+const MAX_PLAYER_ID_LENGTH = 128;
+const MAX_CLIENT_HEADER_LENGTH = 512;
+const MAX_GAME_DURATION_MS = 24 * 60 * 60 * 1000;
+
 export const PlayerSchema = z.enum(['player1', 'player2']);
 export type Player = z.infer<typeof PlayerSchema>;
 
@@ -11,7 +16,7 @@ export type GameStatus = z.infer<typeof GameStatusSchema>;
 
 export const PiecePositionSchema = z
   .object({
-    square: z.number(),
+    square: z.number().int(),
     player: PlayerSchema,
   })
   .refine(val => val.square === -1 || (val.square >= 0 && val.square <= 20), {
@@ -22,10 +27,10 @@ export type PiecePosition = z.infer<typeof PiecePositionSchema>;
 
 export const MoveRecordSchema = z.object({
   player: PlayerSchema,
-  diceRoll: z.number(),
-  pieceIndex: z.number(),
-  fromSquare: z.number(),
-  toSquare: z.number(),
+  diceRoll: z.number().int().min(0).max(4),
+  pieceIndex: z.number().int().min(0).max(6),
+  fromSquare: z.number().int().min(-1).max(20),
+  toSquare: z.number().int().min(0).max(20),
   moveType: MoveTypeSchema.nullable(),
 });
 export type MoveRecord = z.infer<typeof MoveRecordSchema>;
@@ -94,11 +99,11 @@ export type ServerAIResponse = z.infer<typeof ServerAIResponseSchema>;
 
 export const SaveGamePayloadSchema = z.object({
   winner: PlayerSchema,
-  history: z.array(MoveRecordSchema),
-  playerId: z.string(),
-  moveCount: z.number().optional(),
-  duration: z.number().optional(),
-  clientHeader: z.string().optional(),
+  history: z.array(MoveRecordSchema).max(MAX_SAVE_GAME_HISTORY),
+  playerId: z.string().min(1).max(MAX_PLAYER_ID_LENGTH),
+  moveCount: z.number().int().min(0).max(MAX_SAVE_GAME_HISTORY).optional(),
+  duration: z.number().int().min(0).max(MAX_GAME_DURATION_MS).optional(),
+  clientHeader: z.string().max(MAX_CLIENT_HEADER_LENGTH).optional(),
   gameType: z.enum(['classic', 'ml', 'watch', 'heuristic']).default('classic'),
 });
 export type SaveGamePayload = z.infer<typeof SaveGamePayloadSchema>;

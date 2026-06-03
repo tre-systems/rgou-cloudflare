@@ -13,7 +13,9 @@ vi.mock('drizzle-orm/better-sqlite3', () => ({
 }));
 
 vi.mock('better-sqlite3', () => ({
-  default: vi.fn(() => 'sqlite-instance'),
+  default: vi.fn(function MockDatabase() {
+    return { filename: 'local.db' };
+  }),
 }));
 
 describe('Database', () => {
@@ -46,9 +48,9 @@ describe('Database', () => {
 
     it('should handle SQLite creation error', async () => {
       const Database = (await import('better-sqlite3')).default;
-      vi.mocked(Database).mockImplementation(() => {
+      vi.mocked(Database).mockImplementation(function MockDatabase() {
         throw new Error('SQLite error');
-      });
+      } as any);
 
       const { getDb } = await import('../db');
       await expect(getDb()).rejects.toThrow('SQLite error');
