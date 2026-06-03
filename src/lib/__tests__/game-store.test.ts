@@ -6,15 +6,16 @@ const incrementWinsMock = vi.fn();
 const incrementLossesMock = vi.fn();
 
 vi.mock('../wasm-ai-service', () => ({
-  WasmAiService: vi.fn().mockImplementation(() => ({
-    getAIMove: vi.fn(),
-  })),
+  WasmAiService: class {
+    getAIMove = vi.fn();
+    getHeuristicAIMove = vi.fn();
+  },
 }));
 
 vi.mock('../ml-ai-service', () => ({
-  MLAIService: vi.fn().mockImplementation(() => ({
-    getAIMove: vi.fn(),
-  })),
+  MLAIService: class {
+    getAIMove = vi.fn();
+  },
 }));
 
 vi.mock('../stats-store', () => ({

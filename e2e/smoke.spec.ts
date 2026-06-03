@@ -58,17 +58,19 @@ async function verifyDatabaseSave(expectedGameType: string, expectedWinner: stri
       );
     }
 
-    // Get the most recent game
-    const row = db
-      .prepare(
-        `
-      SELECT * FROM games 
-      WHERE winner = ? AND gameType = ? 
-      ORDER BY completedAt DESC 
+    const findSavedGame = db.prepare(`
+      SELECT * FROM games
+      WHERE winner = ? AND gameType = ?
+      ORDER BY completedAt DESC
       LIMIT 1
-    `
-      )
-      .get(expectedWinner, expectedGameType) as any;
+    `);
+
+    const deadline = Date.now() + 5000;
+    let row = findSavedGame.get(expectedWinner, expectedGameType) as any;
+    while (!row && Date.now() < deadline) {
+      await pageWait(100);
+      row = findSavedGame.get(expectedWinner, expectedGameType) as any;
+    }
 
     if (!row) {
       throw new Error(
@@ -93,6 +95,10 @@ async function verifyDatabaseSave(expectedGameType: string, expectedWinner: stri
   } finally {
     db.close();
   }
+}
+
+function pageWait(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 test.describe('Core Game Functionality', () => {
