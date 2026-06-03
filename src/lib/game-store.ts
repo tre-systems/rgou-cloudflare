@@ -9,6 +9,7 @@ import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
 import { getPlayerId } from './utils';
 import { useUIStore } from './ui-store';
+import { getBrowserStorage } from './persist-storage';
 
 const LATEST_VERSION = 1;
 
@@ -253,7 +254,7 @@ export const useGameStore = create<GameStore>()(
     })),
     {
       name: 'rgou-game-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(getBrowserStorage),
       onRehydrateStorage: () => (state, error) => {
         if (error) {
           console.error('Failed to rehydrate game store:', error);

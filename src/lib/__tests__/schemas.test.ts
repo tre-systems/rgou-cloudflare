@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GameStateSchema, MoveRecordSchema } from '../schemas';
+import { GameStateSchema, MoveRecordSchema, SaveGamePayloadSchema } from '../schemas';
 
 describe('Schemas', () => {
   describe('GameStateSchema', () => {
@@ -80,6 +80,71 @@ describe('Schemas', () => {
       };
 
       expect(() => MoveRecordSchema.parse(captureMove)).not.toThrow();
+    });
+  });
+
+  describe('SaveGamePayloadSchema', () => {
+    const validMove = {
+      player: 'player1' as const,
+      diceRoll: 4,
+      pieceIndex: 0,
+      fromSquare: -1,
+      toSquare: 0,
+      moveType: 'rosette' as const,
+    };
+
+    const validPayload = {
+      winner: 'player1' as const,
+      history: [validMove],
+      playerId: 'test-player',
+      moveCount: 1,
+      duration: 5000,
+      clientHeader: 'test-agent',
+      gameType: 'classic' as const,
+    };
+
+    it('should validate a save game payload', () => {
+      expect(() => SaveGamePayloadSchema.parse(validPayload)).not.toThrow();
+    });
+
+    it('should reject oversized save game payloads', () => {
+      expect(() =>
+        SaveGamePayloadSchema.parse({
+          ...validPayload,
+          history: Array(513).fill(validMove),
+          moveCount: 513,
+        })
+      ).toThrow();
+    });
+
+    it('should reject unbounded client metadata', () => {
+      expect(() =>
+        SaveGamePayloadSchema.parse({
+          ...validPayload,
+          playerId: '',
+        })
+      ).toThrow();
+
+      expect(() =>
+        SaveGamePayloadSchema.parse({
+          ...validPayload,
+          clientHeader: 'a'.repeat(513),
+        })
+      ).toThrow();
+    });
+
+    it('should reject impossible move values', () => {
+      expect(() =>
+        SaveGamePayloadSchema.parse({
+          ...validPayload,
+          history: [
+            {
+              ...validMove,
+              diceRoll: 5,
+            },
+          ],
+        })
+      ).toThrow();
     });
   });
 });
