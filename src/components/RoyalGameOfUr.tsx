@@ -3,7 +3,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Brain, Cpu, Eye, Github } from 'lucide-react';
-import Image from 'next/image';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
 import { isDevelopment, getAIName } from '@/lib/utils';
@@ -431,15 +430,10 @@ export default function RoyalGameOfUr() {
                 href="https://ko-fi.com/N4N31DPNUS"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+                className="fixed bottom-5 left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-amber-300/25 bg-slate-950/60 px-3.5 py-1.5 text-[13px] font-semibold text-amber-100/70 no-underline shadow-lg backdrop-blur-sm transition-colors hover:border-amber-300/55 hover:bg-amber-300/10 hover:text-amber-50"
               >
-                <Image
-                  width={145}
-                  height={36}
-                  className="block mx-auto"
-                  src="https://storage.ko-fi.com/cdn/kofi2.png?v=6"
-                  alt="Buy Me a Coffee at ko-fi.com"
-                />
+                <span aria-hidden="true">☕</span>
+                Buy me a coffee
               </a>
             </p>
           </motion.div>
