@@ -71,6 +71,15 @@ jobs:
         run: npm run build:cf
         env:
           GITHUB_SHA: ${{ github.sha }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+          NEXT_PUBLIC_SENTRY_ENVIRONMENT: production
+          NEXT_PUBLIC_SENTRY_RELEASE: ${{ github.sha }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DSN: ${{ vars.SENTRY_DSN || vars.NEXT_PUBLIC_SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: production
+          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'total-reality-engineering' }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'rgou-cloudflare' }}
+          SENTRY_RELEASE: ${{ github.sha }}
 
       - name: Deploy Frontend
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

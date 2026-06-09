@@ -1,4 +1,5 @@
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
+import { withSentryConfig } from '@sentry/nextjs';
 
 initOpenNextCloudflareForDev();
 
@@ -24,4 +25,11 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG ?? 'total-reality-engineering',
+  project: process.env.SENTRY_PROJECT ?? 'rgou-cloudflare',
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  disableLogger: true,
+});
