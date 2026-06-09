@@ -26,7 +26,7 @@ A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with d
 
 ### Prerequisites
 
-- **Node.js 20+** ([download](https://nodejs.org/))
+- **Node.js 22+** ([download](https://nodejs.org/))
 - **Rust & Cargo** ([install](https://www.rust-lang.org/tools/install)) — compiles the AI to WebAssembly
 - **wasm-pack**: `cargo install wasm-pack --version 0.12.1 --locked`
 
