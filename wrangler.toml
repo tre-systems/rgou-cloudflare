@@ -10,6 +10,8 @@ binding = "ASSETS"
 
 [vars]
 ENVIRONMENT = "production"
+SENTRY_ENVIRONMENT = "production"
+SENTRY_PROJECT = "rgou-cloudflare"
 
 [observability]
 enabled = true
