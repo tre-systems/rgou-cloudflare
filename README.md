@@ -1,6 +1,6 @@
 # Royal Game of Ur
 
-[![CI/CD](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/rgilks/rgou-cloudflare/actions/workflows/deploy.yml)
+[![CI/CD](https://github.com/tre-systems/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/tre-systems/rgou-cloudflare/actions/workflows/deploy.yml)
 
 <div align="center">
   <img src="docs/screenshot.png" alt="rgou Screenshot" width="408" />
@@ -13,7 +13,7 @@ A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with d
 
 ## Play Now
 
-**[rgou.tre.systems](https://rgou.tre.systems/)** — works in any modern browser, no installation required.
+**[gameofur.org](https://gameofur.org/)** — works in any modern browser, no installation required.
 
 ## Features
 
@@ -35,7 +35,7 @@ A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with d
 ### Setup
 
 ```bash
-git clone https://github.com/rgilks/rgou-cloudflare.git
+git clone https://github.com/tre-systems/rgou-cloudflare.git
 cd rgou-cloudflare
 npm install
 npm run db:setup            # local SQLite database
