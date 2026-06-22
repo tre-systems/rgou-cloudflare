@@ -21,6 +21,22 @@ head_sampling_rate = 1
 pattern = "rgou.tre.systems/*"
 zone_name = "tre.systems"
 
+[[routes]]
+pattern = "gameofur.org/*"
+zone_name = "gameofur.org"
+
+[[routes]]
+pattern = "www.gameofur.org/*"
+zone_name = "gameofur.org"
+
+[[routes]]
+pattern = "gameofur.net/*"
+zone_name = "gameofur.net"
+
+[[routes]]
+pattern = "www.gameofur.net/*"
+zone_name = "gameofur.net"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "rgou-db"
