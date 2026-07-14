@@ -32,7 +32,7 @@ export default function ModeSelectionCard({
       aria-label={title}
       data-testid={dataTestId}
     >
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between">
         <span className="font-mono text-[11px] tracking-[0.18em] text-[#777a6d]" aria-hidden="true">
           {index}
         </span>
