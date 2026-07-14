@@ -61,6 +61,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 - **[GAME-GUIDE.md](./docs/GAME-GUIDE.md)** — rules, strategy, and history
 - **[ml/README.md](./ml/README.md)** — ML training quick start
 - **[worker/rust_ai_core/tests/README.md](./worker/rust_ai_core/tests/README.md)** — Rust test suite
+- **[SECURITY.md](./SECURITY.md)** — private vulnerability reporting and supported release
 
 ## License
 

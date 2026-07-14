@@ -29,7 +29,7 @@ class WeightConverter:
         input_path = Path(input_file)
         weights = json.loads(input_path.read_text(encoding="utf-8"))
         model_format = self.detect_format(weights)
-        logger.info("Loaded %s model from %s", model_format, input_path)
+        logger.info("Loaded %s model from %r", model_format, str(input_path))
         return weights, model_format
 
     @staticmethod
@@ -125,7 +125,7 @@ class WeightConverter:
             json.dumps(weights, indent=2) + "\n",
             encoding="utf-8",
         )
-        logger.info("Saved weights to %s", output_path)
+        logger.info("Saved weights to %r", str(output_path))
 
 
 def main() -> int:
@@ -160,7 +160,7 @@ def main() -> int:
         )
         converter.save_weights(converted, output_file)
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
-        logger.error("Conversion failed: %s", error)
+        logger.error("Conversion failed: %r", error)
         return 1
     return 0
 

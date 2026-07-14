@@ -67,6 +67,14 @@ describe('usage Worker endpoint', () => {
         )
       ).status
     ).toBe(415);
+    expect(
+      (
+        await worker.fetch(
+          usageRequest(gameStartedUsage('ml', 'player1'), { 'Content-Encoding': 'gzip' }),
+          environment
+        )
+      ).status
+    ).toBe(415);
   });
 
   it('fails closed when analytics are unavailable', async () => {
@@ -102,6 +110,7 @@ describe('health Worker endpoint', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('x-app-release')).toBeTruthy();
+    expect(response.headers.get('permissions-policy')).toContain('geolocation=()');
     expect(await response.json()).toEqual({
       status: 'ok',
       release: response.headers.get('x-app-release'),
