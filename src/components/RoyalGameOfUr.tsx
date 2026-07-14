@@ -194,35 +194,42 @@ export default function RoyalGameOfUr() {
             </div>
           )}
 
-          <div className="flex flex-1 items-center py-6 sm:py-10">
+          <div className="flex flex-1 flex-col py-4 sm:py-6">
             <motion.div
-              className={cn('mx-auto w-full', showModelOverlay ? 'max-w-4xl' : 'max-w-md')}
+              className={cn('mx-auto my-auto w-full', showModelOverlay ? 'max-w-4xl' : 'max-w-md')}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
             >
               <header className="text-center">
-                <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c7a65d]">
-                  An ancient race game
-                </div>
+                {showModelOverlay && (
+                  <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c7a65d]">
+                    An ancient race game
+                  </div>
+                )}
                 <h1
-                  className="display-title text-4xl text-[#eee7d8] sm:text-5xl"
+                  className={cn(
+                    'display-title text-[#eee7d8]',
+                    showModelOverlay ? 'text-4xl sm:text-5xl' : 'text-2xl sm:text-3xl'
+                  )}
                   data-testid="main-title"
                 >
                   Royal Game of Ur
                 </h1>
-                <div
-                  className="mt-3 text-sm tracking-wide text-[#8e9184]"
-                  data-testid="main-subtitle"
-                >
-                  Mesopotamia · Third millennium BCE
-                </div>
+                {showModelOverlay && (
+                  <div
+                    className="mt-3 text-sm tracking-wide text-[#8e9184]"
+                    data-testid="main-subtitle"
+                  >
+                    Mesopotamia · Third millennium BCE
+                  </div>
+                )}
               </header>
 
               {showModelOverlay ? (
                 <ModeSelection onSelect={handleOverlaySelect} onShowHowToPlay={showHowToPlay} />
               ) : (
-                <div className="mt-8">
+                <div className="mt-5">
                   <GameBoard
                     gameState={gameState}
                     onPieceClick={handlePieceClick}
