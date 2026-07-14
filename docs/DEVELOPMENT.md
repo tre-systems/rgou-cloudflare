@@ -13,7 +13,7 @@ npm run smoke:production # verify production assets, validation, and redirects
 npm run lint         # lint            (lint:fix to autofix)
 npm run lint:rust    # Rust formatting and Clippy with warnings denied
 npm run type-check   # TypeScript
-npm run check        # lint + type-check + all Rust tests + unit + e2e
+npm run check        # lint + diagrams + type-check + all Rust tests + unit + e2e
 npm run nuke         # clean reinstall and restart dev
 ```
 
@@ -25,6 +25,17 @@ npm run build:wasm          # WASM only
 npm run build:rust-ai       # native Rust build
 npm run generate:sw         # service worker (embeds the Git commit hash for cache-busting)
 ```
+
+## Architecture diagrams
+
+Graphviz/DOT sources are authoritative and rendered PNGs are committed for GitHub. Install Graphviz with `brew install graphviz`, then run:
+
+```bash
+npm run diagrams          # refresh every PNG from its DOT source
+npm run check:diagrams    # verify all sources render and committed PNGs exist
+```
+
+See [docs/diagrams/README.md](./diagrams/README.md) for the diagram catalogue, reading order, and shared conventions. CI installs Graphviz and validates diagrams through `npm run check`.
 
 ## Testing
 
@@ -88,6 +99,7 @@ The browser reports validated `game_started` and `game_completed` events to the 
 | WASM not loading        | `npm run build:wasm-assets`                                                                                               |
 | ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                   |
 | E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                          |
+| Diagram rendering fails | Install Graphviz with `brew install graphviz`, then run `npm run diagrams`                                               |
 | Cloudflare deploy fails | Run `npm ci`, remove `out` and `.wrangler`, then run `npm run build`. Deploy the generated `out/rgou_main/wrangler.json`. |
 | Anything else           | `npm run nuke`                                                                                                            |
 

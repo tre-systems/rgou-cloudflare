@@ -4,6 +4,10 @@ The Royal Game of Ur is a local-first React application built with Vite and serv
 
 This document is also the project's pattern catalogue. A pattern is useful here only when it gives the code a clear invariant. New code should use the vocabulary and dependency rules below instead of introducing a parallel way to solve the same problem.
 
+![System overview](diagrams/system-overview.png)
+
+The browser cluster is the complete gameplay path. The Cloudflare Worker delivers the application and accepts anonymous aggregate usage events, but gameplay, AI decisions, and personal state do not depend on a server round-trip.
+
 ## Architectural principles
 
 - **Local-first** — the browser owns gameplay and personal statistics.
@@ -17,18 +21,12 @@ This document is also the project's pattern catalogue. A pattern is useful here 
 
 Dependencies point inward:
 
-```text
-React components
-    -> Zustand stores and orchestration
-        -> pure policies, schemas, and game logic
-        -> AI, storage, audio, and analytics adapters
-
-Cloudflare Worker
-    -> request validation and analytics mapping
-    -> Static Assets
-
-Web Worker adapters
-    -> validated Rust/WASM boundary
+```mermaid
+flowchart TD
+    UI[React components] --> STORE[Zustand stores and orchestration]
+    STORE --> CORE[Pure policies, schemas, and game logic]
+    STORE --> PORTS[AI, storage, audio, and analytics ports]
+    PORTS --> PLATFORM[Browser, Web Worker, WASM, and network adapters]
 ```
 
 `src/lib` must not import React components. Presentational components receive domain data and callbacks through props; they do not reach into stores. Platform APIs belong in adapters or effects, not in pure game logic.
@@ -83,6 +81,7 @@ Components may contain display decisions and transient animation state. Reusable
 | Front controller             | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                | `src/worker.ts`, `canonical-host.ts`                              |
 | Offline application shell    | Versioned static assets and required AI files are cached; update behavior is explicit.                        | generated service worker and `ServiceWorkerUpdate.tsx`            |
 | Build once, promote artifact | CI tests, builds the Worker artifact, deploys that artifact, then tests production.                           | `.github/workflows/deploy.yml`, `vite.config.ts`, `wrangler.toml` |
+| Diagram as code              | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs` |
 
 ## Frontend structure
 
@@ -103,6 +102,8 @@ Components may contain display decisions and transient animation state. Reusable
 ## Principal flows
 
 ### AI turn
+
+![Guarded AI turn](diagrams/ai-turn-flow.png)
 
 1. `RoyalGameOfUr.tsx` derives whether the active player is AI-controlled from `game-mode.ts`.
 2. `makeAIMove` snapshots the active game and turn.
