@@ -82,17 +82,17 @@ Components may contain display decisions and transient animation state. Reusable
 
 ### Data, privacy, and delivery patterns
 
-| Pattern                     | Invariant                                                                                                      | Implementation                                                                      |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Local-first persistence     | In-progress games, settings, and personal statistics remain in local storage and are validated when restored.  | Zustand persistence plus `persist-storage.ts`                                       |
-| Data minimization           | Analytics contain only the dimensions required for aggregate product questions.                                | `usage.ts`; startup removes the retired `rgou-player-id` key.                       |
-| Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                       | `game_started` and `game_completed` via `/api/usage`                                |
-| Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                 | `src/worker.ts`, `canonical-host.ts`                                                |
-| Tiered offline precache     | Required shell failure aborts installation; large AI assets are optional; health and API routes stay online.   | generated service worker plus its Node and browser contract tests                   |
-| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts` |
-| Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.           | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
-| Supply-chain gate           | Known high-severity advisories block deployment; update automation cannot silently change executable CI code.  | Audits, lockfiles, immutable action SHAs, Dependabot, and GitHub code scanning      |
-| Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
+| Pattern                     | Invariant                                                                                                                            | Implementation                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Local-first persistence     | In-progress games, settings, and personal statistics remain in local storage and are validated when restored.                        | Zustand persistence plus `persist-storage.ts`                                       |
+| Data minimization           | Analytics contain only the dimensions required for aggregate product questions.                                                      | `usage.ts`; startup removes the retired `rgou-player-id` key.                       |
+| Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                                             | `game_started` and `game_completed` via `/api/usage`                                |
+| Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                                       | `src/worker.ts`, `canonical-host.ts`                                                |
+| Tiered offline precache     | The complete built application, including lazy chunks, is required; large AI assets are optional; health and API routes stay online. | generated service worker plus its Node and browser contract tests                   |
+| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                                                  | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts` |
+| Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.                                 | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
+| Supply-chain gate           | Known high-severity advisories block deployment; update automation cannot silently change executable CI code.                        | Audits, lockfiles, immutable action SHAs, Dependabot, and GitHub code scanning      |
+| Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation.                       | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
 
 ## Frontend structure
 

@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import vm from 'node:vm';
-import { createServiceWorkerSource } from './generate-sw.js';
+import { createServiceWorkerSource, findBuildAssets } from './generate-sw.js';
 
-function installPromiseFor(cache, errors = []) {
+function installPromiseFor(cache, errors = [], buildAssets = []) {
   let installHandler;
   let installPromise;
   const self = {
@@ -14,7 +17,7 @@ function installPromiseFor(cache, errors = []) {
     location: { origin: 'https://gameofur.org' },
   };
 
-  vm.runInNewContext(createServiceWorkerSource('test-release'), {
+  vm.runInNewContext(createServiceWorkerSource('test-release', buildAssets), {
     URL,
     Response,
     caches: {
@@ -93,6 +96,43 @@ test('hashed application assets are part of the required offline shell', async (
     '/assets/index-123.css',
     '/assets/index-456.js',
   ]);
+});
+
+test('production precache includes lazy build chunks and excludes source maps', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rgou-sw-'));
+  const assetDir = path.join(root, 'assets');
+  fs.mkdirSync(path.join(assetDir, 'nested'), { recursive: true });
+  fs.writeFileSync(path.join(assetDir, 'index-123.js'), '');
+  fs.writeFileSync(path.join(assetDir, 'prod-456.js'), '');
+  fs.writeFileSync(path.join(assetDir, 'nested', 'worker-789.js'), '');
+  fs.writeFileSync(path.join(assetDir, 'prod-456.js.map'), '');
+
+  try {
+    const buildAssets = findBuildAssets(assetDir);
+    assert.deepEqual(buildAssets, [
+      '/assets/index-123.js',
+      '/assets/nested/worker-789.js',
+      '/assets/prod-456.js',
+    ]);
+
+    const addAllCalls = [];
+    const installPromise = installPromiseFor(
+      {
+        add: async () => undefined,
+        addAll: async assets => addAllCalls.push(Array.from(assets)),
+        match: async () =>
+          new Response('<script type="module" src="/assets/index-123.js"></script>'),
+        put: async () => undefined,
+      },
+      [],
+      buildAssets
+    );
+
+    await assert.doesNotReject(installPromise);
+    assert.deepEqual(addAllCalls[1], buildAssets);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('health and API requests bypass the cache', () => {
