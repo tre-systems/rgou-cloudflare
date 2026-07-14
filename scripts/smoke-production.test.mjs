@@ -5,6 +5,7 @@ import {
   checkCanonicalRedirect,
   checkConfiguredCanonicalRedirects,
   getConfiguredAliases,
+  runProductionSmokeCli,
 } from './smoke-production.mjs';
 
 const expectedAliases = [
@@ -63,7 +64,10 @@ test('reports the failing alias and redirect details', async () => {
     }),
     error => {
       assert.match(error.message, /www\.gameofur\.net/);
-      assert.match(error.message, /expected 301 https:\/\/gameofur\.org\/offline\?source=smoke&mode=alias/);
+      assert.match(
+        error.message,
+        /expected 301 https:\/\/gameofur\.org\/offline\?source=smoke&mode=alias/
+      );
       assert.match(error.message, /received 302 https:\/\/wrong\.example\/offline/);
       return true;
     }
@@ -75,4 +79,25 @@ test('does not pass when the deployment declares no aliases', async () => {
     checkConfiguredCanonicalRedirects('[assets]\ndirectory = "./out/client"'),
     /wrangler\.toml declares no aliases/
   );
+});
+
+test('the CLI exits cleanly with the smoke result', async () => {
+  const exitCodes = [];
+  const errors = [];
+  const options = {
+    exit: code => exitCodes.push(code),
+    logger: { error: error => errors.push(error) },
+  };
+
+  await runProductionSmokeCli({ ...options, run: async () => undefined });
+  await runProductionSmokeCli({
+    ...options,
+    run: async () => {
+      throw new Error('smoke failed');
+    },
+  });
+
+  assert.deepEqual(exitCodes, [0, 1]);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0].message, /smoke failed/);
 });

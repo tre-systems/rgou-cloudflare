@@ -10,6 +10,7 @@ export type {
   GameMode,
   OpponentMode,
   AISource,
+  Participant,
   MoveEvaluation,
   Diagnostics,
   Timings,
@@ -29,11 +30,13 @@ export {
   GameModeSchema,
   OpponentModeSchema,
   AISourceSchema,
+  ParticipantSchema,
   MoveEvaluationSchema,
   DiagnosticsSchema,
   TimingsSchema,
   AIResponseSchema,
   EngineAIResponseSchema,
+  MAX_GAME_HISTORY,
   GameConstants,
 } from './schemas';
 

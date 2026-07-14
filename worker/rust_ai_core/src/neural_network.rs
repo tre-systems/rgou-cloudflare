@@ -165,12 +165,22 @@ impl NeuralNetwork {
         exp_input.mapv(|x| x / sum)
     }
 
-    pub fn load_weights(&mut self, weights: &[f32]) {
+    pub fn load_weights(&mut self, weights: &[f32]) -> Result<(), String> {
+        let expected = self.config.total_weights();
+        if weights.len() != expected {
+            return Err(format!(
+                "network received {} weights; expected {expected}",
+                weights.len()
+            ));
+        }
+
         let mut idx = 0;
 
         for layer in &mut self.layers {
             idx += layer.load_weights(&weights[idx..]);
         }
+
+        Ok(())
     }
 
     pub fn get_weights(&self) -> Vec<f32> {
@@ -185,6 +195,10 @@ impl NeuralNetwork {
 
     pub fn num_layers(&self) -> usize {
         self.layers.len()
+    }
+
+    pub fn expected_weight_count(&self) -> usize {
+        self.config.total_weights()
     }
 
     pub fn train_step(
@@ -417,10 +431,22 @@ mod tests {
         assert!(!weights.is_empty());
 
         let mut new_network = NeuralNetwork::new(config);
-        new_network.load_weights(&weights);
+        new_network.load_weights(&weights).unwrap();
 
         let new_output = new_network.forward(&input);
         assert!((original_output[0] - new_output[0]).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_network_rejects_wrong_weight_count() {
+        let mut network = NeuralNetwork::new(NetworkConfig {
+            input_size: 2,
+            hidden_sizes: vec![3],
+            output_size: 1,
+        });
+
+        let error = network.load_weights(&[0.1]).unwrap_err();
+        assert!(error.contains("expected 13"));
     }
 
     #[test]
@@ -433,7 +459,7 @@ mod tests {
 
         let weight_count = config.total_weights();
         let mut network = NeuralNetwork::new(config);
-        network.load_weights(&vec![0.1; weight_count]);
+        network.load_weights(&vec![0.1; weight_count]).unwrap();
         let input = Array1::from_vec(vec![1.0, 2.0]);
         let target = Array1::from_vec(vec![0.5]);
 
@@ -477,7 +503,7 @@ mod tests {
 
         let weight_count = config.total_weights();
         let mut network = NeuralNetwork::new(config);
-        network.load_weights(&vec![0.1; weight_count]);
+        network.load_weights(&vec![0.1; weight_count]).unwrap();
         let input = Array1::from_vec(vec![1.0, 2.0]);
         let target = Array1::from_vec(vec![0.0, 1.0, 0.0, 0.0]); // One-hot encoding
 

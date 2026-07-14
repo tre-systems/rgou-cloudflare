@@ -14,6 +14,10 @@ type PendingRequest = {
 
 const AI_REQUEST_TIMEOUT_MS = 30_000;
 
+function asError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
+}
+
 export class AIWorkerClient {
   private worker: Worker | null = null;
   private messageCounter = 0;
@@ -39,7 +43,11 @@ export class AIWorkerClient {
       this.pendingRequests.set(id, { resolve, reject, timeout });
     });
 
-    worker.postMessage(request);
+    try {
+      worker.postMessage(request);
+    } catch (error) {
+      this.restart(asError(error));
+    }
     return response;
   }
 
@@ -59,6 +67,9 @@ export class AIWorkerClient {
         console.error('AI worker failed:', event.message, event);
         this.restart(new Error(`AI worker failed: ${event.message}`));
       };
+      this.worker.onmessageerror = () => {
+        this.restart(new Error('AI worker response could not be decoded'));
+      };
     }
 
     return this.worker;
@@ -68,6 +79,7 @@ export class AIWorkerClient {
     const result = AIWorkerResponseSchema.safeParse(event.data);
     if (!result.success) {
       console.error('AI worker returned an invalid response:', result.error);
+      this.restart(new Error('AI worker returned an invalid response'));
       return;
     }
 

@@ -1,11 +1,17 @@
 import { z } from 'zod';
 import { getModeConfiguration } from './game-mode';
-import { OpponentModeSchema, type GameState, type OpponentMode, type Player } from './types';
+import {
+  MAX_GAME_HISTORY,
+  OpponentModeSchema,
+  ParticipantSchema,
+  type GameState,
+  type OpponentMode,
+  type Player,
+} from './types';
 
 export const GameUsageModeSchema = OpponentModeSchema;
 export type GameUsageMode = OpponentMode;
 
-const ParticipantSchema = z.enum(['human', 'heuristic', 'classic', 'ml']);
 const UsageContextSchema = z.object({
   mode: GameUsageModeSchema,
   player1: ParticipantSchema,
@@ -18,23 +24,29 @@ const UsageEventSchema = z.discriminatedUnion('event', [
   UsageContextSchema.extend({
     event: z.literal('game_completed'),
     winner: z.enum(['player1', 'player2']),
-    moves: z.number().int().min(1).max(512),
+    moves: z.number().int().min(0).max(MAX_GAME_HISTORY),
     durationMs: z.number().int().min(0).max(86_400_000),
   }).strict(),
 ]);
 
 export type UsageEvent = z.infer<typeof UsageEventSchema>;
+type GameStartedUsageEvent = Extract<UsageEvent, { event: 'game_started' }>;
+type GameCompletedUsageEvent = Extract<UsageEvent, { event: 'game_completed' }>;
 
 function context(mode: GameUsageMode, startedBy: Player) {
   const [player1, player2] = getModeConfiguration(mode).participants;
   return { mode, player1, player2, startedBy };
 }
 
-export function gameStartedUsage(mode: GameUsageMode, startedBy: Player): UsageEvent {
+export function gameStartedUsage(mode: GameUsageMode, startedBy: Player): GameStartedUsageEvent {
   return { event: 'game_started', ...context(mode, startedBy) };
 }
 
-export function gameCompletedUsage(mode: GameUsageMode, state: GameState): UsageEvent {
+export function gameCompletedUsage(
+  mode: GameUsageMode,
+  state: GameState,
+  startedBy: Player = state.history[0]?.player ?? state.currentPlayer
+): GameCompletedUsageEvent {
   if (!state.winner) throw new Error('A completed game must have a winner');
   const durationMs = Math.min(
     86_400_000,
@@ -42,9 +54,9 @@ export function gameCompletedUsage(mode: GameUsageMode, state: GameState): Usage
   );
   return {
     event: 'game_completed',
-    ...context(mode, state.history[0]?.player ?? state.currentPlayer),
+    ...context(mode, startedBy),
     winner: state.winner,
-    moves: state.history.length,
+    moves: Math.min(MAX_GAME_HISTORY, state.history.length),
     durationMs,
   };
 }

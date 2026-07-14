@@ -21,15 +21,13 @@ From the repo root these are also exposed as `npm run test:rust`, `test:rust:slo
 
 | File                           | Covers                                               | Run                                         |
 | ------------------------------ | ---------------------------------------------------- | ------------------------------------------- |
-| `ai_matrix_test.rs`            | Every AI vs every AI; win rates, speed, and rankings | `cargo test test_ai_matrix -- --nocapture`  |
+| `ai_matrix_test.rs`            | Compatible AIs; win rates, speed, and rankings       | `cargo test test_ai_matrix -- --nocapture`  |
 | `expectiminimax_diagnostic.rs` | Depth comparison, transposition table, alpha-beta    | `cargo test test_expectiminimax_diagnostic` |
-| `ml_vs_expectiminimax.rs`      | ML AI vs expectiminimax, fixed dice sequences        | `cargo test test_ml_vs_expectiminimax_ai`   |
 | `genetic_params_comparison.rs` | Default vs evolved parameters                        | `cargo test test_genetic_params_comparison` |
 
 ## Useful environment variables
 
 - `NUM_GAMES` — games per matrix match (default 10)
-- `RANDOM_SEED` — fixed seed for reproducible runs
 - `RUN_SLOW_TESTS=1` with `--features slow_tests` — enable depth-4 and extended tests
 
 The AI matrix runs matches in parallel across CPU cores and resets AI state periodically; lower `NUM_GAMES` if you hit memory pressure.

@@ -1,17 +1,13 @@
 use super::{genetic_params::GeneticParams, GameState, HeuristicAI, PiecePosition, Player, AI};
 use crate::{dice, ml_ai::MLAI, MoveEvaluation};
-use js_sys;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 
-lazy_static! {
-    static ref ML_AI_INSTANCE: Mutex<Option<MLAI>> = Mutex::new(None);
-    static ref CLASSIC_AI_INSTANCE: Mutex<Option<AI>> = Mutex::new(None);
-    static ref HEURISTIC_AI_INSTANCE: Mutex<Option<HeuristicAI>> = Mutex::new(None);
-    static ref EVOLVED_PARAMS: Mutex<Option<GeneticParams>> = Mutex::new(None);
-}
+static ML_AI_INSTANCE: Mutex<Option<MLAI>> = Mutex::new(None);
+static CLASSIC_AI_INSTANCE: Mutex<Option<AI>> = Mutex::new(None);
+static HEURISTIC_AI_INSTANCE: Mutex<Option<HeuristicAI>> = Mutex::new(None);
+static EVOLVED_PARAMS: Mutex<Option<GeneticParams>> = Mutex::new(None);
 
 fn get_genetic_params() -> GeneticParams {
     EVOLVED_PARAMS
@@ -218,10 +214,14 @@ pub fn load_ml_weights(
 
     let mut instance = ML_AI_INSTANCE.lock().unwrap();
     if let Some(ref mut ml_ai) = *instance {
-        ml_ai.load_pretrained(&value_weights, &policy_weights);
+        ml_ai
+            .load_pretrained(&value_weights, &policy_weights)
+            .map_err(|error| JsValue::from_str(&error))?;
     } else {
         let mut ml_ai = MLAI::new();
-        ml_ai.load_pretrained(&value_weights, &policy_weights);
+        ml_ai
+            .load_pretrained(&value_weights, &policy_weights)
+            .map_err(|error| JsValue::from_str(&error))?;
         *instance = Some(ml_ai);
     }
 

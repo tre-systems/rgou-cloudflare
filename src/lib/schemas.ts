@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const MAX_SAVE_GAME_HISTORY = 512;
+export const MAX_GAME_HISTORY = 512;
 const PLAYER1_TRACK = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as const;
 const PLAYER2_TRACK = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15] as const;
 
@@ -39,7 +39,7 @@ export const PersistedGameStateSchema = z.object({
   player2Pieces: z.array(PiecePositionSchema).length(7),
   currentPlayer: PlayerSchema,
   diceRoll: z.number().int().min(0).max(4).nullable(),
-  history: z.array(MoveRecordSchema).max(MAX_SAVE_GAME_HISTORY),
+  history: z.array(MoveRecordSchema).max(MAX_GAME_HISTORY),
   startTime: z.number().int().nonnegative().optional(),
 });
 export type PersistedGameState = z.infer<typeof PersistedGameStateSchema>;
@@ -55,7 +55,7 @@ export const GameStateSchema = z
     diceRoll: z.number().int().min(0).max(4).nullable(),
     canMove: z.boolean(),
     validMoves: z.array(z.number().int().min(0).max(6)).max(7),
-    history: z.array(MoveRecordSchema).max(MAX_SAVE_GAME_HISTORY),
+    history: z.array(MoveRecordSchema).max(MAX_GAME_HISTORY),
     startTime: z.number().int().nonnegative().optional(),
   })
   .superRefine((state, context) => {
@@ -164,10 +164,13 @@ export type OpponentMode = z.infer<typeof OpponentModeSchema>;
 export const AISourceSchema = z.enum(['heuristic', 'classic', 'ml']);
 export type AISource = z.infer<typeof AISourceSchema>;
 
+export const ParticipantSchema = z.enum(['human', 'heuristic', 'classic', 'ml']);
+export type Participant = z.infer<typeof ParticipantSchema>;
+
 export const MoveEvaluationSchema = z.object({
   pieceIndex: z.number().int().min(0).max(6),
   score: z.number().finite(),
-  moveType: z.string(),
+  moveType: MoveTypeSchema,
   fromSquare: z.number().int().min(-1).max(20),
   toSquare: z.number().int().min(0).max(20).nullable(),
 });

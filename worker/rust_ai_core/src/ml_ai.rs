@@ -59,9 +59,28 @@ impl MLAI {
         }
     }
 
-    pub fn load_pretrained(&mut self, value_weights: &[f32], policy_weights: &[f32]) {
-        self.value_network.load_weights(value_weights);
-        self.policy_network.load_weights(policy_weights);
+    pub fn load_pretrained(
+        &mut self,
+        value_weights: &[f32],
+        policy_weights: &[f32],
+    ) -> Result<(), String> {
+        let expected_value = self.value_network.expected_weight_count();
+        let expected_policy = self.policy_network.expected_weight_count();
+        if value_weights.len() != expected_value {
+            return Err(format!(
+                "value network received {} weights; expected {expected_value}",
+                value_weights.len()
+            ));
+        }
+        if policy_weights.len() != expected_policy {
+            return Err(format!(
+                "policy network received {} weights; expected {expected_policy}",
+                policy_weights.len()
+            ));
+        }
+
+        self.value_network.load_weights(value_weights)?;
+        self.policy_network.load_weights(policy_weights)
     }
 
     pub fn get_best_move(&mut self, state: &GameState) -> MLResponse {
@@ -319,18 +338,23 @@ mod tests {
     fn test_ml_ai_weight_loading() {
         let mut ai = MLAI::new();
 
-        // Create dummy weights
-        let value_weights = vec![0.1; 81921]; // Approximate size for value network
-        let policy_weights = vec![0.1; 82119]; // Approximate size for policy network
+        let value_weights = vec![0.1; 81921];
+        let policy_weights = vec![0.1; 82119];
 
-        // Should not panic
-        ai.load_pretrained(&value_weights, &policy_weights);
+        ai.load_pretrained(&value_weights, &policy_weights).unwrap();
 
-        // Test that AI still works after loading weights
         let mut state = GameState::new();
-        state.dice_roll = 1; // Ensure there are valid moves
+        state.dice_roll = 1;
         let response = ai.get_best_move(&state);
         assert!(!response.diagnostics.valid_moves.is_empty());
+    }
+
+    #[test]
+    fn test_ml_ai_rejects_incomplete_weights() {
+        let mut ai = MLAI::new();
+        let error = ai.load_pretrained(&[0.1], &[0.1]).unwrap_err();
+
+        assert!(error.contains("value network received 1 weights"));
     }
 
     #[test]
@@ -491,48 +515,38 @@ mod tests {
 
     #[test]
     fn test_ml_ai_actual_weights() {
-        use serde_json;
-        use std::fs;
-
-        // Try to load the actual weights file
         let weights_path = "../../ml/data/weights/ml_ai_weights_pytorch_v5.json";
-        if let Ok(content) = fs::read_to_string(weights_path) {
-            if let Ok(weights_data) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let (Some(value_weights), Some(policy_weights)) = (
-                    weights_data["value_weights"].as_array(),
-                    weights_data["policy_weights"].as_array(),
-                ) {
-                    let value_weights: Vec<f32> = value_weights
-                        .iter()
-                        .filter_map(|v| v.as_f64().map(|f| f as f32))
-                        .collect();
-                    let policy_weights: Vec<f32> = policy_weights
-                        .iter()
-                        .filter_map(|v| v.as_f64().map(|f| f as f32))
-                        .collect();
+        let content = std::fs::read_to_string(weights_path).expect("production model must exist");
+        let weights: serde_json::Value =
+            serde_json::from_str(&content).expect("production model must contain valid JSON");
+        let parse = |name: &str| {
+            weights[name]
+                .as_array()
+                .unwrap_or_else(|| panic!("{name} must be an array"))
+                .iter()
+                .map(|value| {
+                    value
+                        .as_f64()
+                        .unwrap_or_else(|| panic!("{name} must contain numbers"))
+                        as f32
+                })
+                .collect::<Vec<_>>()
+        };
 
-                    let mut ai = MLAI::new();
-                    ai.load_pretrained(&value_weights, &policy_weights);
+        let mut ai = MLAI::new();
+        ai.load_pretrained(&parse("value_weights"), &parse("policy_weights"))
+            .unwrap();
 
-                    let mut state = GameState::new();
-                    state.dice_roll = 1;
-                    let response = ai.get_best_move(&state);
+        let mut state = GameState::new();
+        state.dice_roll = 1;
+        let response = ai.get_best_move(&state);
 
-                    // Check that value network is not always zero
-                    assert_ne!(
-                        response.diagnostics.value_network_output, 0.0,
-                        "Value network should not always return 0.0"
-                    );
-
-                    // Check that policy network outputs are reasonable
-                    assert_eq!(
-                        response.diagnostics.policy_network_outputs.len(),
-                        PIECES_PER_PLAYER
-                    );
-                    let sum: f32 = response.diagnostics.policy_network_outputs.iter().sum();
-                    assert!((sum - 1.0).abs() < 1e-6, "Policy outputs should sum to 1.0");
-                }
-            }
-        }
+        assert_ne!(response.diagnostics.value_network_output, 0.0);
+        assert_eq!(
+            response.diagnostics.policy_network_outputs.len(),
+            PIECES_PER_PLAYER
+        );
+        let sum: f32 = response.diagnostics.policy_network_outputs.iter().sum();
+        assert!((sum - 1.0).abs() < 1e-6);
     }
 }

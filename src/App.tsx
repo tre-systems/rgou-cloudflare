@@ -21,7 +21,7 @@ export default function App() {
   return (
     <AppErrorBoundary>
       <MotionConfig reducedMotion="user">
-        <div style={{ paddingTop: 'env(safe-area-inset-top)' }}>{content}</div>
+        {content}
         <PWAInstallPrompt />
         <NetworkStatus />
         <ServiceWorkerUpdate />

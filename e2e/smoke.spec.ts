@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 async function startGame(page: Page, mode: 'classic' | 'ml' | 'watch' = 'classic') {
   await page.goto('/');
@@ -21,18 +21,26 @@ async function captureUsage(page: Page) {
   return events;
 }
 
+async function setNearWinningRoll(page: Page, roll = 1) {
+  await page.evaluate(value => {
+    const { actions } = window.useGameStore.getState();
+    actions.createNearWinningState();
+    actions.processDiceRoll(value);
+  }, roll);
+}
+
 test.describe('Core Game Functionality', () => {
   test('can start a classic game and see initial state', async ({ page }) => {
     await startGame(page, 'classic');
     await expect(page.getByTestId('game-status-text')).toContainText('Your turn');
-    await expect(page.getByTestId('roll-dice')).toBeVisible();
+    await expect(page.getByTestId('dice-display')).toBeVisible();
     await expect(page.getByTestId('game-board')).toBeVisible();
   });
 
   test('can start ML game and see AI opponent', async ({ page }) => {
     await startGame(page, 'ml');
     await expect(page.getByTestId('game-status-text')).toContainText('Your turn');
-    await expect(page.getByTestId('roll-dice')).toBeVisible();
+    await expect(page.getByTestId('dice-display')).toBeVisible();
   });
 
   test('can start watch mode and see AI vs AI', async ({ page }) => {
@@ -60,26 +68,24 @@ test.describe('Game Interactions', () => {
     await startGame(page, 'classic');
   });
 
-  test('can roll dice and see it changes', async ({ page }) => {
-    const diceButton = page.getByTestId('roll-dice');
-    await expect(diceButton).toBeVisible();
+  test('automatically rolls and displays the dice', async ({ page }) => {
+    await setNearWinningRoll(page);
 
-    await diceButton.click();
-    await page.waitForTimeout(500);
-
-    await expect(diceButton).toBeVisible();
+    const dice = page.getByTestId('dice-display');
+    await expect(dice).toBeVisible();
+    await expect(dice).toHaveAttribute('aria-label', /^Dice roll: [0-4]$/, { timeout: 2000 });
   });
 
-  test('can make a move when dice roll allows', async ({ page }) => {
-    await page.getByTestId('roll-dice').click();
-    await page.waitForTimeout(500);
+  test('can make a legal move with the keyboard', async ({ page }) => {
+    await setNearWinningRoll(page);
 
-    const pieces = page.locator('[data-testid^="player1-piece-"]');
-    const pieceCount = await pieces.count();
-    if (pieceCount > 0) {
-      await pieces.first().click();
-      await expect(page.getByTestId('game-status-text')).not.toBeEmpty();
-    }
+    const piece = page.getByRole('button', { name: 'Move piece 7 from square 12' });
+    await piece.focus();
+    await piece.press('Enter');
+
+    await expect(
+      page.getByTestId('square-13').getByTestId('game-piece-player1-static')
+    ).toBeVisible();
   });
 
   test('can toggle sound settings', async ({ page }) => {
@@ -87,9 +93,7 @@ test.describe('Game Interactions', () => {
     await expect(soundToggle).toBeVisible();
 
     await soundToggle.click();
-    await page.waitForTimeout(100);
-
-    await expect(soundToggle).toBeVisible();
+    await expect(soundToggle).toHaveAttribute('aria-label', 'Enable sound');
   });
 
   test('can open and close help panel', async ({ page }) => {
@@ -99,13 +103,17 @@ test.describe('Game Interactions', () => {
 
     await page.getByTestId('help-close').click();
     await expect(page.getByTestId('help-panel')).not.toBeVisible();
+
+    await page.getByTestId('help-button').click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('help-panel')).not.toBeVisible();
   });
 });
 
 test.describe('Game Completion and Usage Reporting', () => {
   async function simulateGameWin(page: Page) {
     await page.evaluate(() => {
-      const store = (window as any).useGameStore.getState();
+      const store = window.useGameStore.getState();
       store.actions.createNearWinningState();
       store.actions.processDiceRoll(2);
       store.actions.makeMove(6);
@@ -118,12 +126,10 @@ test.describe('Game Completion and Usage Reporting', () => {
     await startGame(page, 'classic');
     await simulateGameWin(page);
 
-    // Verify completion overlay
     await expect(page.getByTestId('game-completion-overlay')).toBeVisible();
     await expect(page.getByTestId('game-completion-title')).toBeVisible();
     await expect(page.getByTestId('game-completion-message')).toBeVisible();
 
-    // Verify stats panel shows the win
     await expect(page.getByTestId('stats-panel')).toBeVisible();
     await expect(page.getByTestId('wins-count')).toContainText('1');
   });
@@ -148,7 +154,7 @@ test.describe('Game Completion and Usage Reporting', () => {
     await startGame(page, 'classic');
     await simulateGameWin(page);
     await page.evaluate(() => {
-      const store = (window as any).useGameStore.getState();
+      const store = window.useGameStore.getState();
       store.actions.reportGameCompleted();
       store.actions.reportGameCompleted();
     });
@@ -160,55 +166,16 @@ test.describe('Game Completion and Usage Reporting', () => {
     await startGame(page, 'classic');
     await simulateGameWin(page);
 
-    // Click reset button
     await page.getByTestId('reset-game-button').click();
-
-    // Should return to mode selection
     await expect(page.getByTestId('ai-model-selection')).toBeVisible();
   });
 });
 
-test.describe('Error Handling and Edge Cases', () => {
-  test('handles rapid dice rolls gracefully', async ({ page }) => {
-    await startGame(page, 'classic');
-
-    // Rapidly click dice roll
-    for (let i = 0; i < 5; i++) {
-      await page.getByTestId('roll-dice').click();
-      await page.waitForTimeout(50);
-    }
-
-    // Should still be functional
-    await expect(page.getByTestId('game-board')).toBeVisible();
-  });
-
-  test('handles rapid piece clicks gracefully', async ({ page }) => {
-    await startGame(page, 'classic');
-
-    // Roll dice first
-    await page.getByTestId('roll-dice').click();
-    await page.waitForTimeout(500);
-
-    // Rapidly click pieces
-    const pieces = page.locator('[data-testid^="player1-piece-"]');
-    const pieceCount = await pieces.count();
-    if (pieceCount > 0) {
-      for (let i = 0; i < 3; i++) {
-        await pieces.first().click();
-        await page.waitForTimeout(50);
-      }
-    }
-
-    // Should still be functional
-    await expect(page.getByTestId('game-board')).toBeVisible();
-  });
-
+test.describe('Persistence', () => {
   test('maintains game state during navigation', async ({ page }) => {
     await startGame(page, 'classic');
-
-    // Make some game progress
-    await page.getByTestId('roll-dice').click();
-    await page.waitForTimeout(500);
+    await setNearWinningRoll(page);
+    await expect(page.getByTestId('dice-display')).toHaveAttribute('aria-label', 'Dice roll: 1');
 
     await page.reload();
 
@@ -222,16 +189,13 @@ test.describe('Mobile Responsiveness', () => {
 
   test('game is fully functional on mobile', async ({ page }) => {
     await startGame(page, 'classic');
+    await setNearWinningRoll(page);
 
-    // Verify all key elements are visible and functional
     await expect(page.getByTestId('game-board')).toBeVisible();
-    await expect(page.getByTestId('roll-dice')).toBeVisible();
+    await expect(page.getByTestId('dice-display')).toBeVisible();
     await expect(page.getByTestId('sound-toggle')).toBeVisible();
     await expect(page.getByTestId('help-button')).toBeVisible();
 
-    // Test basic interactions
-    await page.getByTestId('roll-dice').click();
-    await page.waitForTimeout(500);
-    await expect(page.getByTestId('roll-dice')).toBeVisible();
+    await expect(page.getByTestId('dice-display')).toHaveAttribute('aria-label', 'Dice roll: 1');
   });
 });

@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bug, ChevronDown, ChevronRight, Brain, Zap } from 'lucide-react';
-import { AIResponse, MoveEvaluation } from '@/lib/types';
-import { GameState } from '@/lib/types';
+import type { AIResponse, GameState, MoveEvaluation } from '@/lib/types';
 import {
   calculateBoardControl,
   calculateGamePhase,
@@ -45,7 +44,12 @@ export default function AIDiagnosticsPanel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
     >
-      <button className="w-full text-left flex justify-between items-center" onClick={onToggle}>
+      <button
+        type="button"
+        className="w-full text-left flex justify-between items-center"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+      >
         <div className="flex items-center space-x-2">
           <Bug className="w-4 h-4 text-green-400" />
           <span className="font-semibold text-sm text-white/90">AI Diagnostics</span>
@@ -96,7 +100,9 @@ export default function AIDiagnosticsPanel({
               <div className="grid grid-cols-2 gap-3 text-center">
                 <div className="glass-light p-2 rounded-md">
                   <p className="text-white/70">AI Time (ms)</p>
-                  <p className="font-mono text-white/90">{lastAIMoveDuration?.toFixed(2)}</p>
+                  <p className="font-mono text-white/90">
+                    {lastAIMoveDuration?.toFixed(2) ?? 'N/A'}
+                  </p>
                 </div>
                 <div className="glass-light p-2 rounded-md">
                   <p className="text-white/70">Nodes/Hits</p>
@@ -188,7 +194,7 @@ export default function AIDiagnosticsPanel({
                   {lastAIDiagnostics.diagnostics.moveEvaluations?.map(
                     (move: MoveEvaluation, index: number) => (
                       <div
-                        key={index}
+                        key={`${move.pieceIndex}-${move.fromSquare}-${move.toSquare}-${index}`}
                         className="grid grid-cols-4 gap-2 items-center text-center p-1.5 rounded-md bg-gray-800/50"
                       >
                         <p className="font-mono text-white/90">#{move.pieceIndex}</p>

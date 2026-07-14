@@ -33,7 +33,7 @@ async function waitFor(check) {
     } catch (error) {
       detail = String(error);
     }
-    await pause();
+    if (attempt < 9) await pause();
   }
   throw new Error(`Smoke check failed for ${check.path}: ${detail}`);
 }
@@ -50,15 +50,14 @@ export function getConfiguredAliases(wranglerConfig) {
 
 export async function checkCanonicalRedirect(
   alias,
-  {
-    fetchImpl = fetch,
-    logger = console,
-    probePath = '/offline?source=smoke&mode=alias',
-  } = {}
+  { fetchImpl = fetch, logger = console, probePath = '/offline?source=smoke&mode=alias' } = {}
 ) {
   const requestUrl = `https://${alias}${probePath}`;
   const expectedLocation = `${origin}${probePath}`;
-  const response = await fetchImpl(requestUrl, { redirect: 'manual' });
+  const response = await fetchImpl(requestUrl, {
+    redirect: 'manual',
+    signal: AbortSignal.timeout(10_000),
+  });
   const actualLocation = response.headers.get('location');
 
   if (response.status !== 301 || actualLocation !== expectedLocation) {
@@ -83,7 +82,7 @@ export async function checkConfiguredCanonicalRedirects(wranglerConfig, options)
 export async function runProductionSmoke() {
   const expectedRelease = process.env.EXPECTED_RELEASE?.trim();
 
-  for (const check of checks) await waitFor(check);
+  await Promise.all(checks.map(waitFor));
 
   if (expectedRelease) {
     await waitFor({
@@ -100,17 +99,30 @@ export async function runProductionSmoke() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: origin },
     body: JSON.stringify({ event: 'page_view' }),
+    signal: AbortSignal.timeout(10_000),
   });
-  if (invalidUsage.status !== 400) throw new Error(`Usage validation failed: ${invalidUsage.status}`);
+  if (invalidUsage.status !== 400)
+    throw new Error(`Usage validation failed: ${invalidUsage.status}`);
   console.log('Usage validation smoke check passed');
 
   const wranglerConfig = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
   await checkConfiguredCanonicalRedirects(wranglerConfig);
 }
 
+export async function runProductionSmokeCli({
+  run = runProductionSmoke,
+  logger = console,
+  exit = process.exit,
+} = {}) {
+  try {
+    await run();
+    exit(0);
+  } catch (error) {
+    logger.error(error);
+    exit(1);
+  }
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  runProductionSmoke().catch(error => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+  void runProductionSmokeCli();
 }

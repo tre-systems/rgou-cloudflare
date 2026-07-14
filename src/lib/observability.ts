@@ -8,7 +8,7 @@ function loadSentry() {
   return sentryPromise;
 }
 
-function beforeSend(event: ErrorEvent): ErrorEvent {
+export function sanitizeErrorEvent(event: ErrorEvent): ErrorEvent {
   delete event.user;
   if (event.request) {
     delete event.request.cookies;
@@ -38,18 +38,18 @@ function beforeSend(event: ErrorEvent): ErrorEvent {
 }
 
 export function initializeObservability() {
-  const dsn = import.meta.env['VITE_SENTRY_DSN'];
+  const dsn = import.meta.env.VITE_SENTRY_DSN;
   if (!dsn) return;
 
   void loadSentry()
     .then(Sentry => {
       Sentry.init({
         dsn,
-        environment: import.meta.env['VITE_SENTRY_ENVIRONMENT'] ?? import.meta.env.MODE,
-        release: import.meta.env['VITE_SENTRY_RELEASE'],
+        environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? import.meta.env.MODE,
+        release: import.meta.env.VITE_SENTRY_RELEASE,
         sendDefaultPii: false,
         tracesSampleRate: import.meta.env.PROD ? 0.01 : 0,
-        beforeSend,
+        beforeSend: sanitizeErrorEvent,
       });
     })
     .catch(error => {
@@ -58,7 +58,7 @@ export function initializeObservability() {
 }
 
 export function captureException(error: unknown, context?: Record<string, unknown>) {
-  if (!import.meta.env['VITE_SENTRY_DSN']) return;
+  if (!import.meta.env.VITE_SENTRY_DSN) return;
   void loadSentry()
     .then(Sentry => {
       Sentry.captureException(error, context ? { extra: context } : undefined);

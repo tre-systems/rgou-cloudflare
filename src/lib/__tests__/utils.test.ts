@@ -1,14 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cn, getAIName, getAISubtitle, isDevelopment } from '../utils';
 
 describe('Utils', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.stubGlobal('window', undefined);
-  });
-
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   describe('cn', () => {
@@ -36,15 +31,11 @@ describe('Utils', () => {
   });
 
   describe('environment detection', () => {
-    it('should detect production environment', () => {
-      vi.stubGlobal('window', undefined);
-      vi.stubEnv('NODE_ENV', 'production');
+    it('detects production and explicit end-to-end builds', () => {
+      vi.stubEnv('DEV', false);
       expect(isDevelopment()).toBe(false);
-    });
 
-    it('should detect development environment', () => {
-      vi.stubGlobal('window', { location: { hostname: 'localhost' } });
-      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITE_E2E', 'true');
       expect(isDevelopment()).toBe(true);
     });
   });

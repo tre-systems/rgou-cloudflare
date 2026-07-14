@@ -66,13 +66,13 @@ async function loadMLWeights(): Promise<void> {
     }
 
     let value: unknown;
-    const compressedResponse = await fetch('/ml-weights.json.gz');
-    if (compressedResponse.ok) {
-      try {
+    try {
+      const compressedResponse = await fetch('/ml-weights.json.gz');
+      if (compressedResponse.ok) {
         value = await parseGzipJson(compressedResponse);
-      } catch (error) {
-        console.warn('AI worker could not decompress model; using JSON fallback:', error);
       }
+    } catch (error) {
+      console.warn('AI worker could not load the compressed model; using JSON fallback:', error);
     }
 
     if (value === undefined) {

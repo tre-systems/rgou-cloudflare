@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   PlayerSchema,
+  MoveTypeSchema,
   EngineAIResponseSchema,
   type GameState,
   type EngineAIResponse,
@@ -66,12 +67,7 @@ export function toWasmGameState(position: AIPosition) {
 
 const VALUE_WEIGHT_COUNT = 81_921;
 const POLICY_WEIGHT_COUNT = 82_119;
-const HiddenSizesSchema = z.tuple([
-  z.literal(256),
-  z.literal(128),
-  z.literal(64),
-  z.literal(32),
-]);
+const HiddenSizesSchema = z.tuple([z.literal(256), z.literal(128), z.literal(64), z.literal(32)]);
 const FlatNetworkConfigSchema = z.object({
   input_size: z.literal(150),
   hidden_sizes: HiddenSizesSchema,
@@ -110,7 +106,7 @@ export type MLWeights = z.infer<typeof MLWeightsSchema>;
 const MLMoveEvaluationSchema = z.object({
   piece_index: z.number().int().min(0).max(6),
   score: z.number().finite(),
-  move_type: z.string(),
+  move_type: MoveTypeSchema,
   from_square: z.number().int().min(-1).max(20),
   to_square: z.number().int().min(0).max(20).optional(),
 });

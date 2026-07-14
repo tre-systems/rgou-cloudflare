@@ -10,7 +10,7 @@ declare global {
 export default function GameStoreExposer() {
   useEffect(() => {
     if (
-      (import.meta.env.DEV || import.meta.env['VITE_E2E'] === 'true') &&
+      (import.meta.env.DEV || import.meta.env.VITE_E2E === 'true') &&
       typeof window !== 'undefined'
     ) {
       window.useGameStore = useGameStore;

@@ -11,7 +11,7 @@ For measured win rates and speed across every matchup, see [AI-MATRIX-RESULTS.md
 
 The UI never sends a complete `GameState` to AI code. Both thin main-thread services share one lazily constructed `AIWorkerClient`, which sends a schema-validated `AIPosition`: seven squares per player, current player, and dice roll. The discriminated Worker protocol correlates each request by ID, times it out after 30 seconds, and restarts the Worker after timeout or failure.
 
-The single Worker lazily loads one Rust/WASM module and dispatches Classic, heuristic, and ML requests. ML weights are fetched inside the Worker: it prefers the gzip asset, uses streaming `DecompressionStream`, parses and validates model metadata, network dimensions, and exact weight counts, then loads the arrays into WASM. The uncompressed JSON is a compatibility fallback. Search, inference, decompression, JSON parsing, and validation therefore stay off the UI thread.
+The single Worker lazily loads one Rust/WASM module and dispatches Classic, heuristic, and ML requests. ML weights are fetched inside the Worker: it prefers the gzip asset, uses streaming `DecompressionStream`, parses and validates model metadata, network dimensions, and exact weight counts, then loads the arrays into WASM. A failed compressed fetch or decompression falls back to the uncompressed JSON compatibility asset. Search, inference, decompression, JSON parsing, and validation therefore stay off the UI thread.
 
 The TypeScript and Rust rule implementations consume the same `test-fixtures/rules-conformance.json` cases. These fixtures cover entry, blocking, protected rosettes, captures, finishing, overshoot, and mirrored player tracks. Add a shared case whenever rule behavior changes.
 
@@ -106,14 +106,13 @@ Trained weights live in `ml/data/weights/`:
 | Model      | Games | Epochs |
 | ---------- | ----- | ------ |
 | PyTorch V5 | 2000  | 100    |
-| ML-V2      | 1000  | 50     |
 | ML-Fast    | 1000  | 50     |
 | ML-V4      | 5000  | 100    |
 | ML-Hybrid  | 1000  | 50     |
 
 Convert and publish a model with `npm run load:ml-weights`.
 
-Published weights carry training version, date, game/sample counts, seed, best validation loss, and an exact network shape. `ml/model-manifest.json` records the canonical source revision, training inputs, architecture, weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents these forms from drifting. `MLWeightsSchema` rejects incomplete metadata, the wrong architecture, non-finite values, and incorrect weight counts before data reaches Rust.
+Published weights carry training version, date, game/sample counts, seed, best validation loss, and an exact network shape. `ml/model-manifest.json` records the canonical source revision, training inputs, architecture, weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents these forms from drifting. TypeScript and Rust both reject incomplete metadata, the wrong architecture, non-finite values, and weight arrays whose counts are either short or oversized.
 
 ## Testing
 

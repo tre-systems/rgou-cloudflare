@@ -25,6 +25,8 @@ No GPU? Use the Rust backend instead (`npm run train:rust`, `:quick`, `:producti
 
 `ml/pyproject.toml` declares the supported Python and training dependencies. `ml/uv.lock` pins the complete cross-platform resolution, including artifact hashes. Use `uv sync --project ml --locked`; do not install training dependencies independently with `pip`. Upgrade intentionally with `uv lock --project ml --upgrade`, review the lock diff, and rerun model validation.
 
+Self-play data is written to `~/Desktop/rgou-training-data` by default. Set `RGOU_TRAINING_DATA_DIR` to use another scratch location. Default training output names are ignored because they are replaceable run artifacts; give models selected for comparison or promotion a stable versioned name.
+
 ## Backends
 
 | Backend | Hardware                    | Notes                           |
@@ -32,7 +34,7 @@ No GPU? Use the Rust backend instead (`npm run train:rust`, `:quick`, `:producti
 | PyTorch | GPU required (CUDA / Metal) | Faster training                 |
 | Rust    | CPU, parallel               | Always available; no GPU needed |
 
-`auto` picks PyTorch when a GPU is available, otherwise Rust. Rust data generation uses the available CPU cores, leaving headroom for the system on Apple Silicon and high-core machines.
+`auto` picks PyTorch when a GPU is available, otherwise Rust. Rust data generation uses the available CPU cores, leaving headroom for the system on Apple Silicon and high-core machines. The launcher uses `caffeinate` when available and also runs on platforms without it.
 
 ## Layout
 
@@ -69,7 +71,7 @@ Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.
 
 The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. Rust self-play derives an independent random stream for each game from the configured seed and game index, then preserves game-index order when collecting parallel results. The generated corpus therefore does not depend on Rayon scheduling or core allocation.
 
-New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. GPU kernels can still vary across hardware, so the seed makes CPU data generation reproducible and supports repeatable investigation, but it is not a promise of byte-identical GPU retraining.
+New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. PyTorch trains the policy head from logits and restores the lowest-validation-loss checkpoint before saving. GPU kernels can still vary across hardware, so the seed makes CPU data generation reproducible and supports repeatable investigation, but it is not a promise of byte-identical GPU retraining.
 
 The checked-in `model-manifest.json` is the production artifact contract. It records:
 

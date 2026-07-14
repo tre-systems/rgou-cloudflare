@@ -44,13 +44,4 @@ export function getAISubtitle(aiSource: AIResponse['aiType'] | null): string {
   }
 }
 
-export const isDevelopment = () => {
-  if (typeof window === 'undefined') {
-    return process.env.NODE_ENV === 'development';
-  }
-
-  const hostname = window.location.hostname;
-  return (
-    hostname === 'localhost' || hostname === '127.0.0.1' || process.env.NODE_ENV === 'development'
-  );
-};
+export const isDevelopment = () => import.meta.env.DEV || import.meta.env.VITE_E2E === 'true';

@@ -6,25 +6,36 @@ export default function ServiceWorkerUpdate() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     let active = true;
+    let registration: ServiceWorkerRegistration | undefined;
+    let installingWorker: ServiceWorker | null = null;
+
+    const handleStateChange = () => {
+      if (active && installingWorker?.state === 'installed' && navigator.serviceWorker.controller) {
+        setWaiting(installingWorker);
+      }
+    };
+
+    const handleUpdateFound = () => {
+      installingWorker?.removeEventListener('statechange', handleStateChange);
+      installingWorker = registration?.installing ?? null;
+      installingWorker?.addEventListener('statechange', handleStateChange);
+    };
 
     void navigator.serviceWorker
       .register('/sw.js')
-      .then(async registration => {
+      .then(async currentRegistration => {
         if (!active) return;
+        registration = currentRegistration;
         if (registration.waiting) setWaiting(registration.waiting);
-        registration.addEventListener('updatefound', () => {
-          const worker = registration.installing;
-          worker?.addEventListener('statechange', () => {
-            if (worker.state === 'installed' && navigator.serviceWorker.controller)
-              setWaiting(worker);
-          });
-        });
+        registration.addEventListener('updatefound', handleUpdateFound);
         await registration.update();
       })
       .catch(error => console.warn('Service worker registration failed:', error));
 
     return () => {
       active = false;
+      registration?.removeEventListener('updatefound', handleUpdateFound);
+      installingWorker?.removeEventListener('statechange', handleStateChange);
     };
   }, []);
 

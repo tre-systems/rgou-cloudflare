@@ -1,4 +1,4 @@
-import { GameState } from './types';
+import type { GameState } from './types';
 
 export interface PiecePositions {
   player1OnBoard: number;
