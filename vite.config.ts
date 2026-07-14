@@ -25,8 +25,19 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
     build: {
-      chunkSizeWarningLimit: 510,
       outDir: 'out',
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              {
+                name: 'animation',
+                test: /node_modules[\\/](?:framer-motion|motion-dom|motion-utils)[\\/]/,
+              },
+            ],
+          },
+        },
+      },
       sourcemap: uploadSourceMaps,
     },
   };

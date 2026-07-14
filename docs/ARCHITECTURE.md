@@ -42,7 +42,7 @@ flowchart TD
 | Functional core / imperative shell | Rules return new values and do not perform I/O; effects are coordinated outside the rules.                  | `src/lib/game-logic.ts` is the core; stores, services, and React effects are the shell.   |
 | Explicit state machine             | Legal game transitions are centralized and invalid transitions are no-ops or explicit errors.               | `initializeGame`, `processDiceRoll`, `makeMove`, and `endTurn` in `src/lib/game-logic.ts` |
 | Single writer                      | Zustand actions own application-state mutation; components request transitions rather than editing state.   | `src/lib/game-store.ts`, `src/lib/ui-store.ts`, `src/lib/stats-store.ts`                  |
-| Canonical state / projections      | Persistence contains only irreducible state; board, status, winner, legal moves, and `canMove` are rebuilt. | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
+| Canonical state / projections      | Persistence contains only irreducible state and bounded history; derived gameplay fields are rebuilt.      | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
 | Injected entropy                   | Random choices can be reproduced by supplying a controlled source.                                          | `RandomSource`, `initializeGame`, `rollDice`, and `processDiceRoll` in `game-logic.ts`    |
 | Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.       | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
 | Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                                 | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
@@ -85,14 +85,15 @@ Components may contain display decisions and transient animation state. Reusable
 | Data minimization           | Analytics contain only the dimensions required for aggregate product questions.                                | `usage.ts`; startup removes the retired `rgou-player-id` key.                 |
 | Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                       | `game_started` and `game_completed` via `/api/usage`                          |
 | Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                 | `src/worker.ts`, `canonical-host.ts`                                          |
-| Tiered offline precache     | Required HTML and discovered hashed JS/CSS failure aborts installation; large AI assets are optional.          | generated service worker plus its Node and browser contract tests             |
+| Tiered offline precache     | Required shell failure aborts installation; large AI assets are optional; health and API routes stay online.   | generated service worker plus its Node and browser contract tests             |
+| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts`       |
 | Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.           | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test      |
 | Supply-chain gate           | Known high-severity JavaScript or Rust advisories block deployment.                                            | `npm audit`, committed `Cargo.lock`, and `cargo audit` in CI                  |
 | Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs` |
 
 ## Frontend structure
 
-- `src/components/` — React containers, presentational game UI, and animations
+- `src/components/` — React containers, focused mode/game presentation, and animations
 - `src/hooks/` — focused React effect lifecycles such as turn scheduling and sound coordination
 - `src/lib/schemas.ts` — canonical domain schemas and inferred types
 - `src/lib/game-logic.ts` — pure rules, state transitions, persistence projections, and injectable entropy
@@ -106,7 +107,7 @@ Components may contain display decisions and transient animation state. Reusable
 - `src/lib/usage.ts` — anonymous lifecycle event contract and Analytics Engine mapping
 - `src/worker.ts` — edge front controller, API validation, security headers, and static assets
 
-`RoyalGameOfUr.tsx` is the orchestration container, while `useGameTurnScheduler` and `useGameAudio` own cohesive effect lifecycles. Do not move domain decisions back into leaf components.
+`RoyalGameOfUr.tsx` is the orchestration container, `ModeSelection.tsx` owns mode presentation, and `useGameTurnScheduler` and `useGameAudio` own cohesive effect lifecycles. Do not move domain decisions back into leaf components.
 
 ## Principal flows
 
@@ -118,13 +119,13 @@ Components may contain display decisions and transient animation state. Reusable
 2. `makeAIMove` snapshots the active game and turn.
 3. A thin engine adapter asks the shared lazy `AIWorkerClient` to send a validated `AIPosition`.
 4. The single Worker lazily loads WASM, dispatches to Classic, heuristic, or ML, and validates the returned JSON through `ai-protocol.ts`.
-5. For ML, the Worker fetches, streams gzip decompression, parses, validates, and loads model weights without blocking the UI thread. It falls back to the uncompressed model only when streaming decompression is unavailable or fails.
+5. For ML, the Worker fetches, streams gzip decompression, parses, validates, and loads model weights without blocking the UI thread. A failed compressed fetch or decompression falls back to the uncompressed model.
 6. The store discards stale results, normalizes diagnostics, and applies a legal move through `makeMove`.
 7. Failure, timeout, invalid data, or an illegal suggestion falls back to a legal local move; timeout also restarts the Worker.
 
 ### Persistence
 
-1. Zustand converts runtime `GameState` to `PersistedGameState`, retaining pieces, current player, roll, bounded history, and optional start time.
+1. Zustand converts runtime `GameState` to `PersistedGameState`, retaining pieces, current player, roll, the latest 512 history entries, the original starting player, and optional start time.
 2. Stored values are treated as `unknown`; Zod validates the canonical representation during hydration.
 3. `materializeGameState` rebuilds board occupancy, game status, winner, legal moves, and `canMove` from canonical fields.
 4. Invalid or obsolete data falls back to safe defaults; the retired player identifier is deleted at startup.

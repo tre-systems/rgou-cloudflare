@@ -80,11 +80,49 @@ test('hashed application assets are part of the required offline shell', async (
     addAll: async assets => addAllCalls.push(Array.from(assets)),
     match: async () =>
       new Response(
-        '<link rel="stylesheet" href="/assets/index-123.css"><script type="module" src="/assets/index-456.js"></script>'
+        '<link rel="modulepreload" href="/assets/animation-123.js">' +
+          '<link rel="stylesheet" href="/assets/index-123.css">' +
+          '<script type="module" src="/assets/index-456.js"></script>'
       ),
     put: async () => undefined,
   });
 
   await assert.doesNotReject(installPromise);
-  assert.deepEqual(addAllCalls[1], ['/assets/index-123.css', '/assets/index-456.js']);
+  assert.deepEqual(addAllCalls[1], [
+    '/assets/animation-123.js',
+    '/assets/index-123.css',
+    '/assets/index-456.js',
+  ]);
+});
+
+test('health and API requests bypass the cache', () => {
+  let fetchHandler;
+  const self = {
+    addEventListener(type, handler) {
+      if (type === 'fetch') fetchHandler = handler;
+    },
+    clients: { claim: async () => undefined },
+    location: { origin: 'https://gameofur.org' },
+  };
+
+  vm.runInNewContext(createServiceWorkerSource('test-release'), {
+    URL,
+    Response,
+    caches: {},
+    console,
+    fetch,
+    self,
+  });
+
+  assert.ok(fetchHandler);
+  for (const pathname of ['/healthz', '/api/usage']) {
+    let intercepted = false;
+    fetchHandler({
+      request: new Request(`https://gameofur.org${pathname}`),
+      respondWith: () => {
+        intercepted = true;
+      },
+    });
+    assert.equal(intercepted, false, `${pathname} should remain network-only`);
+  }
 });

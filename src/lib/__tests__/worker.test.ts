@@ -49,12 +49,49 @@ describe('usage Worker endpoint', () => {
     expect((await worker.fetch(usageRequest({ value: 'x'.repeat(300) }), env())).status).toBe(413);
   });
 
+  it('enforces method and media-type boundaries', async () => {
+    const environment = env();
+    expect(
+      (
+        await worker.fetch(
+          new Request('https://gameofur.org/api/usage', { method: 'GET' }),
+          environment
+        )
+      ).status
+    ).toBe(405);
+    expect(
+      (
+        await worker.fetch(
+          usageRequest(gameStartedUsage('ml', 'player1'), { 'Content-Type': 'text/plain' }),
+          environment
+        )
+      ).status
+    ).toBe(415);
+  });
+
   it('fails closed when analytics are unavailable', async () => {
     const unavailable = env();
     delete unavailable.APP_USAGE;
     expect(
       (await worker.fetch(usageRequest(gameStartedUsage('watch', 'player2')), unavailable)).status
     ).toBe(503);
+  });
+});
+
+describe('Worker routing', () => {
+  it('redirects aliases and delegates canonical assets', async () => {
+    const environment = env();
+    const redirect = await worker.fetch(
+      new Request('https://www.gameofur.net/offline?source=test'),
+      environment
+    );
+    expect(redirect.status).toBe(301);
+    expect(redirect.headers.get('location')).toBe('https://gameofur.org/offline?source=test');
+
+    const request = new Request('https://gameofur.org/manifest.json');
+    const asset = await worker.fetch(request, environment);
+    expect(await asset.text()).toBe('asset');
+    expect(environment.ASSETS.fetch).toHaveBeenCalledWith(request);
   });
 });
 

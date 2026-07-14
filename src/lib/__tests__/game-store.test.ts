@@ -5,11 +5,13 @@ import { createTestGameState } from './test-utils';
 
 const incrementWinsMock = vi.fn();
 const incrementLossesMock = vi.fn();
-const { getClassicAIMoveMock, getHeuristicAIMoveMock, getMLAIMoveMock } = vi.hoisted(() => ({
-  getClassicAIMoveMock: vi.fn(),
-  getHeuristicAIMoveMock: vi.fn(),
-  getMLAIMoveMock: vi.fn(),
-}));
+const { getClassicAIMoveMock, getHeuristicAIMoveMock, getMLAIMoveMock, reportUsageMock } =
+  vi.hoisted(() => ({
+    getClassicAIMoveMock: vi.fn(),
+    getHeuristicAIMoveMock: vi.fn(),
+    getMLAIMoveMock: vi.fn(),
+    reportUsageMock: vi.fn(),
+  }));
 
 const classicResponse = (move: number | null) => ({
   move,
@@ -60,6 +62,11 @@ vi.mock('../stats-store', () => ({
       },
     })),
   },
+}));
+
+vi.mock('../usage', async importOriginal => ({
+  ...(await importOriginal<typeof import('../usage')>()),
+  reportUsage: reportUsageMock,
 }));
 
 describe('GameStore', () => {
@@ -272,6 +279,33 @@ describe('GameStore', () => {
       expect(state.lastAIMoveDuration).toBe(null);
       expect(state.lastMoveType).toBe(null);
       expect(state.lastMovePlayer).toBe(null);
+    });
+  });
+
+  describe('usage reporting', () => {
+    it('retains the actual starting player for completion analytics', () => {
+      const { actions } = useGameStore.getState();
+      useUIStore.getState().actions.setSelectedMode('classic');
+      useGameStore.setState(state => ({
+        ...state,
+        gameState: createTestGameState({ currentPlayer: 'player2' }),
+      }));
+
+      actions.reportGameStarted('classic');
+      useGameStore.setState(state => ({
+        ...state,
+        gameState: createTestGameState({
+          currentPlayer: 'player1',
+          gameStatus: 'finished',
+          winner: 'player1',
+          history: [],
+        }),
+      }));
+      actions.reportGameCompleted();
+
+      expect(reportUsageMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ event: 'game_completed', startedBy: 'player2' })
+      );
     });
   });
 

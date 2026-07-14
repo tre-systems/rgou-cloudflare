@@ -22,7 +22,7 @@ describe('Schemas', () => {
 
     it('should reject invalid board size', () => {
       const invalidGameState = {
-        board: Array(20).fill(null), // Wrong size
+        board: Array(20).fill(null),
         player1Pieces: Array(7).fill({ square: -1, player: 'player1' }),
         player2Pieces: Array(7).fill({ square: -1, player: 'player2' }),
         currentPlayer: 'player1',
@@ -99,5 +99,4 @@ describe('Schemas', () => {
       expect(() => MoveRecordSchema.parse(captureMove)).not.toThrow();
     });
   });
-
 });

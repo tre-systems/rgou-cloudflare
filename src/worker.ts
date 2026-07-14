@@ -12,7 +12,7 @@ const SECURITY_HEADERS = {
 };
 
 interface AnalyticsEngineDataset {
-  writeDataPoint(point: { indexes: string[]; blobs: string[]; doubles: number[] }): void;
+  writeDataPoint(point: ReturnType<typeof usageDataPoint>): void;
 }
 
 export interface Env {
@@ -73,7 +73,8 @@ async function recordUsage(request: Request, env: Env): Promise<Response> {
   if (request.headers.get('Origin') !== new URL(request.url).origin) {
     return textResponse(403, 'Forbidden');
   }
-  if (request.headers.get('Content-Type')?.split(';', 1)[0] !== 'application/json') {
+  const mediaType = request.headers.get('Content-Type')?.split(';', 1)[0]?.trim().toLowerCase();
+  if (mediaType !== 'application/json') {
     return textResponse(415, 'Unsupported media type');
   }
   if (Number(request.headers.get('Content-Length') ?? 0) > MAX_USAGE_BODY_BYTES) {

@@ -43,11 +43,6 @@ fn optimize_cpu_usage() {
     }
 }
 
-fn get_evolved_params() -> GeneticParams {
-    GeneticParams::load_from_file("../../ml/data/genetic_params/evolved.json")
-        .unwrap_or_else(|_| GeneticParams::default())
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum AIType {
     Random,
@@ -57,7 +52,6 @@ enum AIType {
     EMMDepth3,
     EMMDepth4,
     MLFast,
-    MLV2,
     MLV4,
     MLHybrid,
     MLPyTorchV5,
@@ -73,7 +67,6 @@ impl AIType {
             AIType::EMMDepth3 => "EMM-Depth3",
             AIType::EMMDepth4 => "EMM-Depth4",
             AIType::MLFast => "ML-Fast",
-            AIType::MLV2 => "ML-V2",
             AIType::MLV4 => "ML-V4",
             AIType::MLHybrid => "ML-Hybrid",
             AIType::MLPyTorchV5 => "ML-PyTorch-V5",
@@ -83,7 +76,6 @@ impl AIType {
     fn weights_file(&self) -> Option<&'static str> {
         match self {
             AIType::MLFast => Some("../../ml/data/weights/ml_ai_weights_fast.json"),
-            AIType::MLV2 => Some("../../ml/data/weights/ml_ai_weights_v2.json"),
             AIType::MLV4 => Some("../../ml/data/weights/ml_ai_weights_v4.json"),
             AIType::MLHybrid => Some("../../ml/data/weights/ml_ai_weights_hybrid.json"),
             AIType::MLPyTorchV5 => Some("../../ml/data/weights/ml_ai_weights_pytorch_v5.json"),
@@ -189,7 +181,7 @@ impl MLAIPlayer {
 
         let (value_weights, policy_weights) = load_ml_weights(weights_file)?;
         let mut ai = MLAI::new();
-        ai.load_pretrained(&value_weights, &policy_weights);
+        ai.load_pretrained(&value_weights, &policy_weights)?;
 
         Ok(Self { ai })
     }
@@ -234,15 +226,25 @@ fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn s
         .as_array()
         .ok_or("Invalid value_weights format")?
         .iter()
-        .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-        .collect();
+        .map(|value| {
+            value
+                .as_f64()
+                .map(|number| number as f32)
+                .ok_or_else(|| "value_weights contains a non-number".to_string())
+        })
+        .collect::<Result<_, _>>()?;
 
     let policy_weights = data["policy_weights"]
         .as_array()
         .ok_or("Invalid policy_weights format")?
         .iter()
-        .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-        .collect();
+        .map(|value| {
+            value
+                .as_f64()
+                .map(|number| number as f32)
+                .ok_or_else(|| "policy_weights contains a non-number".to_string())
+        })
+        .collect::<Result<_, _>>()?;
 
     Ok((value_weights, policy_weights))
 }
@@ -259,8 +261,7 @@ fn play_game(
     ai2: &mut Box<dyn AIPlayer>,
     ai1_plays_first: bool,
 ) -> GameResult {
-    // Use evolved parameters for the game state
-    let evolved_params = get_evolved_params();
+    let evolved_params = GeneticParams::evolved();
     let mut game_state = GameState::with_genetic_params(evolved_params);
     let mut moves_played = 0;
     let mut ai1_time_ms = 0;
@@ -349,7 +350,6 @@ fn play_game(
     }
 }
 
-// Create AI player from type
 fn create_ai_player(ai_type: &AIType) -> Result<Box<dyn AIPlayer>, Box<dyn std::error::Error>> {
     match ai_type {
         AIType::Random => Ok(Box::new(RandomAI)),
@@ -467,7 +467,6 @@ fn test_ai_matrix() {
         AIType::EMMDepth2,
         AIType::EMMDepth3,
         AIType::MLFast,
-        AIType::MLV2,
         AIType::MLV4,
         AIType::MLHybrid,
         AIType::MLPyTorchV5,
@@ -502,40 +501,15 @@ fn test_ai_matrix() {
 
     let start_time = Instant::now();
 
-    // Parallelize match execution
     let results: Vec<MatrixResult> = match_combinations
         .into_par_iter()
         .map(|(ai_type1, ai_type2)| {
             println!("🏆 Testing {} vs {}", ai_type1.name(), ai_type2.name());
 
-            // Create AI players for this match
-            let mut ai1 = match create_ai_player(&ai_type1) {
-                Ok(ai) => ai,
-                Err(e) => {
-                    println!("  ❌ Failed to create {}: {}", ai_type1.name(), e);
-                    return MatrixResult {
-                        ai1: ai_type1.name().to_string(),
-                        ai2: ai_type2.name().to_string(),
-                        ai1_win_rate: 0.0,
-                        ai1_avg_time_ms: 0.0,
-                        ai2_avg_time_ms: 0.0,
-                    };
-                }
-            };
-
-            let mut ai2 = match create_ai_player(&ai_type2) {
-                Ok(ai) => ai,
-                Err(e) => {
-                    println!("  ❌ Failed to create {}: {}", ai_type2.name(), e);
-                    return MatrixResult {
-                        ai1: ai_type1.name().to_string(),
-                        ai2: ai_type2.name().to_string(),
-                        ai1_win_rate: 0.0,
-                        ai1_avg_time_ms: 0.0,
-                        ai2_avg_time_ms: 0.0,
-                    };
-                }
-            };
+            let mut ai1 = create_ai_player(&ai_type1)
+                .unwrap_or_else(|error| panic!("failed to create {}: {error}", ai_type1.name()));
+            let mut ai2 = create_ai_player(&ai_type2)
+                .unwrap_or_else(|error| panic!("failed to create {}: {error}", ai_type2.name()));
 
             let mut ai1_wins = 0;
             let mut ai2_wins = 0;

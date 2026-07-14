@@ -8,13 +8,13 @@ export default function NetworkStatus() {
   useEffect(() => {
     setIsOnline(navigator.onLine);
 
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: number | undefined;
 
     const updateOnlineStatus = () => {
       setIsOnline(navigator.onLine);
       setShowStatus(true);
-      clearTimeout(timer);
-      timer = setTimeout(() => setShowStatus(false), 3000);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setShowStatus(false), 3000);
     };
 
     window.addEventListener('online', updateOnlineStatus);
@@ -23,7 +23,7 @@ export default function NetworkStatus() {
     return () => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
-      clearTimeout(timer);
+      window.clearTimeout(timer);
     };
   }, []);
 
@@ -31,13 +31,16 @@ export default function NetworkStatus() {
 
   return (
     <div
-      className={`fixed top-4 left-4 z-50 p-2 rounded-full shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm flex items-center justify-center`}
+      className="fixed left-4 top-4 z-50 flex items-center justify-center rounded-full bg-white/10 p-2 shadow-lg backdrop-blur-sm transition-all duration-300"
+      role="status"
+      aria-live="polite"
     >
       {isOnline ? (
-        <Wifi className="h-5 w-5 text-green-400" />
+        <Wifi className="h-5 w-5 text-green-400" aria-hidden="true" />
       ) : (
-        <WifiOff className="h-5 w-5 text-red-400" />
+        <WifiOff className="h-5 w-5 text-red-400" aria-hidden="true" />
       )}
+      <span className="sr-only">{isOnline ? 'Back online' : 'You are offline'}</span>
     </div>
   );
 }

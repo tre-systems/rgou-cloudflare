@@ -6,8 +6,9 @@ import {
   getValidMoves,
   makeMove,
   processDiceRoll,
+  toPersistedGameState,
 } from '../game-logic';
-import { GameState } from '../schemas';
+import { MAX_GAME_HISTORY, type GameState } from '../schemas';
 import { createTestGameState } from './test-utils';
 
 describe('game-logic', () => {
@@ -57,34 +58,6 @@ describe('game-logic', () => {
       expect(rollDice(() => 0.999)).toBe(4);
       expect(() => rollDice(() => 1)).toThrow(RangeError);
     });
-    it('should return a number between 0 and 4', () => {
-      const results = new Set<number>();
-
-      for (let i = 0; i < 1000; i++) {
-        const roll = rollDice();
-        expect(roll).toBeGreaterThanOrEqual(0);
-        expect(roll).toBeLessThanOrEqual(4);
-        results.add(roll);
-      }
-
-      expect(results.size).toBeGreaterThan(1);
-    });
-
-    it('should have reasonable distribution', () => {
-      const rolls = Array.from({ length: 10000 }, () => rollDice());
-      const counts = rolls.reduce(
-        (acc, roll) => {
-          acc[roll] = (acc[roll] || 0) + 1;
-          return acc;
-        },
-        {} as Record<number, number>
-      );
-
-      // Each value should appear at least once
-      for (let i = 0; i <= 4; i++) {
-        expect(counts[i]).toBeGreaterThan(0);
-      }
-    });
   });
 
   describe('getValidMoves', () => {
@@ -128,7 +101,7 @@ describe('game-logic', () => {
   describe('makeMove', () => {
     it('should return unchanged state for invalid move', () => {
       const gameState: GameState = { ...initializeGame(), currentPlayer: 'player1' };
-      const [newState, moveType, movePlayer] = makeMove(gameState, 99); // Invalid piece index
+      const [newState, moveType, movePlayer] = makeMove(gameState, 99);
       expect(newState).toEqual(gameState);
       expect(moveType).toBeNull();
       expect(movePlayer).toBe(gameState.currentPlayer);
@@ -224,7 +197,6 @@ describe('game-logic', () => {
     });
 
     it('should switch players when not landing on rosette', () => {
-      // Place the piece so that a move does NOT land on a rosette (e.g., from -1 to 1)
       const gameState: GameState = {
         ...initializeGame(),
         diceRoll: 2,
@@ -286,6 +258,26 @@ describe('game-logic', () => {
     });
   });
 
+  describe('persistence projection', () => {
+    it('keeps only the most recent bounded move history', () => {
+      const gameState = initializeGame(() => 0.1);
+      gameState.history = Array.from({ length: MAX_GAME_HISTORY + 2 }, (_, index) => ({
+        player: index % 2 === 0 ? ('player1' as const) : ('player2' as const),
+        diceRoll: 1,
+        pieceIndex: 0,
+        fromSquare: -1,
+        toSquare: 3,
+        moveType: 'move' as const,
+      }));
+
+      const persisted = toPersistedGameState(gameState);
+
+      expect(persisted.history).toHaveLength(MAX_GAME_HISTORY);
+      expect(persisted.history[0]?.player).toBe('player1');
+      expect(persisted.history).toEqual(gameState.history.slice(2));
+    });
+  });
+
   describe('processDiceRoll', () => {
     it('should use provided roll when given', () => {
       const gameState = initializeGame();
@@ -295,12 +287,11 @@ describe('game-logic', () => {
       expect(newState.canMove).toBe(true);
     });
 
-    it('should generate random roll when not provided', () => {
+    it('uses injected entropy when no roll is provided', () => {
       const gameState = initializeGame();
-      const newState = processDiceRoll(gameState);
+      const newState = processDiceRoll(gameState, undefined, () => 0.5);
 
-      expect(newState.diceRoll).toBeGreaterThanOrEqual(0);
-      expect(newState.diceRoll).toBeLessThanOrEqual(4);
+      expect(newState.diceRoll).toBe(2);
     });
 
     it('should handle roll of 0', () => {

@@ -911,14 +911,11 @@ mod tests {
     fn test_feature_sensitivity() {
         let mut state = GameState::new();
 
-        // Test that small changes in game state produce different features
         let features1 = GameFeatures::from_game_state(&state);
 
-        // Change current player
         state.current_player = Player::Player2;
         let features2 = GameFeatures::from_game_state(&state);
 
-        // Should be different
         let mut differences = 0;
         for i in 0..SIZE {
             if (features1.features[i] - features2.features[i]).abs() > 1e-6 {

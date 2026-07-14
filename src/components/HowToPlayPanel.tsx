@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Dice6, Crown, Star, Zap, Trophy, ArrowRight } from 'lucide-react';
 
@@ -7,6 +8,16 @@ interface HowToPlayPanelProps {
 }
 
 export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -24,16 +35,24 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="how-to-play-title"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white neon-text">How to Play</h2>
+              <h2 id="how-to-play-title" className="text-xl font-bold text-white neon-text">
+                How to Play
+              </h2>
               <motion.button
+                type="button"
                 onClick={onClose}
                 className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label="Close how to play"
+                autoFocus
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </motion.button>
             </div>
 
@@ -75,15 +94,24 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
                 </h3>
                 <ul className="text-sm space-y-2">
                   <li className="flex items-start">
-                    <span className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                    <span
+                      className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"
+                      aria-hidden="true"
+                    />
                     Move pieces along your designated track from start to finish
                   </li>
                   <li className="flex items-start">
-                    <span className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                    <span
+                      className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"
+                      aria-hidden="true"
+                    />
                     You must move a piece if possible, even if it&apos;s not advantageous
                   </li>
                   <li className="flex items-start">
-                    <span className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                    <span
+                      className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"
+                      aria-hidden="true"
+                    />
                     If no moves are possible, your turn is skipped
                   </li>
                 </ul>
@@ -132,6 +160,7 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
 
               <div className="flex justify-center mt-6">
                 <button
+                  type="button"
                   onClick={onClose}
                   className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                   data-testid="help-close"

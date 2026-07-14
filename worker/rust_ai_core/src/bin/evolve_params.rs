@@ -44,117 +44,48 @@ fn optimize_cpu_usage() {
     }
 }
 
-// Tournament-style evaluation: evolved params vs default params
-fn evaluate_params_tournament(evolved_params: &GeneticParams) -> f64 {
+fn win_rate_against_default(evolved_params: &GeneticParams, num_games: usize) -> f64 {
     let default_params = GeneticParams::default();
 
-    let results: Vec<bool> = (0..GAMES_PER_EVAL)
-        .into_par_iter()
-        .map(|_| {
-            let mut game_state = GameState::new();
-            let mut moves_played = 0;
-            let max_moves = 200;
-
-            while !game_state.is_game_over() && moves_played < max_moves {
-                let current_player = game_state.current_player;
-                let is_evolved_turn = current_player == Player::Player2;
-
-                game_state.dice_roll = rgou_ai_core::dice::roll_dice();
-                if game_state.dice_roll == 0 {
-                    game_state.current_player = game_state.current_player.opponent();
-                    continue;
-                }
-
-                // Use different parameters based on whose turn it is
-                let test_params = if is_evolved_turn {
-                    evolved_params.clone()
-                } else {
-                    default_params.clone()
-                };
-
-                // Create a new game state with the test parameters
-                let mut test_state = GameState::with_genetic_params(test_params);
-                test_state.board = game_state.board.clone();
-                test_state.player1_pieces = game_state.player1_pieces.clone();
-                test_state.player2_pieces = game_state.player2_pieces.clone();
-                test_state.current_player = game_state.current_player;
-                test_state.dice_roll = game_state.dice_roll;
-
-                let mut ai = AI::new();
-                let (best_move, _) = ai.get_best_move(&test_state, 3);
-
-                if let Some(move_piece) = best_move {
-                    game_state.make_move(move_piece).ok();
-                } else {
-                    game_state.current_player = game_state.current_player.opponent();
-                }
-                moves_played += 1;
-            }
-
-            // Determine winner - evolved params are Player2
-            let p1_finished = game_state
-                .player1_pieces
-                .iter()
-                .filter(|p| p.square == 20)
-                .count();
-            let p2_finished = game_state
-                .player2_pieces
-                .iter()
-                .filter(|p| p.square == 20)
-                .count();
-
-            if p2_finished >= 7 {
-                true // Evolved params win
-            } else if p1_finished >= 7 {
-                false // Default params win
-            } else {
-                // Game ended by move limit, evaluate final position
-                let evolved_eval = game_state.evaluate();
-                evolved_eval > 0 // Positive eval means Player2 (evolved) is winning
-            }
-        })
-        .collect();
-
-    let wins = results.iter().filter(|&&won| won).count();
-    wins as f64 / GAMES_PER_EVAL as f64
-}
-
-fn validate_against_default(evolved_params: &GeneticParams, num_games: usize) -> f64 {
-    let default_params = GeneticParams::default();
     let results: Vec<bool> = (0..num_games)
         .into_par_iter()
         .map(|_| {
             let mut game_state = GameState::new();
             let mut moves_played = 0;
             let max_moves = 200;
+
             while !game_state.is_game_over() && moves_played < max_moves {
                 let current_player = game_state.current_player;
                 let is_evolved_turn = current_player == Player::Player2;
+
                 game_state.dice_roll = rgou_ai_core::dice::roll_dice();
                 if game_state.dice_roll == 0 {
                     game_state.current_player = game_state.current_player.opponent();
                     continue;
                 }
+
                 let test_params = if is_evolved_turn {
                     evolved_params.clone()
                 } else {
                     default_params.clone()
                 };
-                let mut test_state = GameState::with_genetic_params(test_params);
-                test_state.board = game_state.board.clone();
-                test_state.player1_pieces = game_state.player1_pieces.clone();
-                test_state.player2_pieces = game_state.player2_pieces.clone();
-                test_state.current_player = game_state.current_player;
-                test_state.dice_roll = game_state.dice_roll;
+
+                let mut test_state = game_state.clone();
+                test_state.genetic_params = test_params;
+
                 let mut ai = AI::new();
                 let (best_move, _) = ai.get_best_move(&test_state, 3);
+
                 if let Some(move_piece) = best_move {
-                    game_state.make_move(move_piece).ok();
+                    game_state
+                        .make_move(move_piece)
+                        .expect("AI must return a legal move");
                 } else {
                     game_state.current_player = game_state.current_player.opponent();
                 }
                 moves_played += 1;
             }
+
             let p1_finished = game_state
                 .player1_pieces
                 .iter()
@@ -165,16 +96,17 @@ fn validate_against_default(evolved_params: &GeneticParams, num_games: usize) ->
                 .iter()
                 .filter(|p| p.square == 20)
                 .count();
+
             if p2_finished >= 7 {
                 true
             } else if p1_finished >= 7 {
                 false
             } else {
-                let evolved_eval = game_state.evaluate();
-                evolved_eval > 0
+                game_state.evaluate() > 0
             }
         })
         .collect();
+
     let wins = results.iter().filter(|&&won| won).count();
     wins as f64 / num_games as f64
 }
@@ -200,7 +132,7 @@ fn main() {
         let scored: Vec<(f64, GeneticParams)> = population
             .par_iter()
             .map(|p| {
-                let score = evaluate_params_tournament(p);
+                let score = win_rate_against_default(p, GAMES_PER_EVAL);
                 (score, p.clone())
             })
             .collect();
@@ -248,7 +180,7 @@ fn main() {
     // Post-evolution validation
     println!("\n🔬 Validating best evolved parameters against default with 1000 games...");
     let validation_games = 1000;
-    let win_rate = validate_against_default(&best_params, validation_games);
+    let win_rate = win_rate_against_default(&best_params, validation_games);
     println!(
         "Evolved win rate over {} games: {:.2}%",
         validation_games,

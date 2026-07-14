@@ -11,6 +11,7 @@ pub mod features;
 pub mod genetic_params;
 pub mod ml_ai;
 pub mod neural_network;
+#[cfg(feature = "training")]
 pub mod training;
 
 pub const PIECES_PER_PLAYER: usize = 7;
@@ -19,8 +20,6 @@ const MAX_TRANSPOSITION_ENTRIES: usize = 50_000;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
-
-// These constants are now part of GeneticParams
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

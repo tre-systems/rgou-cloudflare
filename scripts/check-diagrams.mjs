@@ -9,8 +9,8 @@ const diagramDir = join(process.cwd(), 'docs', 'diagrams');
 const probe = spawnSync('dot', ['-V'], { stdio: 'ignore' });
 
 if (probe.error || probe.status !== 0) {
-  console.log('Diagram check skipped: Graphviz `dot` is not available on PATH.');
-  process.exit(0);
+  console.error('Diagram check requires Graphviz `dot`. Install it with: brew install graphviz');
+  process.exit(1);
 }
 
 const dotFiles = readdirSync(diagramDir)

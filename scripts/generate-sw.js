@@ -81,6 +81,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  if (url.pathname === '/healthz' || url.pathname.startsWith('/api/')) {
+    return;
+  }
+
   if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/wasm/')) {
     event.respondWith(
       caches.match(event.request, { ignoreVary: true }).then(async cachedResponse => {

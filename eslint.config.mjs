@@ -8,7 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       '.wrangler/**',
-      '.next/**',
+      'ml/.venv/**',
       'node_modules/**',
       'public/**',
       'out/**',

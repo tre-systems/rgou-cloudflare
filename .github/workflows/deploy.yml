@@ -21,7 +21,6 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      deployments: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -96,17 +95,17 @@ jobs:
         run: npm run build
         env:
           GITHUB_SHA: ${{ github.sha }}
-          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN || vars.NEXT_PUBLIC_SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
           VITE_SENTRY_ENVIRONMENT: production
           VITE_SENTRY_RELEASE: ${{ github.sha }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_DSN: ${{ vars.SENTRY_DSN || vars.NEXT_PUBLIC_SENTRY_DSN }}
+          SENTRY_DSN: ${{ vars.SENTRY_DSN }}
           SENTRY_ENVIRONMENT: production
           SENTRY_ORG: ${{ vars.SENTRY_ORG || 'total-reality-engineering' }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'rgou-cloudflare' }}
           SENTRY_RELEASE: ${{ github.sha }}
 
-      - name: Deploy Frontend
+      - name: Deploy application
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: npx wrangler deploy --config out/rgou_main/wrangler.json
         env:

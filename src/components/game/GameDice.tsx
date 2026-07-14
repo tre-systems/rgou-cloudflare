@@ -1,188 +1,114 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GameState } from '@/lib/types';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import type { GameState } from '@/lib/types';
 
 interface GameDiceProps {
   gameState: GameState;
 }
 
+const EMPTY_PATTERN = [false, false, false, false];
+const PIP_COLOR = '#FFD600';
+const PIP_GLOW = '#FFF200';
+const PIP_SIZE = 7;
+const FACE_SIZE = 14;
+
+function getDicePattern(total: number): boolean[] {
+  const pattern = [...EMPTY_PATTERN];
+
+  for (let marked = 0; marked < total;) {
+    const index = Math.floor(Math.random() * pattern.length);
+    if (!pattern[index]) {
+      pattern[index] = true;
+      marked += 1;
+    }
+  }
+
+  return pattern;
+}
+
 export default function GameDice({ gameState }: GameDiceProps) {
   const [rolling, setRolling] = useState(false);
-  const [displayPattern, setDisplayPattern] = useState<boolean[]>([false, false, false, false]);
+  const [displayPattern, setDisplayPattern] = useState<boolean[]>(EMPTY_PATTERN);
   const [lastRoll, setLastRoll] = useState<{ pattern: boolean[]; value: number } | null>(null);
   const [burst, setBurst] = useState(false);
   const [numberPulse, setNumberPulse] = useState(false);
 
-  function getDicePattern(total: number): boolean[] {
-    const arr = [false, false, false, false];
-    let count = 0;
-    while (count < total) {
-      const idx = Math.floor(Math.random() * 4);
-      if (!arr[idx]) {
-        arr[idx] = true;
-        count++;
-      }
-    }
-    return arr;
-  }
-
   useEffect(() => {
-    if (gameState.diceRoll === null) {
+    const roll = gameState.diceRoll;
+    if (roll === null) {
       setRolling(false);
       setBurst(false);
       setNumberPulse(false);
       return;
     }
+
     setRolling(true);
     setBurst(false);
     setNumberPulse(false);
+
     let ticks = 0;
-    const maxTicks = 8;
-    const interval = setInterval(() => {
+    let burstTimer: number | undefined;
+    let pulseTimer: number | undefined;
+    const interval = window.setInterval(() => {
       setDisplayPattern(getDicePattern(Math.floor(Math.random() * 5)));
-      ticks++;
-      if (ticks >= maxTicks) {
-        clearInterval(interval);
-        const pattern = getDicePattern(gameState.diceRoll!);
-        setDisplayPattern(pattern);
-        setLastRoll({ pattern, value: gameState.diceRoll! });
-        setRolling(false);
-        setBurst(true);
-        setNumberPulse(true);
-        setTimeout(() => setBurst(false), 350);
-        setTimeout(() => setNumberPulse(false), 500);
-      }
+      ticks += 1;
+
+      if (ticks < 8) return;
+
+      window.clearInterval(interval);
+      const pattern = getDicePattern(roll);
+      setDisplayPattern(pattern);
+      setLastRoll({ pattern, value: roll });
+      setRolling(false);
+      setBurst(true);
+      setNumberPulse(true);
+      burstTimer = window.setTimeout(() => setBurst(false), 350);
+      pulseTimer = window.setTimeout(() => setNumberPulse(false), 500);
     }, 80);
-    return () => clearInterval(interval);
+
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(burstTimer);
+      window.clearTimeout(pulseTimer);
+    };
   }, [gameState.diceRoll]);
 
-  const pipColor = '#FFD600';
-  const pipGlow = '#FFF200';
-  const pipSize = 7;
-  const pipFinalSize = 14;
-  const borderColor = 'rgba(253, 230, 138, 0.3)';
-  const borderWidth = 1.5;
-
-  if (gameState.diceRoll === null) {
-    if (lastRoll) {
-      return (
-        <motion.div
-          className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
-          style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
-          initial={{ scale: 0 }}
-          animate={{
-            scale: 1,
-            x: 0,
-          }}
-          transition={{
-            type: 'spring',
-            stiffness: 400,
-            damping: 25,
-            x: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' },
-          }}
-          data-testid="roll-dice"
-        >
-          <div className="flex flex-1 items-center justify-between h-full px-3">
-            {lastRoll.pattern.map((isDot, i) => (
-              <svg
-                key={i}
-                width={pipFinalSize}
-                height={pipFinalSize}
-                viewBox={`0 0 ${pipFinalSize} ${pipFinalSize}`}
-                style={{ display: 'block', overflow: 'visible' }}
-              >
-                {isDot && (
-                  <circle
-                    cx={pipFinalSize / 2}
-                    cy={pipFinalSize / 2}
-                    r={pipSize / 2}
-                    fill={pipColor}
-                    style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
-                  />
-                )}
-              </svg>
-            ))}
-            <span
-              className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
-              style={{
-                textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
-                lineHeight: '1',
-                alignSelf: 'center',
-              }}
-            >
-              {lastRoll.value}
-            </span>
-          </div>
-        </motion.div>
-      );
-    } else {
-      return (
-        <motion.div
-          className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box"
-          style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          data-testid="roll-dice"
-        >
-          <div className="flex flex-1 items-center justify-between h-full px-3">
-            {[0, 1, 2, 3].map(i => (
-              <svg
-                key={i}
-                width={pipFinalSize}
-                height={pipFinalSize}
-                viewBox={`0 0 ${pipFinalSize} ${pipFinalSize}`}
-                style={{ display: 'block' }}
-              />
-            ))}
-            <span
-              className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
-              style={{
-                textShadow: '0 0 6px #FFD600, 0 0 2px #fff',
-                lineHeight: '1',
-                alignSelf: 'center',
-              }}
-            />
-          </div>
-        </motion.div>
-      );
-    }
-  }
+  const hasActiveRoll = gameState.diceRoll !== null;
+  const pattern = hasActiveRoll ? displayPattern : (lastRoll?.pattern ?? EMPTY_PATTERN);
+  const value = hasActiveRoll ? (rolling ? null : gameState.diceRoll) : lastRoll?.value;
+  const ariaLabel = rolling
+    ? 'Dice rolling'
+    : value === undefined
+      ? 'Dice not rolled'
+      : `Dice roll: ${value}`;
 
   return (
     <motion.div
-      className="flex items-center min-w-[96px] min-h-[40px] h-10 w-24 bg-black/30 rounded-xl px-0 border-box relative overflow-visible"
-      style={{ border: `${borderWidth}px solid ${borderColor}`, boxSizing: 'border-box' }}
+      className="relative flex h-10 min-h-[40px] w-24 min-w-[96px] items-center overflow-visible rounded-xl border border-amber-200/30 bg-black/30"
       initial={{ scale: 0 }}
-      animate={{
-        scale: 1,
-        x: 0,
-      }}
-      transition={{
-        type: 'spring',
-        stiffness: 400,
-        damping: 25,
-        x: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' },
-      }}
-      data-testid="roll-dice"
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      data-testid="dice-display"
+      role="img"
+      aria-label={ariaLabel}
     >
-      <div className="flex flex-1 items-center justify-between h-full px-3">
-        {displayPattern.map((isDot, i) => (
+      <div className="flex h-full flex-1 items-center justify-between px-3">
+        {pattern.map((isMarked, index) => (
           <motion.svg
-            key={i}
-            width={pipFinalSize}
-            height={pipFinalSize}
-            viewBox={`0 0 ${pipFinalSize} ${pipFinalSize}`}
-            style={{ display: 'block', overflow: 'visible' }}
+            key={index}
+            width={FACE_SIZE}
+            height={FACE_SIZE}
+            viewBox={`0 0 ${FACE_SIZE} ${FACE_SIZE}`}
+            className="overflow-visible"
             animate={
               rolling
-                ? { scale: [1, 1.25, 1], filter: 'drop-shadow(0 0 3px #FFF200)' }
-                : isDot
+                ? { scale: [1, 1.25, 1], filter: `drop-shadow(0 0 3px ${PIP_GLOW})` }
+                : isMarked
                   ? {
                       scale: [1, burst ? 1.5 : 1, 1],
                       filter: burst
-                        ? 'drop-shadow(0 0 6px #FFF200)'
-                        : 'drop-shadow(0 0 3px #FFD600)',
+                        ? `drop-shadow(0 0 6px ${PIP_GLOW})`
+                        : `drop-shadow(0 0 3px ${PIP_COLOR})`,
                     }
                   : { scale: 1, filter: 'none' }
             }
@@ -190,26 +116,22 @@ export default function GameDice({ gameState }: GameDiceProps) {
               duration: rolling ? 0.4 : burst ? 0.35 : 0.2,
               repeat: rolling ? Infinity : 0,
             }}
+            aria-hidden="true"
           >
-            {isDot && (
+            {isMarked && (
               <circle
-                cx={pipFinalSize / 2}
-                cy={pipFinalSize / 2}
-                r={pipSize / 2}
-                fill={pipColor}
-                style={{ filter: `drop-shadow(0 0 2px ${pipGlow})` }}
+                cx={FACE_SIZE / 2}
+                cy={FACE_SIZE / 2}
+                r={PIP_SIZE / 2}
+                fill={PIP_COLOR}
+                style={{ filter: `drop-shadow(0 0 2px ${PIP_GLOW})` }}
               />
             )}
           </motion.svg>
         ))}
+
         <motion.span
-          className="text-yellow-400 font-bold tracking-wider text-base w-4 text-center select-none"
-          style={{
-            textShadow: '0 0 10px #FFD600, 0 0 2px #fff',
-            lineHeight: '1',
-            alignSelf: 'center',
-            marginLeft: '4px',
-          }}
+          className="w-4 select-none text-center text-base font-bold leading-none tracking-wider text-yellow-400 [text-shadow:0_0_10px_#FFD600,0_0_2px_#fff]"
           animate={
             numberPulse
               ? {
@@ -219,34 +141,26 @@ export default function GameDice({ gameState }: GameDiceProps) {
               : { scale: 1 }
           }
           transition={{ duration: 0.5 }}
+          aria-hidden="true"
         >
-          {rolling ? '' : gameState.diceRoll}
+          {value}
         </motion.span>
       </div>
+
       <AnimatePresence>
         {burst && (
           <motion.div
-            className="absolute left-1/2 top-1/2 pointer-events-none"
-            style={{ transform: 'translate(-50%, -50%)' }}
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             initial={{ opacity: 0.7, scale: 0.7 }}
             animate={{ opacity: 0, scale: 2.2 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
           >
-            {[...Array(8)].map((_, j) => (
-              <div
-                key={j}
-                style={{
-                  position: 'absolute',
-                  left: pipFinalSize / 2,
-                  top: pipFinalSize / 2,
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: pipColor,
-                  boxShadow: `0 0 12px 4px ${pipGlow}`,
-                  transform: `rotate(${j * 45}deg) translateY(-18px)`,
-                }}
+            {Array.from({ length: 8 }, (_, index) => (
+              <span
+                key={index}
+                className="absolute h-1.5 w-1.5 rounded-full bg-[#FFD600] shadow-[0_0_12px_4px_#FFF200]"
+                style={{ transform: `rotate(${index * 45}deg) translateY(-18px)` }}
               />
             ))}
           </motion.div>
