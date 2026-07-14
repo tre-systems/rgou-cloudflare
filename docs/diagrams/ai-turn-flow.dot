@@ -92,7 +92,7 @@ digraph AITurnFlow {
     ];
 
     ENGINE [shape=diamond, label="Engine?", width=2.0, height=1.02, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
-    SEARCH [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Classic / heuristic</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">bounded expectiminimax cache</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    SEARCH [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Classic search / heuristic evaluation</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic cache bounded at 50,000</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
     MODEL [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Load ML weights once</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">fetch, stream gunzip, parse, validate</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
     NETWORK [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>ML inference</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">value + policy networks</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
     PARSE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Validate and normalize</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">engine result schema</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
@@ -135,6 +135,6 @@ digraph AITurnFlow {
   POSITION -> ADAPTER [lhead=cluster_boundary];
   WORKER -> ENGINE [lhead=cluster_core];
   PARSE -> CURRENT [label="validated response", ltail=cluster_core, lhead=cluster_guards];
-  CLIENT -> FAILURE [label="timeout / worker error", style=dashed, color="#c53030", fontcolor="#c53030", constraint=false];
-  PARSE -> FAILURE [label="invalid result", style=dashed, color="#c53030", fontcolor="#c53030", constraint=false];
+  CLIENT -> FAILURE [style=dashed, color="#c53030", constraint=false];
+  PARSE -> FAILURE [style=dashed, color="#c53030", constraint=false];
 }

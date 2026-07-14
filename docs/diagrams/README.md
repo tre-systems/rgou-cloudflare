@@ -29,17 +29,4 @@ Fonts use Avenir when available. PNGs render at 220 DPI.
 
 Use Mermaid directly in Markdown for a small flow that remains clear without clusters, detailed edge labels, or careful layout. Use Graphviz when the diagram needs multiple boundaries, branches, or more than one kind of relationship. Keep each diagram focused on one architectural question.
 
-## Render and verify
-
-```bash
-npm run diagrams
-npm run check:diagrams
-```
-
-Both commands use Graphviz (`brew install graphviz`). `npm run diagrams` refreshes every committed PNG. The check verifies that each DOT source renders cleanly and has a corresponding PNG; CI installs Graphviz and runs this check through `npm run check`.
-
-To render one diagram manually:
-
-```bash
-dot -Tpng:cairo docs/diagrams/system-overview.dot -Gdpi=220 -o docs/diagrams/system-overview.png
-```
+Rendering and validation commands are documented once in the [development guide](../DEVELOPMENT.md#architecture-diagrams).

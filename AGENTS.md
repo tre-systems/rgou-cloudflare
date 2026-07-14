@@ -7,12 +7,11 @@ These instructions apply to the whole repository. Keep changes simple, typed, te
 Start with the local docs before making design or workflow decisions:
 
 - `README.md` - project overview, setup, testing, and documentation index.
-- `docs/DEVELOPMENT.md` - commands, testing strategy, analytics setup, troubleshooting, and CI.
+- `docs/DEVELOPMENT.md` - commands, testing strategy, troubleshooting, and CI.
 - `docs/ARCHITECTURE.md` - app structure, data flow, persistence, deployment, and production behavior.
 - `docs/AI-SYSTEM.md` - Classic AI, ML AI, Rust/WASM architecture, training, and model files.
 - `docs/AI-MATRIX-RESULTS.md` - generated AI matchup and performance results.
 - `docs/GAME-GUIDE.md` - game rules, strategy, and historical notes.
-- `docs/TODO.md` - roadmap and deferred work.
 - `ml/README.md` - ML training quick start.
 - `worker/rust_ai_core/tests/README.md` - Rust AI test suite.
 - `.github/workflows/deploy.yml` and `wrangler.toml` - CI and Cloudflare deployment behavior.

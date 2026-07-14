@@ -1,15 +1,15 @@
 # AI System
 
-The game has two AI opponents, both written in Rust and compiled to WebAssembly so they run locally in the browser with no network latency:
+The game has two AI opponents, both written in Rust and compiled to WebAssembly. Inference and search run locally; there is no server-side AI service:
 
 - **Classic AI** — expectiminimax search with alpha-beta pruning and tunable evaluation parameters
-- **ML AI** — a value + policy neural network trained through self-play
+- **ML AI** — a value + policy neural network trained from expectiminimax-labelled simulated games
 
 For measured win rates and speed across every matchup, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md).
 
 ## Browser execution
 
-The UI never sends a complete `GameState` to AI code. Both thin main-thread services share one lazily constructed `AIWorkerClient`, which sends a schema-validated `AIPosition`: seven squares per player, current player, and dice roll. The discriminated Worker protocol correlates each request by ID, times it out after 30 seconds, and restarts the Worker after timeout or failure.
+The UI never sends a complete `GameState` to AI code. Both thin main-thread services share one lazily constructed `AIWorkerClient`, which sends a schema-validated `AIPosition`: seven squares per player, current player, and dice roll. The discriminated Worker protocol correlates each request by ID and times it out after 30 seconds. A timeout, transport failure, or invalid response restarts the Worker and rejects every pending request.
 
 The single Worker lazily loads one Rust/WASM module and dispatches Classic, heuristic, and ML requests. ML weights are fetched inside the Worker: it prefers the gzip asset, uses streaming `DecompressionStream`, parses and validates model metadata, network dimensions, and exact weight counts, then loads the arrays into WASM. A failed compressed fetch or decompression falls back to the uncompressed JSON compatibility asset. Search, inference, decompression, JSON parsing, and validation therefore stay off the UI thread.
 
@@ -37,7 +37,7 @@ Four binary dice give a roll of 0–4:
 
 ### Search depth
 
-The browser Classic AI searches to **depth 4** (`worker/rust_ai_core/src/wasm_api.rs`). The AI matrix benchmarks depths 1–3 by default and depth 4 under slow tests; depth 3 gives the best strength-for-speed in testing, while the browser uses depth 4 for maximum strength.
+The browser Classic AI searches to **depth 4** (`worker/rust_ai_core/src/wasm_api.rs`). The normal AI matrix benchmarks depths 1–3; slow tests add depth 4.
 
 The optimized browser instance retains a transposition table across requests. A position hash includes all seven pieces for both players, current player, and genetic parameters. The table is bounded at 50,000 entries and clears before inserting beyond the ceiling, preventing an unbounded long-lived Worker cache.
 
@@ -45,7 +45,7 @@ The optimized browser instance retains a transposition table across requests. A 
 
 The evaluation function is driven by a set of weights (`GeneticParams` in `worker/rust_ai_core/src/genetic_params.rs`): win score, finished-piece value, position weight, safety, rosette control, advancement, capture, and center-lane bonuses.
 
-An evolutionary search (`cargo run --release --bin evolve_params`) tunes these against the defaults and writes an optimized set to `ml/data/genetic_params/evolved.json`. At runtime the AI loads that file and falls back to the built-in defaults if it is unavailable. The evolved set:
+An evolutionary search (`cargo run --release --bin evolve_params`) tunes these against the defaults and writes an optimized set to `ml/data/genetic_params/evolved.json`. The Rust build embeds that JSON for native and WASM use; malformed embedded data falls back to the built-in defaults. The evolved set is:
 
 ```json
 {
@@ -67,22 +67,22 @@ npm run evolve:genetic-params     # evolve, save to ml/data/genetic_params/evolv
 npm run validate:genetic-params   # compare evolved vs default over many games
 ```
 
-The search runs 50 generations of 50 individuals, 100 games per evaluation, and only keeps parameters that beat the defaults.
+The search runs 50 generations of 50 individuals with 100 games per evaluation. It writes a candidate only when a final 1,000-game validation exceeds a 55% win rate against the defaults.
 
 ## ML AI
 
 ### Architecture
 
-- **Input**: 150-feature vector describing the game state
-- **Shared hidden layers**: 256 → 128 → 64 → 32 (ReLU)
-- **Outputs**: a value head (1 unit, tanh) predicting the expected result, and a policy head (7 units, softmax) scoring moves
-- The chosen move combines the value and policy outputs
+- **Input**: the same 150-feature game-state vector is supplied to both networks
+- **Networks**: independent value and policy MLPs, each with 256 → 128 → 64 → 32 hidden units (ReLU)
+- **Outputs**: the value network emits 1 tanh unit estimating normalized expectiminimax evaluation; the policy network emits a 7-way softmax over piece choices
+- Move scoring combines next-position value, current policy probability, and fixed finish/capture/rosette bonuses
 
 The architecture is defined in `ml/config/training.json` and `worker/rust_ai_core/src/features.rs`.
 
 ### Training
 
-Self-play generates games (value targets from outcomes, policy targets from move choices), which train the network. Two backends share the same presets:
+The data generator plays expectiminimax against itself. At each playable position, expectiminimax supplies a normalized evaluation target and a one-hot best-move target for the value and policy networks. Two training backends share the same presets:
 
 | Backend | Hardware                      | Notes                           |
 | ------- | ----------------------------- | ------------------------------- |
@@ -99,20 +99,11 @@ Rust self-play derives an independent random stream for each game from the confi
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) and [ml/README.md](../ml/README.md) for training commands.
 
-### Models
+### Model contract
 
-Trained weights live in `ml/data/weights/`:
+`ml/data/weights/ml_ai_weights_pytorch_v5.json` is the production source model. Its verified metadata records 2,000 simulated games, 100 epochs, seed 42, 303,228 training samples, and the best validation loss. The Fast, V4, and Hybrid files in the same directory are comparison fixtures for the AI matrix, not deployment sources; their legacy metadata is not treated as authoritative provenance.
 
-| Model      | Games | Epochs |
-| ---------- | ----- | ------ |
-| PyTorch V5 | 2000  | 100    |
-| ML-Fast    | 1000  | 50     |
-| ML-V4      | 5000  | 100    |
-| ML-Hybrid  | 1000  | 50     |
-
-Convert and publish a model with `npm run load:ml-weights`.
-
-Published weights carry training version, date, game/sample counts, seed, best validation loss, and an exact network shape. `ml/model-manifest.json` records the canonical source revision, training inputs, architecture, weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents these forms from drifting. TypeScript and Rust both reject incomplete metadata, the wrong architecture, non-finite values, and weight arrays whose counts are either short or oversized.
+`npm run load:ml-weights` validates and publishes the selected production source. `ml/model-manifest.json` records its source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
 
 ## Testing
 
@@ -122,14 +113,3 @@ The Rust test suite covers game logic, the full position hash, the bounded trans
 npm run test:ai-comparison:fast            # quick matrix (10 games per match)
 npm run test:ai-comparison:comprehensive   # 100 games per match, plus slow tests
 ```
-
-## Key files
-
-- Classic AI core: `worker/rust_ai_core/src/lib.rs`
-- Evaluation parameters: `worker/rust_ai_core/src/genetic_params.rs`
-- Feature extraction: `worker/rust_ai_core/src/features.rs`
-- WASM bindings: `worker/rust_ai_core/src/wasm_api.rs`
-- Worker protocol and narrow position: `src/lib/ai-protocol.ts`
-- Lazy typed Worker client: `src/lib/ai-worker-client.ts`
-- Unified Worker: `src/lib/ai.worker.ts`
-- Thin frontend adapters: `src/lib/wasm-ai-service.ts`, `src/lib/ml-ai-service.ts`
