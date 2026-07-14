@@ -37,6 +37,8 @@ def canonical_hash(value: Any) -> str:
 
 
 def repository_path(path: Path) -> Path:
+    # Canonicalize before rejecting any path outside the repository.
+    # codeql[py/path-injection]
     candidate = (path if path.is_absolute() else REPOSITORY_ROOT / path).resolve()
     if not candidate.is_relative_to(REPOSITORY_ROOT):
         raise ValueError(f"path must stay inside the repository: {path}")
