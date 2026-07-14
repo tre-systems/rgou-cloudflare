@@ -14,6 +14,7 @@ const REQUIRED_ASSETS = [
   '/',
   '/offline',
   '/manifest.json',
+  '/icon.svg',
   '/icons/icon-128x128.png',
 ];
 
