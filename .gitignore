@@ -36,6 +36,10 @@ yarn-error.log*
 
 # Local configuration
 .env*
+.dev.vars*
+*.key
+*.p12
+*.pfx
 wrangler.toml.backup
 
 # Rust application lockfile exception

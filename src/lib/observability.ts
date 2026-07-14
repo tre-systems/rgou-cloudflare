@@ -1,7 +1,37 @@
 import type { ErrorEvent } from '@sentry/browser';
 
-const SENSITIVE_KEYS = /authorization|board|cookie|diagnostics|gameState|history|moves|token/i;
+const SENSITIVE_KEYS =
+  /authorization|board|cookie|diagnostics|email|gameState|history|ipAddress|moves|password|referer|referrer|secret|session|token|user/i;
+const URL_KEYS = /^(?:from|link|source|to|url)$/i;
+const FILTERED = '[Filtered]';
 let sentryPromise: Promise<typeof import('@sentry/browser')> | null = null;
+
+function sanitizeUrl(value: string): string {
+  try {
+    const isAbsolute = /^[a-z][a-z\d+.-]*:/i.test(value);
+    const url = new URL(value, window.location.origin);
+    return isAbsolute ? `${url.origin}${url.pathname}` : url.pathname;
+  } catch {
+    return FILTERED;
+  }
+}
+
+function sanitizeValue(value: unknown, key = '', seen = new WeakSet<object>()): unknown {
+  if (SENSITIVE_KEYS.test(key)) return FILTERED;
+  if (URL_KEYS.test(key) && typeof value === 'string') return sanitizeUrl(value);
+  if (!value || typeof value !== 'object') return value;
+  if (seen.has(value)) return FILTERED;
+
+  seen.add(value);
+  if (Array.isArray(value)) return value.map(item => sanitizeValue(item, '', seen));
+
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entryValue]) => [
+      entryKey,
+      sanitizeValue(entryValue, entryKey, seen),
+    ])
+  );
+}
 
 function loadSentry() {
   sentryPromise ??= import('@sentry/browser');
@@ -25,14 +55,15 @@ export function sanitizeErrorEvent(event: ErrorEvent): ErrorEvent {
     event.request.headers = Object.fromEntries(
       Object.entries(event.request.headers ?? {}).map(([key, value]) => [
         key,
-        SENSITIVE_KEYS.test(key) ? '[Filtered]' : value,
+        SENSITIVE_KEYS.test(key) ? FILTERED : value,
       ])
     );
   }
-  if (event.extra) {
-    for (const key of Object.keys(event.extra)) {
-      if (SENSITIVE_KEYS.test(key)) event.extra[key] = '[Filtered]';
-    }
+  if (event.extra) event.extra = sanitizeValue(event.extra) as typeof event.extra;
+  if (event.contexts) event.contexts = sanitizeValue(event.contexts) as typeof event.contexts;
+  if (event.tags) event.tags = sanitizeValue(event.tags) as typeof event.tags;
+  if (event.breadcrumbs) {
+    event.breadcrumbs = sanitizeValue(event.breadcrumbs) as typeof event.breadcrumbs;
   }
   return event;
 }

@@ -37,7 +37,10 @@ def canonical_hash(value: Any) -> str:
 
 
 def repository_path(path: Path) -> Path:
-    return path if path.is_absolute() else REPOSITORY_ROOT / path
+    candidate = (path if path.is_absolute() else REPOSITORY_ROOT / path).resolve()
+    if not candidate.is_relative_to(REPOSITORY_ROOT):
+        raise ValueError(f"path must stay inside the repository: {path}")
+    return candidate
 
 
 def display_path(path: Path) -> str:

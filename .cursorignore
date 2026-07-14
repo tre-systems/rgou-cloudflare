@@ -31,6 +31,12 @@ playwright-report/
 .eslintcache
 
 # Environment and misc
+.env*
+.dev.vars*
+*.key
+*.p12
+*.pem
+*.pfx
 .venv/
 .wrangler/
 node_modules/

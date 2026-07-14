@@ -43,6 +43,10 @@ class TrainingLauncherTests(unittest.TestCase):
         with self.assertRaisesRegex(Exception, "must be positive"):
             train.positive_int("0")
 
+    def test_rejects_output_paths_outside_the_weights_directory(self):
+        with self.assertRaisesRegex(ValueError, "weights directory"):
+            train.output_path(Path("/tmp/weights"), "../outside.json")
+
 
 @unittest.skipUnless(torch is not None, "PyTorch is not installed")
 class PyTorchTrainingTests(unittest.TestCase):

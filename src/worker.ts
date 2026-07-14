@@ -5,6 +5,8 @@ const MAX_USAGE_BODY_BYTES = 256;
 const APP_RELEASE = import.meta.env.VITE_SENTRY_RELEASE || 'development';
 const SECURITY_HEADERS = {
   'Cross-Origin-Resource-Policy': 'same-origin',
+  'Permissions-Policy':
+    'browsing-topics=(), camera=(), geolocation=(), microphone=(), payment=(), usb=()',
   'Referrer-Policy': 'no-referrer',
   'Strict-Transport-Security': 'max-age=31536000',
   'X-Content-Type-Options': 'nosniff',
@@ -76,6 +78,10 @@ async function recordUsage(request: Request, env: Env): Promise<Response> {
   const mediaType = request.headers.get('Content-Type')?.split(';', 1)[0]?.trim().toLowerCase();
   if (mediaType !== 'application/json') {
     return textResponse(415, 'Unsupported media type');
+  }
+  const contentEncoding = request.headers.get('Content-Encoding')?.trim().toLowerCase();
+  if (contentEncoding && contentEncoding !== 'identity') {
+    return textResponse(415, 'Unsupported content encoding');
   }
   if (Number(request.headers.get('Content-Length') ?? 0) > MAX_USAGE_BODY_BYTES) {
     return textResponse(413, 'Payload too large');

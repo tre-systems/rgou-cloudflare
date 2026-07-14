@@ -91,7 +91,7 @@ Components may contain display decisions and transient animation state. Reusable
 | Tiered offline precache     | Required shell failure aborts installation; large AI assets are optional; health and API routes stay online.   | generated service worker plus its Node and browser contract tests                   |
 | Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts` |
 | Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.           | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
-| Supply-chain gate           | Known high-severity JavaScript or Rust advisories block deployment.                                            | `npm audit`, committed `Cargo.lock`, and `cargo audit` in CI                        |
+| Supply-chain gate           | Known high-severity advisories block deployment; update automation cannot silently change executable CI code.  | Audits, lockfiles, immutable action SHAs, Dependabot, and GitHub code scanning      |
 | Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
 
 ## Frontend structure
@@ -161,7 +161,9 @@ The application deploys as a Cloudflare Worker with Static Assets through the Cl
 
 The Worker permanently redirects `www.gameofur.org`, `gameofur.net`, `www.gameofur.net`, and `rgou.tre.systems` while preserving path and query. It owns `/api/usage` and delegates all other requests to Static Assets with SPA fallback. No D1 or R2 binding is required.
 
-Regular single-threaded WebAssembly does not require cross-origin isolation. The application deliberately does not send COOP/COEP merely for `.wasm` files: those response headers would not isolate the top-level browsing context. If shared memory or threaded WASM is introduced, isolation must be enabled for the document and every participating resource, then verified with `crossOriginIsolated`. The current deployment uses CSP, HSTS, MIME sniffing protection, and frame denial; edge API responses also use a same-origin resource policy. It does not opt into cross-origin isolation.
+Regular single-threaded WebAssembly does not require cross-origin isolation. The application deliberately does not send COOP/COEP merely for `.wasm` files: those response headers would not isolate the top-level browsing context. If shared memory or threaded WASM is introduced, isolation must be enabled for the document and every participating resource, then verified with `crossOriginIsolated`. The current deployment uses CSP, HSTS, MIME sniffing protection, frame denial, a same-origin resource policy, and a restrictive permissions policy. It does not opt into cross-origin isolation.
+
+The usage route accepts only same-origin JSON POSTs, rejects encoded and oversized bodies, validates the parsed event against a strict schema, and fails closed when Analytics Engine is unavailable. Error reports strip request bodies, query strings, identity, nested game data, credentials, and URL queries before leaving the browser.
 
 ## Patterns deliberately not used
 

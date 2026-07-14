@@ -17,6 +17,13 @@ logger = logging.getLogger(__name__)
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
+def output_path(directory: Path, filename: str) -> Path:
+    candidate = (directory / filename).resolve()
+    if not candidate.is_relative_to(directory.resolve()):
+        raise ValueError("output file must stay inside the weights directory")
+    return candidate
+
+
 class UnifiedTrainer:
     def __init__(self, config_path: Path | None = None):
         self.config_path = config_path or REPOSITORY_ROOT / "ml/config/training.json"
@@ -73,8 +80,8 @@ class UnifiedTrainer:
             )
             logger.info("✅ Rust training completed successfully")
             return True
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Rust training failed: {e}")
+        except subprocess.CalledProcessError as error:
+            logger.error("❌ Rust training failed: %r", error)
             return False
 
     def train_pytorch(self, params: dict[str, Any], output_file: Path) -> bool:
@@ -99,8 +106,8 @@ class UnifiedTrainer:
             )
             logger.info("✅ PyTorch training completed successfully")
             return True
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ PyTorch training failed: {e}")
+        except subprocess.CalledProcessError as error:
+            logger.error("❌ PyTorch training failed: %r", error)
             return False
 
     def train(
@@ -120,7 +127,7 @@ class UnifiedTrainer:
             else:
                 output_file = self.config["output_formats"]["unified"]
 
-        output_path = self.weights_dir / output_file
+        resolved_output_path = output_path(self.weights_dir, output_file)
 
         if backend == "auto":
             if self.check_pytorch_available():
@@ -130,24 +137,24 @@ class UnifiedTrainer:
                 backend = "rust"
                 logger.info("🦀 Auto-selected Rust backend")
 
-        logger.info(f"🚀 Starting {backend.upper()} training...")
-        logger.info(f"📊 Parameters: {params}")
-        logger.info(f"📁 Output: {output_path}")
+        logger.info("🚀 Starting %s training...", backend.upper())
+        logger.info("📊 Parameters: %r", params)
+        logger.info("📁 Output: %r", str(resolved_output_path))
 
         start_time = time.time()
 
         if backend == "pytorch":
-            success = self.train_pytorch(params, output_path)
+            success = self.train_pytorch(params, resolved_output_path)
         elif backend == "rust":
-            success = self.train_rust(params, output_path)
+            success = self.train_rust(params, resolved_output_path)
         else:
-            logger.error(f"❌ Unknown backend: {backend}")
+            logger.error("❌ Unknown backend: %r", backend)
             return False
 
         if success:
             training_time = time.time() - start_time
             logger.info(f"🎉 Training completed in {training_time:.2f} seconds")
-            logger.info(f"📁 Weights saved to: {output_path}")
+            logger.info("📁 Weights saved to: %r", str(resolved_output_path))
         return success
 
     def check_pytorch_available(self) -> bool:
@@ -226,7 +233,7 @@ def main():
             sys.exit(1)
 
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
-        logger.error(f"❌ Training failed: {error}")
+        logger.error("❌ Training failed: %r", error)
         sys.exit(1)
 
 
