@@ -2,8 +2,22 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const origin = 'https://gameofur.org';
+const securityHeaders = {
+  'content-security-policy': "frame-ancestors 'none'",
+  'cross-origin-resource-policy': 'same-origin',
+  'permissions-policy': 'geolocation=()',
+  'referrer-policy': 'no-referrer',
+  'strict-transport-security': 'max-age=31536000',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+};
 const checks = [
-  { path: '/', type: 'text/html', includes: '<div id="root"></div>' },
+  {
+    path: '/',
+    type: 'text/html',
+    includes: '<div id="root"></div>',
+    headers: securityHeaders,
+  },
   { path: '/manifest.json', type: 'application/json', includes: 'Royal Game of Ur' },
   { path: '/wasm/rgou_ai_worker_bg.wasm', type: 'application/wasm' },
   { path: '/ml-weights.json.gz', type: 'application/gzip' },
@@ -25,15 +39,24 @@ export async function waitFor(
       });
       const contentType = response.headers.get('content-type') ?? '';
       const body = check.includes ? await response.text() : '';
+      const headersMatch = Object.entries(check.headers ?? {}).every(([name, expected]) =>
+        response.headers.get(name)?.includes(expected)
+      );
       if (
         response.ok &&
         contentType.includes(check.type) &&
-        (!check.includes || body.includes(check.includes))
+        (!check.includes || body.includes(check.includes)) &&
+        headersMatch
       ) {
         console.log(`Smoke check passed: ${check.path}`);
         return;
       }
-      detail = `${response.status} ${contentType}`;
+      const missingHeaders = Object.entries(check.headers ?? {})
+        .filter(([name, expected]) => !response.headers.get(name)?.includes(expected))
+        .map(([name]) => name);
+      detail = `${response.status} ${contentType}${
+        missingHeaders.length > 0 ? `; missing headers: ${missingHeaders.join(', ')}` : ''
+      }`;
     } catch (error) {
       detail = String(error);
     }

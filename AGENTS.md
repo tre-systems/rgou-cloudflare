@@ -56,6 +56,7 @@ Keep `README.md` and the relevant docs up to date when behavior, commands, setup
 
 - Keep `.gitignore` current.
 - Keep `.cursorignore` current, especially for large model files and build artifacts that slow indexing.
+- Do not add an LLM, coding assistant, or other automated tool as a commit co-author.
 - Keep docs concise and consolidate duplicated guidance where possible.
 - When reviewing a file, check whether it should be split, whether the behavior belongs there, and whether the implementation can be simplified.
 

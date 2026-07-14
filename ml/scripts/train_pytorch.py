@@ -545,7 +545,7 @@ class PyTorchTrainer:
 
     def save_weights(self, filename: str, metadata: dict[str, Any]):
         """Save trained weights and metadata"""
-        logger.info(f"💾 Saving weights to {filename}...")
+        logger.info("💾 Saving weights to %r...", str(filename))
 
         # Get weights as lists
         value_weights = []
@@ -569,7 +569,7 @@ class PyTorchTrainer:
         with open(filename, "w") as f:
             json.dump(weights_data, f, indent=2)
 
-        logger.info(f"✅ Weights saved to {filename}")
+        logger.info("✅ Weights saved to %r", str(filename))
 
 
 def main():
@@ -618,8 +618,8 @@ def main():
     logger.info(f"  Learning Rate: {config.learning_rate}")
     logger.info(f"  Batch Size: {config.batch_size}")
     logger.info(f"  Search Depth: {config.depth}")
-    logger.info(f"  Output: {config.output_file}")
-    logger.info(f"  Training Data Directory: {config.training_data_dir}")
+    logger.info("  Output: %r", config.output_file)
+    logger.info("  Training Data Directory: %r", str(config.training_data_dir))
 
     logger.info("🎮 GPU status:")
     if torch.cuda.is_available():
@@ -648,10 +648,10 @@ def main():
         trainer.save_weights(config.output_file, metadata)
 
         logger.info("✅ Training complete!")
-        logger.info(f"📁 Weights saved to: {config.output_file}")
+        logger.info("📁 Weights saved to: %r", config.output_file)
 
-    except Exception as e:
-        logger.error(f"❌ Training failed: {e}")
+    except Exception as error:
+        logger.error("❌ Training failed: %r", error)
         sys.exit(1)
     finally:
         Path(config.temp_data_file).unlink(missing_ok=True)

@@ -118,6 +118,8 @@ async function getMove(engine: AIEngine, position: Parameters<typeof toWasmGameS
   }
 }
 
+// A dedicated Worker accepts messages only from the document that created it.
+// codeql[js/missing-origin-check]
 self.addEventListener('message', async (event: MessageEvent) => {
   const parsed = AIWorkerRequestSchema.safeParse(event.data);
   if (!parsed.success) {

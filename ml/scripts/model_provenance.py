@@ -37,11 +37,16 @@ def canonical_hash(value: Any) -> str:
 
 
 def repository_path(path: Path) -> Path:
-    return path if path.is_absolute() else REPOSITORY_ROOT / path
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"path must stay inside the repository: {path}")
+    return REPOSITORY_ROOT / path
 
 
 def display_path(path: Path) -> str:
-    return repository_path(path).relative_to(REPOSITORY_ROOT).as_posix()
+    candidate = path if path.is_absolute() else repository_path(path)
+    if not candidate.is_relative_to(REPOSITORY_ROOT):
+        raise ValueError(f"path must stay inside the repository: {path}")
+    return candidate.relative_to(REPOSITORY_ROOT).as_posix()
 
 
 def normalize_architecture(config: dict[str, Any]) -> dict[str, Any]:

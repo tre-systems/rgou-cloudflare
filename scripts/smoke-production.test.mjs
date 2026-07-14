@@ -64,12 +64,12 @@ test('reports the failing alias and redirect details', async () => {
       probePath,
     }),
     error => {
-      assert.match(error.message, /www\.gameofur\.net/);
-      assert.match(
+      assert.equal(
         error.message,
-        /expected 301 https:\/\/gameofur\.org\/offline\?source=smoke&mode=alias/
+        'Canonical redirect smoke check failed for www.gameofur.net: ' +
+          'expected 301 https://gameofur.org/offline?source=smoke&mode=alias, ' +
+          'received 302 https://wrong.example/offline'
       );
-      assert.match(error.message, /received 302 https:\/\/wrong\.example\/offline/);
       return true;
     }
   );
@@ -97,6 +97,24 @@ test('allows time for a release identity to propagate', async () => {
   );
 
   assert.equal(attempts, 11);
+});
+
+test('requires configured response headers', async () => {
+  await assert.rejects(
+    waitFor(
+      {
+        path: '/',
+        type: 'text/html',
+        headers: { 'content-security-policy': "frame-ancestors 'none'" },
+      },
+      {
+        attempts: 1,
+        fetchImpl: async () =>
+          new Response('<html></html>', { headers: { 'Content-Type': 'text/html' } }),
+      }
+    ),
+    /missing headers: content-security-policy/
+  );
 });
 
 test('the CLI exits cleanly with the smoke result', async () => {

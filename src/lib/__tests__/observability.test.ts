@@ -5,7 +5,6 @@ import { sanitizeErrorEvent } from '../observability';
 describe('observability privacy filter', () => {
   it('removes identity, request data, query strings, and sensitive context', () => {
     const event = {
-      type: undefined,
       user: { id: 'private' },
       request: {
         cookies: { session: 'private' },
@@ -14,15 +13,34 @@ describe('observability privacy filter', () => {
         url: 'https://gameofur.org/play?token=private',
         headers: { Authorization: 'private', Accept: 'application/json' },
       },
-      extra: { gameState: { history: [] }, operation: 'ai-move' },
-    } as ErrorEvent;
+      extra: {
+        gameState: { history: [] },
+        operation: 'ai-move',
+        nested: { token: 'private', url: 'https://gameofur.org/play?secret=value' },
+      },
+      contexts: { state: { board: ['private'] } },
+      breadcrumbs: [
+        { category: 'navigation', data: { from: '/?secret=value', to: '/play?secret=value' } },
+      ],
+    } as unknown as ErrorEvent;
 
     expect(sanitizeErrorEvent(event)).toEqual({
       request: {
         url: 'https://gameofur.org/play',
         headers: { Authorization: '[Filtered]', Accept: 'application/json' },
       },
-      extra: { gameState: '[Filtered]', operation: 'ai-move' },
+      extra: {
+        gameState: '[Filtered]',
+        operation: 'ai-move',
+        nested: { token: '[Filtered]', url: 'https://gameofur.org/play' },
+      },
+      contexts: { state: { board: '[Filtered]' } },
+      breadcrumbs: [
+        {
+          category: 'navigation',
+          data: { from: '/', to: '/play' },
+        },
+      ],
     });
   });
 

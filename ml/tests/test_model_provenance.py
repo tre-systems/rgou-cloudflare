@@ -73,6 +73,12 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertEqual(first, second)
         self.assertEqual(gzip.decompress(first), content)
 
+    def test_rejects_paths_outside_the_repository(self):
+        with self.assertRaisesRegex(ValueError, "inside the repository"):
+            model_provenance.repository_path(Path("../outside.json"))
+        with self.assertRaisesRegex(ValueError, "inside the repository"):
+            model_provenance.repository_path(Path("/tmp/outside.json"))
+
 
 if __name__ == "__main__":
     unittest.main()
