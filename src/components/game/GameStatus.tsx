@@ -77,26 +77,23 @@ export default function GameStatus({
 
   return (
     <div className="relative mt-1 flex h-11 flex-col justify-start pt-1">
-      <div className="flex h-7 items-center justify-center">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={status.text}
-            className="flex items-center justify-center gap-2"
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+      <div className="flex h-7 items-center justify-center overflow-hidden">
+        <motion.div
+          key={status.text}
+          className="flex items-center justify-center gap-2"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+        >
+          <StatusIcon className={cn('h-4 w-4', status.color)} data-testid="game-status-icon" />
+          <span
+            className={cn('text-base font-semibold tracking-tight', status.color)}
+            data-testid="game-status-text"
+            aria-live="polite"
           >
-            <StatusIcon className={cn('h-4 w-4', status.color)} data-testid="game-status-icon" />
-            <span
-              className={cn('text-base font-semibold tracking-tight', status.color)}
-              data-testid="game-status-text"
-              aria-live="polite"
-            >
-              {status.text}
-            </span>
-          </motion.div>
-        </AnimatePresence>
+            {status.text}
+          </span>
+        </motion.div>
       </div>
 
       <AnimatePresence>
