@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GameStateSchema, MoveRecordSchema, SaveGamePayloadSchema } from '../schemas';
+import { GameStateSchema, MoveRecordSchema } from '../schemas';
 
 describe('Schemas', () => {
   describe('GameStateSchema', () => {
@@ -100,85 +100,4 @@ describe('Schemas', () => {
     });
   });
 
-  describe('SaveGamePayloadSchema', () => {
-    const validMove = {
-      player: 'player1' as const,
-      diceRoll: 1,
-      pieceIndex: 0,
-      fromSquare: 13,
-      toSquare: 20,
-      moveType: 'finish' as const,
-    };
-
-    const validPayload = {
-      gameId: 'game_test',
-      winner: 'player1' as const,
-      history: [validMove],
-      playerId: 'test-player',
-      moveCount: 1,
-      duration: 5000,
-      clientHeader: 'test-agent',
-      gameType: 'classic' as const,
-    };
-
-    it('should validate a save game payload', () => {
-      expect(() => SaveGamePayloadSchema.parse(validPayload)).not.toThrow();
-    });
-
-    it('should reject oversized save game payloads', () => {
-      expect(() =>
-        SaveGamePayloadSchema.parse({
-          ...validPayload,
-          history: Array(513).fill(validMove),
-          moveCount: 513,
-        })
-      ).toThrow();
-    });
-
-    it('should reject unbounded client metadata', () => {
-      expect(() =>
-        SaveGamePayloadSchema.parse({
-          ...validPayload,
-          playerId: '',
-        })
-      ).toThrow();
-
-      expect(() =>
-        SaveGamePayloadSchema.parse({
-          ...validPayload,
-          clientHeader: 'a'.repeat(513),
-        })
-      ).toThrow();
-    });
-
-    it('should reject impossible move values', () => {
-      expect(() =>
-        SaveGamePayloadSchema.parse({
-          ...validPayload,
-          history: [
-            {
-              ...validMove,
-              diceRoll: 5,
-            },
-          ],
-        })
-      ).toThrow();
-    });
-
-    it('should reject inconsistent completion data', () => {
-      expect(() =>
-        SaveGamePayloadSchema.parse({
-          ...validPayload,
-          moveCount: 2,
-        })
-      ).toThrow();
-
-      expect(() =>
-        SaveGamePayloadSchema.parse({
-          ...validPayload,
-          winner: 'player2',
-        })
-      ).toThrow();
-    });
-  });
 });

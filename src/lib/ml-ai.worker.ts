@@ -12,13 +12,14 @@ interface MLWasmModule {
 let mlWasmModule: MLWasmModule;
 let mlWasmReady: Promise<void> | null = null;
 let weightsLoaded = false;
+const WASM_MODULE_URL = '/wasm/rgou_ai_core.js';
 
 const loadMLWasm = (): Promise<void> => {
   if (mlWasmReady) return mlWasmReady;
 
   mlWasmReady = (async () => {
     try {
-      mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
+      mlWasmModule = (await import(/* @vite-ignore */ WASM_MODULE_URL)) as MLWasmModule;
 
       const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
       await mlWasmModule.default({ module_or_path: wasmUrl });

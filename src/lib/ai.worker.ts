@@ -17,13 +17,14 @@ let wasmModule: WasmModule;
 let wasmReady: Promise<void> | null = null;
 let classicAiInitialized = false;
 let heuristicAiInitialized = false;
+const WASM_MODULE_URL = '/wasm/rgou_ai_core.js';
 
 const loadWasm = (): Promise<void> => {
   if (wasmReady) return wasmReady;
 
   wasmReady = (async () => {
     try {
-      wasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
+      wasmModule = (await import(/* @vite-ignore */ WASM_MODULE_URL)) as WasmModule;
 
       const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
       await wasmModule.default({ module_or_path: wasmUrl });

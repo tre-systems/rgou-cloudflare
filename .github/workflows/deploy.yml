@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare
+name: Validate and deploy
 
 on:
   push:
@@ -12,7 +12,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Cloudflare
+    name: Validate and deploy
+    timeout-minutes: 20
     permissions:
       contents: read
       deployments: write
@@ -63,19 +64,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Build wasm assets
-        run: npm run build:wasm-assets
-
       - name: Run all tests
         run: npm run check
 
       - name: Build
-        run: npm run build:cf
+        run: npm run build
         env:
           GITHUB_SHA: ${{ github.sha }}
-          NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
-          NEXT_PUBLIC_SENTRY_ENVIRONMENT: production
-          NEXT_PUBLIC_SENTRY_RELEASE: ${{ github.sha }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN || vars.NEXT_PUBLIC_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: production
+          VITE_SENTRY_RELEASE: ${{ github.sha }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_DSN: ${{ vars.SENTRY_DSN || vars.NEXT_PUBLIC_SENTRY_DSN }}
           SENTRY_ENVIRONMENT: production
@@ -89,4 +87,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config wrangler.toml --env=""
+          command: deploy --config out/rgou_main/wrangler.json
+
+      - name: Smoke test production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run smoke:production

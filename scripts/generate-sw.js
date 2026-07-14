@@ -14,7 +14,10 @@ const STATIC_ASSETS = [
   '/',
   '/offline',
   '/manifest.json',
-  '/favicon.ico',
+  '/icons/icon-128x128.png',
+  '/wasm/rgou_ai_core.js',
+  '/wasm/rgou_ai_worker_bg.wasm',
+  '/ml-weights.json.gz',
 ];
 
 self.addEventListener('install', event => {
@@ -27,7 +30,6 @@ self.addEventListener('install', event => {
       })
   );
 
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
@@ -62,11 +64,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/') || url.pathname.startsWith('/wasm/')) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/wasm/')) {
     event.respondWith(
       caches.match(event.request).then(async cachedResponse => {
         if (cachedResponse) {
@@ -110,6 +108,11 @@ self.addEventListener('fetch', event => {
         })
       )
   );
+});
+
+self.addEventListener('message', event => {
+  if (event.origin !== self.location.origin) return;
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 `;
 

@@ -213,7 +213,7 @@ function formatSpeedAnalysis(speedLines) {
   // Convert to markdown table
   const rows = speedLines
     .map(line => {
-      const match = line.match(/^(.+?):\s*([\d\.]+)ms\/move\s*\((.+?)\)/);
+      const match = line.match(/^(.+?):\s*([\d.]+)ms\/move\s*\((.+?)\)/);
       if (match) {
         return [match[1], match[2], match[3]];
       }
@@ -241,7 +241,7 @@ function formatRecommendations(lines) {
         !line.includes('test result:') && !line.includes('running') && !line.includes('test test_')
     )
     .map(line => {
-      const cleanLine = line.replace(/^[•\-\*]\s*/, '');
+      const cleanLine = line.replace(/^[•*-]\s*/, '');
       return `- ${cleanLine}`;
     })
     .join('\n');

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, getAIName } from '@/lib/utils';
 import { GameState } from '@/lib/types';

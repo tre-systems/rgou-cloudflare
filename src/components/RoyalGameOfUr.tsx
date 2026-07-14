@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Brain, Cpu, Eye, Github } from 'lucide-react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
@@ -58,6 +58,7 @@ export default function RoyalGameOfUr() {
     makeMove,
     makeAIMove,
     reset,
+    reportGameStarted,
     createNearWinningState: createNearWinningStateAction,
   } = useGameActions();
   const aiThinking = useGameStore(state => state.aiThinking);
@@ -223,6 +224,7 @@ export default function RoyalGameOfUr() {
 
     setShowModelOverlay(false);
     reset();
+    reportGameStarted(mode);
 
     setTimeout(() => {
       processDiceRoll();

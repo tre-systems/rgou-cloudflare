@@ -59,7 +59,7 @@ export default function GameBoard({
 
   React.useEffect(() => {
     if (gameState.gameStatus === 'finished' && gameState.winner) {
-      actions.postGameToServer();
+      actions.reportGameCompleted();
     }
   }, [gameState.gameStatus, gameState.winner, actions]);
 
@@ -110,7 +110,7 @@ export default function GameBoard({
             }
           }
           break;
-        case 'finish':
+        case 'finish': {
           const boardRect = boardRef.current?.getBoundingClientRect();
           if (boardRect) {
             const isPlayer1 = lastMovePlayer === 'player1';
@@ -127,6 +127,7 @@ export default function GameBoard({
             ]);
           }
           break;
+        }
       }
     }
   }, [lastMoveType, lastMovePlayer, gameState.history]);

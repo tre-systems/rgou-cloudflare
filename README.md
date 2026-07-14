@@ -9,7 +9,7 @@
   <hr />
 </div>
 
-A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with dual AI opponents, offline play, and animations. Built with Next.js, TypeScript, Rust, and WebAssembly.
+A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with dual AI opponents, offline play, and animations. Built with Vite, React, TypeScript, Rust, and WebAssembly.
 
 ## Play Now
 
@@ -20,7 +20,7 @@ A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with d
 - **Dual AI**: classic expectiminimax and a self-trained neural network, both running locally via WebAssembly
 - **Offline-first**: a PWA that is fully playable without a connection
 - **Responsive UI**: animations and sound effects on desktop and mobile
-- **Statistics**: win/loss tracking persisted locally and saved to the database
+- **Private by design**: win/loss statistics stay on the device; anonymous aggregate game lifecycle counts are sent to Cloudflare Analytics Engine when online
 
 ## Quick Start
 
@@ -38,12 +38,11 @@ A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with d
 git clone https://github.com/tre-systems/rgou-cloudflare.git
 cd rgou-cloudflare
 npm install
-npm run db:setup            # local SQLite database
 npm run build:wasm-assets   # compile the Rust AI to WASM (required)
 npm run dev
 ```
 
-The game opens at http://localhost:3000.
+The game opens at the local URL printed by Vite (normally http://localhost:5173).
 
 ## AI System
 
@@ -67,7 +66,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 
 ## Documentation
 
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, data flow, database, and deployment
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, data flow, analytics, and deployment
 - **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** — Classic AI, ML AI, training, and genetic evolution
 - **[AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md)** — generated AI win-rate and speed results
 - **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — commands, testing, and troubleshooting
@@ -78,10 +77,10 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 
 ## Architecture
 
-- **Frontend**: Next.js, React, TypeScript, Tailwind CSS, Framer Motion, Zustand
+- **Frontend**: Vite, React, TypeScript, Tailwind CSS, Framer Motion, Zustand
 - **AI engine**: Rust compiled to WebAssembly, running in Web Workers
-- **Database**: Cloudflare D1 (production), SQLite (development), Drizzle ORM
-- **Deployment**: Cloudflare Workers via OpenNext, deployed by GitHub Actions
+- **Analytics**: anonymous lifecycle counters in the shared Cloudflare Analytics Engine `app_usage` dataset
+- **Deployment**: Cloudflare Worker + Static Assets, deployed by GitHub Actions
 
 See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for details.
 

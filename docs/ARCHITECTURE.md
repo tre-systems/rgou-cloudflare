@@ -1,6 +1,6 @@
 # Architecture
 
-The Royal Game of Ur runs as a Next.js app with its AI engine compiled from Rust to WebAssembly. All AI executes client-side in Web Workers, so the game plays fully offline with no server round-trips.
+The Royal Game of Ur is a Vite-built React SPA served by a small Cloudflare Worker, with its AI engine compiled from Rust to WebAssembly. All AI executes client-side in Web Workers, so gameplay has no server round-trips and remains available offline.
 
 ## Principles
 
@@ -15,7 +15,7 @@ The Royal Game of Ur runs as a Next.js app with its AI engine compiled from Rust
 - **Game logic**: `src/lib/game-logic.ts` (pure functions: `getValidMoves`, `makeMove`, `processDiceRoll`)
 - **AI services**: `src/lib/wasm-ai-service.ts` (Classic AI), `src/lib/ml-ai-service.ts` (ML AI)
 - **Statistics**: `src/lib/stats-store.ts`
-- **Persistence**: `src/lib/actions.ts` (`saveGame`)
+- **Usage analytics**: `src/lib/usage.ts` and the validated `/api/usage` route in `src/worker.ts`
 
 ## AI engine
 
@@ -30,36 +30,19 @@ See [AI-SYSTEM.md](./AI-SYSTEM.md) for the algorithms and models. Core: `worker/
 
 **AI turn**: `RoyalGameOfUr.tsx` detects an AI turn → `makeAIMove` in `game-store.ts` → the relevant AI service → the chosen move is applied by `makeMove` → UI updates.
 
-**Game completion**: state is set to finished → local stats update → `postGameToServer` calls the `saveGame` action → the game is written idempotently to the database using its client-generated game ID → the completion overlay shows stats.
+**Game completion**: state is set to finished → local stats update → the completion overlay shows stats → one best-effort anonymous `game_completed` event is sent to the Worker.
 
-## Database
+## Persistence and analytics
 
-Drizzle ORM over SQLite locally (`local.db`, `npm run db:setup`) and Cloudflare D1 in production (`npm run migrate:d1`).
+In-progress games, settings, and personal win/loss statistics are validated and stored only in browser local storage. Watch-mode matches are excluded from personal statistics.
 
-```typescript
-// src/lib/db/schema.ts
-export const games = sqliteTable('games', {
-  id: text('id').primaryKey(),
-  playerId: text('playerId').notNull(),
-  winner: text('winner', { enum: ['player1', 'player2'] }),
-  completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
-  moveCount: integer('moveCount'),
-  duration: integer('duration'),
-  clientHeader: text('clientHeader'),
-  history: text('history', { mode: 'json' }),
-  gameType: text('gameType', { enum: ['classic', 'ml', 'watch', 'heuristic'] })
-    .notNull()
-    .default('classic'),
-});
-```
-
-Players are identified by an anonymous local ID. In-progress games and player settings are validated and restored from local storage. Win/loss statistics update immediately on completion, exclude AI-vs-AI watch matches, and are also saved to the database for analytics.
+The app has no database. It reports only `game_started` and `game_completed` lifecycle events to the shared account-level Analytics Engine dataset `app_usage`, indexed by `rgou`. Events contain mode, anonymous participant categories, starting side, and—on completion—winner, move count, and duration. They do not contain a player identifier, user agent, board state, or move history. The Worker accepts only small, strict, same-origin JSON payloads. Analytics are best-effort and never block the game.
 
 ## Deployment
 
-The app deploys to **Cloudflare Workers** via [OpenNext](https://opennext.js.org/cloudflare). GitHub Actions (`.github/workflows/deploy.yml`) runs `npm run check`, builds with `npm run build:cf`, and deploys with Wrangler. Configuration lives in `wrangler.toml`; the canonical production site is `https://gameofur.org`, with `www.gameofur.org`, `gameofur.net`, `www.gameofur.net`, and `rgou.tre.systems` routed to the same Worker.
+The app deploys as a Cloudflare Worker with Static Assets through the Cloudflare Vite plugin. GitHub Actions runs `npm run check`, builds with Vite, deploys the generated Wrangler configuration, and smoke-tests production. Configuration lives in `wrangler.toml`; the canonical production site is `https://gameofur.org`. The Worker permanently redirects `www.gameofur.org`, `gameofur.net`, `www.gameofur.net`, and `rgou.tre.systems` while preserving path and query.
 
-The app does not use Next.js incremental regeneration, so OpenNext uses its default in-process/dummy cache configuration and requires no R2 binding. Static PWA and WebAssembly assets are served by the Worker assets binding.
+The Worker owns the `/api/usage` route and delegates all other requests to Static Assets with SPA fallback. No D1 or R2 binding is required.
 
 WASM requires cross-origin isolation headers, set in `public/_headers`:
 
@@ -72,9 +55,9 @@ WASM requires cross-origin isolation headers, set in `public/_headers`:
 
 ## Inactive server worker
 
-`worker/src/lib.rs` contains a standalone Rust HTTP worker exposing `POST /ai-move` and `GET /health` for server-side AI. It is not part of the deployment — the app runs AI client-side — but is kept for potential future use such as multiplayer validation or analytics.
+The Rust crate also exposes native binaries used for training and evaluation. They are not part of the web deployment.
 
 ## Development vs production
 
-- **Development** (localhost only): AI diagnostics panel, AI toggle, and reset/test controls; local SQLite database.
-- **Production**: clean UI with no dev tools; Classic AI as the default opponent; Cloudflare D1; optimized builds.
+- **Development** (localhost only): AI diagnostics panel, AI toggle, and reset/test controls.
+- **Production**: clean UI with no dev tools, optimized assets, canonical redirects, and best-effort Analytics Engine usage counters.

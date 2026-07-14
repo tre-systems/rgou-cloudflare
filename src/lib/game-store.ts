@@ -11,12 +11,12 @@ import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
-import { saveGame } from './actions';
-import { createId, getPlayerId } from './utils';
+import { createId } from './utils';
 import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
+import { gameCompletedUsage, gameStartedUsage, reportUsage, type GameUsageMode } from './usage';
 
-const LATEST_VERSION = 2;
+const LATEST_VERSION = 3;
 
 const wasmAiService = new WasmAiService();
 const mlAiService = new MLAIService();
@@ -35,6 +35,8 @@ type GameStore = {
   lastAIMoveDuration: number | null;
   lastMoveType: MoveType | null;
   lastMovePlayer: Player | null;
+  usageStarted: boolean;
+  usageCompleted: boolean;
   actions: {
     initialize: (fromStorage?: boolean) => void;
     processDiceRoll: (roll?: number) => void;
@@ -42,7 +44,8 @@ type GameStore = {
     makeMove: (pieceIndex: number) => void;
     makeAIMove: (aiSource: 'heuristic' | 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
-    postGameToServer: () => Promise<void>;
+    reportGameStarted: (mode: GameUsageMode) => void;
+    reportGameCompleted: () => void;
     createNearWinningState: () => void;
   };
 };
@@ -57,6 +60,8 @@ export const useGameStore = create<GameStore>()(
       lastAIMoveDuration: null,
       lastMoveType: null,
       lastMovePlayer: null,
+      usageStarted: false,
+      usageCompleted: false,
       actions: {
         initialize: (fromStorage = false) => {
           if (!fromStorage) {
@@ -68,6 +73,8 @@ export const useGameStore = create<GameStore>()(
               state.lastAIMoveDuration = null;
               state.lastMoveType = null;
               state.lastMovePlayer = null;
+              state.usageStarted = false;
+              state.usageCompleted = false;
             });
           }
         },
@@ -214,6 +221,8 @@ export const useGameStore = create<GameStore>()(
             state.lastAIMoveDuration = null;
             state.lastMoveType = null;
             state.lastMovePlayer = null;
+            state.usageStarted = false;
+            state.usageCompleted = false;
           });
         },
         createNearWinningState: () => {
@@ -238,42 +247,26 @@ export const useGameStore = create<GameStore>()(
             state.lastAIMoveDuration = null;
             state.lastMoveType = null;
             state.lastMovePlayer = null;
+            state.usageStarted = false;
+            state.usageCompleted = false;
           });
         },
-        postGameToServer: async () => {
-          const { gameId, gameState } = get();
-          if (gameState.gameStatus !== 'finished' || !gameState.winner) {
-            return;
-          }
-
-          try {
-            const duration = gameState.startTime ? Date.now() - gameState.startTime : undefined;
-            let clientHeader = 'unknown';
-            if (typeof window !== 'undefined' && window.navigator) {
-              clientHeader = window.navigator.userAgent;
-            }
-
-            const uiStore = useUIStore.getState();
-            const gameMode = uiStore.selectedMode || 'classic';
-
-            const payload = {
-              gameId,
-              winner: gameState.winner,
-              history: gameState.history,
-              playerId: getPlayerId(),
-              moveCount: gameState.history.length,
-              duration,
-              clientHeader,
-              gameType: gameMode,
-            };
-
-            const result = await saveGame(payload);
-            if (result?.error) {
-              console.error('Failed to save game result:', result.error);
-            }
-          } catch (error) {
-            console.error('Failed to save game result:', error);
-          }
+        reportGameStarted: mode => {
+          const { gameState, usageStarted } = get();
+          if (usageStarted) return;
+          set(state => {
+            state.usageStarted = true;
+          });
+          reportUsage(gameStartedUsage(mode, gameState.currentPlayer));
+        },
+        reportGameCompleted: () => {
+          const { gameState, usageCompleted } = get();
+          const mode = useUIStore.getState().selectedMode;
+          if (usageCompleted || gameState.gameStatus !== 'finished' || !mode) return;
+          set(state => {
+            state.usageCompleted = true;
+          });
+          reportUsage(gameCompletedUsage(mode, gameState));
         },
       },
     })),
@@ -320,11 +313,15 @@ export const useGameStore = create<GameStore>()(
           ...currentState,
           gameId: restoreGameId(persisted.gameId),
           gameState,
+          usageStarted: persisted.usageStarted === true,
+          usageCompleted: persisted.usageCompleted === true,
         };
       },
       partialize: state => ({
         gameId: state.gameId,
         gameState: state.gameState,
+        usageStarted: state.usageStarted,
+        usageCompleted: state.usageCompleted,
       }),
     }
   )

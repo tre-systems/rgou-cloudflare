@@ -10,7 +10,6 @@ worker/node_modules/
 !.yarn/versions
 
 # build and dist
-.next/
 out/
 dist/
 build/
@@ -26,7 +25,6 @@ worker/rust_ai_core/target/
 worker/ml_ai_core/pkg/
 worker/ml_ai_core/target/
 worker/target/
-.open-next/
 
 # test and coverage
 coverage/
@@ -40,7 +38,6 @@ Thumbs.db
 *.swp
 *.swo
 *.tsbuildinfo
-next-env.d.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -58,10 +55,7 @@ yarn-error.log*
 .wrangler/
 wrangler.toml.backup
 
-# Local DB and cache
-local.db
-*.sqlite
-*.db
+# Local cache
 .cache/
 .parcel-cache/
 .turbo/
