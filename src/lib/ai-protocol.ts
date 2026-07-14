@@ -66,6 +66,30 @@ export function toWasmGameState(position: AIPosition) {
 
 const VALUE_WEIGHT_COUNT = 81_921;
 const POLICY_WEIGHT_COUNT = 82_119;
+const HiddenSizesSchema = z.tuple([
+  z.literal(256),
+  z.literal(128),
+  z.literal(64),
+  z.literal(32),
+]);
+const FlatNetworkConfigSchema = z.object({
+  input_size: z.literal(150),
+  hidden_sizes: HiddenSizesSchema,
+  value_output_size: z.literal(1),
+  policy_output_size: z.literal(7),
+});
+const DualNetworkConfigSchema = z.object({
+  value_network: z.object({
+    input_size: z.literal(150),
+    hidden_sizes: HiddenSizesSchema,
+    output_size: z.literal(1),
+  }),
+  policy_network: z.object({
+    input_size: z.literal(150),
+    hidden_sizes: HiddenSizesSchema,
+    output_size: z.literal(7),
+  }),
+});
 
 export const MLWeightsSchema = z.object({
   value_weights: z.array(z.number().finite()).length(VALUE_WEIGHT_COUNT),
@@ -78,12 +102,7 @@ export const MLWeightsSchema = z.object({
     seed: z.number().int(),
     best_validation_loss: z.number().finite().nonnegative(),
   }),
-  network_config: z.object({
-    input_size: z.literal(150),
-    hidden_sizes: z.tuple([z.literal(256), z.literal(128), z.literal(64), z.literal(32)]),
-    value_output_size: z.literal(1),
-    policy_output_size: z.literal(7),
-  }),
+  network_config: z.union([FlatNetworkConfigSchema, DualNetworkConfigSchema]),
 });
 
 export type MLWeights = z.infer<typeof MLWeightsSchema>;
