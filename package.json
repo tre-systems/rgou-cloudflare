@@ -8,22 +8,23 @@
   "scripts": {
     "dev": "npm run generate:sw && next dev --turbopack",
     "build": "npm run generate:sw && npm run build:wasm-assets && next build",
-    "build:cf": "npm run generate:sw && npm run build:wasm-assets && npx @opennextjs/cloudflare build",
+    "build:cf": "npx @opennextjs/cloudflare build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:rust": "cd worker/rust_ai_core && cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings",
     "type-check": "tsc --noEmit",
     "generate:sw": "GITHUB_SHA=$GITHUB_SHA node scripts/generate-sw.js",
     "build:wasm": "cd worker/rust_ai_core && wasm-pack build --target web --out-name rgou_ai_worker -- --features wasm --no-default-features",
     "build:wasm-assets": "npm run build:wasm && rm -rf public/wasm && mkdir -p public/wasm && cp worker/rust_ai_core/pkg/rgou_ai_worker_bg.wasm public/wasm/rgou_ai_worker_bg.wasm && cp worker/rust_ai_core/pkg/rgou_ai_worker.js public/wasm/rgou_ai_core.js",
     "build:rust-ai": "cd worker/rust_ai_core && cargo build --release",
     "nuke": "rm -rf .next .open-next .wrangler node_modules package-lock.json && npm install && npm run dev",
-    "check": "npm run lint && npm run type-check && (cd worker/rust_ai_core && NUM_GAMES=4 cargo test test_ai_matrix -- --nocapture) && npm run test:coverage && npm run test:e2e",
-    "check:slow": "npm run lint && npm run type-check && (cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture) && npm run test:coverage && npm run test:e2e",
+    "check": "npm run lint && npm run type-check && npm run lint:rust && npm run test:rust && npm run test:coverage && npm run test:e2e",
+    "check:slow": "npm run lint && npm run type-check && npm run lint:rust && (cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture) && npm run test:coverage && npm run test:e2e",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:rust": "cd worker/rust_ai_core && cargo test -- --nocapture",
+    "test:rust": "cd worker/rust_ai_core && cargo test --all-targets -- --nocapture",
     "test:rust:slow": "cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture",
     "test:ai-comparison": "./scripts/test-ai-comparison.sh",
     "test:ai-comparison:fast": "NUM_GAMES=10 ./scripts/test-ai-comparison.sh",
@@ -66,9 +67,9 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250719.0",
+    "@cloudflare/workers-types": "5.20260714.1",
     "@eslint/eslintrc": "^3",
-    "@opennextjs/cloudflare": "1.19.11",
+    "@opennextjs/cloudflare": "1.20.1",
     "@playwright/test": "^1.54.1",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
@@ -90,7 +91,7 @@
     "typescript": "^5",
     "typescript-eslint": "^8.37.0",
     "vitest": "^4.1.8",
-    "wrangler": "4.97.0"
+    "wrangler": "4.110.0"
   },
   "overrides": {
     "@esbuild-kit/core-utils": {

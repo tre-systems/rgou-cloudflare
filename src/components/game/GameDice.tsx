@@ -75,14 +75,12 @@ export default function GameDice({ gameState }: GameDiceProps) {
           animate={{
             scale: 1,
             x: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}
           transition={{
             type: 'spring',
             stiffness: 400,
             damping: 25,
             x: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' },
-            backgroundColor: { duration: 1, repeat: Infinity, ease: 'easeInOut' },
           }}
           data-testid="roll-dice"
         >
@@ -161,14 +159,12 @@ export default function GameDice({ gameState }: GameDiceProps) {
       animate={{
         scale: 1,
         x: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
       }}
       transition={{
         type: 'spring',
         stiffness: 400,
         damping: 25,
         x: { duration: 0.5, repeat: Infinity, ease: 'easeInOut' },
-        backgroundColor: { duration: 1, repeat: Infinity, ease: 'easeInOut' },
       }}
       data-testid="roll-dice"
     >

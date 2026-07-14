@@ -238,9 +238,11 @@ mod tests {
     #[test]
     fn test_crossover() {
         let params1 = GeneticParams::default();
-        let mut params2 = GeneticParams::default();
-        params2.win_score = 20000;
-        params2.finished_piece_value = 2000;
+        let params2 = GeneticParams {
+            win_score: 20000,
+            finished_piece_value: 2000,
+            ..GeneticParams::default()
+        };
 
         let crossed = params1.crossover(&params2, 1.0);
 

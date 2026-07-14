@@ -173,21 +173,11 @@ test.describe('Game Interactions', () => {
 
 test.describe('Game Completion and Database Saves', () => {
   async function simulateGameWin(page: Page) {
-    await page.getByTestId('create-near-winning-state').click();
-    await page.waitForTimeout(500);
-
-    // Roll dice to get a value that will complete the game
     await page.evaluate(() => {
       const store = (window as any).useGameStore.getState();
-      store.actions.processDiceRoll(2); // Roll 2 to move the last piece from square 12 to finish
-    });
-
-    await page.waitForTimeout(500);
-
-    // Make the winning move
-    await page.evaluate(() => {
-      const store = (window as any).useGameStore.getState();
-      store.actions.makeMove(6); // Move the last piece
+      store.actions.createNearWinningState();
+      store.actions.processDiceRoll(2);
+      store.actions.makeMove(6);
     });
 
     await waitForGameCompletion(page);
@@ -236,6 +226,30 @@ test.describe('Game Completion and Database Saves', () => {
     expect(savedGame).toBeTruthy();
     expect(savedGame.winner).toBe('player1');
     expect(savedGame.gameType).toBe('watch');
+  });
+
+  test('saves a completed game only once when the completion effect repeats', async ({ page }) => {
+    await startGame(page, 'classic');
+    await simulateGameWin(page);
+
+    const savedGame = await verifyDatabaseSave('classic');
+    await page.evaluate(async () => {
+      const store = (window as any).useGameStore.getState();
+      await store.actions.postGameToServer();
+      await store.actions.postGameToServer();
+    });
+
+    const db = new Database('local.db');
+    try {
+      const row = db
+        .prepare('SELECT COUNT(*) AS count FROM games WHERE id = ?')
+        .get(savedGame.id) as {
+        count: number;
+      };
+      expect(row.count).toBe(1);
+    } finally {
+      db.close();
+    }
   });
 
   test('can reset game after completion', async ({ page }) => {
@@ -292,22 +306,10 @@ test.describe('Error Handling and Edge Cases', () => {
     await page.getByTestId('roll-dice').click();
     await page.waitForTimeout(500);
 
-    // Navigate away and back
-    await page.goto('/');
-    await page.goto('/');
+    await page.reload();
 
-    // Wait for the page to load and game state to be restored
-    await page.waitForTimeout(1000);
-
-    // Should either be in a game (game state is persisted) or back to mode selection
-    const gameBoard = page.getByTestId('game-board');
-    const modeSelection = page.getByTestId('ai-model-selection');
-
-    // Check if either is visible (both are valid outcomes)
-    const gameBoardVisible = await gameBoard.isVisible();
-    const modeSelectionVisible = await modeSelection.isVisible();
-
-    expect(gameBoardVisible || modeSelectionVisible).toBe(true);
+    await expect(page.getByTestId('game-board')).toBeVisible();
+    await expect(page.getByTestId('ai-model-selection')).not.toBeVisible();
   });
 });
 

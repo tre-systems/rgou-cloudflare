@@ -7,6 +7,15 @@ export function cn(...inputs: ClassValue[]) {
 
 const PLAYER_ID_KEY = 'rgou-player-id';
 
+export function createId(prefix: 'game' | 'player'): string {
+  const randomId = globalThis.crypto?.randomUUID?.();
+  if (randomId) {
+    return `${prefix}_${randomId}`;
+  }
+
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
 export function getPlayerId(): string {
   if (typeof window === 'undefined') {
     return 'unknown';
@@ -14,8 +23,8 @@ export function getPlayerId(): string {
 
   let playerId = localStorage.getItem(PLAYER_ID_KEY);
 
-  if (!playerId) {
-    playerId = `player_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  if (!playerId || !/^player_[A-Za-z0-9_-]+$/.test(playerId) || playerId.length > 128) {
+    playerId = createId('player');
     localStorage.setItem(PLAYER_ID_KEY, playerId);
   }
 

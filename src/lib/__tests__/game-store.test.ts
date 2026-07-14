@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useGameStore } from '../game-store';
+import { useUIStore } from '../ui-store';
 import { createTestGameState } from './test-utils';
 
 const incrementWinsMock = vi.fn();
@@ -36,6 +37,7 @@ vi.mock('@/lib/actions', () => ({
 describe('GameStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useUIStore.getState().actions.reset();
     useGameStore.getState().actions.reset();
   });
 
@@ -87,6 +89,19 @@ describe('GameStore', () => {
       expect(gameState.gameStatus).toBe('finished');
       expect(gameState.winner).toBe('player1');
       expect(incrementWinsMock).toHaveBeenCalled();
+    });
+
+    it('should not count AI-vs-AI results in player statistics', () => {
+      useUIStore.getState().actions.setSelectedMode('watch');
+      const { actions } = useGameStore.getState();
+      actions.createNearWinningState();
+
+      actions.processDiceRoll(2);
+      actions.makeMove(6);
+
+      expect(useGameStore.getState().gameState.gameStatus).toBe('finished');
+      expect(incrementWinsMock).not.toHaveBeenCalled();
+      expect(incrementLossesMock).not.toHaveBeenCalled();
     });
   });
 
@@ -239,6 +254,8 @@ describe('GameStore', () => {
       expect(gameState.diceRoll).toBe(null);
       expect(gameState.canMove).toBe(false);
       expect(gameState.validMoves).toEqual([]);
+      expect(gameState.history).toEqual([]);
+      expect(gameState.board.filter(Boolean)).toHaveLength(1);
     });
   });
 });

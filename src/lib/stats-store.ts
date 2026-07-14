@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { GameStats } from './schemas';
-import { getBrowserStorage } from './persist-storage';
+import { getBrowserStorage, parsePersistedGameStats } from './persist-storage';
 
 type StatsStore = {
   stats: GameStats;
@@ -45,6 +45,13 @@ export const useStatsStore = create<StatsStore>()(
     {
       name: 'rgou-stats-storage',
       storage: createJSONStorage(getBrowserStorage),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<StatsStore>;
+        return {
+          ...currentState,
+          stats: parsePersistedGameStats(persisted?.stats) ?? currentState.stats,
+        };
+      },
       partialize: state => ({ stats: state.stats }),
     }
   )

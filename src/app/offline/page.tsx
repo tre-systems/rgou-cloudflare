@@ -20,7 +20,7 @@ export default function OfflinePage() {
           </p>
           <div className="flex items-center justify-center space-x-2 text-sm text-slate-400">
             <Wifi className="h-4 w-4" />
-            <span>Reconnect to sync your progress</span>
+            <span>Your game and statistics remain stored locally</span>
           </div>
         </div>
 
@@ -32,7 +32,7 @@ export default function OfflinePage() {
         </button>
 
         <div className="mt-6 text-sm text-slate-400">
-          <p>Game data is stored locally and will sync when you&apos;re back online.</p>
+          <p>Reconnect to save future completed-game analytics.</p>
         </div>
       </div>
     </div>

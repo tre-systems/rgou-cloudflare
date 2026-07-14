@@ -68,6 +68,9 @@ use crate::{GameState, AI, PIECES_PER_PLAYER};
 use rand::Rng;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::sync::Once;
+
+static CONFIGURE_THREAD_POOL: Once = Once::new();
 
 /// System types for CPU optimization strategies
 #[derive(Debug, Clone, Copy)]
@@ -464,19 +467,18 @@ impl Trainer {
     /// - Neural network training
     /// - AI evaluation and testing
     fn configure_thread_pool() {
-        let total_cores = std::thread::available_parallelism()
-            .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
-            .get();
+        CONFIGURE_THREAD_POOL.call_once(|| {
+            let total_cores = std::thread::available_parallelism()
+                .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
+                .get();
+            let num_cores = Self::get_optimal_core_count(total_cores);
 
-        // Determine optimal core count based on system characteristics
-        let num_cores = Self::get_optimal_core_count(total_cores);
-
-        // Configure rayon thread pool for optimal performance
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(num_cores)
-            .stack_size(8 * 1024 * 1024) // 8MB stack size for deep recursion
-            .build_global()
-            .unwrap_or_else(|_| println!("Warning: Could not set thread pool size"));
+            // Rayon may already be initialized by another AI task; its existing pool remains valid.
+            let _ = rayon::ThreadPoolBuilder::new()
+                .num_threads(num_cores)
+                .stack_size(8 * 1024 * 1024)
+                .build_global();
+        });
     }
 
     /// Determine the optimal number of CPU cores to use based on system characteristics
@@ -656,7 +658,7 @@ impl Trainer {
                 let completed =
                     completed_games.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
-                if completed % progress_interval == 0 {
+                if completed.is_multiple_of(progress_interval) {
                     let elapsed = start_time.elapsed();
                     let games_per_sec = if elapsed.as_secs() > 0 {
                         completed as f64 / elapsed.as_secs_f64()
@@ -1348,7 +1350,7 @@ mod tests {
         let value_target = trainer.calculate_value_target(&game_state);
 
         // Value target should be in [-1, 1] range
-        assert!(value_target >= -1.0 && value_target <= 1.0);
+        assert!((-1.0..=1.0).contains(&value_target));
     }
 
     #[test]
@@ -1641,7 +1643,7 @@ mod tests {
             // Features should be reasonable values (allow flexibility for strategic features)
             for (feature_idx, &feature) in sample.features.iter().enumerate() {
                 assert!(
-                    feature >= -15.0 && feature <= 15.0,
+                    (-15.0..=15.0).contains(&feature),
                     "Sample {}, Feature {} out of range: {}",
                     sample_idx,
                     feature_idx,

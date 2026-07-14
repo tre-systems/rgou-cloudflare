@@ -341,7 +341,7 @@ mod tests {
         let evaluation = ai.evaluate_position(&state);
 
         // Evaluation should be in reasonable range for tanh output
-        assert!(evaluation >= -1.0 && evaluation <= 1.0);
+        assert!((-1.0..=1.0).contains(&evaluation));
     }
 
     #[test]
@@ -447,7 +447,7 @@ mod tests {
             PIECES_PER_PLAYER
         );
         for &output in &response.diagnostics.policy_network_outputs {
-            assert!(output >= 0.0 && output <= 1.0);
+            assert!((0.0..=1.0).contains(&output));
         }
 
         // Policy outputs should sum to approximately 1.0 (softmax)

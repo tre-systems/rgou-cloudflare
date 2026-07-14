@@ -18,14 +18,15 @@ describe('actions', () => {
   const mockDb = {
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
-    returning: vi.fn(),
+    onConflictDoNothing: vi.fn().mockReturnThis(),
+    run: vi.fn(),
   };
 
   const mockSqliteDb = {
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockReturnThis(),
-    get: vi.fn(),
+    onConflictDoNothing: vi.fn().mockReturnThis(),
+    run: vi.fn(),
   };
 
   beforeEach(() => {
@@ -37,16 +38,17 @@ describe('actions', () => {
       player: 'player1',
       diceRoll: 3,
       pieceIndex: 0,
-      fromSquare: 0,
-      toSquare: 4,
-      moveType: 'move',
+      fromSquare: 13,
+      toSquare: 20,
+      moveType: 'finish',
     };
 
     const validPayload: SaveGamePayload = {
+      gameId: 'test-game-id',
       winner: 'player1',
       history: [validMoveRecord],
       playerId: 'test-player',
-      moveCount: 10,
+      moveCount: 1,
       duration: 5000,
       clientHeader: 'test-header',
       gameType: 'classic',
@@ -59,17 +61,18 @@ describe('actions', () => {
         success: true,
         data: validPayload,
       });
-      mockDb.returning.mockResolvedValue([{ id: 'test-game-id' }]);
+      mockDb.run.mockResolvedValue({ success: true });
 
       const result = await saveGame(validPayload);
 
       expect(result).toEqual({ success: true, gameId: 'test-game-id' });
       expect(mockDb.insert).toHaveBeenCalled();
       expect(mockDb.values).toHaveBeenCalledWith({
+        id: 'test-game-id',
         winner: 'player1',
         playerId: 'test-player',
         completedAt: expect.any(Date),
-        moveCount: 10,
+        moveCount: 1,
         duration: 5000,
         clientHeader: 'test-header',
         history: validPayload.history,
@@ -88,17 +91,18 @@ describe('actions', () => {
         success: true,
         data: validPayload,
       });
-      mockSqliteDb.get.mockReturnValue({ id: 'test-game-id' });
+      mockSqliteDb.run.mockReturnValue({ changes: 1 });
 
       const result = await saveGame(validPayload);
 
       expect(result).toEqual({ success: true, gameId: 'test-game-id' });
       expect(mockSqliteDb.insert).toHaveBeenCalled();
       expect(mockSqliteDb.values).toHaveBeenCalledWith({
+        id: 'test-game-id',
         winner: 'player1',
         playerId: 'test-player',
         completedAt: expect.any(Date),
-        moveCount: 10,
+        moveCount: 1,
         duration: 5000,
         clientHeader: 'test-header',
         history: validPayload.history,
@@ -119,6 +123,7 @@ describe('actions', () => {
       const result = await saveGame(validPayload);
 
       expect(result).toEqual({ error: 'Invalid game data' });
+      expect(getDb).not.toHaveBeenCalled();
     });
 
     it('should handle database errors in production', async () => {
@@ -129,14 +134,11 @@ describe('actions', () => {
         data: validPayload,
       });
       const dbError = new Error('Database connection failed');
-      mockDb.returning.mockRejectedValue(dbError);
+      mockDb.run.mockRejectedValue(dbError);
 
       const result = await saveGame(validPayload);
 
-      expect(result).toEqual({
-        error: 'Failed to save game',
-        details: 'Database connection failed',
-      });
+      expect(result).toEqual({ error: 'Failed to save game' });
     });
 
     it('should handle general errors', async () => {
@@ -148,35 +150,31 @@ describe('actions', () => {
 
       const result = await saveGame(validPayload);
 
-      expect(result).toEqual({
-        error: 'Failed to save game',
-        details: 'General error',
-      });
+      expect(result).toEqual({ error: 'Failed to save game' });
     });
 
-    it.each([
-      ['classic', 'classic-id'],
-      ['ml', 'ml-id'],
-      ['watch', 'watch-id'],
-    ] as const)('should save correct gameType for %s mode', async (gameType, gameId) => {
-      vi.stubEnv('NODE_ENV', 'production');
-      vi.mocked(getDb).mockResolvedValue(mockDb as any);
-      vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
-        success: true,
-        data: { ...validPayload, gameType },
-      });
-      mockDb.returning.mockResolvedValue([{ id: gameId }]);
+    it.each(['classic', 'ml', 'watch'] as const)(
+      'should save correct gameType for %s mode',
+      async gameType => {
+        vi.stubEnv('NODE_ENV', 'production');
+        vi.mocked(getDb).mockResolvedValue(mockDb as any);
+        vi.mocked(SaveGamePayloadSchema.safeParse).mockReturnValue({
+          success: true,
+          data: { ...validPayload, gameType },
+        });
+        mockDb.run.mockResolvedValue({ success: true });
 
-      const result = await saveGame({
-        ...validPayload,
-        gameType,
-      });
-      expect(result).toEqual({ success: true, gameId });
-      expect(mockDb.values).toHaveBeenCalledWith(
-        expect.objectContaining({
+        const result = await saveGame({
+          ...validPayload,
           gameType,
-        })
-      );
-    });
+        });
+        expect(result).toEqual({ success: true, gameId: 'test-game-id' });
+        expect(mockDb.values).toHaveBeenCalledWith(
+          expect.objectContaining({
+            gameType,
+          })
+        );
+      }
+    );
   });
 });

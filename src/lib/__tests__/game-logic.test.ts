@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { initializeGame, rollDice, getValidMoves, makeMove, processDiceRoll } from '../game-logic';
+import {
+  endTurn,
+  initializeGame,
+  rollDice,
+  getValidMoves,
+  makeMove,
+  processDiceRoll,
+} from '../game-logic';
 import { GameState } from '../schemas';
 import { createTestGameState } from './test-utils';
 
@@ -149,20 +156,21 @@ describe('game-logic', () => {
 
     it('should handle capture move', () => {
       const gameState = createTestGameState({
-        diceRoll: 4,
+        diceRoll: 1,
         canMove: true,
         validMoves: [0],
-        player2PieceSquares: [0], // square 0 is where piece 0 will land
+        player1PieceSquares: [0],
+        player2PieceSquares: [4],
       });
 
       const [newState, moveType, movePlayer] = makeMove(gameState, 0);
 
-      expect(newState.player1Pieces[0].square).toBe(0);
+      expect(newState.player1Pieces[0].square).toBe(4);
       expect(newState.player2Pieces[0].square).toBe(-1);
-      expect(newState.board[0]).toEqual(newState.player1Pieces[0]);
+      expect(newState.board[4]).toEqual(newState.player1Pieces[0]);
       expect(moveType).toBe('capture');
       expect(movePlayer).toBe('player1');
-      expect(newState.currentPlayer).toBe('player1');
+      expect(newState.currentPlayer).toBe('player2');
     });
 
     it('should handle finish move', () => {
@@ -338,6 +346,30 @@ describe('game-logic', () => {
       expect(newState.currentPlayer).toBe('player2');
       expect(newState.gameStatus).toBe('playing');
       expect(newState.winner).toBeNull();
+    });
+
+    it.each([-1, 1.5, 5])('should reject invalid provided roll %s', roll => {
+      expect(() => processDiceRoll(initializeGame(), roll)).toThrow(RangeError);
+    });
+
+    it('should not reroll before the current turn is resolved', () => {
+      const gameState = processDiceRoll(initializeGame(), 2);
+      expect(processDiceRoll(gameState, 4)).toBe(gameState);
+    });
+  });
+
+  describe('endTurn', () => {
+    it('should switch players after a roll with no move', () => {
+      const gameState = processDiceRoll(initializeGame(), 0);
+      const newState = endTurn(gameState);
+
+      expect(newState.currentPlayer).not.toBe(gameState.currentPlayer);
+      expect(newState.diceRoll).toBeNull();
+    });
+
+    it('should not end a turn while a valid move is available', () => {
+      const gameState = processDiceRoll(initializeGame(), 2);
+      expect(endTurn(gameState)).toBe(gameState);
     });
   });
 });

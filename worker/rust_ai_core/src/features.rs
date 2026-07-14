@@ -444,10 +444,12 @@ impl GameFeatures {
 
         let mut safety_score = 0.0;
         for piece in pieces {
-            if piece.square >= 0 && piece.square < BOARD_SIZE as i8
-                && ROSETTE_SQUARES.contains(&(piece.square as u8)) {
-                    safety_score += 1.0;
-                }
+            if piece.square >= 0
+                && piece.square < BOARD_SIZE as i8
+                && ROSETTE_SQUARES.contains(&(piece.square as u8))
+            {
+                safety_score += 1.0;
+            }
         }
         safety_score / PIECES_PER_PLAYER as f32
     }
@@ -780,7 +782,7 @@ mod tests {
         // All features should be in reasonable ranges (allow flexibility for strategic features)
         for (i, &feature) in features.features.iter().enumerate() {
             assert!(
-                feature >= -15.0 && feature <= 15.0,
+                (-15.0..=15.0).contains(&feature),
                 "Feature {} out of range: {}",
                 i,
                 feature
