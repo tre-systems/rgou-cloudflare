@@ -1,13 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bug, ChevronDown, ChevronRight, ExternalLink, Github } from 'lucide-react';
+import { Bug, ChevronDown, ChevronRight, ExternalLink, Github, Heart } from 'lucide-react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
-import { isDevelopment, getAIName } from '@/lib/utils';
+import { cn, isDevelopment, getAIName } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
 import HowToPlayPanel from './HowToPlayPanel';
-import AnimatedBackground from './AnimatedBackground';
+import SiteBackdrop from './SiteBackdrop';
 import ModeSelection from './ModeSelection';
 import { getModeConfiguration } from '@/lib/game-mode';
 import type { OpponentMode } from '@/lib/types';
@@ -133,7 +133,7 @@ export default function RoyalGameOfUr() {
         />
       </Suspense>
     ) : (
-      <div className="glass-dark rounded-lg p-3">
+      <div className="surface-panel rounded-lg p-3">
         <button
           type="button"
           className="w-full text-left flex justify-between items-center"
@@ -165,156 +165,116 @@ export default function RoyalGameOfUr() {
 
   return (
     <>
-      <a
-        href="https://github.com/tre-systems/rgou-cloudflare"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="GitHub Repository"
-        className="fixed bottom-5 right-4 z-50 opacity-60 hover:opacity-100 transition-opacity"
-        data-testid="github-link"
-      >
-        <Github className="w-6 h-6" />
-      </a>
-      <AnimatedBackground />
-      <main className="relative flex min-h-screen w-full items-center justify-center p-4 pb-24">
-        {!isStandalone && (
-          <div className="hidden md:block absolute top-4 right-4 z-50">
-            <button
-              type="button"
-              onClick={() => {
-                window.open(
-                  '/',
-                  'GamePopout',
-                  'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no,noopener,noreferrer'
-                );
-              }}
-              className="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2 text-white/80 hover:text-white font-semibold shadow-lg backdrop-blur-md border border-white/10 transition-colors"
-              title="Pop Out Game"
-            >
-              <ExternalLink className="w-4 h-4 mr-1" />
-              <span>Pop Out Game</span>
-            </button>
-          </div>
-        )}
-        {isDevelopment() && (
-          <div className="hidden xl:block absolute left-4 top-1/2 -translate-y-1/2 w-80">
-            {diagnosticsPanelOrPlaceholder}
-          </div>
-        )}
-        <motion.div
-          className="w-full max-w-sm mx-auto space-y-3"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <motion.div
-            className="text-center space-y-1"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <motion.h1
-              className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 neon-text"
-              animate={{
-                backgroundPosition: ['0%', '100%', '0%'],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: 'linear',
-              }}
-              style={{
-                backgroundSize: '200% 200%',
-              }}
-              data-testid="main-title"
-            >
-              Royal Game of Ur
-            </motion.h1>
-
-            <motion.div
-              className="flex items-center justify-center space-x-2"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ repeat: Infinity, duration: 2.5 }}
-            >
-              <svg
-                className="w-3 h-3 text-amber-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
+      <SiteBackdrop />
+      <main className="relative z-10 min-h-screen w-full">
+        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-8">
+          <div className="flex h-10 items-center justify-end">
+            {!isStandalone && (
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(
+                    '/',
+                    'GamePopout',
+                    'width=440,height=820,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no,noopener,noreferrer'
+                  );
+                }}
+                className="hidden items-center gap-2 text-sm font-medium text-[#8e9184] transition-colors hover:text-[#eee7d8] md:inline-flex"
+                title="Open the game in a compact window"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-6.364l-1.414 1.414M6.05 17.95l-1.414 1.414m12.728 0l-1.414-1.414M6.05 6.05L4.636 4.636"
-                />
-              </svg>
-              <span className="text-white/80 font-medium text-sm" data-testid="main-subtitle">
-                Ancient Mesopotamian Board Game
-              </span>
-              <svg
-                className="w-3 h-3 text-amber-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-6.364l-1.414 1.414M6.05 17.95l-1.414 1.414m12.728 0l-1.414-1.414M6.05 6.05L4.636 4.636"
-                />
-              </svg>
-            </motion.div>
-            <div className="h-4" />
-          </motion.div>
+                <ExternalLink className="h-4 w-4" />
+                Pop out game
+              </button>
+            )}
+          </div>
 
-          {showModelOverlay ? (
-            <ModeSelection onSelect={handleOverlaySelect} />
-          ) : (
-            <GameBoard
-              gameState={gameState}
-              onPieceClick={handlePieceClick}
-              aiThinking={aiThinking}
-              onResetGame={handleReset}
-              soundEnabled={soundEnabled}
-              onToggleSound={toggleSound}
-              onShowHowToPlay={showHowToPlay}
-              onCreateNearWinningState={createNearWinningState}
-              watchMode={selectedMode === 'watch'}
-              aiSourceP1={aiSourceP1}
-              aiSourceP2={aiSourceP2}
-              lastMoveType={lastMoveType}
-              lastMovePlayer={lastMovePlayer}
-            />
+          {isDevelopment() && (
+            <div className="absolute left-4 top-1/2 hidden w-80 -translate-y-1/2 xl:block">
+              {diagnosticsPanelOrPlaceholder}
+            </div>
           )}
 
-          {isDevelopment() && <div className="xl:hidden">{diagnosticsPanelOrPlaceholder}</div>}
+          <div className="flex flex-1 items-center py-6 sm:py-10">
+            <motion.div
+              className={cn('mx-auto w-full', showModelOverlay ? 'max-w-4xl' : 'max-w-md')}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+            >
+              <header className="text-center">
+                <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c7a65d]">
+                  An ancient race game
+                </div>
+                <h1
+                  className="display-title text-4xl text-[#eee7d8] sm:text-5xl"
+                  data-testid="main-title"
+                >
+                  Royal Game of Ur
+                </h1>
+                <div
+                  className="mt-3 text-sm tracking-wide text-[#8e9184]"
+                  data-testid="main-subtitle"
+                >
+                  Mesopotamia · Third millennium BCE
+                </div>
+              </header>
 
-          <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
+              {showModelOverlay ? (
+                <ModeSelection onSelect={handleOverlaySelect} onShowHowToPlay={showHowToPlay} />
+              ) : (
+                <div className="mt-8">
+                  <GameBoard
+                    gameState={gameState}
+                    onPieceClick={handlePieceClick}
+                    aiThinking={aiThinking}
+                    onResetGame={handleReset}
+                    soundEnabled={soundEnabled}
+                    onToggleSound={toggleSound}
+                    onShowHowToPlay={showHowToPlay}
+                    onCreateNearWinningState={createNearWinningState}
+                    watchMode={selectedMode === 'watch'}
+                    aiSourceP1={aiSourceP1}
+                    aiSourceP2={aiSourceP2}
+                    lastMoveType={lastMoveType}
+                    lastMovePlayer={lastMovePlayer}
+                  />
+                </div>
+              )}
 
-          <div className="h-4" />
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.6 }}
-          >
-            <p className="text-center">
+              {isDevelopment() && (
+                <div className="mt-4 xl:hidden">{diagnosticsPanelOrPlaceholder}</div>
+              )}
+            </motion.div>
+          </div>
+
+          <footer className="flex flex-col items-center justify-between gap-3 border-t border-[#35382f] pt-5 text-xs text-[#8e9184] sm:flex-row">
+            <span>Open source · Built for the web</span>
+            <div className="flex items-center gap-5">
+              <a
+                href="https://github.com/tre-systems/rgou-cloudflare"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub Repository"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-[#eee7d8]"
+                data-testid="github-link"
+              >
+                <Github className="h-3.5 w-3.5" />
+                Source
+              </a>
               <a
                 href="https://ko-fi.com/N4N31DPNUS"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-5 left-1/2 z-50 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-amber-300/25 bg-slate-950/60 px-3.5 py-1.5 text-[13px] font-semibold text-amber-100/70 no-underline shadow-lg backdrop-blur-sm transition-colors hover:border-amber-300/55 hover:bg-amber-300/10 hover:text-amber-50"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-[#eee7d8]"
               >
-                <span aria-hidden="true">☕</span>
-                Buy me a coffee
+                <Heart className="h-3.5 w-3.5" />
+                Support the project
               </a>
-            </p>
-          </motion.div>
-        </motion.div>
+            </div>
+          </footer>
+        </div>
+
+        <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
       </main>
     </>
   );

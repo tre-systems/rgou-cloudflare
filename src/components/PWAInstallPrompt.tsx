@@ -67,28 +67,28 @@ export default function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-sm">
-      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-lg p-4">
+      <div className="surface-panel rounded-xl p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
-              <Download className="h-5 w-5 text-blue-400" />
-              <h3 className="text-sm font-semibold text-white">Install Game of Ur</h3>
+              <Download className="h-5 w-5 text-[#c7a65d]" />
+              <h3 className="text-sm font-semibold text-[#eee7d8]">Install Game of Ur</h3>
             </div>
-            <p className="text-xs text-slate-300 mb-3">
-              Add to your home screen for easy access and offline play!
+            <p className="mb-3 text-xs text-[#aca99e]">
+              Add it to your home screen for quick access and offline play.
             </p>
             <div className="flex space-x-2">
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition-colors duration-200"
+                className="rounded bg-[#c7a65d] px-3 py-2 text-xs font-semibold text-[#191a17] transition-colors hover:bg-[#e2ca91]"
               >
                 Install
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium py-2 px-3 rounded transition-colors duration-200"
+                className="rounded border border-[#45483e] px-3 py-2 text-xs font-medium text-[#bdb9ad] transition-colors hover:bg-[#303229] hover:text-[#eee7d8]"
               >
                 Not now
               </button>
@@ -97,7 +97,7 @@ export default function PWAInstallPrompt() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="text-slate-400 hover:text-slate-300 transition-colors"
+            className="text-[#8e9184] transition-colors hover:text-[#eee7d8]"
             aria-label="Dismiss install prompt"
           >
             <X className="h-4 w-4" aria-hidden="true" />

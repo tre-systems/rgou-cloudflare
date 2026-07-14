@@ -39,7 +39,7 @@ export default function AIDiagnosticsPanel({
 
   return (
     <motion.div
-      className="glass-dark rounded-lg p-3"
+      className="surface-panel rounded-lg p-3"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
@@ -74,13 +74,13 @@ export default function AIDiagnosticsPanel({
           >
             <div className="mt-3 space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="glass-light p-2 rounded-md">
+                <div className="surface-inset rounded-md p-2">
                   <p className="text-white/70">Chosen Move</p>
                   <p className="font-bold text-lg text-green-400">
                     Piece #{lastAIDiagnostics.move}
                   </p>
                 </div>
-                <div className="glass-light p-2 rounded-md">
+                <div className="surface-inset rounded-md p-2">
                   <p className="text-white/70">Evaluation</p>
                   <p
                     className={`font-bold text-lg ${
@@ -98,13 +98,13 @@ export default function AIDiagnosticsPanel({
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="glass-light p-2 rounded-md">
+                <div className="surface-inset rounded-md p-2">
                   <p className="text-white/70">AI Time (ms)</p>
                   <p className="font-mono text-white/90">
                     {lastAIMoveDuration?.toFixed(2) ?? 'N/A'}
                   </p>
                 </div>
-                <div className="glass-light p-2 rounded-md">
+                <div className="surface-inset rounded-md p-2">
                   <p className="text-white/70">Nodes/Hits</p>
                   <p className="font-mono text-white/90">
                     {lastAIDiagnostics.diagnostics.nodesEvaluated} /{' '}
@@ -115,7 +115,7 @@ export default function AIDiagnosticsPanel({
 
               {isMLAI && mlDiagnostics.value_network_output !== undefined && (
                 <div className="grid grid-cols-2 gap-3 text-center">
-                  <div className="glass-light p-2 rounded-md">
+                  <div className="surface-inset rounded-md p-2">
                     <div className="flex items-center justify-center space-x-1">
                       <Brain className="w-3 h-3 text-blue-400" />
                       <p className="text-white/70">Value Network</p>
@@ -124,7 +124,7 @@ export default function AIDiagnosticsPanel({
                       {mlDiagnostics.value_network_output?.toFixed(3) || 'N/A'}
                     </p>
                   </div>
-                  <div className="glass-light p-2 rounded-md">
+                  <div className="surface-inset rounded-md p-2">
                     <div className="flex items-center justify-center space-x-1">
                       <Zap className="w-3 h-3 text-purple-400" />
                       <p className="text-white/70">Policy Outputs</p>
@@ -137,11 +137,11 @@ export default function AIDiagnosticsPanel({
               )}
 
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="glass-light p-2 rounded-md">
+                <div className="surface-inset rounded-md p-2">
                   <p className="text-white/70">Game Phase</p>
                   <p className="font-mono text-white/90">{gamePhase}</p>
                 </div>
-                <div className="glass-light p-2 rounded-md">
+                <div className="surface-inset rounded-md p-2">
                   <p className="text-white/70">Board Control</p>
                   <p
                     className={`font-mono font-bold ${

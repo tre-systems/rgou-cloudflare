@@ -20,7 +20,7 @@ An offline-first implementation of the ancient Royal Game of Ur with Classic and
 - **Dual AI**: classic expectiminimax and a neural network trained from simulated games, both running locally through Rust and WebAssembly
 - **Non-blocking play**: one lazily created Web Worker hosts every AI engine, keeping search, inference, and model loading off the UI thread
 - **Offline-first**: HTML plus its hashed JS/CSS shell are installed atomically while larger AI assets are cached opportunistically
-- **Responsive UI**: keyboard-accessible play, animations, and sound on desktop and mobile
+- **Responsive UI**: keyboard-accessible play, restrained motion, reduced-motion support, and sound on desktop and mobile
 - **Private by design**: win/loss statistics stay on the device; anonymous lifecycle events are sent to Cloudflare Analytics Engine for aggregate counts when online
 
 ## Quick Start
