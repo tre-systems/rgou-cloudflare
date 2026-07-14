@@ -8,14 +8,18 @@ const checks = [
   { path: '/wasm/rgou_ai_worker_bg.wasm', type: 'application/wasm' },
   { path: '/ml-weights.json.gz', type: 'application/gzip' },
 ];
+const propagationAttempts = 20;
 
 const pause = () => new Promise(resolve => setTimeout(resolve, 3_000));
 
-async function waitFor(check) {
+export async function waitFor(
+  check,
+  { attempts = propagationAttempts, fetchImpl = fetch, pauseImpl = pause } = {}
+) {
   let detail = 'No response';
-  for (let attempt = 0; attempt < 10; attempt += 1) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
-      const response = await fetch(`${origin}${check.path}`, {
+      const response = await fetchImpl(`${origin}${check.path}`, {
         cache: 'no-store',
         signal: AbortSignal.timeout(10_000),
       });
@@ -33,7 +37,7 @@ async function waitFor(check) {
     } catch (error) {
       detail = String(error);
     }
-    if (attempt < 9) await pause();
+    if (attempt < attempts - 1) await pauseImpl();
   }
   throw new Error(`Smoke check failed for ${check.path}: ${detail}`);
 }
