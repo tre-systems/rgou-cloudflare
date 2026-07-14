@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Brain, Cpu, Eye, Github } from 'lucide-react';
@@ -13,6 +11,8 @@ import HowToPlayPanel from './HowToPlayPanel';
 import AnimatedBackground from './AnimatedBackground';
 import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
 import ModeSelectionCard from './ModeSelectionCard';
+import { getAISource, getModeConfiguration, isAITurn } from '@/lib/game-mode';
+import type { OpponentMode } from '@/lib/types';
 
 const MODE_OPTIONS = [
   {
@@ -42,7 +42,7 @@ const MODE_OPTIONS = [
     colorClass: 'text-orange-400',
     borderColorClass: 'border-orange-400/30 hover:border-orange-400/60',
   },
-];
+] as const;
 
 function isStandalonePWA() {
   if (typeof window === 'undefined') return false;
@@ -59,6 +59,7 @@ export default function RoyalGameOfUr() {
     makeAIMove,
     reset,
     reportGameStarted,
+    reportGameCompleted,
     createNearWinningState: createNearWinningStateAction,
   } = useGameActions();
   const aiThinking = useGameStore(state => state.aiThinking);
@@ -70,8 +71,6 @@ export default function RoyalGameOfUr() {
   const uiStore = useUIStore();
   const {
     reset: resetUI,
-    setAiSourceP1,
-    setAiSourceP2,
     setDiagnosticsPanelOpen,
     setHowToPlayOpen,
     setSelectedMode,
@@ -80,8 +79,9 @@ export default function RoyalGameOfUr() {
   } = uiStore.actions;
   const showModelOverlay = uiStore.showModelOverlay;
   const selectedMode = uiStore.selectedMode;
-  const aiSourceP1 = uiStore.aiSourceP1;
-  const aiSourceP2 = uiStore.aiSourceP2;
+  const modeConfiguration = selectedMode ? getModeConfiguration(selectedMode) : null;
+  const aiSourceP1 = modeConfiguration?.player1 ?? null;
+  const aiSourceP2 = modeConfiguration?.player2 ?? 'ml';
   const soundEnabled = uiStore.soundEnabled;
   const diagnosticsPanelOpen = uiStore.diagnosticsPanelOpen;
   const howToPlayOpen = uiStore.howToPlayOpen;
@@ -96,13 +96,12 @@ export default function RoyalGameOfUr() {
       return;
     }
 
-    const isWatchMode = selectedMode === 'watch';
-    const isAIsTurn =
-      isWatchMode ||
-      (gameState.currentPlayer === 'player2' &&
-        (selectedMode === 'classic' || selectedMode === 'ml' || selectedMode === 'heuristic'));
+    if (!selectedMode) return;
 
-    if (!isAIsTurn && gameState.canMove) {
+    const isWatchMode = getModeConfiguration(selectedMode).watch;
+    const isCurrentTurnAI = isAITurn(selectedMode, gameState.currentPlayer);
+
+    if (!isCurrentTurnAI && gameState.canMove) {
       return;
     }
 
@@ -111,13 +110,13 @@ export default function RoyalGameOfUr() {
       return () => clearTimeout(timer);
     }
 
-    if (isAIsTurn && gameState.canMove) {
+    if (isCurrentTurnAI && gameState.canMove) {
       const moveDelay = selectedMode === 'watch' ? 750 : 250;
       const timer = setTimeout(() => {
-        const aiSource = gameState.currentPlayer === 'player1' ? aiSourceP1 : aiSourceP2;
+        const aiSource = getAISource(selectedMode, gameState.currentPlayer);
         if (aiSource) {
           if (!isWatchMode) soundEffects.aiThinking();
-          makeAIMove(aiSource as 'heuristic' | 'client' | 'ml', isWatchMode);
+          makeAIMove(aiSource, isWatchMode);
         }
       }, moveDelay);
       return () => clearTimeout(timer);
@@ -128,28 +127,22 @@ export default function RoyalGameOfUr() {
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [
-    gameState,
-    showModelOverlay,
-    selectedMode,
-    aiSourceP1,
-    aiSourceP2,
-    processDiceRoll,
-    endTurn,
-    makeAIMove,
-  ]);
+  }, [gameState, showModelOverlay, selectedMode, processDiceRoll, endTurn, makeAIMove]);
 
   useEffect(() => {
     if (gameState.gameStatus === 'finished') {
-      setTimeout(() => {
+      reportGameCompleted();
+      const timer = setTimeout(() => {
         if (gameState.winner === 'player1') {
           soundEffects.gameWin();
         } else {
           soundEffects.gameLoss();
         }
       }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [gameState.gameStatus, gameState.winner]);
+    return undefined;
+  }, [gameState.gameStatus, gameState.winner, reportGameCompleted]);
 
   useEffect(() => {
     if (lastMoveType && lastMovePlayer) {
@@ -206,22 +199,8 @@ export default function RoyalGameOfUr() {
     createNearWinningStateAction();
   };
 
-  const handleOverlaySelect = (mode: 'heuristic' | 'classic' | 'ml' | 'watch') => {
+  const handleOverlaySelect = (mode: OpponentMode) => {
     setSelectedMode(mode);
-    if (mode === 'heuristic') {
-      setAiSourceP1(null);
-      setAiSourceP2('heuristic');
-    } else if (mode === 'classic') {
-      setAiSourceP1(null);
-      setAiSourceP2('client');
-    } else if (mode === 'ml') {
-      setAiSourceP1(null);
-      setAiSourceP2('ml');
-    } else if (mode === 'watch') {
-      setAiSourceP1('client');
-      setAiSourceP2('ml');
-    }
-
     setShowModelOverlay(false);
     reset();
     reportGameStarted(mode);
@@ -397,7 +376,7 @@ export default function RoyalGameOfUr() {
                       title={mode.label}
                       description={mode.description}
                       subtitle={mode.subtitle}
-                      onClick={() => handleOverlaySelect(mode.key as 'classic' | 'ml' | 'watch')}
+                      onClick={() => handleOverlaySelect(mode.key)}
                       colorClass={mode.colorClass}
                       borderColorClass={mode.borderColorClass}
                       data-testid={`mode-select-${mode.key}`}
@@ -419,6 +398,8 @@ export default function RoyalGameOfUr() {
               watchMode={selectedMode === 'watch'}
               aiSourceP1={aiSourceP1}
               aiSourceP2={aiSourceP2}
+              lastMoveType={lastMoveType}
+              lastMovePlayer={lastMovePlayer}
             />
           )}
 

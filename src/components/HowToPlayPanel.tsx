@@ -1,5 +1,3 @@
-'use client';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Dice6, Crown, Star, Zap, Trophy, ArrowRight } from 'lucide-react';
 

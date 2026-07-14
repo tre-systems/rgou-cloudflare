@@ -10,7 +10,7 @@ import {
 import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
-import type { GameState, Player, MoveType, AIResponse } from './types';
+import type { AISource, GameState, Player, MoveType, AIResponse } from './types';
 import { createId } from './utils';
 import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
@@ -42,7 +42,7 @@ type GameStore = {
     processDiceRoll: (roll?: number) => void;
     endTurn: () => void;
     makeMove: (pieceIndex: number) => void;
-    makeAIMove: (aiSource: 'heuristic' | 'client' | 'ml', isPlayer1AI?: boolean) => Promise<void>;
+    makeAIMove: (aiSource: AISource, isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
     reportGameStarted: (mode: GameUsageMode) => void;
     reportGameCompleted: () => void;
@@ -116,7 +116,7 @@ export const useGameStore = create<GameStore>()(
             });
           }
         },
-        makeAIMove: async (aiSource: 'heuristic' | 'client' | 'ml', isPlayer1AI = false) => {
+        makeAIMove: async (aiSource: AISource, isPlayer1AI = false) => {
           const { aiThinking, gameId, gameState, actions } = get();
 
           if (aiThinking || !gameState.canMove) return;

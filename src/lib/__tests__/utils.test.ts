@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { cn, getPlayerId, getAIName, getAISubtitle, isDevelopment } from '../utils';
+import { cn, getAIName, getAISubtitle, isDevelopment } from '../utils';
 
 describe('Utils', () => {
   beforeEach(() => {
@@ -16,52 +16,6 @@ describe('Utils', () => {
       expect(cn('class1', 'class2')).toBe('class1 class2');
       expect(cn('px-2 py-1', 'px-4')).toBe('py-1 px-4');
       expect(cn('bg-red-500', 'bg-blue-500')).toBe('bg-blue-500');
-    });
-  });
-
-  describe('getPlayerId', () => {
-    it('should return existing player ID from localStorage', () => {
-      const existingId = 'player_1234567890_abc123';
-      const localStorageMock = {
-        getItem: vi.fn().mockReturnValue(existingId),
-        setItem: vi.fn(),
-      };
-      vi.stubGlobal('localStorage', localStorageMock);
-      vi.stubGlobal('window', { localStorage: localStorageMock });
-      const result = getPlayerId();
-      expect(result).toBe(existingId);
-    });
-
-    it('should generate new player ID when none exists', () => {
-      const localStorageMock = {
-        getItem: vi.fn().mockReturnValue(null),
-        setItem: vi.fn(),
-      };
-      vi.stubGlobal('localStorage', localStorageMock);
-      vi.stubGlobal('window', { localStorage: localStorageMock });
-      const result = getPlayerId();
-      expect(result).toMatch(/^player_[0-9a-f-]{36}$/);
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('rgou-player-id', result);
-    });
-
-    it('should replace an invalid stored player ID', () => {
-      const localStorageMock = {
-        getItem: vi.fn().mockReturnValue('invalid player id'),
-        setItem: vi.fn(),
-      };
-      vi.stubGlobal('localStorage', localStorageMock);
-      vi.stubGlobal('window', { localStorage: localStorageMock });
-
-      const result = getPlayerId();
-
-      expect(result).toMatch(/^player_[0-9a-f-]{36}$/);
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('rgou-player-id', result);
-    });
-
-    it('should return "unknown" when window is undefined', () => {
-      vi.stubGlobal('window', undefined);
-      const result = getPlayerId();
-      expect(result).toBe('unknown');
     });
   });
 

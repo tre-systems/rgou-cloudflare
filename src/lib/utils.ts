@@ -1,13 +1,12 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { AIResponse } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const PLAYER_ID_KEY = 'rgou-player-id';
-
-export function createId(prefix: 'game' | 'player'): string {
+export function createId(prefix: 'game'): string {
   const randomId = globalThis.crypto?.randomUUID?.();
   if (randomId) {
     return `${prefix}_${randomId}`;
@@ -16,24 +15,7 @@ export function createId(prefix: 'game' | 'player'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
-export function getPlayerId(): string {
-  if (typeof window === 'undefined') {
-    return 'unknown';
-  }
-
-  let playerId = localStorage.getItem(PLAYER_ID_KEY);
-
-  if (!playerId || !/^player_[A-Za-z0-9_-]+$/.test(playerId) || playerId.length > 128) {
-    playerId = createId('player');
-    localStorage.setItem(PLAYER_ID_KEY, playerId);
-  }
-
-  return playerId;
-}
-
-export function getAIName(
-  aiSource: 'server' | 'client' | 'ml' | 'fallback' | 'heuristic' | null
-): string {
+export function getAIName(aiSource: AIResponse['aiType'] | null): string {
   if (!aiSource) return 'Unknown';
   switch (aiSource) {
     case 'client':
@@ -51,9 +33,7 @@ export function getAIName(
   }
 }
 
-export function getAISubtitle(
-  aiSource: 'server' | 'client' | 'ml' | 'fallback' | 'heuristic' | null
-): string {
+export function getAISubtitle(aiSource: AIResponse['aiType'] | null): string {
   switch (aiSource) {
     case 'client':
       return 'Expectiminimax algorithm';

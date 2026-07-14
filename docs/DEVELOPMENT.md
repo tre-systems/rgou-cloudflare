@@ -38,6 +38,8 @@ npm run generate:sw         # service worker (embeds the Git commit hash for cac
 
 UI components are not unit-tested; logic is extracted to `src/lib` and tested there. E2E tests use `data-testid` selectors and verify the built app and anonymous usage lifecycle.
 
+Architectural invariants are documented in the [pattern catalogue](./ARCHITECTURE.md#pattern-catalogue). In particular, add unit tests for pure policies and boundary parsers, and use Playwright for rendered component behavior.
+
 ```bash
 npm run test                     # unit tests (Vitest)
 npm run test:watch               # watch mode
