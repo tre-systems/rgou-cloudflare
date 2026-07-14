@@ -36,11 +36,22 @@ test.describe('Core Game Functionality', () => {
   });
 
   test('can start watch mode and see AI vs AI', async ({ page }) => {
+    const mlFailures: string[] = [];
+    let modelRequests = 0;
+    page.on('console', message => {
+      if (message.type() === 'error' && message.text().includes('AI worker ml request failed')) {
+        mlFailures.push(message.text());
+      }
+    });
+    page.on('request', request => {
+      if (new URL(request.url()).pathname === '/ml-weights.json.gz') modelRequests += 1;
+    });
+
     await startGame(page, 'watch');
     await expect(page.getByTestId('game-status-text')).toContainText("'s turn");
-    // In watch mode, AI should make moves automatically
-    await page.waitForTimeout(2000);
+    await expect.poll(() => modelRequests, { timeout: 5000 }).toBeGreaterThan(0);
     await expect(page.getByTestId('game-status-text')).not.toBeEmpty();
+    expect(mlFailures).toEqual([]);
   });
 });
 
