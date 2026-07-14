@@ -4,12 +4,12 @@ Graphviz/DOT sources and rendered PNGs live together in this directory. The `.do
 
 ## Files
 
-| Question | Source | Rendered |
-| --- | --- | --- |
-| Where does gameplay run, and which data crosses the edge boundary? | `system-overview.dot` | `system-overview.png` |
-| How does an AI result travel through workers, validation, stale guards, and fallback behavior? | `ai-turn-flow.dot` | `ai-turn-flow.png` |
+| Question                                                                                                      | Source                | Rendered              |
+| ------------------------------------------------------------------------------------------------------------- | --------------------- | --------------------- |
+| Where does gameplay run, and which data crosses the edge boundary?                                            | `system-overview.dot` | `system-overview.png` |
+| How does an AI result travel through the one lazy Worker, validation, stale guards, and centralized fallback? | `ai-turn-flow.dot`    | `ai-turn-flow.png`    |
 
-Read the system overview first. Use the AI-turn diagram when changing game orchestration, AI services, Web Worker messages, WASM response validation, or fallback behavior.
+Read the system overview first. Use the AI-turn diagram when changing game orchestration, `AIPosition`, the shared Worker client, model loading, WASM response validation, cache lifetime, or fallback behavior.
 
 ## Conventions
 

@@ -18,12 +18,10 @@ export function createId(prefix: 'game'): string {
 export function getAIName(aiSource: AIResponse['aiType'] | null): string {
   if (!aiSource) return 'Unknown';
   switch (aiSource) {
-    case 'client':
+    case 'classic':
       return 'Classic';
     case 'ml':
       return 'ML AI';
-    case 'server':
-      return 'Server AI';
     case 'fallback':
       return 'Fallback';
     case 'heuristic':
@@ -35,7 +33,7 @@ export function getAIName(aiSource: AIResponse['aiType'] | null): string {
 
 export function getAISubtitle(aiSource: AIResponse['aiType'] | null): string {
   switch (aiSource) {
-    case 'client':
+    case 'classic':
       return 'Expectiminimax algorithm';
     case 'ml':
       return 'Neural network model';

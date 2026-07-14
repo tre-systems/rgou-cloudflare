@@ -5,12 +5,12 @@ describe('game mode policy', () => {
   it('derives both AI assignments from the selected mode', () => {
     expect(getModeConfiguration('classic')).toMatchObject({
       player1: null,
-      player2: 'client',
+      player2: 'classic',
       participants: ['human', 'classic'],
       watch: false,
     });
     expect(getModeConfiguration('watch')).toMatchObject({
-      player1: 'client',
+      player1: 'classic',
       player2: 'ml',
       participants: ['classic', 'ml'],
       watch: true,

@@ -169,7 +169,7 @@ export default function GameCompletionOverlay({
           <div className="mb-2">
             {isWatchMode && (
               <span className="text-xs text-gray-400">
-                {isPlayer1Winner ? getAISubtitle('client') : getAISubtitle('ml')}
+                {isPlayer1Winner ? getAISubtitle('classic') : getAISubtitle('ml')}
               </span>
             )}
           </div>

@@ -1,5 +1,12 @@
 import type { StateStorage } from 'zustand/middleware';
-import { GameStateSchema, GameStatsSchema, type GameState, type GameStats } from './schemas';
+import {
+  GameStateSchema,
+  GameStatsSchema,
+  PersistedGameStateSchema,
+  type GameState,
+  type GameStats,
+} from './schemas';
+import { materializeGameState } from './game-logic';
 
 const noopStorage: StateStorage = {
   getItem: () => null,
@@ -22,8 +29,14 @@ export function removeLegacyPlayerIdentity(): void {
 }
 
 export function parsePersistedGameState(value: unknown): GameState | null {
-  const result = GameStateSchema.safeParse(value);
-  return result.success ? result.data : null;
+  const result = PersistedGameStateSchema.safeParse(value);
+  if (!result.success) return null;
+
+  try {
+    return GameStateSchema.parse(materializeGameState(result.data));
+  } catch {
+    return null;
+  }
 }
 
 export function parsePersistedGameStats(value: unknown): GameStats | null {

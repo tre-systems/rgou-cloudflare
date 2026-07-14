@@ -4,6 +4,7 @@ export type {
   GameStatus,
   PiecePosition,
   MoveRecord,
+  PersistedGameState,
   GameState,
   GameStats,
   GameMode,
@@ -13,7 +14,7 @@ export type {
   Diagnostics,
   Timings,
   AIResponse,
-  ServerAIResponse,
+  EngineAIResponse,
 } from './schemas';
 
 export {
@@ -22,6 +23,7 @@ export {
   GameStatusSchema,
   PiecePositionSchema,
   MoveRecordSchema,
+  PersistedGameStateSchema,
   GameStateSchema,
   GameStatsSchema,
   GameModeSchema,
@@ -31,7 +33,7 @@ export {
   DiagnosticsSchema,
   TimingsSchema,
   AIResponseSchema,
-  ServerAIResponseSchema,
+  EngineAIResponseSchema,
   GameConstants,
 } from './schemas';
 

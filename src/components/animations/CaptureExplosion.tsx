@@ -3,9 +3,10 @@ import { cn } from '@/lib/utils';
 
 interface CaptureExplosionProps {
   position: { x: number; y: number };
+  onComplete: () => void;
 }
 
-export default function CaptureExplosion({ position }: CaptureExplosionProps) {
+export default function CaptureExplosion({ position, onComplete }: CaptureExplosionProps) {
   return (
     <motion.div
       className="fixed pointer-events-none z-50"
@@ -14,6 +15,7 @@ export default function CaptureExplosion({ position }: CaptureExplosionProps) {
       animate={{ opacity: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 2.5 }}
+      onAnimationComplete={onComplete}
     >
       <motion.div
         className="absolute -translate-x-1/2 -translate-y-8 text-red-400 font-bold text-lg drop-shadow-lg"

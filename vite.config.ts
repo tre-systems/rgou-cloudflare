@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
     build: {
-      chunkSizeWarningLimit: 750,
+      chunkSizeWarningLimit: 510,
       outDir: 'out',
       sourcemap: uploadSourceMaps,
     },

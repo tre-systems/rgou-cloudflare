@@ -10,7 +10,7 @@ export type Player = z.infer<typeof PlayerSchema>;
 export const MoveTypeSchema = z.enum(['move', 'capture', 'rosette', 'finish']);
 export type MoveType = z.infer<typeof MoveTypeSchema>;
 
-export const GameStatusSchema = z.enum(['waiting', 'playing', 'finished']);
+export const GameStatusSchema = z.enum(['playing', 'finished']);
 export type GameStatus = z.infer<typeof GameStatusSchema>;
 
 export const PiecePositionSchema = z
@@ -33,6 +33,16 @@ export const MoveRecordSchema = z.object({
   moveType: MoveTypeSchema.nullable(),
 });
 export type MoveRecord = z.infer<typeof MoveRecordSchema>;
+
+export const PersistedGameStateSchema = z.object({
+  player1Pieces: z.array(PiecePositionSchema).length(7),
+  player2Pieces: z.array(PiecePositionSchema).length(7),
+  currentPlayer: PlayerSchema,
+  diceRoll: z.number().int().min(0).max(4).nullable(),
+  history: z.array(MoveRecordSchema).max(MAX_SAVE_GAME_HISTORY),
+  startTime: z.number().int().nonnegative().optional(),
+});
+export type PersistedGameState = z.infer<typeof PersistedGameStateSchema>;
 
 export const GameStateSchema = z
   .object({
@@ -151,7 +161,7 @@ export type GameMode = z.infer<typeof GameModeSchema>;
 export const OpponentModeSchema = z.enum(['heuristic', 'classic', 'ml', 'watch']);
 export type OpponentMode = z.infer<typeof OpponentModeSchema>;
 
-export const AISourceSchema = z.enum(['heuristic', 'client', 'ml']);
+export const AISourceSchema = z.enum(['heuristic', 'classic', 'ml']);
 export type AISource = z.infer<typeof AISourceSchema>;
 
 export const MoveEvaluationSchema = z.object({
@@ -184,12 +194,12 @@ export const AIResponseSchema = z.object({
   thinking: z.string(),
   timings: TimingsSchema,
   diagnostics: DiagnosticsSchema,
-  aiType: z.enum(['client', 'server', 'fallback', 'ml', 'heuristic']),
+  aiType: z.enum(['classic', 'fallback', 'ml', 'heuristic']),
 });
 export type AIResponse = z.infer<typeof AIResponseSchema>;
 
-export const ServerAIResponseSchema = AIResponseSchema.omit({ aiType: true });
-export type ServerAIResponse = z.infer<typeof ServerAIResponseSchema>;
+export const EngineAIResponseSchema = AIResponseSchema.omit({ aiType: true });
+export type EngineAIResponse = z.infer<typeof EngineAIResponseSchema>;
 
 export const GameConstants = {
   ROSETTE_SQUARES: [0, 7, 13, 15, 16] as const,

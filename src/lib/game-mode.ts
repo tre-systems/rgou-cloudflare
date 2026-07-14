@@ -18,7 +18,7 @@ const MODE_CONFIGURATION = {
   },
   classic: {
     player1: null,
-    player2: 'client',
+    player2: 'classic',
     participants: ['human', 'classic'],
     watch: false,
   },
@@ -29,7 +29,7 @@ const MODE_CONFIGURATION = {
     watch: false,
   },
   watch: {
-    player1: 'client',
+    player1: 'classic',
     player2: 'ml',
     participants: ['classic', 'ml'],
     watch: true,
