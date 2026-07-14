@@ -5,7 +5,7 @@ import gzip
 import hashlib
 import json
 import math
-import subprocess
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -113,54 +113,29 @@ def validate_metadata(metadata: Any) -> dict[str, Any]:
         "batch_size",
         "validation_split",
         "seed",
+        "source_committed_at",
+        "source_revision",
         "training_time_seconds",
         "best_validation_loss",
     }
     missing = required - metadata.keys()
     if missing:
         raise ValueError(f"model metadata is missing: {sorted(missing)}")
+    if not re.fullmatch(r"[0-9a-f]{40}", metadata["source_revision"]):
+        raise ValueError("source_revision must be a full lowercase Git commit SHA")
+    if not re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})",
+        metadata["source_committed_at"],
+    ):
+        raise ValueError("source_committed_at must be an ISO 8601 timestamp")
     return metadata
 
 
-def commit_details(revision: str) -> tuple[str, str]:
-    result = subprocess.run(
-        ["git", "show", "-s", "--format=%H%x00%cI", revision],
-        cwd=REPOSITORY_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    resolved_revision, separator, committed_at = result.stdout.strip().partition("\x00")
-    if not separator or not resolved_revision or not committed_at:
-        raise ValueError(f"source revision is invalid: {revision}")
-    return resolved_revision, committed_at
-
-
-def model_revision(model_path: Path, metadata: dict[str, Any]) -> dict[str, Any]:
-    training_revision = metadata.get("source_revision")
-    if training_revision:
-        revision, committed_at = commit_details(training_revision)
-        return {
-            "kind": "training_source_commit",
-            "revision": revision,
-            "committed_at": committed_at,
-        }
-
-    relative_path = display_path(model_path)
-    result = subprocess.run(
-        ["git", "log", "-1", "--format=%H%x00%cI", "--", relative_path],
-        cwd=REPOSITORY_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    revision, separator, committed_at = result.stdout.strip().partition("\x00")
-    if not separator or not revision or not committed_at:
-        raise ValueError(f"no committed source revision found for {relative_path}")
+def model_revision(metadata: dict[str, Any]) -> dict[str, Any]:
     return {
-        "kind": "last_model_artifact_commit",
-        "revision": revision,
-        "committed_at": committed_at,
+        "kind": "training_source_commit",
+        "revision": metadata["source_revision"],
+        "committed_at": metadata["source_committed_at"],
     }
 
 
@@ -265,7 +240,7 @@ def build_manifest(
         },
         "architecture": architecture,
         "training": metadata,
-        "source": model_revision(absolute_model, metadata),
+        "source": model_revision(metadata),
         "inputs": {
             "training_config": {
                 "path": display_path(training_config_path),
@@ -384,7 +359,6 @@ def main() -> int:
         ValueError,
         KeyError,
         json.JSONDecodeError,
-        subprocess.SubprocessError,
     ) as error:
         print(f"Model provenance failed: {error}", file=sys.stderr)
         return 1

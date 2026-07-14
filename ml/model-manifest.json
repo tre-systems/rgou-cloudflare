@@ -13,15 +13,15 @@
   "deployment": {
     "gzip": {
       "content_encoding": "gzip",
-      "decompressed_sha256": "db8817077bb20f80442d3371058b2c6b1ce310c030a33daf06f34184d240076b",
+      "decompressed_sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
       "path": "public/ml-weights.json.gz",
-      "sha256": "a87b026de34bf6448b8989a71768f13aa9dbb29f35acff5652a944cb12c0b2ef",
-      "size_bytes": 1553331
+      "sha256": "a8e12c499f838a978e1d38485675d2c6d83f9e0025a3cb835abee3dd69872e1f",
+      "size_bytes": 1553417
     },
     "json": {
       "path": "public/ml-weights.json",
-      "sha256": "db8817077bb20f80442d3371058b2c6b1ce310c030a33daf06f34184d240076b",
-      "size_bytes": 4199902
+      "sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
+      "size_bytes": 4200026
     }
   },
   "inputs": {
@@ -41,8 +41,8 @@
   "model": {
     "format": "rgou-dual-network-json-v1",
     "path": "ml/data/weights/ml_ai_weights_pytorch_v5.json",
-    "sha256": "db8817077bb20f80442d3371058b2c6b1ce310c030a33daf06f34184d240076b",
-    "size_bytes": 4199902,
+    "sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
+    "size_bytes": 4200026,
     "weights": {
       "policy": {
         "count": 82119,
@@ -57,7 +57,7 @@
   "schema_version": 2,
   "source": {
     "committed_at": "2025-07-20T22:01:01+01:00",
-    "kind": "last_model_artifact_commit",
+    "kind": "training_source_commit",
     "revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4"
   },
   "training": {
@@ -75,6 +75,8 @@
     "num_games": 2000,
     "num_training_samples": 303228,
     "seed": 42,
+    "source_committed_at": "2025-07-20T22:01:01+01:00",
+    "source_revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4",
     "training_date": "2025-07-20 21:50:41",
     "training_time_seconds": 3297.1347529888153,
     "validation_split": 0.2,
