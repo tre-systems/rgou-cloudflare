@@ -97,7 +97,7 @@ npm run load:ml-weights
   ml/data/weights/my_production_model.json
 ```
 
-Promotion fails if architecture, metadata, numeric values, or exact weight counts do not match. Verification also requires both deployed fallback files to contain the exact production source bytes. Review and commit the source model, both deployed artifacts, and manifest together.
+Promotion fails if architecture, metadata, numeric values, or exact weight counts do not match. Verification requires the deployed JSON to match the production source byte-for-byte and the deterministic gzip file to decompress to those same bytes. Review and commit the source model, both deployed artifacts, and manifest together.
 
 ## Troubleshooting
 

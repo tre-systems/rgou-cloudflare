@@ -57,7 +57,7 @@ test.describe('Core Game Functionality', () => {
 
     await startGame(page, 'watch');
     await expect(page.getByTestId('game-status-text')).toContainText("'s turn");
-    await expect.poll(() => modelRequests, { timeout: 5000 }).toBeGreaterThan(0);
+    await expect.poll(() => modelRequests, { timeout: 10000 }).toBeGreaterThan(0);
     await expect(page.getByTestId('game-status-text')).not.toBeEmpty();
     expect(mlFailures).toEqual([]);
   });

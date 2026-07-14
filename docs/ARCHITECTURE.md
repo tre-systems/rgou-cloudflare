@@ -1,12 +1,12 @@
 # Architecture
 
-The Royal Game of Ur is a local-first React application built with Vite and served by a small Cloudflare Worker. Its Rust AI engines are compiled to WebAssembly and run in one lazy Web Worker. Gameplay has no server round-trips and remains available offline.
+The Royal Game of Ur is a local-first React application built with Vite and served by a small Cloudflare Worker. Its Rust AI engines are compiled to WebAssembly and run in one lazy Web Worker.
 
 This document is also the project's pattern catalogue. A pattern is useful here only when it gives the code a clear invariant. New code should use the vocabulary and dependency rules below instead of introducing a parallel way to solve the same problem.
 
 ![System overview](diagrams/system-overview.png)
 
-The browser cluster is the complete gameplay path. The Cloudflare Worker delivers the application and accepts anonymous aggregate usage events, but gameplay, AI decisions, and personal state do not depend on a server round-trip.
+The browser cluster is the complete gameplay path. The Cloudflare Worker delivers the application and accepts anonymous lifecycle events for aggregate reporting, but gameplay, AI decisions, and personal state do not depend on a server round-trip.
 
 ## Architectural principles
 
@@ -15,7 +15,7 @@ The browser cluster is the complete gameplay path. The Cloudflare Worker deliver
 - **Explicit sources of truth** — persisted state is canonical, projections are rebuilt, mode policy is defined once, and the TypeScript and Rust rules are kept aligned by shared conformance fixtures.
 - **Deterministic core** — starting-player and dice entropy can be injected; tests and simulations do not depend on ambient randomness.
 - **Validate every untrusted boundary** — persisted data, Worker requests, and WASM JSON are runtime values, not trusted TypeScript objects.
-- **Privacy by data minimization** — do not create or retain identifiers when aggregate events are enough.
+- **Privacy by data minimization** — do not create or retain identifiers when anonymous lifecycle events are enough.
 - **Progressive resilience** — offline play, AI fallbacks, stale-response guards, request timeouts, and best-effort analytics keep optional failures out of the game loop.
 
 ## Layers and dependency direction
@@ -30,7 +30,7 @@ flowchart TD
     PORTS --> PLATFORM[Browser, Web Worker, WASM, and network adapters]
 ```
 
-`src/lib` must not import React components. Presentational components receive domain data and callbacks through props; they do not reach into stores. Platform APIs belong in adapters or effects, not in pure game logic.
+`src/lib` must not import React components. Leaf presentation components receive domain data and callbacks through props; the root orchestration component is the store-facing container. Platform APIs belong in adapters or effects, not in pure game logic.
 
 ## Pattern catalogue
 
@@ -42,11 +42,11 @@ flowchart TD
 | Functional core / imperative shell | Rules return new values and do not perform I/O; effects are coordinated outside the rules.                  | `src/lib/game-logic.ts` is the core; stores, services, and React effects are the shell.   |
 | Explicit state machine             | Legal game transitions are centralized and invalid transitions are no-ops or explicit errors.               | `initializeGame`, `processDiceRoll`, `makeMove`, and `endTurn` in `src/lib/game-logic.ts` |
 | Single writer                      | Zustand actions own application-state mutation; components request transitions rather than editing state.   | `src/lib/game-store.ts`, `src/lib/ui-store.ts`, `src/lib/stats-store.ts`                  |
-| Canonical state / projections      | Persistence contains only irreducible state and bounded history; derived gameplay fields are rebuilt.      | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
+| Canonical state / projections      | Persistence contains only irreducible state and bounded history; derived gameplay fields are rebuilt.       | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
 | Injected entropy                   | Random choices can be reproduced by supplying a controlled source.                                          | `RandomSource`, `initializeGame`, `rollDice`, and `processDiceRoll` in `game-logic.ts`    |
 | Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.       | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
-| Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                                 | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
-| Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                       | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                      |
+| Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                                  | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
+| Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                        | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                     |
 
 The state machine deliberately remains a small set of pure transition functions instead of a framework. If transitions gain substantially more states, cross-cutting guards, or replay requirements, move to a reducer driven by explicit domain events; do not spread more transition logic through components.
 
@@ -86,7 +86,7 @@ Components may contain display decisions and transient animation state. Reusable
 | Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                       | `game_started` and `game_completed` via `/api/usage`                          |
 | Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                 | `src/worker.ts`, `canonical-host.ts`                                          |
 | Tiered offline precache     | Required shell failure aborts installation; large AI assets are optional; health and API routes stay online.   | generated service worker plus its Node and browser contract tests             |
-| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts`       |
+| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts`       |
 | Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.           | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test      |
 | Supply-chain gate           | Known high-severity JavaScript or Rust advisories block deployment.                                            | `npm audit`, committed `Cargo.lock`, and `cargo audit` in CI                  |
 | Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs` |
@@ -125,7 +125,7 @@ Components may contain display decisions and transient animation state. Reusable
 
 ### Persistence
 
-1. Zustand converts runtime `GameState` to `PersistedGameState`, retaining pieces, current player, roll, the latest 512 history entries, the original starting player, and optional start time.
+1. Zustand converts runtime `GameState` to `PersistedGameState`, retaining pieces, current player, roll, the latest 512 history entries, and optional start time. The store separately retains the original starting player for completion analytics.
 2. Stored values are treated as `unknown`; Zod validates the canonical representation during hydration.
 3. `materializeGameState` rebuilds board occupancy, game status, winner, legal moves, and `canMove` from canonical fields.
 4. Invalid or obsolete data falls back to safe defaults; the retired player identifier is deleted at startup.
@@ -150,16 +150,7 @@ flowchart LR
 
 In-progress games, settings, and personal win/loss statistics are stored only in browser local storage. Watch-mode matches are excluded from personal statistics.
 
-The app has no database. It reports only `game_started` and `game_completed` events to the shared account-level Analytics Engine dataset `app_usage`, indexed by `rgou`. Analytics Engine retains these points for three months; the dataset is operational aggregate telemetry, not historical product data. Events contain mode, anonymous participant categories, starting side, and—on completion—winner, move count, and duration. They contain no player identifier, user agent, board state, or move history.
-
-## AI engine
-
-Both AIs are Rust compiled to WebAssembly and run in one lazily created Web Worker, so search, inference, model parsing, and model validation never block the UI:
-
-- **Classic AI** — expectiminimax with alpha-beta pruning
-- **ML AI** — value and policy neural networks
-
-See [AI-SYSTEM.md](./AI-SYSTEM.md) for algorithms and models. The Rust core is `worker/rust_ai_core/src/lib.rs`; WASM bindings are in `worker/rust_ai_core/src/wasm_api.rs`.
+The app has no database. It reports only `game_started` and `game_completed` events to the shared account-level Analytics Engine dataset `app_usage`, indexed by `rgou`. [Analytics Engine retains data for three months](https://developers.cloudflare.com/analytics/analytics-engine/limits/#data-retention); this dataset is operational aggregate telemetry, not historical product data. Events contain mode, anonymous participant categories, starting side, and—on completion—winner, move count, and duration. They contain no player identifier, user agent, board state, or move history.
 
 ## Deployment
 
@@ -185,6 +176,6 @@ Adopt one of these only when a concrete requirement creates its characteristic p
 ## Development and production
 
 - **Development:** AI diagnostics, AI toggle, and reset/test controls are available locally.
-- **Production:** developer controls are absent; assets are optimized; canonical redirects, privacy-filtered error reporting, and best-effort Analytics Engine counters are enabled.
+- **Production:** developer controls are absent; assets are optimized; canonical redirects, privacy-filtered error reporting, and best-effort Analytics Engine telemetry are enabled.
 
 The Rust crate also exposes native binaries for training and evaluation. They are tooling, not part of the web deployment.
