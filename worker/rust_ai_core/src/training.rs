@@ -752,9 +752,9 @@ impl Trainer {
     }
 
     fn roll_dice(&self) -> u8 {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let probabilities = [1, 4, 6, 4, 1];
-        let roll = rng.gen_range(0..16);
+        let roll = rng.random_range(0..16);
 
         let mut cumulative = 0;
         for (value, &prob) in (0..5).zip(probabilities.iter()) {

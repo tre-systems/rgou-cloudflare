@@ -43,9 +43,20 @@ describe('game-logic', () => {
       expect(gameState1.player1Pieces).not.toBe(gameState2.player1Pieces);
       expect(gameState1.player2Pieces).not.toBe(gameState2.player2Pieces);
     });
+
+    it('accepts injected entropy for deterministic starting players', () => {
+      expect(initializeGame(() => 0.1).currentPlayer).toBe('player1');
+      expect(initializeGame(() => 0.9).currentPlayer).toBe('player2');
+    });
   });
 
   describe('rollDice', () => {
+    it('accepts injected entropy for deterministic rolls', () => {
+      expect(rollDice(() => 0)).toBe(0);
+      expect(rollDice(() => 0.5)).toBe(2);
+      expect(rollDice(() => 0.999)).toBe(4);
+      expect(() => rollDice(() => 1)).toThrow(RangeError);
+    });
     it('should return a number between 0 and 4', () => {
       const results = new Set<number>();
 

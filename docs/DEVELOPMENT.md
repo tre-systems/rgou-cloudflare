@@ -39,13 +39,15 @@ See [docs/diagrams/README.md](./diagrams/README.md) for the diagram catalogue, r
 
 ## Testing
 
-| Layer                        | Tool                | What to test                 |
-| ---------------------------- | ------------------- | ---------------------------- |
-| Pure logic (rules, reducers) | Vitest              | High value, low maintenance  |
-| Schema / domain types        | Vitest              | Zod schemas and types        |
-| Store transitions            | Vitest              | Zustand actions              |
-| UI smoke / full game         | Playwright          | Critical flows only          |
-| AI behavior & matchups       | Rust (`cargo test`) | Game logic and AI comparison |
+| Layer                        | Tool                | What to test                            |
+| ---------------------------- | ------------------- | --------------------------------------- |
+| Pure logic (rules, reducers) | Vitest              | High value, low maintenance             |
+| Schema / domain types        | Vitest              | Zod schemas and types                   |
+| Store transitions            | Vitest              | Zustand actions                         |
+| UI smoke / full game         | Playwright          | Critical flows only                     |
+| AI behavior & matchups       | Rust (`cargo test`) | Game logic and AI comparison            |
+| TS/Rust rule parity          | Vitest + Rust       | Shared conformance fixtures             |
+| Service Worker contracts     | Node test runner    | Required and optional precache behavior |
 
 UI components are not unit-tested; logic is extracted to `src/lib` and tested there. E2E tests use `data-testid` selectors and verify the built app and anonymous usage lifecycle.
 
@@ -56,11 +58,15 @@ npm run test                     # unit tests (Vitest)
 npm run test:watch               # watch mode
 npm run test:coverage            # with coverage
 npm run test:rust                # Rust tests
+npm run test:service-worker      # required/optional offline precache contract
+npm run test:model-provenance    # production model, deployment, and training-input hashes
 npm run test:rust:slow           # include depth-4 / slow tests
 npm run test:e2e                 # end-to-end (Playwright)
 npm run test:e2e:ui              # Playwright UI
 npm run test:ai-comparison:fast  # quick AI matrix
 ```
+
+The two rule implementations share `test-fixtures/rules-conformance.json`. Every rule change must update or extend this corpus and pass both `src/lib/__tests__/rules-conformance.test.ts` and `worker/rust_ai_core/tests/rules_conformance.rs`. Use injected `RandomSource` values or explicit dice rolls when a test must be reproducible.
 
 ## Machine learning
 
@@ -90,7 +96,7 @@ npm run load:ml-weights
 
 ## Usage analytics
 
-The browser reports validated `game_started` and `game_completed` events to the same-origin `/api/usage` Worker endpoint. Development does not require a database. In production the optional `APP_USAGE` binding writes anonymous counters to the account-level `app_usage` Analytics Engine dataset; reporting failures never interrupt play.
+The browser reports validated `game_started` and `game_completed` events to the same-origin `/api/usage` Worker endpoint. Development does not require a database. In production the optional `APP_USAGE` binding writes anonymous counters to the account-level `app_usage` Analytics Engine dataset; reporting failures never interrupt play. Analytics Engine retention is three months, by design: these counters are aggregate operational telemetry rather than historical records.
 
 ## Troubleshooting
 
@@ -99,7 +105,7 @@ The browser reports validated `game_started` and `game_completed` events to the 
 | WASM not loading        | `npm run build:wasm-assets`                                                                                               |
 | ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                   |
 | E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                          |
-| Diagram rendering fails | Install Graphviz with `brew install graphviz`, then run `npm run diagrams`                                               |
+| Diagram rendering fails | Install Graphviz with `brew install graphviz`, then run `npm run diagrams`                                                |
 | Cloudflare deploy fails | Run `npm ci`, remove `out` and `.wrangler`, then run `npm run build`. Deploy the generated `out/rgou_main/wrangler.json`. |
 | Anything else           | `npm run nuke`                                                                                                            |
 
@@ -107,4 +113,6 @@ If a WASM build fails, confirm `wasm-pack` is exactly `0.12.1` (`cargo install w
 
 ## Continuous integration
 
-`.github/workflows/deploy.yml` runs `npm run check` on every push, builds the Vite/Worker artifact, deploys it on `main`, and smoke-tests production. Run `npm run check` locally before pushing; use `npm run check:slow` to include depth-4 tests.
+`.github/workflows/deploy.yml` serializes work by ref, restores locked Node and Rust dependencies, runs `npm audit` and `cargo audit`, runs `npm run check`, builds the Vite/Worker artifact, deploys it on `main`, and smoke-tests production. The build embeds the full Git SHA; `/healthz` returns it in both JSON and `X-App-Release`, and the smoke test rejects a different release. Run `npm run check` locally before pushing; use `npm run check:slow` to include depth-4 tests.
+
+`Cargo.lock` and `rust-toolchain.toml` are committed application inputs. Update them intentionally when changing Rust dependencies or the compiler; do not regenerate them incidentally in CI.

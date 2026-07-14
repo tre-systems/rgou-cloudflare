@@ -1,7 +1,13 @@
 /// <reference lib="webworker" />
 
-import { parseServerAIResponseJson } from './ai-protocol';
-import { GameStateSchema, type GameState, type ServerAIResponse } from './types';
+import {
+  AIWorkerRequestSchema,
+  MLWeightsSchema,
+  parseMLAIResponseJson,
+  parseEngineAIResponseJson,
+  toWasmGameState,
+  type AIEngine,
+} from './ai-protocol';
 
 interface WasmModule {
   default: (input?: { module_or_path: string | URL }) => Promise<unknown>;
@@ -9,131 +15,130 @@ interface WasmModule {
   get_classic_ai_move_optimized: (gameState: unknown) => string;
   init_classic_ai: () => string;
   init_ml_ai: () => string;
+  load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
+  get_ml_ai_move: (gameState: unknown) => string;
   init_heuristic_ai: () => string;
   get_heuristic_ai_move: (gameState: unknown) => string;
 }
 
+const WASM_MODULE_URL = '/wasm/rgou_ai_core.js';
 let wasmModule: WasmModule;
 let wasmReady: Promise<void> | null = null;
 let classicAiInitialized = false;
 let heuristicAiInitialized = false;
-const WASM_MODULE_URL = '/wasm/rgou_ai_core.js';
+let mlAiInitialized = false;
+let mlWeightsReady: Promise<void> | null = null;
 
-const loadWasm = (): Promise<void> => {
+function loadWasm(): Promise<void> {
   if (wasmReady) return wasmReady;
 
   wasmReady = (async () => {
-    try {
-      wasmModule = (await import(/* @vite-ignore */ WASM_MODULE_URL)) as WasmModule;
+    wasmModule = (await import(/* @vite-ignore */ WASM_MODULE_URL)) as WasmModule;
+    await wasmModule.default({
+      module_or_path: `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`,
+    });
 
-      const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
-      await wasmModule.default({ module_or_path: wasmUrl });
-
-      if (typeof wasmModule.get_ai_move_wasm !== 'function') {
-        throw new Error('WASM module does not have get_ai_move_wasm function');
-      }
-
-      try {
-        if (typeof wasmModule.init_classic_ai === 'function') {
-          wasmModule.init_classic_ai();
-          classicAiInitialized = true;
-        } else {
-          console.warn('AI Worker: init_classic_ai not available, using fallback');
-        }
-      } catch (error) {
-        console.warn('AI Worker: failed to initialize Classic AI, using fallback:', error);
-      }
-
-      try {
-        if (typeof wasmModule.init_ml_ai === 'function') {
-          wasmModule.init_ml_ai();
-        }
-      } catch (error) {
-        console.warn('AI Worker: failed to initialize ML AI:', error);
-      }
-
-      try {
-        if (typeof wasmModule.init_heuristic_ai === 'function') {
-          wasmModule.init_heuristic_ai();
-          heuristicAiInitialized = true;
-        }
-      } catch (error) {
-        console.warn('AI Worker: failed to initialize Heuristic AI:', error);
-      }
-    } catch (error) {
-      console.error('AI Worker: Failed to load WebAssembly module:', error);
-      throw new Error(`WebAssembly module failed to load: ${error}`);
-    }
+    wasmModule.init_classic_ai();
+    classicAiInitialized = true;
+    wasmModule.init_heuristic_ai();
+    heuristicAiInitialized = true;
   })();
 
   return wasmReady;
-};
+}
 
-const transformGameStateToRequest = (gameState: GameState) => ({
-  player1Pieces: gameState.player1Pieces.map(p => ({ square: p.square })),
-  player2Pieces: gameState.player2Pieces.map(p => ({ square: p.square })),
-  currentPlayer: gameState.currentPlayer === 'player1' ? 'Player1' : 'Player2',
-  diceRoll: gameState.diceRoll,
-});
-
-const getAIMove = (gameState: GameState): ServerAIResponse => {
-  const request = transformGameStateToRequest(gameState);
-
-  if (classicAiInitialized && typeof wasmModule.get_classic_ai_move_optimized === 'function') {
-    try {
-      return parseServerAIResponseJson(wasmModule.get_classic_ai_move_optimized(request));
-    } catch (error) {
-      console.warn('AI Worker: optimized Classic AI failed, falling back:', error);
-    }
+async function parseGzipJson(response: Response): Promise<unknown> {
+  if (!response.body || typeof DecompressionStream === 'undefined') {
+    throw new Error('Streaming gzip decompression is unavailable');
   }
 
-  return parseServerAIResponseJson(wasmModule.get_ai_move_wasm(request));
-};
+  const body = response.body.pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(body).json();
+}
 
-const getHeuristicAIMove = (gameState: GameState): ServerAIResponse => {
-  const request = transformGameStateToRequest(gameState);
+async function loadMLWeights(): Promise<void> {
+  if (mlWeightsReady) return mlWeightsReady;
 
-  if (heuristicAiInitialized && typeof wasmModule.get_heuristic_ai_move === 'function') {
-    try {
-      return parseServerAIResponseJson(wasmModule.get_heuristic_ai_move(request));
-    } catch (error) {
-      console.warn('AI Worker: Heuristic AI failed, falling back to Classic AI:', error);
+  mlWeightsReady = (async () => {
+    if (!mlAiInitialized) {
+      wasmModule.init_ml_ai();
+      mlAiInitialized = true;
     }
-  }
 
-  return getAIMove(gameState);
-};
-
-self.addEventListener(
-  'message',
-  async (event: MessageEvent<{ id: number; gameState?: GameState; type?: string }>) => {
-    try {
-      await loadWasm();
-
-      const { id, type } = event.data;
-      const gameState = event.data.gameState
-        ? GameStateSchema.parse(event.data.gameState)
-        : undefined;
-
-      if (gameState) {
-        const response =
-          type === 'heuristic' ? getHeuristicAIMove(gameState) : getAIMove(gameState);
-        self.postMessage({ type: 'success', id, response });
-      } else {
-        throw new Error('No game state provided for AI move request');
+    let value: unknown;
+    const compressedResponse = await fetch('/ml-weights.json.gz');
+    if (compressedResponse.ok) {
+      try {
+        value = await parseGzipJson(compressedResponse);
+      } catch (error) {
+        console.warn('AI worker could not decompress model; using JSON fallback:', error);
       }
-    } catch (error) {
-      console.error('AI Worker: Error processing message:', error);
-      self.postMessage({ type: 'error', id: event.data.id, error: (error as Error).message });
     }
-  }
-);
 
-loadWasm()
-  .then(() => {
-    self.postMessage({ type: 'ready' });
-  })
-  .catch(error => {
-    console.error('AI Worker: Failed to initialize WASM on startup:', error);
-    self.postMessage({ type: 'error', id: -1, error: error.message });
-  });
+    if (value === undefined) {
+      const jsonResponse = await fetch('/ml-weights.json');
+      if (!jsonResponse.ok) {
+        throw new Error(`ML weights request failed with ${jsonResponse.status}`);
+      }
+      value = await jsonResponse.json();
+    }
+
+    const weights = MLWeightsSchema.parse(value);
+    wasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
+  })();
+
+  try {
+    await mlWeightsReady;
+  } catch (error) {
+    mlWeightsReady = null;
+    throw error;
+  }
+}
+
+async function getMove(engine: AIEngine, position: Parameters<typeof toWasmGameState>[0]) {
+  await loadWasm();
+  const request = toWasmGameState(position);
+
+  switch (engine) {
+    case 'classic':
+      return parseEngineAIResponseJson(
+        classicAiInitialized
+          ? wasmModule.get_classic_ai_move_optimized(request)
+          : wasmModule.get_ai_move_wasm(request)
+      );
+    case 'heuristic':
+      return parseEngineAIResponseJson(
+        heuristicAiInitialized
+          ? wasmModule.get_heuristic_ai_move(request)
+          : wasmModule.get_ai_move_wasm(request)
+      );
+    case 'ml':
+      await loadMLWeights();
+      return parseMLAIResponseJson(wasmModule.get_ml_ai_move(request));
+  }
+}
+
+self.addEventListener('message', async (event: MessageEvent) => {
+  const parsed = AIWorkerRequestSchema.safeParse(event.data);
+  if (!parsed.success) {
+    const id =
+      typeof event.data === 'object' && event.data && Number.isInteger(event.data.id)
+        ? event.data.id
+        : 0;
+    self.postMessage({ type: 'error', id, error: 'Invalid AI worker request' });
+    return;
+  }
+
+  const { id, engine, position } = parsed.data;
+  try {
+    const response = await getMove(engine, position);
+    self.postMessage({ type: 'success', id, engine, response });
+  } catch (error) {
+    console.error(`AI worker ${engine} request failed:`, error);
+    self.postMessage({
+      type: 'error',
+      id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+});

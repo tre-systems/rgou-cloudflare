@@ -2,17 +2,20 @@ class SoundEffects {
   private audioContext: AudioContext | null = null;
   private enabled = true;
 
-  constructor() {
+  private createAudioContext(): AudioContext | null {
     if (typeof window !== 'undefined' && window.AudioContext) {
       try {
-        this.audioContext = new window.AudioContext();
+        return new window.AudioContext();
       } catch (error) {
         console.warn('Web Audio API not supported:', error);
       }
     }
+
+    return null;
   }
 
   private async ensureAudioContext() {
+    this.audioContext ??= this.createAudioContext();
     if (!this.audioContext) return null;
 
     if (this.audioContext.state === 'suspended') {

@@ -32,14 +32,15 @@ pub struct Layer {
 
 impl Layer {
     pub fn new(input_size: usize, output_size: usize) -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         // Use Xavier/Glorot initialization to prevent dying ReLU
         let scale = (2.0 / input_size as f32).sqrt();
-        let weights =
-            Array2::from_shape_fn((input_size, output_size), |_| rng.gen_range(-scale..scale));
+        let weights = Array2::from_shape_fn((input_size, output_size), |_| {
+            rng.random_range(-scale..scale)
+        });
 
-        let biases = Array1::from_shape_fn(output_size, |_| rng.gen_range(-0.1..0.1));
+        let biases = Array1::from_shape_fn(output_size, |_| rng.random_range(-0.1..0.1));
 
         Layer { weights, biases }
     }

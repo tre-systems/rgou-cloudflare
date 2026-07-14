@@ -9,6 +9,11 @@ on:
       - main
 
   workflow_dispatch:
+
+concurrency:
+  group: rgou-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,14 +31,17 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
-      - name: Install Rust tools
-        run: |
-          if ! wasm-pack --version 2>/dev/null | grep -q '0.12.1'; then
-            cargo install wasm-pack --version 0.12.1 --locked --force
-          fi
+      - name: Setup Rust
+        id: rust-toolchain
+        uses: dtolnay/rust-toolchain@1.96.0
+        with:
+          components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
 
       - name: Cache Rust dependencies
         uses: actions/cache@v5
@@ -44,7 +52,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             worker/rust_ai_core/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/deploy.yml') }}
+          key: ${{ runner.os }}-cargo-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('.github/workflows/deploy.yml') }}
 
       - name: Cache node modules
         uses: actions/cache@v5
@@ -52,8 +60,22 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
 
+      - name: Install Rust tools
+        run: |
+          if ! wasm-pack --version 2>/dev/null | grep -q '0.12.1'; then
+            cargo install wasm-pack --version 0.12.1 --locked --force
+          fi
+          if ! cargo audit --version 2>/dev/null | grep -q '0.22.2'; then
+            cargo install cargo-audit --version 0.22.2 --locked --force
+          fi
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit dependencies
+        run: |
+          npm audit --audit-level=high
+          cargo audit --file worker/rust_ai_core/Cargo.lock
 
       - name: Install Graphviz
         run: sudo apt-get update && sudo apt-get install --yes graphviz
@@ -94,3 +116,5 @@ jobs:
       - name: Smoke test production
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: npm run smoke:production
+        env:
+          EXPECTED_RELEASE: ${{ github.sha }}

@@ -5,6 +5,8 @@ Leverages existing Rust code for data generation and game logic
 """
 
 import json
+import platform
+import random
 import subprocess
 import sys
 import time
@@ -23,6 +25,36 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def source_commit() -> Tuple[str, str]:
+    source_paths = [
+        "ml/config",
+        "ml/scripts",
+        "ml/pyproject.toml",
+        "ml/uv.lock",
+        "rust-toolchain.toml",
+        "worker/rust_ai_core",
+    ]
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=normal", "--", *source_paths],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if status.stdout.strip():
+        raise RuntimeError("training sources must be committed before starting a run")
+    result = subprocess.run(
+        ["git", "show", "-s", "--format=%H%x00%cI", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    revision, separator, committed_at = result.stdout.strip().partition("\x00")
+    if not separator:
+        raise RuntimeError("could not determine the training source commit")
+    return revision, committed_at
+
 
 @dataclass
 class TrainingConfig:
@@ -125,6 +157,8 @@ class PolicyNetwork(nn.Module):
 class PyTorchTrainer:
     def __init__(self, config: TrainingConfig):
         self.config = config
+        self.source_revision, self.source_committed_at = source_commit()
+        self.configure_reproducibility()
         
         # Detect best available device - REQUIRE GPU acceleration
         if torch.cuda.is_available():
@@ -156,6 +190,16 @@ class PyTorchTrainer:
         
         logger.info(f"Value network parameters: {sum(p.numel() for p in self.value_network.parameters()):,}")
         logger.info(f"Policy network parameters: {sum(p.numel() for p in self.policy_network.parameters()):,}")
+
+    def configure_reproducibility(self):
+        random.seed(self.config.seed)
+        np.random.seed(self.config.seed)
+        torch.manual_seed(self.config.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self.config.seed)
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+        self.data_loader_generator = torch.Generator().manual_seed(self.config.seed)
     
     def generate_training_data(self) -> List[Dict[str, Any]]:
         """Generate training data using Rust code"""
@@ -255,6 +299,7 @@ class PyTorchTrainer:
             train_dataset, 
             batch_size=self.config.batch_size, 
             shuffle=True,
+            generator=self.data_loader_generator,
             num_workers=0  # Keep simple for now
         )
         val_loader = DataLoader(
@@ -419,17 +464,24 @@ class PyTorchTrainer:
         logger.info("═══════════════════════════════════════════════════════════════")
         
         return {
-            "training_date": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "training_date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "version": "pytorch_v1",
             "num_games": self.config.num_games,
             "num_training_samples": len(training_data),
-            "epochs": self.config.epochs,
+            "epochs": len(loss_history),
+            "requested_epochs": self.config.epochs,
             "learning_rate": self.config.learning_rate,
             "batch_size": self.config.batch_size,
             "validation_split": self.config.validation_split,
+            "depth": self.config.depth,
             "seed": self.config.seed,
             "training_time_seconds": training_time,
             "best_validation_loss": best_val_loss,
+            "source_revision": self.source_revision,
+            "source_committed_at": self.source_committed_at,
+            "python_version": platform.python_version(),
+            "numpy_version": np.__version__,
+            "torch_version": torch.__version__,
             "improvements": [
                 "PyTorch-based training for maximum speed",
                 "GPU acceleration when available",
@@ -539,4 +591,4 @@ def main():
         (config.training_data_dir / "temp_config.json").unlink(missing_ok=True)
 
 if __name__ == "__main__":
-    main() 
+    main()

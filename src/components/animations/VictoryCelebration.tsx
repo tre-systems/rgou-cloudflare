@@ -1,12 +1,17 @@
 import { motion } from 'framer-motion';
-import { Player } from '@/lib/types';
+import type { Player } from '@/lib/types';
 
 interface VictoryCelebrationProps {
   position: { x: number; y: number };
   player: Player;
+  onComplete: () => void;
 }
 
-export default function VictoryCelebration({ position, player }: VictoryCelebrationProps) {
+export default function VictoryCelebration({
+  position,
+  player,
+  onComplete,
+}: VictoryCelebrationProps) {
   const isPlayer1 = player === 'player1';
   const colors = isPlayer1
     ? {
@@ -30,6 +35,7 @@ export default function VictoryCelebration({ position, player }: VictoryCelebrat
       animate={{ opacity: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 3 }}
+      onAnimationComplete={onComplete}
     >
       <motion.div
         className={`absolute -translate-x-1/2 -translate-y-8 font-bold text-lg drop-shadow-lg ${colors.primary}`}

@@ -57,3 +57,32 @@ describe('usage Worker endpoint', () => {
     ).toBe(503);
   });
 });
+
+describe('health Worker endpoint', () => {
+  it('exposes a non-cacheable release identity', async () => {
+    const response = await worker.fetch(new Request('https://gameofur.org/healthz'), env());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('x-app-release')).toBeTruthy();
+    expect(await response.json()).toEqual({
+      status: 'ok',
+      release: response.headers.get('x-app-release'),
+    });
+  });
+
+  it('supports HEAD and rejects mutation methods', async () => {
+    const head = await worker.fetch(
+      new Request('https://gameofur.org/healthz', { method: 'HEAD' }),
+      env()
+    );
+    expect(head.status).toBe(200);
+    expect(await head.text()).toBe('');
+
+    const post = await worker.fetch(
+      new Request('https://gameofur.org/healthz', { method: 'POST' }),
+      env()
+    );
+    expect(post.status).toBe(405);
+  });
+});

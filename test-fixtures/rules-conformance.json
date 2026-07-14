@@ -1,0 +1,58 @@
+[
+  {
+    "name": "all player one pieces may enter on four",
+    "currentPlayer": "player1",
+    "diceRoll": 4,
+    "player1Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "player2Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "validMoves": [0, 1, 2, 3, 4, 5, 6]
+  },
+  {
+    "name": "own piece blocks the entry square",
+    "currentPlayer": "player1",
+    "diceRoll": 1,
+    "player1Squares": [3, -1, -1, -1, -1, -1, -1],
+    "player2Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "validMoves": [0]
+  },
+  {
+    "name": "opponent is protected on the central rosette",
+    "currentPlayer": "player1",
+    "diceRoll": 1,
+    "player1Squares": [6, 20, 20, 20, 20, 20, 20],
+    "player2Squares": [7, -1, -1, -1, -1, -1, -1],
+    "validMoves": []
+  },
+  {
+    "name": "opponent can be captured in the central lane",
+    "currentPlayer": "player1",
+    "diceRoll": 1,
+    "player1Squares": [0, 20, 20, 20, 20, 20, 20],
+    "player2Squares": [4, -1, -1, -1, -1, -1, -1],
+    "validMoves": [0]
+  },
+  {
+    "name": "exact roll finishes a piece",
+    "currentPlayer": "player1",
+    "diceRoll": 1,
+    "player1Squares": [13, 20, 20, 20, 20, 20, 20],
+    "player2Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "validMoves": [0]
+  },
+  {
+    "name": "overshooting the finish is illegal",
+    "currentPlayer": "player1",
+    "diceRoll": 2,
+    "player1Squares": [13, 20, 20, 20, 20, 20, 20],
+    "player2Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "validMoves": []
+  },
+  {
+    "name": "player two uses its mirrored private track",
+    "currentPlayer": "player2",
+    "diceRoll": 2,
+    "player1Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "player2Squares": [-1, -1, -1, -1, -1, -1, -1],
+    "validMoves": [0, 1, 2, 3, 4, 5, 6]
+  }
+]

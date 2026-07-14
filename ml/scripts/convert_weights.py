@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import logging
+from model_provenance import normalize_architecture, validate_weights
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -84,7 +85,9 @@ class WeightConverter:
             unified_weights["policy_weights"] = weights_data["policy_weights"]
             unified_weights["metadata"] = weights_data.get("metadata", {})
             if "network_config" in weights_data:
-                unified_weights["network_config"] = weights_data["network_config"]
+                unified_weights["network_config"] = normalize_architecture(
+                    weights_data["network_config"]
+                )
         
         elif format_type == "rust":
             # Rust format needs conversion
@@ -172,10 +175,10 @@ class WeightConverter:
             
             # Get network config (either from weights or from unified config)
             if "network_config" in weights_data:
-                config = weights_data["network_config"]
+                config = normalize_architecture(weights_data["network_config"])
             else:
                 # Use unified config for legacy weights
-                config = self.config["network_architecture"]
+                config = normalize_architecture(self.config["network_architecture"])
                 logger.info("📋 Using unified network config for validation")
             
             # Validate weight counts
@@ -190,20 +193,17 @@ class WeightConverter:
                 config["policy_output_size"]
             )
             
-            actual_value_weights = len(weights_data["value_weights"])
-            actual_policy_weights = len(weights_data["policy_weights"])
+            value_weights = weights_data["value_weights"]
+            policy_weights = weights_data["policy_weights"]
+            actual_value_weights = len(value_weights)
+            actual_policy_weights = len(policy_weights)
             
             logger.info(f"📊 Weight counts:")
             logger.info(f"  Value: {actual_value_weights} (expected ~{expected_value_weights})")
             logger.info(f"  Policy: {actual_policy_weights} (expected ~{expected_policy_weights})")
             
-            # Allow some tolerance for weight count differences
-            tolerance = 1000
-            if abs(actual_value_weights - expected_value_weights) > tolerance:
-                logger.warning(f"⚠️  Value network weight count differs significantly from expected")
-            
-            if abs(actual_policy_weights - expected_policy_weights) > tolerance:
-                logger.warning(f"⚠️  Policy network weight count differs significantly from expected")
+            validate_weights("value", value_weights, expected_value_weights)
+            validate_weights("policy", policy_weights, expected_policy_weights)
             
             logger.info("✅ Weight validation passed")
             return True
@@ -238,22 +238,6 @@ class WeightConverter:
         
         logger.info(f"✅ Weights saved to {output_path}")
     
-    def copy_to_public(self, weights_data: Dict[str, Any], output_name: str = "ml-weights.json"):
-        """Copy weights to public directory for browser use"""
-        public_dir = Path.cwd() / "public"
-        output_path = public_dir / output_name
-        
-        # Ensure public directory exists
-        public_dir.mkdir(parents=True, exist_ok=True)
-        
-        logger.info(f"📁 Copying weights to public directory: {output_path}")
-        
-        with open(output_path, 'w') as f:
-            json.dump(weights_data, f, indent=2)
-        
-        logger.info(f"✅ Weights copied to public directory")
-        logger.info(f"🌐 ML AI will now use weights from: /{output_name}")
-
 def main():
     parser = argparse.ArgumentParser(description="Unified Weight Conversion Utility")
     parser.add_argument("input_file", help="Input weights file")
@@ -261,10 +245,6 @@ def main():
     parser.add_argument("--format", choices=["unified", "pytorch", "rust"], 
                        default="unified", help="Output format")
     parser.add_argument("--validate", action="store_true", help="Validate weights")
-    parser.add_argument("--copy-to-public", action="store_true", 
-                       help="Copy weights to public directory for browser use")
-    parser.add_argument("--public-name", default="ml-weights.json",
-                       help="Name for public weights file")
     
     args = parser.parse_args()
     
@@ -297,10 +277,6 @@ def main():
         # Save converted weights
         converter.save_weights(converted_weights, output_file)
         
-        # Copy to public directory if requested
-        if args.copy_to_public:
-            converter.copy_to_public(converted_weights, args.public_name)
-        
         logger.info("🎉 Weight conversion completed successfully!")
         logger.info(f"📁 Input: {args.input_file}")
         logger.info(f"📁 Output: {output_file}")
@@ -310,4 +286,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    main() 
+    main()
