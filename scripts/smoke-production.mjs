@@ -1,5 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+
 const origin = 'https://gameofur.org';
-const expectedRelease = process.env.EXPECTED_RELEASE?.trim();
 const checks = [
   { path: '/', type: 'text/html', includes: '<div id="root"></div>' },
   { path: '/manifest.json', type: 'application/json', includes: 'Royal Game of Ur' },
@@ -36,32 +38,79 @@ async function waitFor(check) {
   throw new Error(`Smoke check failed for ${check.path}: ${detail}`);
 }
 
-for (const check of checks) await waitFor(check);
+export function getConfiguredAliases(wranglerConfig) {
+  const canonicalHostname = new URL(origin).hostname;
+  const routeHostnames = Array.from(
+    wranglerConfig.matchAll(/^\s*pattern\s*=\s*"([^/"]+)\/\*"\s*$/gm),
+    match => match[1]
+  );
 
-if (expectedRelease) {
-  await waitFor({
-    path: '/healthz',
-    type: 'application/json',
-    includes: `"release":"${expectedRelease}"`,
-  });
-  console.log(`Release identity smoke check passed: ${expectedRelease}`);
-} else {
-  console.warn('Release identity smoke check skipped: EXPECTED_RELEASE is not set');
+  return [...new Set(routeHostnames)].filter(hostname => hostname !== canonicalHostname);
 }
 
-const invalidUsage = await fetch(`${origin}/api/usage`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', Origin: origin },
-  body: JSON.stringify({ event: 'page_view' }),
-});
-if (invalidUsage.status !== 400) throw new Error(`Usage validation failed: ${invalidUsage.status}`);
-console.log('Usage validation smoke check passed');
-
-const redirect = await fetch('https://gameofur.net/offline?source=smoke', { redirect: 'manual' });
-if (
-  redirect.status !== 301 ||
-  redirect.headers.get('location') !== `${origin}/offline?source=smoke`
+export async function checkCanonicalRedirect(
+  alias,
+  {
+    fetchImpl = fetch,
+    logger = console,
+    probePath = '/offline?source=smoke&mode=alias',
+  } = {}
 ) {
-  throw new Error('Canonical redirect smoke check failed');
+  const requestUrl = `https://${alias}${probePath}`;
+  const expectedLocation = `${origin}${probePath}`;
+  const response = await fetchImpl(requestUrl, { redirect: 'manual' });
+  const actualLocation = response.headers.get('location');
+
+  if (response.status !== 301 || actualLocation !== expectedLocation) {
+    throw new Error(
+      `Canonical redirect smoke check failed for ${alias}: expected 301 ${expectedLocation}, ` +
+        `received ${response.status} ${actualLocation ?? '(missing Location header)'}`
+    );
+  }
+
+  logger.log(`Canonical redirect smoke check passed: ${alias}`);
 }
-console.log('Canonical redirect smoke check passed');
+
+export async function checkConfiguredCanonicalRedirects(wranglerConfig, options) {
+  const aliases = getConfiguredAliases(wranglerConfig);
+  if (aliases.length === 0) {
+    throw new Error('Canonical redirect smoke check failed: wrangler.toml declares no aliases');
+  }
+
+  await Promise.all(aliases.map(alias => checkCanonicalRedirect(alias, options)));
+}
+
+export async function runProductionSmoke() {
+  const expectedRelease = process.env.EXPECTED_RELEASE?.trim();
+
+  for (const check of checks) await waitFor(check);
+
+  if (expectedRelease) {
+    await waitFor({
+      path: '/healthz',
+      type: 'application/json',
+      includes: `"release":"${expectedRelease}"`,
+    });
+    console.log(`Release identity smoke check passed: ${expectedRelease}`);
+  } else {
+    console.warn('Release identity smoke check skipped: EXPECTED_RELEASE is not set');
+  }
+
+  const invalidUsage = await fetch(`${origin}/api/usage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin },
+    body: JSON.stringify({ event: 'page_view' }),
+  });
+  if (invalidUsage.status !== 400) throw new Error(`Usage validation failed: ${invalidUsage.status}`);
+  console.log('Usage validation smoke check passed');
+
+  const wranglerConfig = await readFile(new URL('../wrangler.toml', import.meta.url), 'utf8');
+  await checkConfiguredCanonicalRedirects(wranglerConfig);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runProductionSmoke().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
