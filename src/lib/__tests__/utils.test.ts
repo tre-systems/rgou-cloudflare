@@ -21,14 +21,11 @@ describe('Utils', () => {
 
   describe('getAIName and getAISubtitle', () => {
     it('should return correct AI names and subtitles', () => {
-      expect(getAIName('client')).toBe('Classic');
-      expect(getAISubtitle('client')).toBe('Expectiminimax algorithm');
+      expect(getAIName('classic')).toBe('Classic');
+      expect(getAISubtitle('classic')).toBe('Expectiminimax algorithm');
 
       expect(getAIName('ml')).toBe('ML AI');
       expect(getAISubtitle('ml')).toBe('Neural network model');
-
-      expect(getAIName('server')).toBe('Server AI');
-      expect(getAISubtitle('server')).toBe('');
 
       expect(getAIName('fallback')).toBe('Fallback');
       expect(getAISubtitle('fallback')).toBe('');

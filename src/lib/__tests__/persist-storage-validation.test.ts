@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { initializeGame } from '../game-logic';
+import { initializeGame, processDiceRoll } from '../game-logic';
 import {
   parsePersistedGameState,
   parsePersistedGameStats,
@@ -33,5 +33,22 @@ describe('persisted state validation', () => {
     ).toBeNull();
     expect(parsePersistedGameStats({ wins: 2, losses: 1, gamesPlayed: 99 })).toBeNull();
     expect(parsePersistedGameStats({ wins: -1, losses: 1, gamesPlayed: 0 })).toBeNull();
+  });
+
+  it('rebuilds derived board and legal-move projections during hydration', () => {
+    const state = processDiceRoll(
+      initializeGame(() => 0.1),
+      4
+    );
+    const restored = parsePersistedGameState({
+      ...state,
+      board: Array(21).fill({ square: 0, player: 'player2' }),
+      validMoves: [],
+      canMove: false,
+    });
+
+    expect(restored?.board.every(square => square === null)).toBe(true);
+    expect(restored?.validMoves).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(restored?.canMove).toBe(true);
   });
 });

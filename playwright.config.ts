@@ -17,6 +17,11 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'webkit-core',
+      grep: /@cross-browser/,
+      use: { ...devices['Desktop Safari'] },
+    },
   ],
 
   webServer: {

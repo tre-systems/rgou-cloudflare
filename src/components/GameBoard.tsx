@@ -77,7 +77,6 @@ export default function GameBoard({
                 },
               ]);
               setScreenShake(true);
-              setTimeout(() => setScreenShake(false), 500);
             }
           }
           break;
@@ -124,30 +123,6 @@ export default function GameBoard({
     }
   }, [lastMoveType, lastMovePlayer, gameState.history]);
 
-  useEffect(() => {
-    explosions.forEach(explosion => {
-      setTimeout(() => {
-        setExplosions(prev => prev.filter(e => e.id !== explosion.id));
-      }, 2000);
-    });
-  }, [explosions]);
-
-  useEffect(() => {
-    celebrations.forEach(celebration => {
-      setTimeout(() => {
-        setCelebrations(prev => prev.filter(c => c.id !== celebration.id));
-      }, 3000);
-    });
-  }, [celebrations]);
-
-  useEffect(() => {
-    rosetteLandings.forEach(rosette => {
-      setTimeout(() => {
-        setRosetteLandings(prev => prev.filter(r => r.id !== rosette.id));
-      }, 3000);
-    });
-  }, [rosetteLandings]);
-
   const boardLayout = [
     [16, 17, 18, 19, -1, -1, 15, 14],
     [4, 5, 6, 7, 8, 9, 10, 11],
@@ -158,7 +133,13 @@ export default function GameBoard({
     <>
       <AnimatePresence>
         {explosions.map(explosion => (
-          <CaptureExplosion key={explosion.id} position={explosion.position} />
+          <CaptureExplosion
+            key={explosion.id}
+            position={explosion.position}
+            onComplete={() =>
+              setExplosions(current => current.filter(item => item.id !== explosion.id))
+            }
+          />
         ))}
       </AnimatePresence>
       <AnimatePresence>
@@ -167,12 +148,21 @@ export default function GameBoard({
             key={celebration.id}
             position={celebration.position}
             player={celebration.player}
+            onComplete={() =>
+              setCelebrations(current => current.filter(item => item.id !== celebration.id))
+            }
           />
         ))}
       </AnimatePresence>
       <AnimatePresence>
         {rosetteLandings.map(rosette => (
-          <RosetteLanding key={rosette.id} position={rosette.position} />
+          <RosetteLanding
+            key={rosette.id}
+            position={rosette.position}
+            onComplete={() =>
+              setRosetteLandings(current => current.filter(item => item.id !== rosette.id))
+            }
+          />
         ))}
       </AnimatePresence>
       <AnimatePresence>
@@ -188,6 +178,9 @@ export default function GameBoard({
         className="w-full max-w-sm mx-auto space-y-3"
         animate={screenShake ? { x: [0, -2, 2, -2, 2, 0] } : { x: 0 }}
         transition={{ duration: 0.5 }}
+        onAnimationComplete={() => {
+          if (screenShake) setScreenShake(false);
+        }}
         data-testid="game-board"
       >
         <PlayerArea

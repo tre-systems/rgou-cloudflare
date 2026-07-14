@@ -2,6 +2,7 @@ import { getCanonicalRedirectUrl } from './lib/canonical-host';
 import { parseUsageEvent, usageDataPoint } from './lib/usage';
 
 const MAX_USAGE_BODY_BYTES = 256;
+const APP_RELEASE = import.meta.env.VITE_SENTRY_RELEASE || 'development';
 const SECURITY_HEADERS = {
   'Cross-Origin-Resource-Policy': 'same-origin',
   'Referrer-Policy': 'no-referrer',
@@ -26,6 +27,23 @@ function textResponse(status: number, message: string): Response {
       ...SECURITY_HEADERS,
       'Cache-Control': 'no-store',
       'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
+}
+
+function healthResponse(request: Request): Response {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return textResponse(405, 'Method not allowed');
+  }
+
+  const body =
+    request.method === 'HEAD' ? null : JSON.stringify({ status: 'ok', release: APP_RELEASE });
+  return new Response(body, {
+    headers: {
+      ...SECURITY_HEADERS,
+      'Cache-Control': 'no-store',
+      'Content-Type': 'application/json; charset=utf-8',
+      'X-App-Release': APP_RELEASE,
     },
   });
 }
@@ -91,7 +109,9 @@ export default {
       });
     }
 
-    if (new URL(request.url).pathname === '/api/usage') return recordUsage(request, env);
+    const pathname = new URL(request.url).pathname;
+    if (pathname === '/healthz') return healthResponse(request);
+    if (pathname === '/api/usage') return recordUsage(request, env);
     return env.ASSETS.fetch(request);
   },
 };

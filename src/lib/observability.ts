@@ -1,7 +1,12 @@
-import * as Sentry from '@sentry/browser';
 import type { ErrorEvent } from '@sentry/browser';
 
 const SENSITIVE_KEYS = /authorization|board|cookie|diagnostics|gameState|history|moves|token/i;
+let sentryPromise: Promise<typeof import('@sentry/browser')> | null = null;
+
+function loadSentry() {
+  sentryPromise ??= import('@sentry/browser');
+  return sentryPromise;
+}
 
 function beforeSend(event: ErrorEvent): ErrorEvent {
   delete event.user;
@@ -36,16 +41,29 @@ export function initializeObservability() {
   const dsn = import.meta.env['VITE_SENTRY_DSN'];
   if (!dsn) return;
 
-  Sentry.init({
-    dsn,
-    environment: import.meta.env['VITE_SENTRY_ENVIRONMENT'] ?? import.meta.env.MODE,
-    release: import.meta.env['VITE_SENTRY_RELEASE'],
-    sendDefaultPii: false,
-    tracesSampleRate: import.meta.env.PROD ? 0.01 : 0,
-    beforeSend,
-  });
+  void loadSentry()
+    .then(Sentry => {
+      Sentry.init({
+        dsn,
+        environment: import.meta.env['VITE_SENTRY_ENVIRONMENT'] ?? import.meta.env.MODE,
+        release: import.meta.env['VITE_SENTRY_RELEASE'],
+        sendDefaultPii: false,
+        tracesSampleRate: import.meta.env.PROD ? 0.01 : 0,
+        beforeSend,
+      });
+    })
+    .catch(error => {
+      console.error('Failed to initialize error monitoring:', error);
+    });
 }
 
 export function captureException(error: unknown, context?: Record<string, unknown>) {
-  Sentry.captureException(error, context ? { extra: context } : undefined);
+  if (!import.meta.env['VITE_SENTRY_DSN']) return;
+  void loadSentry()
+    .then(Sentry => {
+      Sentry.captureException(error, context ? { extra: context } : undefined);
+    })
+    .catch(loadError => {
+      console.error('Failed to report error:', loadError);
+    });
 }

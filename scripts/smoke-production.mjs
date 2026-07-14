@@ -1,4 +1,5 @@
 const origin = 'https://gameofur.org';
+const expectedRelease = process.env.EXPECTED_RELEASE?.trim();
 const checks = [
   { path: '/', type: 'text/html', includes: '<div id="root"></div>' },
   { path: '/manifest.json', type: 'application/json', includes: 'Royal Game of Ur' },
@@ -36,6 +37,17 @@ async function waitFor(check) {
 }
 
 for (const check of checks) await waitFor(check);
+
+if (expectedRelease) {
+  await waitFor({
+    path: '/healthz',
+    type: 'application/json',
+    includes: `"release":"${expectedRelease}"`,
+  });
+  console.log(`Release identity smoke check passed: ${expectedRelease}`);
+} else {
+  console.warn('Release identity smoke check skipped: EXPECTED_RELEASE is not set');
+}
 
 const invalidUsage = await fetch(`${origin}/api/usage`, {
   method: 'POST',

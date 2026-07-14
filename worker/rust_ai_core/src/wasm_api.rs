@@ -21,36 +21,6 @@ fn get_genetic_params() -> GeneticParams {
         .clone()
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SearchCache {
-    pub last_position_hash: u64,
-    pub last_evaluations: Vec<MoveEvaluationWasm>,
-    pub last_depth: u8,
-    pub last_nodes_evaluated: u64,
-}
-
-impl Default for SearchCache {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SearchCache {
-    pub fn new() -> Self {
-        SearchCache {
-            last_position_hash: 0,
-            last_evaluations: Vec::new(),
-            last_depth: 0,
-            last_nodes_evaluated: 0,
-        }
-    }
-}
-
-lazy_static! {
-    static ref SEARCH_CACHE: Mutex<SearchCache> = Mutex::new(SearchCache::new());
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GameStateRequest {
@@ -312,9 +282,6 @@ pub fn init_classic_ai() -> Result<JsValue, JsValue> {
     let mut instance = CLASSIC_AI_INSTANCE.lock().unwrap();
     *instance = Some(classic_ai);
 
-    let mut cache = SEARCH_CACHE.lock().unwrap();
-    *cache = SearchCache::new();
-
     let response = serde_json::to_string(&"Classic AI initialized with persistent instance")
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
     Ok(JsValue::from_str(&response))
@@ -324,13 +291,8 @@ pub fn init_classic_ai() -> Result<JsValue, JsValue> {
 pub fn clear_classic_ai_cache() -> Result<JsValue, JsValue> {
     let mut instance = CLASSIC_AI_INSTANCE.lock().unwrap();
     if let Some(ref mut ai) = *instance {
-        ai.transposition_table.clear();
-        ai.nodes_evaluated = 0;
-        ai.transposition_hits = 0;
+        ai.clear_transposition_table();
     }
-
-    let mut cache = SEARCH_CACHE.lock().unwrap();
-    *cache = SearchCache::new();
 
     let response = serde_json::to_string(&"Classic AI cache cleared")
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
@@ -345,17 +307,11 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
 
     let start_time = js_sys::Date::now();
     let game_state = convert_request_to_game_state(&game_state_request);
-    let current_position_hash = game_state.hash();
 
     let mut instance = CLASSIC_AI_INSTANCE.lock().unwrap();
     let ai = instance.as_mut().ok_or_else(|| {
         JsValue::from_str("Classic AI not initialized. Call init_classic_ai() first.")
     })?;
-
-    let mut cache = SEARCH_CACHE.lock().unwrap();
-
-    let can_use_cache =
-        cache.last_position_hash != 0 && cache.last_depth >= 3 && cache.last_nodes_evaluated > 0;
 
     let ai_depth = 4;
 
@@ -366,36 +322,25 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
     let move_evaluations_wasm: Vec<MoveEvaluationWasm> =
         move_evaluations.iter().map(|eval| eval.into()).collect();
 
-    cache.last_position_hash = current_position_hash;
-    cache.last_evaluations = move_evaluations_wasm.clone();
-    cache.last_depth = ai_depth;
-    cache.last_nodes_evaluated = ai.nodes_evaluated as u64;
-
-    let cache_info = if can_use_cache {
-        format!(
-            " (incremental search, {} nodes, {} cache hits)",
-            ai.nodes_evaluated, ai.transposition_hits
-        )
-    } else {
-        format!(
-            " (full search, {} nodes, {} cache hits)",
-            ai.nodes_evaluated, ai.transposition_hits
-        )
-    };
+    let cache_info = format!(
+        " ({} nodes, {} cache hits, {} cached positions)",
+        ai.nodes_evaluated,
+        ai.transposition_hits,
+        ai.get_transposition_table_size()
+    );
 
     let response = AIResponse {
         r#move: ai_move,
         evaluation,
         thinking: format!(
-            "Classic AI (depth {}) chose move {:?} with score {:.1}.{}{}",
+            "Classic AI (depth {}) chose move {:?} with score {:.1}{}",
             ai_depth,
             ai_move,
             move_evaluations_wasm
                 .first()
                 .map(|m| m.score)
                 .unwrap_or(0.0),
-            cache_info,
-            if can_use_cache { " [CACHED]" } else { "" }
+            cache_info
         ),
         timings: Timings {
             ai_move_calculation: ((end_time - start_time) as u32).max(1),

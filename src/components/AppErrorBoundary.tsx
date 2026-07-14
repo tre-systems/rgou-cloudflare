@@ -26,15 +26,15 @@ export default class AppErrorBoundary extends Component<Props, State> {
         <div className="mx-auto flex max-w-md flex-col gap-5">
           <h1 className="text-3xl font-bold">The game hit a problem.</h1>
           <p className="text-slate-300">
-            Reset the view to continue. Your saved game stays on this device.
+            Reload the game to continue. Your saved game stays on this device.
           </p>
           <button
             type="button"
-            onClick={() => this.setState({ failed: false })}
+            onClick={() => window.location.reload()}
             className="w-fit rounded-md bg-blue-500 px-4 py-2 font-semibold text-white"
             data-testid="global-error-reset"
           >
-            Reset view
+            Reload game
           </button>
         </div>
       </main>

@@ -4,8 +4,10 @@ import { immer } from 'zustand/middleware/immer';
 import {
   endTurn as endTurnLogic,
   initializeGame,
+  getValidMoves,
   processDiceRoll,
   makeMove as makeMoveLogic,
+  toPersistedGameState,
 } from './game-logic';
 import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
@@ -15,8 +17,9 @@ import { createId } from './utils';
 import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
 import { gameCompletedUsage, gameStartedUsage, reportUsage, type GameUsageMode } from './usage';
+import { captureException } from './observability';
 
-const LATEST_VERSION = 3;
+const LATEST_VERSION = 4;
 
 const wasmAiService = new WasmAiService();
 const mlAiService = new MLAIService();
@@ -96,7 +99,8 @@ export const useGameStore = create<GameStore>()(
         },
         makeMove: (pieceIndex: number) => {
           const { gameState } = get();
-          if (gameState.canMove && gameState.validMoves.includes(pieceIndex)) {
+          const validMoves = getValidMoves(gameState);
+          if (gameState.diceRoll && validMoves.includes(pieceIndex)) {
             const [newState, moveType, movePlayer] = makeMoveLogic(gameState, pieceIndex);
             set(state => {
               state.gameState = newState;
@@ -173,7 +177,7 @@ export const useGameStore = create<GameStore>()(
               aiResponse = { ...heuristicResponse, aiType: 'heuristic' as const };
             } else {
               const wasmResponse = await wasmAiService.getAIMove(gameState);
-              aiResponse = { ...wasmResponse, aiType: 'client' as const };
+              aiResponse = { ...wasmResponse, aiType: 'classic' as const };
             }
 
             const duration = performance.now() - startTime;
@@ -191,17 +195,56 @@ export const useGameStore = create<GameStore>()(
 
             if (aiMove === null || aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
               if (gameState.validMoves.length > 0) {
-                actions.makeMove(gameState.validMoves[0]);
+                const fallbackMove = gameState.validMoves[0];
+                set(state => {
+                  state.lastAIDiagnostics = {
+                    move: fallbackMove,
+                    evaluation: 0,
+                    thinking: 'Deterministic fallback: AI returned an invalid move',
+                    timings: { aiMoveCalculation: duration, totalHandlerTime: duration },
+                    diagnostics: {
+                      searchDepth: 0,
+                      validMoves: gameState.validMoves,
+                      moveEvaluations: [],
+                      transpositionHits: 0,
+                      nodesEvaluated: 0,
+                    },
+                    aiType: 'fallback',
+                  };
+                });
+                actions.makeMove(fallbackMove);
               }
             } else {
               actions.makeMove(aiMove);
             }
           } catch (error) {
             console.error('GameStore: AI move failed:', error);
+            captureException(error, {
+              operation: 'ai-move',
+              aiSource,
+              currentPlayer: gameState.currentPlayer,
+            });
             if (isCurrentTurn() && gameState.validMoves.length > 0) {
-              const fallbackMove =
-                gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
-              console.warn('GameStore: Using fallback random move:', fallbackMove);
+              const fallbackMove = gameState.validMoves[0];
+              const duration = performance.now() - startTime;
+              console.warn('GameStore: Using deterministic fallback move:', fallbackMove);
+              set(state => {
+                state.lastAIMoveDuration = duration;
+                state.lastAIDiagnostics = {
+                  move: fallbackMove,
+                  evaluation: 0,
+                  thinking: 'Deterministic fallback: AI request failed',
+                  timings: { aiMoveCalculation: duration, totalHandlerTime: duration },
+                  diagnostics: {
+                    searchDepth: 0,
+                    validMoves: gameState.validMoves,
+                    moveEvaluations: [],
+                    transpositionHits: 0,
+                    nodesEvaluated: 0,
+                  },
+                  aiType: 'fallback',
+                };
+              });
               actions.makeMove(fallbackMove);
             }
           } finally {
@@ -319,7 +362,7 @@ export const useGameStore = create<GameStore>()(
       },
       partialize: state => ({
         gameId: state.gameId,
-        gameState: state.gameState,
+        gameState: toPersistedGameState(state.gameState),
         usageStarted: state.usageStarted,
         usageCompleted: state.usageCompleted,
       }),

@@ -1,6 +1,6 @@
 //! Genetic parameter evolution for EMM and Heuristic AIs
 
-use rand::seq::SliceRandom;
+use rand::prelude::IndexedRandom;
 use rayon::prelude::*;
 use rgou_ai_core::Player;
 use rgou_ai_core::{genetic_params::GeneticParams, GameState, AI};
@@ -185,7 +185,7 @@ fn main() {
     optimize_cpu_usage();
 
     let start_time = std::time::Instant::now();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut population: Vec<GeneticParams> = (0..POPULATION_SIZE)
         .map(|_| GeneticParams::default().random_mutation(1.0, 2.0))
         .collect();

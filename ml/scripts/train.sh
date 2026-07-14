@@ -8,9 +8,9 @@ set -e
 echo "🚀 Unified ML Training Script"
 echo "=============================="
 
-# Check if Python is available
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python3 not found. Please install Python 3.8+"
+# Check if uv is available
+if ! command -v uv &> /dev/null; then
+    echo "❌ uv not found. Install it from https://docs.astral.sh/uv/"
     exit 1
 fi
 
@@ -103,30 +103,30 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Build command
-CMD="python3 ml/scripts/train.py --backend $BACKEND --preset $PRESET"
+CMD=(uv run --project ml --locked python ml/scripts/train.py --backend "$BACKEND" --preset "$PRESET")
 
 if [ -n "$OUTPUT" ]; then
-    CMD="$CMD --output $OUTPUT"
+    CMD+=(--output "$OUTPUT")
 fi
 
 if [ -n "$NUM_GAMES" ]; then
-    CMD="$CMD --num-games $NUM_GAMES"
+    CMD+=(--num-games "$NUM_GAMES")
 fi
 
 if [ -n "$EPOCHS" ]; then
-    CMD="$CMD --epochs $EPOCHS"
+    CMD+=(--epochs "$EPOCHS")
 fi
 
 if [ -n "$LEARNING_RATE" ]; then
-    CMD="$CMD --learning-rate $LEARNING_RATE"
+    CMD+=(--learning-rate "$LEARNING_RATE")
 fi
 
 if [ -n "$BATCH_SIZE" ]; then
-    CMD="$CMD --batch-size $BATCH_SIZE"
+    CMD+=(--batch-size "$BATCH_SIZE")
 fi
 
 if [ -n "$DEPTH" ]; then
-    CMD="$CMD --depth $DEPTH"
+    CMD+=(--depth "$DEPTH")
 fi
 
 echo "🎯 Training Configuration:"
@@ -143,8 +143,8 @@ echo ""
 # Check for GPU acceleration if using PyTorch
 if [ "$BACKEND" = "auto" ] || [ "$BACKEND" = "pytorch" ]; then
     echo "🔍 Checking for GPU acceleration..."
-    if python3 -c "import torch; print('CUDA:', torch.cuda.is_available()); print('MPS:', torch.backends.mps.is_available() if hasattr(torch.backends, 'mps') else False)" 2>/dev/null | grep -q "True"; then
-        if python3 -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | grep -q "True"; then
+    if uv run --project ml --locked python -c "import torch; print('CUDA:', torch.cuda.is_available()); print('MPS:', torch.backends.mps.is_available() if hasattr(torch.backends, 'mps') else False)" 2>/dev/null | grep -q "True"; then
+        if uv run --project ml --locked python -c "import torch; print(torch.cuda.is_available())" 2>/dev/null | grep -q "True"; then
             echo "🎮 CUDA detected - GPU acceleration will be used!"
         else
             echo "🍎 Apple Metal (MPS) detected - GPU acceleration will be used!"
@@ -160,7 +160,7 @@ fi
 
 # Run training with caffeinate to prevent sleep
 echo "🚀 Starting training..."
-caffeinate -i $CMD
+caffeinate -i "${CMD[@]}"
 
 echo ""
-echo "✅ Training completed!" 
+echo "✅ Training completed!"

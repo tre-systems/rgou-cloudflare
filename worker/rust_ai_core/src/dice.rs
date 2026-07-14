@@ -12,8 +12,8 @@ pub const DICE_PROBABILITIES: [f32; 5] =
 /// Generate a random dice roll (0-4) with the correct probability distribution
 /// for 4 tetrahedral dice
 pub fn roll_dice() -> u8 {
-    let mut rng = rand::thread_rng();
-    let roll: f32 = rng.gen();
+    let mut rng = rand::rng();
+    let roll: f32 = rng.random();
 
     let mut cumulative_prob = 0.0;
     for (i, &prob) in DICE_PROBABILITIES.iter().enumerate() {
@@ -29,7 +29,7 @@ pub fn roll_dice() -> u8 {
 
 /// Generate a random dice roll using a provided RNG
 pub fn roll_dice_with_rng<R: Rng>(rng: &mut R) -> u8 {
-    let roll: f32 = rng.gen();
+    let roll: f32 = rng.random();
 
     let mut cumulative_prob = 0.0;
     for (i, &prob) in DICE_PROBABILITIES.iter().enumerate() {
@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_roll_dice_with_rng() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         for _ in 0..1000 {
             let roll = roll_dice_with_rng(&mut rng);
             assert!(roll <= 4);

@@ -5,17 +5,49 @@ import { createTestGameState } from './test-utils';
 
 const incrementWinsMock = vi.fn();
 const incrementLossesMock = vi.fn();
+const { getClassicAIMoveMock, getHeuristicAIMoveMock, getMLAIMoveMock } = vi.hoisted(() => ({
+  getClassicAIMoveMock: vi.fn(),
+  getHeuristicAIMoveMock: vi.fn(),
+  getMLAIMoveMock: vi.fn(),
+}));
+
+const classicResponse = (move: number | null) => ({
+  move,
+  evaluation: 12,
+  thinking: 'Classic test move',
+  timings: { aiMoveCalculation: 1, totalHandlerTime: 1 },
+  diagnostics: {
+    searchDepth: 4,
+    validMoves: move === null ? [] : [move],
+    moveEvaluations: [],
+    transpositionHits: 0,
+    nodesEvaluated: 1,
+  },
+});
+
+const mlResponse = (move: number | null) => ({
+  move,
+  evaluation: 0.5,
+  thinking: 'ML test move',
+  timings: { aiMoveCalculation: 1, totalHandlerTime: 1 },
+  diagnostics: {
+    valid_moves: move === null ? [] : [move],
+    move_evaluations: [],
+    value_network_output: 0.5,
+    policy_network_outputs: [],
+  },
+});
 
 vi.mock('../wasm-ai-service', () => ({
   WasmAiService: class {
-    getAIMove = vi.fn();
-    getHeuristicAIMove = vi.fn();
+    getAIMove = getClassicAIMoveMock;
+    getHeuristicAIMove = getHeuristicAIMoveMock;
   },
 }));
 
 vi.mock('../ml-ai-service', () => ({
   MLAIService: class {
-    getAIMove = vi.fn();
+    getAIMove = getMLAIMoveMock;
   },
 }));
 
@@ -33,6 +65,9 @@ vi.mock('../stats-store', () => ({
 describe('GameStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getClassicAIMoveMock.mockResolvedValue(classicResponse(0));
+    getHeuristicAIMoveMock.mockResolvedValue(classicResponse(0));
+    getMLAIMoveMock.mockResolvedValue(mlResponse(0));
     useUIStore.getState().actions.reset();
     useGameStore.getState().actions.reset();
   });
@@ -111,7 +146,7 @@ describe('GameStore', () => {
       });
 
       const { actions } = useGameStore.getState();
-      await actions.makeAIMove('client');
+      await actions.makeAIMove('classic');
 
       const { aiThinking } = useGameStore.getState();
       expect(aiThinking).toBe(false);
@@ -121,22 +156,27 @@ describe('GameStore', () => {
       useGameStore.setState({
         gameState: createTestGameState({
           currentPlayer: 'player2',
+          diceRoll: 2,
           canMove: true,
           validMoves: [0],
         }),
       });
 
       const { actions } = useGameStore.getState();
-      await actions.makeAIMove('client');
+      await actions.makeAIMove('classic');
 
       const { aiThinking } = useGameStore.getState();
       expect(aiThinking).toBe(false);
+      expect(getClassicAIMoveMock).toHaveBeenCalledOnce();
+      expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
+      expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('classic');
     });
 
     it('should handle ML AI move successfully', async () => {
       useGameStore.setState({
         gameState: createTestGameState({
           currentPlayer: 'player2',
+          diceRoll: 2,
           canMove: true,
           validMoves: [0],
         }),
@@ -147,9 +187,13 @@ describe('GameStore', () => {
 
       const { aiThinking } = useGameStore.getState();
       expect(aiThinking).toBe(false);
+      expect(getMLAIMoveMock).toHaveBeenCalledOnce();
+      expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
+      expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('ml');
     });
 
     it('should use fallback when AI returns invalid move', async () => {
+      getClassicAIMoveMock.mockResolvedValue(classicResponse(0));
       useGameStore.setState({
         gameState: createTestGameState({
           currentPlayer: 'player2',
@@ -160,11 +204,39 @@ describe('GameStore', () => {
       });
 
       const { actions } = useGameStore.getState();
-      await actions.makeAIMove('client');
+      await actions.makeAIMove('classic');
 
       const { gameState } = useGameStore.getState();
       // fallback is to take first valid move, which is piece 1
       expect(gameState.player2Pieces[1].square).not.toBe(-1);
+      expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('fallback');
+    });
+
+    it('ignores an AI response after the game is reset', async () => {
+      let resolveMove: ((value: ReturnType<typeof classicResponse>) => void) | undefined;
+      getClassicAIMoveMock.mockReturnValue(
+        new Promise(resolve => {
+          resolveMove = resolve;
+        })
+      );
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player2',
+          diceRoll: 1,
+          canMove: true,
+          validMoves: [0],
+        }),
+      });
+
+      const movePromise = useGameStore.getState().actions.makeAIMove('classic');
+      useGameStore.getState().actions.reset();
+      const resetGameId = useGameStore.getState().gameId;
+      resolveMove?.(classicResponse(0));
+      await movePromise;
+
+      expect(useGameStore.getState().gameId).toBe(resetGameId);
+      expect(useGameStore.getState().gameState.history).toEqual([]);
+      expect(useGameStore.getState().lastAIDiagnostics).toBeNull();
     });
   });
 
@@ -184,7 +256,7 @@ describe('GameStore', () => {
             transpositionHits: 0,
             nodesEvaluated: 100,
           },
-          aiType: 'server' as const,
+          aiType: 'classic' as const,
         };
         state.lastAIMoveDuration = 100;
         state.lastMoveType = 'move';

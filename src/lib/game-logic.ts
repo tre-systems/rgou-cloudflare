@@ -1,9 +1,26 @@
-import { GameState, Player, PiecePosition, MoveType, GameConstants } from './schemas';
+import {
+  GameState,
+  Player,
+  PiecePosition,
+  MoveType,
+  GameConstants,
+  PersistedGameState,
+} from './schemas';
 
 const { ROSETTE_SQUARES, BOARD_ARRAY_SIZE, PIECES_PER_PLAYER, PLAYER1_TRACK, PLAYER2_TRACK } =
   GameConstants;
 
-export function initializeGame(): GameState {
+export type RandomSource = () => number;
+
+function sample(random: RandomSource): number {
+  const value = random();
+  if (!Number.isFinite(value) || value < 0 || value >= 1) {
+    throw new RangeError('Random source must return a number from 0 (inclusive) to 1 (exclusive)');
+  }
+  return value;
+}
+
+export function initializeGame(random: RandomSource = Math.random): GameState {
   const player1Pieces: PiecePosition[] = Array(PIECES_PER_PLAYER)
     .fill(null)
     .map(() => ({
@@ -18,7 +35,7 @@ export function initializeGame(): GameState {
       player: 'player2' as Player,
     }));
 
-  const startingPlayer: Player = Math.random() < 0.5 ? 'player1' : 'player2';
+  const startingPlayer: Player = sample(random) < 0.5 ? 'player1' : 'player2';
 
   return {
     board: Array(BOARD_ARRAY_SIZE).fill(null),
@@ -34,19 +51,32 @@ export function initializeGame(): GameState {
   };
 }
 
-export function rollDice(): number {
+export function rollDice(random: RandomSource = Math.random): number {
   const probabilities = [1 / 16, 4 / 16, 6 / 16, 4 / 16, 1 / 16];
-  const random = Math.random();
+  const value = sample(random);
 
   let cumulativeProb = 0;
   for (let i = 0; i < probabilities.length; i++) {
     cumulativeProb += probabilities[i];
-    if (random <= cumulativeProb) {
+    if (value < cumulativeProb) {
       return i;
     }
   }
 
   return 2;
+}
+
+export function buildBoard(
+  player1Pieces: readonly PiecePosition[],
+  player2Pieces: readonly PiecePosition[]
+): Array<PiecePosition | null> {
+  const board: Array<PiecePosition | null> = Array(BOARD_ARRAY_SIZE).fill(null);
+  for (const piece of [...player1Pieces, ...player2Pieces]) {
+    if (piece.square >= 0 && piece.square < GameConstants.TRACK_LENGTH) {
+      board[piece.square] = piece;
+    }
+  }
+  return board;
 }
 
 function getPlayerTrack(player: Player): readonly number[] {
@@ -74,6 +104,7 @@ export function getValidMoves(gameState: GameState): number[] {
 
   const currentPieces =
     gameState.currentPlayer === 'player1' ? gameState.player1Pieces : gameState.player2Pieces;
+  const board = buildBoard(gameState.player1Pieces, gameState.player2Pieces);
 
   const validMoves: number[] = [];
 
@@ -91,7 +122,7 @@ export function getValidMoves(gameState: GameState): number[] {
       }
     } else {
       const newActualPos = getActualPosition(gameState.currentPlayer, newTrackPos);
-      const occupant = gameState.board[newActualPos];
+      const occupant = board[newActualPos];
 
       if (!occupant || (occupant.player !== gameState.currentPlayer && !isRosette(newActualPos))) {
         validMoves.push(index);
@@ -102,17 +133,48 @@ export function getValidMoves(gameState: GameState): number[] {
   return validMoves;
 }
 
+export function materializeGameState(state: PersistedGameState): GameState {
+  const player1Finished = state.player1Pieces.every(piece => piece.square === 20);
+  const player2Finished = state.player2Pieces.every(piece => piece.square === 20);
+  if (player1Finished && player2Finished) {
+    throw new Error('Both players cannot finish the same game');
+  }
+
+  const winner: Player | null = player1Finished ? 'player1' : player2Finished ? 'player2' : null;
+  const base: GameState = {
+    ...state,
+    board: buildBoard(state.player1Pieces, state.player2Pieces),
+    gameStatus: winner ? 'finished' : 'playing',
+    winner,
+    canMove: false,
+    validMoves: [],
+  };
+  const validMoves = getValidMoves(base);
+
+  return {
+    ...base,
+    validMoves,
+    canMove: base.diceRoll !== null && base.diceRoll > 0 && validMoves.length > 0,
+  };
+}
+
+export function toPersistedGameState(gameState: GameState): PersistedGameState {
+  return {
+    player1Pieces: gameState.player1Pieces,
+    player2Pieces: gameState.player2Pieces,
+    currentPlayer: gameState.currentPlayer,
+    diceRoll: gameState.diceRoll,
+    history: gameState.history,
+    ...(gameState.startTime === undefined ? {} : { startTime: gameState.startTime }),
+  };
+}
+
 export function makeMove(
   gameState: GameState,
   pieceIndex: number
 ): [GameState, MoveType | null, Player] {
   const validMoves = getValidMoves(gameState);
-  if (
-    !gameState.canMove ||
-    !Number.isInteger(pieceIndex) ||
-    !validMoves.includes(pieceIndex) ||
-    !gameState.diceRoll
-  ) {
+  if (!Number.isInteger(pieceIndex) || !validMoves.includes(pieceIndex) || !gameState.diceRoll) {
     return [gameState, null, gameState.currentPlayer];
   }
 
@@ -209,7 +271,11 @@ export function makeMove(
   return [newState, moveType, movePlayer];
 }
 
-export function processDiceRoll(gameState: GameState, providedRoll?: number): GameState {
+export function processDiceRoll(
+  gameState: GameState,
+  providedRoll?: number,
+  random: RandomSource = Math.random
+): GameState {
   if (gameState.gameStatus !== 'playing' || gameState.diceRoll !== null) {
     return gameState;
   }
@@ -221,7 +287,7 @@ export function processDiceRoll(gameState: GameState, providedRoll?: number): Ga
     throw new RangeError('Dice roll must be an integer between 0 and 4');
   }
 
-  const diceRoll = providedRoll !== undefined ? providedRoll : rollDice();
+  const diceRoll = providedRoll !== undefined ? providedRoll : rollDice(random);
   const validMoves = getValidMoves({ ...gameState, diceRoll });
 
   return {

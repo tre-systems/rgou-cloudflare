@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MLWeightsSchema, parseMLAIResponseJson, parseServerAIResponseJson } from '../ai-protocol';
+import {
+  AIPositionSchema,
+  AIWorkerRequestSchema,
+  MLWeightsSchema,
+  parseMLAIResponseJson,
+  parseEngineAIResponseJson,
+  toAIPosition,
+} from '../ai-protocol';
+import { initializeGame, processDiceRoll } from '../game-logic';
 
 describe('AI protocol', () => {
   beforeEach(() => {
@@ -67,7 +75,7 @@ describe('AI protocol', () => {
   });
 
   it('validates Classic AI responses from Rust', () => {
-    const response = parseServerAIResponseJson(
+    const response = parseEngineAIResponseJson(
       JSON.stringify({
         move: 1,
         evaluation: 12,
@@ -87,12 +95,62 @@ describe('AI protocol', () => {
     expect(response.diagnostics.searchDepth).toBe(4);
   });
 
-  it('validates downloaded model weights before loading WASM', () => {
+  it('rejects model artifacts that do not match the runtime architecture', () => {
     expect(MLWeightsSchema.safeParse({ value_weights: [0.1], policy_weights: [0.2] }).success).toBe(
-      true
-    );
-    expect(MLWeightsSchema.safeParse({ value_weights: [], policy_weights: [] }).success).toBe(
       false
     );
+    expect(
+      MLWeightsSchema.safeParse({
+        value_weights: [],
+        policy_weights: [],
+        metadata: {
+          version: 'test',
+          training_date: '2026-01-01',
+          num_games: 1,
+          num_training_samples: 1,
+          seed: 42,
+          best_validation_loss: 1,
+        },
+        network_config: {
+          input_size: 149,
+          hidden_sizes: [256, 128, 64, 32],
+          value_output_size: 1,
+          policy_output_size: 7,
+        },
+      }).success
+    ).toBe(false);
+  });
+
+  it('creates the narrow position contract without board or history data', () => {
+    const gameState = processDiceRoll(
+      initializeGame(() => 0.1),
+      2
+    );
+    gameState.history.push({
+      player: 'player1',
+      diceRoll: 1,
+      pieceIndex: 0,
+      fromSquare: -1,
+      toSquare: 3,
+      moveType: 'move',
+    });
+
+    const position = toAIPosition(gameState);
+
+    expect(AIPositionSchema.parse(position)).toEqual(position);
+    expect(position).not.toHaveProperty('board');
+    expect(position).not.toHaveProperty('history');
+    expect(position.player1Squares).toHaveLength(7);
+  });
+
+  it('rejects loose or unknown worker messages', () => {
+    expect(
+      AIWorkerRequestSchema.safeParse({
+        id: 1,
+        type: 'getMove',
+        engine: 'server',
+        position: {},
+      }).success
+    ).toBe(false);
   });
 });

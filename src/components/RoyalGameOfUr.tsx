@@ -11,8 +11,10 @@ import HowToPlayPanel from './HowToPlayPanel';
 import AnimatedBackground from './AnimatedBackground';
 import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
 import ModeSelectionCard from './ModeSelectionCard';
-import { getAISource, getModeConfiguration, isAITurn } from '@/lib/game-mode';
+import { getModeConfiguration } from '@/lib/game-mode';
 import type { OpponentMode } from '@/lib/types';
+import { useGameAudio } from '@/hooks/useGameAudio';
+import { useGameTurnScheduler } from '@/hooks/useGameTurnScheduler';
 
 const MODE_OPTIONS = [
   {
@@ -91,81 +93,23 @@ export default function RoyalGameOfUr() {
     setIsStandalone(isStandalonePWA());
   }, []);
 
-  useEffect(() => {
-    if (showModelOverlay || gameState.gameStatus !== 'playing') {
-      return;
-    }
+  useGameTurnScheduler({
+    gameState,
+    overlayOpen: showModelOverlay,
+    selectedMode,
+    processDiceRoll,
+    endTurn,
+    makeAIMove,
+  });
 
-    if (!selectedMode) return;
-
-    const isWatchMode = getModeConfiguration(selectedMode).watch;
-    const isCurrentTurnAI = isAITurn(selectedMode, gameState.currentPlayer);
-
-    if (!isCurrentTurnAI && gameState.canMove) {
-      return;
-    }
-
-    if (gameState.diceRoll === null) {
-      const timer = setTimeout(() => processDiceRoll(), 500);
-      return () => clearTimeout(timer);
-    }
-
-    if (isCurrentTurnAI && gameState.canMove) {
-      const moveDelay = selectedMode === 'watch' ? 750 : 250;
-      const timer = setTimeout(() => {
-        const aiSource = getAISource(selectedMode, gameState.currentPlayer);
-        if (aiSource) {
-          if (!isWatchMode) soundEffects.aiThinking();
-          makeAIMove(aiSource, isWatchMode);
-        }
-      }, moveDelay);
-      return () => clearTimeout(timer);
-    }
-
-    if (gameState.diceRoll !== null && !gameState.canMove) {
-      const timer = setTimeout(() => endTurn(), 1500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [gameState, showModelOverlay, selectedMode, processDiceRoll, endTurn, makeAIMove]);
-
-  useEffect(() => {
-    if (gameState.gameStatus === 'finished') {
-      reportGameCompleted();
-      const timer = setTimeout(() => {
-        if (gameState.winner === 'player1') {
-          soundEffects.gameWin();
-        } else {
-          soundEffects.gameLoss();
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [gameState.gameStatus, gameState.winner, reportGameCompleted]);
-
-  useEffect(() => {
-    if (lastMoveType && lastMovePlayer) {
-      switch (lastMoveType) {
-        case 'capture':
-          soundEffects.pieceCapture();
-          break;
-        case 'rosette':
-          soundEffects.rosetteLanding();
-          break;
-        case 'finish':
-          soundEffects.pieceFinish();
-          break;
-        case 'move':
-          soundEffects.pieceMove();
-          break;
-      }
-    }
-  }, [lastMoveType, lastMovePlayer]);
-
-  useEffect(() => {
-    soundEffects.setEnabled(soundEnabled);
-  }, [soundEnabled]);
+  useGameAudio({
+    soundEnabled,
+    gameStatus: gameState.gameStatus,
+    winner: gameState.winner,
+    lastMoveType,
+    lastMovePlayer,
+    reportGameCompleted,
+  });
 
   const handlePieceClick = useCallback(
     (pieceIndex: number) => {
