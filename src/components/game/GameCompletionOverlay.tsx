@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { Trophy, Zap } from 'lucide-react';
-import { cn, getAISubtitle } from '@/lib/utils';
+import { Cpu, Trophy } from 'lucide-react';
+import { getAISubtitle } from '@/lib/utils';
 import type { GameMode, GameState } from '@/lib/types';
 import { useGameStats } from '@/lib/stats-store';
 
@@ -8,21 +8,6 @@ interface GameCompletionOverlayProps {
   gameState: GameState;
   onResetGame: () => void;
   gameMode: GameMode;
-}
-
-const CONFETTI_COLORS = [
-  '#ff6b6b',
-  '#4ecdc4',
-  '#45b7d1',
-  '#96ceb4',
-  '#feca57',
-  '#ff9ff3',
-  '#54a0ff',
-] as const;
-
-function seededFraction(index: number, salt: number) {
-  const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
-  return value - Math.floor(value);
 }
 
 export default function GameCompletionOverlay({
@@ -33,322 +18,101 @@ export default function GameCompletionOverlay({
   const gameStats = useGameStats();
   const isPlayer1Winner = gameState.winner === 'player1';
   const isWatchMode = gameMode === 'watch';
+  const winnerName = isPlayer1Winner ? 'Classic' : 'Machine Learning';
 
-  const title = isWatchMode
-    ? isPlayer1Winner
-      ? 'Classic Wins!'
-      : 'ML AI Wins!'
-    : isPlayer1Winner
-      ? 'Victory!'
-      : 'AI Wins!';
-
+  const title = isWatchMode ? `${winnerName} wins` : isPlayer1Winner ? 'You won' : 'The AI won';
   const message = isWatchMode
-    ? isPlayer1Winner
-      ? 'The classic AI proved its strength!'
-      : 'The ML AI has triumphed!'
+    ? `${winnerName} brought every piece home first.`
     : isPlayer1Winner
-      ? '🎉 Victory is yours! 🎉'
-      : '💫 The AI mastered the game! 💫';
+      ? 'Every piece made it safely around the board.'
+      : 'A close race. Choose an opponent and play again.';
 
   return (
     <motion.div
-      className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0e0f0d]/88 p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       data-testid="game-completion-overlay"
       role="dialog"
       aria-modal="true"
       aria-labelledby="game-completion-title"
     >
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 50 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 rounded-full"
-            style={{
-              left: `${seededFraction(i, 1) * 100}%`,
-              top: '-10px',
-              backgroundColor:
-                CONFETTI_COLORS[Math.floor(seededFraction(i, 2) * CONFETTI_COLORS.length)],
-            }}
-            initial={{ y: -10, x: 0, rotate: 0, scale: 0 }}
-            animate={{
-              y: ['100vh', '100vh'],
-              x: [0, seededFraction(i, 3) * 200 - 100],
-              rotate: [0, 360],
-              scale: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + seededFraction(i, 4) * 2,
-              delay: seededFraction(i, 5) * 2,
-              ease: 'easeOut',
-            }}
-          />
-        ))}
-      </div>
-
-      {isPlayer1Winner && (
-        <div className="absolute inset-0 pointer-events-none">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-32 bg-gradient-to-b from-yellow-400 to-transparent opacity-60"
-              style={{
-                left: '50%',
-                top: '50%',
-                transformOrigin: 'center',
-                transform: `translate(-50%, -50%) rotate(${i * 30}deg)`,
-              }}
-              initial={{ scaleY: 0, opacity: 0 }}
-              animate={{ scaleY: 1, opacity: [0, 0.6, 0] }}
-              transition={{
-                duration: 2,
-                delay: i * 0.1,
-                ease: 'easeOut',
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {!isPlayer1Winner && (
-        <div className="absolute inset-0 pointer-events-none">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 bg-gradient-to-b from-purple-400 via-pink-400 to-transparent opacity-80"
-              style={{
-                left: `${20 + i * 10}%`,
-                top: '0',
-                height: '100%',
-                transform: `skewX(${seededFraction(i, 6) * 20 - 10}deg)`,
-              }}
-              initial={{ scaleY: 0, opacity: 0 }}
-              animate={{ scaleY: 1, opacity: [0, 0.8, 0] }}
-              transition={{
-                duration: 0.3,
-                delay: i * 0.2,
-                ease: 'easeOut',
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       <motion.div
-        className="glass rounded-lg p-8 text-center shadow-2xl max-w-sm mx-4 relative overflow-hidden"
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.5, opacity: 0 }}
-        transition={{
-          type: 'spring',
-          stiffness: 260,
-          damping: 20,
-        }}
+        className="surface-panel w-full max-w-sm rounded-2xl p-7 text-center"
+        initial={{ opacity: 0, scale: 0.97, y: 14 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.98, y: 8 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       >
-        <motion.div
-          className="absolute inset-0 rounded-lg"
-          style={{
-            background: isPlayer1Winner
-              ? 'radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%)',
-          }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.6, 0.3],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[#5b5e51] bg-[#303229] text-[#c7a65d]">
+          {isPlayer1Winner ? (
+            <Trophy className="h-6 w-6" strokeWidth={1.6} />
+          ) : (
+            <Cpu className="h-6 w-6" strokeWidth={1.6} />
+          )}
+        </div>
 
-        <motion.div
-          className="text-center relative z-10"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 200,
-            damping: 15,
-            delay: 0.2,
-          }}
+        {isWatchMode && (
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8e9184]">
+            {getAISubtitle(isPlayer1Winner ? 'classic' : 'ml')}
+          </div>
+        )}
+        <h2
+          id="game-completion-title"
+          className="display-title text-4xl text-[#eee7d8]"
+          data-testid="game-completion-title"
         >
-          <div className="mb-2">
-            {isWatchMode && (
-              <span className="text-xs text-gray-400">
-                {isPlayer1Winner ? getAISubtitle('classic') : getAISubtitle('ml')}
-              </span>
-            )}
+          {title}
+        </h2>
+        <p
+          className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#aca99e]"
+          data-testid="game-completion-message"
+        >
+          {message}
+        </p>
+
+        {!isWatchMode && (
+          <div
+            className="surface-inset mt-6 grid grid-cols-3 divide-x divide-[#45483e] rounded-xl px-3 py-4"
+            data-testid="stats-panel"
+          >
+            <div>
+              <div className="font-mono text-xl text-[#a7cad7]" data-testid="wins-count">
+                {gameStats.wins}
+              </div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-[#8e9184]">Wins</div>
+            </div>
+            <div>
+              <div className="font-mono text-xl text-[#dfa18c]" data-testid="losses-count">
+                {gameStats.losses}
+              </div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-[#8e9184]">Losses</div>
+            </div>
+            <div data-testid="games-played">
+              <div className="font-mono text-xl text-[#e2ca91]">
+                {gameStats.gamesPlayed > 0
+                  ? Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)
+                  : 0}
+                %
+              </div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-[#8e9184]">
+                Win rate
+              </div>
+            </div>
           </div>
-          <div className="absolute inset-0 pointer-events-none">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 rounded-full"
-                style={{
-                  left: `${seededFraction(i, 7) * 100}%`,
-                  top: `${seededFraction(i, 8) * 100}%`,
-                  backgroundColor: isPlayer1Winner ? '#22c55e' : '#ec4899',
-                }}
-                animate={{
-                  y: [0, -20, 0],
-                  opacity: [0, 1, 0],
-                  scale: [0, 1, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  delay: i * 0.1,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-            ))}
-          </div>
+        )}
 
-          <motion.div
-            animate={{
-              rotate: [0, 10, -10, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 2,
-              ease: 'easeInOut',
-            }}
-          >
-            {isPlayer1Winner ? (
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 15,
-                  delay: 0.5,
-                }}
-              >
-                <Trophy className="w-20 h-20 text-green-400 mx-auto mb-4 drop-shadow-lg" />
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ scale: 0, rotate: 180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 15,
-                  delay: 0.5,
-                }}
-              >
-                <Zap className="w-20 h-20 text-pink-400 mx-auto mb-4 drop-shadow-lg" />
-              </motion.div>
-            )}
-          </motion.div>
-
-          <motion.h2
-            id="game-completion-title"
-            className={cn(
-              'text-4xl font-bold neon-text mb-6',
-              isPlayer1Winner ? 'text-green-400' : 'text-pink-400'
-            )}
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{
-              type: 'spring',
-              stiffness: 200,
-              damping: 15,
-              delay: 0.8,
-            }}
-            data-testid="game-completion-title"
-          >
-            {title}
-          </motion.h2>
-
-          <motion.div
-            className="text-white/80 mb-6"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{
-              type: 'spring',
-              stiffness: 200,
-              damping: 15,
-              delay: 1.0,
-            }}
-          >
-            <p className="text-lg mb-3" data-testid="game-completion-message">
-              {message}
-            </p>
-
-            {!isWatchMode && (
-              <motion.div
-                className="bg-white/10 rounded-lg p-4 backdrop-blur-sm"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 15,
-                  delay: 1.3,
-                }}
-                data-testid="stats-panel"
-              >
-                <div className="text-center">
-                  <h3 className="text-sm font-semibold text-white/90 mb-2">Your Record</h3>
-                  <div className="flex justify-center space-x-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-400" data-testid="wins-count">
-                        {gameStats.wins}
-                      </div>
-                      <div className="text-xs text-white/70">Wins</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-pink-400" data-testid="losses-count">
-                        {gameStats.losses}
-                      </div>
-                      <div className="text-xs text-white/70">Losses</div>
-                    </div>
-                  </div>
-                  {gameStats.gamesPlayed > 0 && (
-                    <div className="mt-2 text-xs text-white/60" data-testid="games-played">
-                      Win Rate: {Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)}%
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-
-          <motion.button
-            type="button"
-            autoFocus
-            onClick={onResetGame}
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg relative overflow-hidden group"
-            whileHover={{
-              scale: 1.05,
-              boxShadow: '0 0 30px rgba(59, 130, 246, 0.4)',
-            }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2 }}
-            data-testid="reset-game-button"
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                delay: 1.5,
-              }}
-            />
-            <span className="relative z-10">Play Again</span>
-          </motion.button>
-        </motion.div>
+        <button
+          type="button"
+          autoFocus
+          onClick={onResetGame}
+          className="mt-6 w-full rounded-lg border border-[#c7a65d] bg-[#c7a65d] px-6 py-3 text-sm font-semibold text-[#191a17] transition-colors hover:border-[#e2ca91] hover:bg-[#e2ca91]"
+          data-testid="reset-game-button"
+        >
+          Choose another opponent
+        </button>
       </motion.div>
     </motion.div>
   );

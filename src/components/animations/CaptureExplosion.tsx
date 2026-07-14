@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 
 interface CaptureExplosionProps {
   position: { x: number; y: number };
@@ -9,67 +8,27 @@ interface CaptureExplosionProps {
 export default function CaptureExplosion({ position, onComplete }: CaptureExplosionProps) {
   return (
     <motion.div
-      className="fixed pointer-events-none z-50"
+      className="pointer-events-none fixed z-50"
       style={{ left: position.x, top: position.y }}
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 2.5 }}
+      transition={{ duration: 1.25, ease: 'easeOut' }}
       onAnimationComplete={onComplete}
+      aria-hidden="true"
     >
       <motion.div
-        className="absolute -translate-x-1/2 -translate-y-8 text-red-400 font-bold text-lg drop-shadow-lg"
-        initial={{ scale: 0, y: 0 }}
-        animate={{
-          scale: [0, 1.2, 1, 0],
-          y: [0, -20, -30, -40],
-        }}
-        transition={{ duration: 2, ease: 'easeOut' }}
+        className="absolute -translate-x-1/2 -translate-y-10 whitespace-nowrap rounded-full border border-[#b96852]/60 bg-[#1d1f1b] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#dfa18c]"
+        initial={{ y: 4, opacity: 0, scale: 0.94 }}
+        animate={{ y: -8, opacity: [0, 1, 1, 0], scale: 1 }}
+        transition={{ duration: 1.15, ease: 'easeOut' }}
       >
-        CAPTURED!
+        Captured
       </motion.div>
-
       <motion.div
-        className="absolute w-16 h-16 -translate-x-8 -translate-y-8 border-4 border-red-500 rounded-full"
-        initial={{ scale: 0, opacity: 1 }}
-        animate={{ scale: [0, 1, 2], opacity: [1, 0.8, 0] }}
-        transition={{ duration: 1.2, ease: 'easeOut' }}
-      />
-
-      {Array.from({ length: 12 }, (_, i) => (
-        <motion.div
-          key={i}
-          className={cn(
-            'absolute w-3 h-3 rounded-full',
-            i % 3 === 0 ? 'bg-red-500' : i % 3 === 1 ? 'bg-orange-500' : 'bg-yellow-500'
-          )}
-          initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-          animate={{
-            scale: [0, 1, 0.5, 0],
-            x: Math.cos((i * 2 * Math.PI) / 12) * (30 + ((i * 17) % 31)),
-            y: Math.sin((i * 2 * Math.PI) / 12) * (30 + ((i * 17) % 31)),
-            opacity: [1, 1, 0.5, 0],
-          }}
-          transition={{
-            duration: 1.5,
-            ease: 'easeOut',
-            delay: ((i * 7) % 10) * 0.03,
-          }}
-        />
-      ))}
-
-      <motion.div
-        className="absolute w-12 h-12 -translate-x-6 -translate-y-6 bg-white rounded-full opacity-90"
-        initial={{ scale: 0 }}
-        animate={{ scale: [0, 1, 0] }}
-        transition={{ duration: 0.4 }}
-      />
-
-      <motion.div
-        className="absolute w-1 h-16 -translate-x-0.5 -translate-y-8 bg-gradient-to-b from-yellow-300 to-red-500"
-        initial={{ scaleY: 0, opacity: 1 }}
-        animate={{ scaleY: [0, 1, 0], opacity: [1, 1, 0] }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+        className="absolute h-10 w-10 -translate-x-5 -translate-y-5 rounded-full border border-[#b96852]"
+        initial={{ scale: 0.45, opacity: 0.8 }}
+        animate={{ scale: 1.6, opacity: 0 }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
       />
     </motion.div>
   );

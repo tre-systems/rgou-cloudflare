@@ -36,17 +36,17 @@ flowchart TD
 
 ### Domain and state patterns
 
-| Pattern                            | Invariant                                                                                                   | Implementation                                                                            |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Schema-first domain model          | A durable or boundary-crossing domain value has one Zod schema and an inferred TypeScript type.             | `src/lib/schemas.ts`, re-exported by `src/lib/types.ts`                                   |
-| Functional core / imperative shell | Rules return new values and do not perform I/O; effects are coordinated outside the rules.                  | `src/lib/game-logic.ts` is the core; stores, services, and React effects are the shell.   |
-| Explicit state machine             | Legal game transitions are centralized and invalid transitions are no-ops or explicit errors.               | `initializeGame`, `processDiceRoll`, `makeMove`, and `endTurn` in `src/lib/game-logic.ts` |
-| Single writer                      | Zustand actions own application-state mutation; components request transitions rather than editing state.   | `src/lib/game-store.ts`, `src/lib/ui-store.ts`, `src/lib/stats-store.ts`                  |
-| Canonical state / projections      | Persistence contains only irreducible state and bounded history; derived gameplay fields are rebuilt.       | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
-| Injected entropy                   | Random choices can be reproduced by supplying a controlled source.                                          | `RandomSource`, `initializeGame`, `rollDice`, and `processDiceRoll` in `game-logic.ts`    |
-| Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.       | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
-| Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                                  | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
-| Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                        | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                     |
+| Pattern                            | Invariant                                                                                                 | Implementation                                                                            |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Schema-first domain model          | A durable or boundary-crossing domain value has one Zod schema and an inferred TypeScript type.           | `src/lib/schemas.ts`, re-exported by `src/lib/types.ts`                                   |
+| Functional core / imperative shell | Rules return new values and do not perform I/O; effects are coordinated outside the rules.                | `src/lib/game-logic.ts` is the core; stores, services, and React effects are the shell.   |
+| Explicit state machine             | Legal game transitions are centralized and invalid transitions are no-ops or explicit errors.             | `initializeGame`, `processDiceRoll`, `makeMove`, and `endTurn` in `src/lib/game-logic.ts` |
+| Single writer                      | Zustand actions own application-state mutation; components request transitions rather than editing state. | `src/lib/game-store.ts`, `src/lib/ui-store.ts`, `src/lib/stats-store.ts`                  |
+| Canonical state / projections      | Persistence contains only irreducible state and bounded history; derived gameplay fields are rebuilt.     | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
+| Injected entropy                   | Random choices can be reproduced by supplying a controlled source.                                        | `RandomSource`, `initializeGame`, `rollDice`, and `processDiceRoll` in `game-logic.ts`    |
+| Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.     | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
+| Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                               | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
+| Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                     | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                      |
 
 The state machine deliberately remains a small set of pure transition functions instead of a framework. If transitions gain substantially more states, cross-cutting guards, or replay requirements, move to a reducer driven by explicit domain events; do not spread more transition logic through components.
 
@@ -68,28 +68,31 @@ Messages between the main thread, the Web Worker, and WASM are boundary data eve
 
 ### UI patterns
 
-| Pattern                  | Invariant                                                                                                  | Implementation                                                                      |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Container / presentation | The root game component selects state; focused hooks own effect lifecycles; board components render props. | `RoyalGameOfUr.tsx`, `useGameTurnScheduler`, `useGameAudio`, and `components/game/` |
-| Local transient state    | Animation and DOM-measurement state stays near the component that owns its lifecycle.                      | `GameBoard.tsx` animation collections and board ref                                 |
-| Error boundary           | An unexpected render failure has a safe recovery surface and privacy-filtered reporting.                   | `AppErrorBoundary.tsx`, `observability.ts`                                          |
-| Stable test seam         | Critical UI controls expose semantic roles or stable `data-testid` selectors for browser tests.            | `src/components/`, `e2e/smoke.spec.ts`                                              |
+| Pattern                  | Invariant                                                                                                    | Implementation                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Container / presentation | The root game component selects state; focused hooks own effect lifecycles; board components render props.   | `RoyalGameOfUr.tsx`, `useGameTurnScheduler`, `useGameAudio`, and `components/game/` |
+| Local transient state    | Animation and DOM-measurement state stays near the component that owns its lifecycle.                        | `GameBoard.tsx` animation collections and board ref                                 |
+| Design tokens            | Palette, surfaces, focus treatment, and shared interaction states have one definition.                       | CSS custom properties and primitives in `src/globals.css`                           |
+| Purposeful motion        | Motion communicates navigation or game feedback; decorative loops are avoided and reduced motion is honored. | `MotionConfig`, game feedback components, and the reduced-motion CSS override       |
+| Flow-first responsive UI | Primary actions remain reachable without overlays; secondary links stay in document flow at every width.     | Mode selection, game controls, footer, and Playwright mobile coverage               |
+| Error boundary           | An unexpected render failure has a safe recovery surface and privacy-filtered reporting.                     | `AppErrorBoundary.tsx`, `observability.ts`                                          |
+| Stable test seam         | Critical UI controls expose semantic roles or stable `data-testid` selectors for browser tests.              | `src/components/`, `e2e/smoke.spec.ts`                                              |
 
 Components may contain display decisions and transient animation state. Reusable rules, mode decisions, validation, persistence, and network behavior belong in `src/lib` so they can be unit-tested without rendering React.
 
 ### Data, privacy, and delivery patterns
 
-| Pattern                     | Invariant                                                                                                      | Implementation                                                                |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Local-first persistence     | In-progress games, settings, and personal statistics remain in local storage and are validated when restored.  | Zustand persistence plus `persist-storage.ts`                                 |
-| Data minimization           | Analytics contain only the dimensions required for aggregate product questions.                                | `usage.ts`; startup removes the retired `rgou-player-id` key.                 |
-| Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                       | `game_started` and `game_completed` via `/api/usage`                          |
-| Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                 | `src/worker.ts`, `canonical-host.ts`                                          |
-| Tiered offline precache     | Required shell failure aborts installation; large AI assets are optional; health and API routes stay online.   | generated service worker plus its Node and browser contract tests             |
-| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts`       |
-| Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.           | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test      |
-| Supply-chain gate           | Known high-severity JavaScript or Rust advisories block deployment.                                            | `npm audit`, committed `Cargo.lock`, and `cargo audit` in CI                  |
-| Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs` |
+| Pattern                     | Invariant                                                                                                      | Implementation                                                                      |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Local-first persistence     | In-progress games, settings, and personal statistics remain in local storage and are validated when restored.  | Zustand persistence plus `persist-storage.ts`                                       |
+| Data minimization           | Analytics contain only the dimensions required for aggregate product questions.                                | `usage.ts`; startup removes the retired `rgou-player-id` key.                       |
+| Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                       | `game_started` and `game_completed` via `/api/usage`                                |
+| Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                 | `src/worker.ts`, `canonical-host.ts`                                                |
+| Tiered offline precache     | Required shell failure aborts installation; large AI assets are optional; health and API routes stay online.   | generated service worker plus its Node and browser contract tests                   |
+| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                            | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts` |
+| Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.           | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
+| Supply-chain gate           | Known high-severity JavaScript or Rust advisories block deployment.                                            | `npm audit`, committed `Cargo.lock`, and `cargo audit` in CI                        |
+| Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation. | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
 
 ## Frontend structure
 

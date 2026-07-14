@@ -10,14 +10,12 @@ interface GamePieceProps {
 
 const PLAYER_COLORS = {
   player1: {
-    classes: 'bg-blue-500 border-blue-400 shadow-blue-500/50',
-    center: 'bg-blue-300',
-    glow: 'rgba(96, 165, 250, 0.9)',
+    classes: 'bg-[#477a91] border-[#9abfce]',
+    center: 'border-[#d1e0e4]',
   },
   player2: {
-    classes: 'bg-pink-500 border-pink-400 shadow-pink-500/50',
-    center: 'bg-pink-300',
-    glow: 'rgba(244, 114, 182, 0.9)',
+    classes: 'bg-[#a75542] border-[#d89b87]',
+    center: 'border-[#efd1c6]',
   },
 } as const;
 
@@ -33,52 +31,25 @@ const GamePiece = memo(function GamePiece({
       className={`relative h-full w-full overflow-hidden rounded-full border-2 ${
         isClickable ? 'cursor-pointer' : 'cursor-default'
       } ${colors.classes}`}
-      whileHover={isClickable ? { scale: 1.1, boxShadow: `0 0 20px ${colors.glow}` } : {}}
-      whileTap={isClickable ? { scale: 0.95 } : {}}
+      style={{ boxShadow: 'inset 0 1px rgba(255,255,255,0.18), 0 2px 5px rgba(0,0,0,0.28)' }}
+      whileHover={isClickable ? { scale: 1.08, y: -1 } : undefined}
+      whileTap={isClickable ? { scale: 0.95 } : undefined}
       animate={
         isFinishing
           ? {
-              scale: [1, 1.1, 1],
-              boxShadow: [
-                `0 0 10px ${colors.glow}`,
-                `0 0 20px ${colors.glow}`,
-                `0 0 10px ${colors.glow}`,
-              ],
+              scale: [1, 1.06, 1],
             }
           : {}
       }
       transition={
         isFinishing
-          ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
-          : { type: 'spring', stiffness: 400, damping: 25 }
+          ? { duration: 0.45, ease: 'easeOut' }
+          : { type: 'spring', stiffness: 500, damping: 34 }
       }
       data-testid={`game-piece-${player}-${isClickable ? 'clickable' : 'static'}`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-tl from-black/20 to-transparent" />
-
-      {isClickable && (
-        <motion.div
-          className="absolute inset-0 rounded-full border-2 border-white/50 pointer-events-none"
-          animate={{
-            boxShadow: [`0 0 0 0 rgba(255, 255, 255, 0.7)`, `0 0 0 8px rgba(255, 255, 255, 0)`],
-          }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      )}
-
-      {isFinishing && (
-        <motion.div
-          className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400/50 to-emerald-400/50"
-          animate={{
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className={`h-1/3 w-1/3 rounded-full shadow-inner ${colors.center}`} />
+        <div className={`h-[42%] w-[42%] rounded-full border ${colors.center}`} />
       </div>
     </motion.div>
   );
