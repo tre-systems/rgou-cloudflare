@@ -137,9 +137,12 @@ class UnifiedTrainer:
                 backend = "rust"
                 logger.info("🦀 Auto-selected Rust backend")
 
-        logger.info("🚀 Starting %s training...", backend.upper())
-        logger.info("📊 Parameters: %r", params)
-        logger.info("📁 Output: %r", str(resolved_output_path))
+        if backend not in {"pytorch", "rust"}:
+            logger.error("❌ Unknown training backend")
+            return False
+
+        logger.info("🚀 Starting training...")
+        logger.info("📊 Training parameters validated")
 
         start_time = time.time()
 
@@ -147,14 +150,11 @@ class UnifiedTrainer:
             success = self.train_pytorch(params, resolved_output_path)
         elif backend == "rust":
             success = self.train_rust(params, resolved_output_path)
-        else:
-            logger.error("❌ Unknown backend: %r", backend)
-            return False
 
         if success:
             training_time = time.time() - start_time
             logger.info(f"🎉 Training completed in {training_time:.2f} seconds")
-            logger.info("📁 Weights saved to: %r", str(resolved_output_path))
+            logger.info("📁 Weights saved successfully")
         return success
 
     def check_pytorch_available(self) -> bool:
