@@ -3,7 +3,7 @@
 [![CI/CD](https://github.com/tre-systems/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/tre-systems/rgou-cloudflare/actions/workflows/deploy.yml)
 
 <div align="center">
-  <img src="docs/screenshot.png" alt="Royal Game of Ur AI match in progress" width="408" />
+  <img src="docs/screenshot.png" alt="Royal Game of Ur — a game in progress against the Classic AI" width="408" />
   <br />
   <a href="https://ko-fi.com/N4N31DPNUS"><img height="36" src="https://storage.ko-fi.com/cdn/kofi2.png?v=6" alt="Support the project on Ko-fi" /></a>
   <hr />
