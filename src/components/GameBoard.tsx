@@ -93,10 +93,12 @@ export default function GameBoard({
       );
       if (!position) return;
 
+      // Keep only the most recent marker of each type so fast auto-play
+      // (watch mode) can't stack a dozen overlapping labels on the board.
       if (lastMoveType === 'capture') {
-        setExplosions(current => [...current, { id: `explosion-${animationId}`, position }]);
+        setExplosions([{ id: `explosion-${animationId}`, position }]);
       } else {
-        setRosetteLandings(current => [...current, { id: `rosette-${animationId}`, position }]);
+        setRosetteLandings([{ id: `rosette-${animationId}`, position }]);
       }
     }
   }, [lastMoveType, lastMovePlayer, gameState.history]);
