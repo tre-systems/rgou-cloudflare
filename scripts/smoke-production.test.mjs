@@ -6,6 +6,7 @@ import {
   checkConfiguredCanonicalRedirects,
   getConfiguredAliases,
   runProductionSmokeCli,
+  waitFor,
 } from './smoke-production.mjs';
 
 const expectedAliases = [
@@ -79,6 +80,23 @@ test('does not pass when the deployment declares no aliases', async () => {
     checkConfiguredCanonicalRedirects('[assets]\ndirectory = "./out/client"'),
     /wrangler\.toml declares no aliases/
   );
+});
+
+test('allows time for a release identity to propagate', async () => {
+  let attempts = 0;
+
+  await waitFor(
+    { path: '/healthz', type: 'application/json', includes: 'current-release' },
+    {
+      fetchImpl: async () => {
+        attempts += 1;
+        return Response.json({ release: attempts > 10 ? 'current-release' : 'previous-release' });
+      },
+      pauseImpl: async () => undefined,
+    }
+  );
+
+  assert.equal(attempts, 11);
 });
 
 test('the CLI exits cleanly with the smoke result', async () => {
