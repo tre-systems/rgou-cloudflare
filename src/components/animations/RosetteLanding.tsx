@@ -3,9 +3,10 @@ import { Star } from 'lucide-react';
 
 interface RosetteLandingProps {
   position: { x: number; y: number };
+  onComplete: () => void;
 }
 
-export default function RosetteLanding({ position }: RosetteLandingProps) {
+export default function RosetteLanding({ position, onComplete }: RosetteLandingProps) {
   return (
     <motion.div
       className="fixed pointer-events-none z-50"
@@ -14,6 +15,7 @@ export default function RosetteLanding({ position }: RosetteLandingProps) {
       animate={{ opacity: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 3 }}
+      onAnimationComplete={onComplete}
     >
       <motion.div
         className="absolute -translate-x-1/2 -translate-y-10 text-amber-400 font-bold text-lg drop-shadow-lg"

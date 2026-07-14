@@ -5,7 +5,7 @@ Training for the ML AI. For the network architecture, model list, and how the AI
 ## Quick start
 
 ```bash
-pip install -r requirements.txt   # PyTorch backend only
+uv sync --project ml --locked
 
 npm run train:pytorch:quick       # quick test (100 games, 10 epochs)
 npm run train:pytorch             # default (1000 games, 50 epochs)
@@ -18,9 +18,12 @@ No GPU? Use the Rust backend instead (`npm run train:rust`, `:quick`, `:producti
 
 ## Prerequisites
 
-- **Python 3.8+** with `pip` (PyTorch backend)
+- **uv** for the locked Python training environment
+- **Python 3.12.13**, selected from `ml/.python-version` by uv
 - **Rust & Cargo** (data generation, and the CPU backend)
 - **GPU** for PyTorch: Apple Metal (MPS) or NVIDIA CUDA
+
+`ml/pyproject.toml` declares the supported Python and training dependencies. `ml/uv.lock` pins the complete cross-platform resolution, including artifact hashes. Use `uv sync --project ml --locked`; do not install training dependencies independently with `pip`. Upgrade intentionally with `uv lock --project ml --upgrade`, review the lock diff, and rerun model validation.
 
 ## Backends
 
@@ -35,12 +38,17 @@ No GPU? Use the Rust backend instead (`npm run train:rust`, `:quick`, `:producti
 
 ```
 ml/
+├── .python-version             # pinned training interpreter
+├── pyproject.toml              # Python project and direct dependencies
+├── uv.lock                     # exact transitive dependency resolution
+├── model-manifest.json         # verified production-model provenance
 ├── config/training.json        # network architecture + training presets
 ├── scripts/
 │   ├── train.sh                # entry point (wraps caffeinate); --backend, --preset, --num-games …
 │   ├── train.py                # unified trainer (Rust / PyTorch backends)
 │   ├── train_pytorch.py        # PyTorch backend
 │   ├── convert_weights.py      # weight format conversion
+│   ├── model_provenance.py     # exact model, metadata, and deployment validation
 │   └── load-weights.sh         # convert + publish weights (npm run load:ml-weights)
 └── data/
     ├── weights/                # trained model weights
@@ -52,16 +60,47 @@ ml/
 ```bash
 ./ml/scripts/train.sh --backend pytorch --num-games 1500 --epochs 75
 ./ml/scripts/train.sh --backend rust --preset quick
-npm run load:ml-weights ml/data/weights/my_weights.json --copy-to-public
+./ml/scripts/load-weights.sh --promote ml/data/weights/my_weights.json
 ```
 
 Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.md](../docs/AI-SYSTEM.md#evaluation-parameters).
+
+## Reproducibility and model promotion
+
+The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. GPU kernels and parallel Rust data generation can still vary across hardware, so the seed supports repeatable investigation but is not a promise of byte-identical retraining.
+
+The checked-in `model-manifest.json` is the production artifact contract. It records:
+
+- the exact source-model, deployed JSON, and deterministic-gzip hashes and sizes;
+- exact value and policy weight counts and hashes;
+- the normalized network architecture and original training metadata;
+- the commit that last changed the production source model;
+- hashes for the training configuration, Python project, and lockfile.
+
+Validate the currently promoted model without installing PyTorch:
+
+```bash
+"$(uv python find "$(cat ml/.python-version)")" \
+  ml/scripts/model_provenance.py verify
+```
+
+When promoting a replacement, preserve its training metadata and run the single promotion command. It validates the model before changing public assets, writes byte-identical JSON and deterministic gzip variants, regenerates the manifest, and verifies the result:
+
+```bash
+npm run load:ml-weights
+
+./ml/scripts/load-weights.sh --promote \
+  ml/data/weights/my_production_model.json
+```
+
+Promotion fails if architecture, metadata, numeric values, or exact weight counts do not match. Verification also requires both deployed fallback files to contain the exact production source bytes. Review and commit the source model, both deployed artifacts, and manifest together.
 
 ## Troubleshooting
 
 ```bash
 # Is a GPU visible to PyTorch?
-python3 -c "import torch; print(torch.cuda.is_available(), torch.backends.mps.is_available())"
+uv run --project ml --locked python -c \
+  "import torch; print(torch.cuda.is_available(), torch.backends.mps.is_available())"
 ```
 
 - **Training too slow** — switch to the Rust backend, or lower `--num-games` / `--epochs`.

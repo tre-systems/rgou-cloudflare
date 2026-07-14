@@ -11,7 +11,7 @@ digraph AITurnFlow {
     newrank=true,
     forcelabels=true,
     fontname="Avenir",
-    label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><FONT POINT-SIZE="34"><B>Guarded AI Turn</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="14" COLOR="#5b6b80">Time-bounded worker requests may change the game only while their original turn is still current.</FONT></TD></TR></TABLE>>,
+    label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><FONT POINT-SIZE="34"><B>Guarded AI Turn</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="14" COLOR="#5b6b80">One lazy typed Worker owns every engine; only a current, legal result may change the game.</FONT></TD></TR></TABLE>>,
     labelloc=t,
     labeljust=c
   ];
@@ -42,7 +42,7 @@ digraph AITurnFlow {
 
   subgraph cluster_orchestration {
     graph [
-      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1f5fbf"><B>GAME ORCHESTRATION</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#496f9f">The store owns the asynchronous turn and the only state-changing exit.</FONT></TD></TR></TABLE>>,
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1f5fbf"><B>GAME ORCHESTRATION</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#496f9f">The scheduler starts work; the store owns the only state-changing exit.</FONT></TD></TR></TABLE>>,
       labelloc=t,
       labeljust=l,
       color="#b9d8ff",
@@ -52,16 +52,16 @@ digraph AITurnFlow {
       margin=20
     ];
 
-    START [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>AI-controlled turn</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">RoyalGameOfUr requests makeAIMove</FONT></TD></TR></TABLE>>];
-    SNAPSHOT [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Snapshot turn identity</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">gameId, player, roll, history length</FONT></TD></TR></TABLE>>];
-    SOURCE [shape=diamond, label="AI source?", width=2.2, height=1.05, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    START [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>AI-controlled turn</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">useGameTurnScheduler requests a move</FONT></TD></TR></TABLE>>];
+    SNAPSHOT [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Snapshot turn identity</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">game ID, player, roll, history length</FONT></TD></TR></TABLE>>];
+    POSITION [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Project AIPosition</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">14 squares, player, roll — no history or board</FONT></TD></TR></TABLE>>];
 
-    START -> SNAPSHOT -> SOURCE;
+    START -> SNAPSHOT -> POSITION;
   }
 
-  subgraph cluster_workers {
+  subgraph cluster_boundary {
     graph [
-      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#8a5f00"><B>BOUNDED ASYNC BOUNDARY</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#836b27">Each service correlates requests, enforces a timeout, and rejects worker failure.</FONT></TD></TR></TABLE>>,
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#8a5f00"><B>LAZY, BOUNDED ASYNC BOUNDARY</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#836b27">One protocol correlates requests, enforces a timeout, and restarts a failed Worker.</FONT></TD></TR></TABLE>>,
       labelloc=t,
       labeljust=l,
       color="#f2cf78",
@@ -71,20 +71,17 @@ digraph AITurnFlow {
       margin=20
     ];
 
-    CLASSIC [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>WasmAiService</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic / heuristic request</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
-    ML [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>MLAIService</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">ML request + validated weights</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
-    CWORKER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Classic Web Worker</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">validates GameState</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
-    MWORKER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>ML Web Worker</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">validates GameState</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    ADAPTER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Thin engine adapter</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic, heuristic, or ML result schema</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    CLIENT [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>AIWorkerClient</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">lazy owner, request ID, 30 s timeout</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    WORKER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Single Web Worker</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">validates discriminated request</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00", penwidth=3.2];
 
-    CLASSIC -> CWORKER [label="request ID"];
-    ML -> MWORKER [label="request ID"];
-    { rank=same; CLASSIC; ML; }
-    { rank=same; CWORKER; MWORKER; }
+    ADAPTER -> CLIENT [label="engine + AIPosition"];
+    CLIENT -> WORKER [label="typed request"];
   }
 
   subgraph cluster_core {
     graph [
-      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#6b46a3"><B>RUST / WASM COMPUTATION</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#76569b">Generated bindings and Zod schemas form an anti-corruption layer around serialized values.</FONT></TD></TR></TABLE>>,
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#6b46a3"><B>WORKER-LOCAL RUST / WASM</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#76569b">WASM and ML data are loaded once, on demand, away from the UI thread.</FONT></TD></TR></TABLE>>,
       labelloc=t,
       labeljust=l,
       color="#d6c3f5",
@@ -94,18 +91,23 @@ digraph AITurnFlow {
       margin=20
     ];
 
-    SEARCH [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Classic search</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">expectiminimax / heuristic</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    ENGINE [shape=diamond, label="Engine?", width=2.0, height=1.02, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    SEARCH [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Classic / heuristic</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">bounded expectiminimax cache</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    MODEL [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Load ML weights once</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">fetch, stream gunzip, parse, validate</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
     NETWORK [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>ML inference</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">value + policy networks</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
-    PARSE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Parse and normalize response</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">ai-protocol + service response schema</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    PARSE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Validate and normalize</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">engine result schema</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
 
+    ENGINE -> SEARCH [label="Classic / heuristic"];
+    ENGINE -> MODEL [label="ML"];
+    MODEL -> NETWORK;
     SEARCH -> PARSE;
     NETWORK -> PARSE;
-    { rank=same; SEARCH; NETWORK; }
+    { rank=same; SEARCH; MODEL; }
   }
 
   subgraph cluster_guards {
     graph [
-      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1e6b43"><B>RESULT GUARDS</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#4e7a61">Only a current, legal result may reach the game state machine.</FONT></TD></TR></TABLE>>,
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1e6b43"><B>RESULT GUARDS</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#4e7a61">Fallback is an orchestration decision; adapters never mutate game state.</FONT></TD></TR></TABLE>>,
       labelloc=t,
       labeljust=l,
       color="#b8e5c8",
@@ -119,7 +121,7 @@ digraph AITurnFlow {
     LEGAL [shape=diamond, label="Move is\nlegal?", width=2.05, height=1.05, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
     DISCARD [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Discard stale result</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">no game-state update</FONT></TD></TR></TABLE>>, fillcolor="#fde2e1:#fff5f5", color="#c53030"];
     FAILURE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Request cannot produce a move</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">timeout, worker failure, invalid payload</FONT></TD></TR></TABLE>>, fillcolor="#fde2e1:#fff5f5", color="#c53030"];
-    FALLBACK [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Select a legal fallback</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">optional failure stays outside the loop</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    FALLBACK [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Select first legal fallback</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">one deterministic centralized policy</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
     APPLY [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Apply through makeMove</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">pure transition + Zustand single writer</FONT></TD></TR></TABLE>>, fillcolor="#d8f5de:#effcf2", color="#15803d", penwidth=3.2];
 
     CURRENT -> DISCARD [label="No", color="#c53030", fontcolor="#c53030"];
@@ -130,12 +132,9 @@ digraph AITurnFlow {
     FALLBACK -> APPLY [style=dashed, color="#d39a00"];
   }
 
-  SOURCE -> CLASSIC [label="Classic / heuristic", lhead=cluster_workers];
-  SOURCE -> ML [label="ML", lhead=cluster_workers];
-  CWORKER -> SEARCH [lhead=cluster_core];
-  MWORKER -> NETWORK [lhead=cluster_core];
+  POSITION -> ADAPTER [lhead=cluster_boundary];
+  WORKER -> ENGINE [lhead=cluster_core];
   PARSE -> CURRENT [label="validated response", ltail=cluster_core, lhead=cluster_guards];
-  CLASSIC -> FAILURE [style=dashed, color="#c53030", constraint=false];
-  ML -> FAILURE [style=dashed, color="#c53030", constraint=false];
-  PARSE -> FAILURE [style=dashed, color="#c53030", constraint=false];
+  CLIENT -> FAILURE [label="timeout / worker error", style=dashed, color="#c53030", fontcolor="#c53030", constraint=false];
+  PARSE -> FAILURE [label="invalid result", style=dashed, color="#c53030", fontcolor="#c53030", constraint=false];
 }

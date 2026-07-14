@@ -1,0 +1,85 @@
+{
+  "architecture": {
+    "hidden_sizes": [
+      256,
+      128,
+      64,
+      32
+    ],
+    "input_size": 150,
+    "policy_output_size": 7,
+    "value_output_size": 1
+  },
+  "deployment": {
+    "gzip": {
+      "content_encoding": "gzip",
+      "decompressed_sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
+      "path": "public/ml-weights.json.gz",
+      "sha256": "a8e12c499f838a978e1d38485675d2c6d83f9e0025a3cb835abee3dd69872e1f",
+      "size_bytes": 1553417
+    },
+    "json": {
+      "path": "public/ml-weights.json",
+      "sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
+      "size_bytes": 4200026
+    }
+  },
+  "inputs": {
+    "python_lock": {
+      "path": "ml/uv.lock",
+      "sha256": "08dac3c8f902646e14a56fd56a660372f89d7b6de1dd1a2dd8ab24dfd892d2ca"
+    },
+    "python_project": {
+      "path": "ml/pyproject.toml",
+      "sha256": "527d2f5bb4baa5e66d0ea93b682f3d4cceede02bd51b56b8151d943af3d0126b"
+    },
+    "training_config": {
+      "path": "ml/config/training.json",
+      "sha256": "b17eb90e4cd44144b94128c924e098d18afb2fbab2e59a0f01b20535a1385159"
+    }
+  },
+  "model": {
+    "format": "rgou-dual-network-json-v1",
+    "path": "ml/data/weights/ml_ai_weights_pytorch_v5.json",
+    "sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
+    "size_bytes": 4200026,
+    "weights": {
+      "policy": {
+        "count": 82119,
+        "sha256": "9ffb6fab229f5624d4e3b661afbd6800c2350f67ada9c0b8280494c4af767920"
+      },
+      "value": {
+        "count": 81921,
+        "sha256": "c7c3f768d6b102bc217abd86a331a5bca2442fafcdcb12bf660a41f1ddd1c294"
+      }
+    }
+  },
+  "schema_version": 2,
+  "source": {
+    "committed_at": "2025-07-20T22:01:01+01:00",
+    "kind": "training_source_commit",
+    "revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4"
+  },
+  "training": {
+    "batch_size": 64,
+    "best_validation_loss": 1.6501182404500019,
+    "epochs": 100,
+    "improvements": [
+      "PyTorch-based training for maximum speed",
+      "GPU acceleration when available",
+      "Leverages existing Rust data generation",
+      "Optimized neural network architecture",
+      "Early stopping and learning rate scheduling"
+    ],
+    "learning_rate": 0.001,
+    "num_games": 2000,
+    "num_training_samples": 303228,
+    "seed": 42,
+    "source_committed_at": "2025-07-20T22:01:01+01:00",
+    "source_revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4",
+    "training_date": "2025-07-20 21:50:41",
+    "training_time_seconds": 3297.1347529888153,
+    "validation_split": 0.2,
+    "version": "pytorch_v1"
+  }
+}

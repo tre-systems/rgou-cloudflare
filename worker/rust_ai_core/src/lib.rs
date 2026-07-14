@@ -15,6 +15,7 @@ pub mod training;
 
 pub const PIECES_PER_PLAYER: usize = 7;
 pub const BOARD_SIZE: usize = 21;
+const MAX_TRANSPOSITION_ENTRIES: usize = 50_000;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const PLAYER2_TRACK: [u8; 14] = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15];
@@ -331,15 +332,19 @@ impl GameState {
 
     fn hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
-        for (_i, piece) in self.player1_pieces.iter().enumerate().take(6) {
+
+        self.player1_pieces.len().hash(&mut hasher);
+        for piece in &self.player1_pieces {
             hasher.write_i8(piece.square + 1);
         }
-        for (_i, piece) in self.player2_pieces.iter().enumerate().take(6) {
+
+        self.player2_pieces.len().hash(&mut hasher);
+        for piece in &self.player2_pieces {
             hasher.write_i8(piece.square + 1);
         }
-        if self.current_player == Player::Player2 {
-            hasher.write_u64(1 << 63);
-        }
+
+        self.current_player.hash(&mut hasher);
+        self.genetic_params.hash(&mut hasher);
         hasher.finish()
     }
 }
@@ -351,6 +356,7 @@ struct TranspositionEntry {
 
 pub struct AI {
     transposition_table: HashMap<u64, TranspositionEntry>,
+    max_transposition_entries: usize,
     pub nodes_evaluated: u32,
     pub transposition_hits: u32,
 }
@@ -369,6 +375,7 @@ impl AI {
     pub fn new() -> Self {
         AI {
             transposition_table: HashMap::new(),
+            max_transposition_entries: MAX_TRANSPOSITION_ENTRIES,
             nodes_evaluated: 0,
             transposition_hits: 0,
         }
@@ -382,6 +389,26 @@ impl AI {
         self.transposition_table.clear();
         self.nodes_evaluated = 0;
         self.transposition_hits = 0;
+    }
+
+    fn store_transposition(&mut self, state_hash: u64, entry: TranspositionEntry) {
+        if self.transposition_table.len() >= self.max_transposition_entries
+            && !self.transposition_table.contains_key(&state_hash)
+        {
+            self.transposition_table.clear();
+        }
+
+        self.transposition_table.insert(state_hash, entry);
+    }
+
+    #[cfg(test)]
+    fn with_transposition_table_limit(max_transposition_entries: usize) -> Self {
+        assert!(max_transposition_entries > 0);
+
+        Self {
+            max_transposition_entries,
+            ..Self::new()
+        }
     }
 
     pub fn get_best_move(
@@ -567,7 +594,7 @@ impl AI {
 
         if state.is_game_over() {
             let eval = state.evaluate() as f32;
-            self.transposition_table.insert(
+            self.store_transposition(
                 state_hash,
                 TranspositionEntry {
                     evaluation: eval,
@@ -597,7 +624,7 @@ impl AI {
             expected_score += score * prob;
         }
 
-        self.transposition_table.insert(
+        self.store_transposition(
             state_hash,
             TranspositionEntry {
                 evaluation: expected_score,
@@ -1220,6 +1247,84 @@ mod tests {
         let mut game_state3 = game_state1.clone();
         game_state3.current_player = Player::Player2;
         assert_ne!(game_state1.hash(), game_state3.hash());
+    }
+
+    #[test]
+    fn test_hash_includes_every_piece_for_both_players() {
+        let base_state = GameState::new();
+        let base_hash = base_state.hash();
+
+        for piece_index in 0..PIECES_PER_PLAYER {
+            let mut player1_state = base_state.clone();
+            player1_state.player1_pieces[piece_index].square = piece_index as i8;
+            assert_ne!(
+                base_hash,
+                player1_state.hash(),
+                "player 1 piece {piece_index} must participate in the position hash"
+            );
+
+            let mut player2_state = base_state.clone();
+            player2_state.player2_pieces[piece_index].square = piece_index as i8;
+            assert_ne!(
+                base_hash,
+                player2_state.hash(),
+                "player 2 piece {piece_index} must participate in the position hash"
+            );
+        }
+    }
+
+    #[test]
+    fn test_hash_includes_evaluation_parameters() {
+        let state = GameState::new();
+        let mut state_with_different_evaluation = state.clone();
+        state_with_different_evaluation.genetic_params.win_score += 1;
+
+        assert_ne!(state.hash(), state_with_different_evaluation.hash());
+    }
+
+    #[test]
+    fn test_transposition_table_is_bounded() {
+        let mut ai = AI::with_transposition_table_limit(3);
+
+        for state_hash in 0..3 {
+            ai.store_transposition(
+                state_hash,
+                TranspositionEntry {
+                    evaluation: state_hash as f32,
+                    depth: 1,
+                },
+            );
+        }
+        assert_eq!(ai.get_transposition_table_size(), 3);
+
+        ai.store_transposition(
+            2,
+            TranspositionEntry {
+                evaluation: 20.0,
+                depth: 2,
+            },
+        );
+        assert_eq!(ai.get_transposition_table_size(), 3);
+
+        ai.store_transposition(
+            3,
+            TranspositionEntry {
+                evaluation: 3.0,
+                depth: 1,
+            },
+        );
+        assert_eq!(ai.get_transposition_table_size(), 1);
+
+        for state_hash in 4..100 {
+            ai.store_transposition(
+                state_hash,
+                TranspositionEntry {
+                    evaluation: state_hash as f32,
+                    depth: 1,
+                },
+            );
+            assert!(ai.get_transposition_table_size() <= 3);
+        }
     }
 
     #[test]

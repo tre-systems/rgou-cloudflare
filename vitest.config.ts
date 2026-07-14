@@ -60,6 +60,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      thresholds: {
+        statements: 70,
+        branches: 60,
+        functions: 60,
+        lines: 70,
+      },
       exclude: [
         'src/lib/sound-effects.ts',
         'src/lib/types.ts',
@@ -145,17 +151,11 @@ export default defineConfig({
         '**/wrangler.toml.tsbuildinfo',
         'src/app/**',
         'src/components/**',
-        // AI worker files below are excluded because they depend on browser/worker APIs and cannot be reliably tested in Node
-        'src/lib/wasm-ai-service.ts',
-        'src/lib/ml-ai-service.ts',
-        'src/lib/__tests__/wasm-ai-service.test.ts',
-        'src/lib/__tests__/ml-ai-service.test.ts',
         // Utility files that depend on Node.js APIs and file system operations
         'src/lib/utils/getFileHash.ts',
         'src/lib/utils/getGitCommitHash.ts',
         // Worker files that cannot be tested in Node environment
         'src/lib/ai.worker.ts',
-        'src/lib/ml-ai.worker.ts',
       ],
       include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
     },

@@ -45,6 +45,23 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   {
+    files: ['src/lib/**/*.{ts,tsx}'],
+    ignores: ['src/lib/__tests__/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/components/**', '../components/**', '../../components/**'],
+              message: 'Domain and adapter code must not depend on UI components.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.{mjs,cjs}'],
     languageOptions: { globals: globals.node },
   },

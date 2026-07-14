@@ -2,19 +2,22 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const releaseId = process.env.GITHUB_SHA?.slice(0, 12) || `local-${Date.now()}`;
-const CACHE_VERSION = `${releaseId}-v1.0.0`;
-
-const serviceWorkerTemplate = `const CACHE_VERSION = '${CACHE_VERSION}';
+export function createServiceWorkerSource(releaseId) {
+  const cacheVersion = `${releaseId}-v1.1.0`;
+  return `const CACHE_VERSION = '${cacheVersion}';
 const CACHE_NAME = \`royal-game-of-ur-\${CACHE_VERSION}\`;
 const OFFLINE_URL = '/offline';
 
-const STATIC_ASSETS = [
+const REQUIRED_ASSETS = [
   '/',
   '/offline',
   '/manifest.json',
   '/icons/icon-128x128.png',
+];
+
+const OPTIONAL_ASSETS = [
   '/wasm/rgou_ai_core.js',
   '/wasm/rgou_ai_worker_bg.wasm',
   '/ml-weights.json.gz',
@@ -22,14 +25,28 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_ASSETS))
-      .catch(error => {
-        console.error('[SW] Failed to cache static assets:', error);
-      })
-  );
+    caches.open(CACHE_NAME).then(async cache => {
+      await cache.addAll(REQUIRED_ASSETS);
 
+      const indexResponse = await cache.match('/');
+      if (!indexResponse) throw new Error('[SW] Cached application shell is missing');
+      const html = await indexResponse.text();
+      const shellAssets = Array.from(
+        html.matchAll(/(?:src|href)=["'](\\/assets\\/[^"']+)["']/g),
+        match => match[1]
+      );
+      await cache.addAll([...new Set(shellAssets)]);
+
+      const results = await Promise.allSettled(
+        OPTIONAL_ASSETS.map(asset => cache.add(asset))
+      );
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.error('[SW] Failed to cache optional asset:', OPTIONAL_ASSETS[index], result.reason);
+        }
+      });
+    })
+  );
 });
 
 self.addEventListener('activate', event => {
@@ -66,7 +83,7 @@ self.addEventListener('fetch', event => {
 
   if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/wasm/')) {
     event.respondWith(
-      caches.match(event.request).then(async cachedResponse => {
+      caches.match(event.request, { ignoreVary: true }).then(async cachedResponse => {
         if (cachedResponse) {
           return cachedResponse;
         }
@@ -115,10 +132,20 @@ self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 `;
+}
 
-const publicDir = path.join(process.cwd(), 'public');
-const swPath = path.join(publicDir, 'sw.js');
+export function generateServiceWorker({
+  releaseId = process.env.GITHUB_SHA?.slice(0, 12) || `local-${Date.now()}`,
+  publicDir = path.join(process.cwd(), 'public'),
+} = {}) {
+  const cacheVersion = `${releaseId}-v1.1.0`;
+  const swPath = path.join(publicDir, 'sw.js');
 
-console.log('Generating service worker with cache version:', CACHE_VERSION);
-fs.writeFileSync(swPath, serviceWorkerTemplate);
-console.log('Service worker generated successfully');
+  console.log('Generating service worker with cache version:', cacheVersion);
+  fs.writeFileSync(swPath, createServiceWorkerSource(releaseId));
+  console.log('Service worker generated successfully');
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  generateServiceWorker();
+}

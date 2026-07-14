@@ -9,7 +9,7 @@
   <hr />
 </div>
 
-An offline-first implementation of the ancient Royal Game of Ur (c. 2500 BCE) with Classic and machine-learning opponents. The React interface runs both Rust/WebAssembly AIs locally in Web Workers and deploys as a Cloudflare Worker with Static Assets.
+An offline-first implementation of the ancient Royal Game of Ur (c. 2500 BCE) with Classic and machine-learning opponents. The React interface runs both Rust/WebAssembly AIs locally in one lazy Web Worker and deploys as a Cloudflare Worker with Static Assets.
 
 ## Play Now
 
@@ -18,8 +18,8 @@ An offline-first implementation of the ancient Royal Game of Ur (c. 2500 BCE) wi
 ## Features
 
 - **Dual AI**: classic expectiminimax and a self-trained neural network, both running locally through Rust and WebAssembly
-- **Non-blocking play**: both AI engines run in Web Workers, keeping search and inference off the UI thread
-- **Offline-first**: a PWA that is fully playable without a connection
+- **Non-blocking play**: one lazily created Web Worker hosts every AI engine, keeping search, inference, and model loading off the UI thread
+- **Offline-first**: HTML plus its hashed JS/CSS shell are installed atomically while larger AI assets are cached opportunistically
 - **Responsive UI**: animations and sound effects on desktop and mobile
 - **Private by design**: win/loss statistics stay on the device; anonymous aggregate game lifecycle counts are sent to Cloudflare Analytics Engine when online
 
@@ -47,7 +47,7 @@ The game opens at the local URL printed by Vite (normally http://localhost:5173)
 
 ## AI System
 
-Two opponents, both running entirely in the browser:
+Two opponents, both running entirely in the browser through one typed Worker boundary:
 
 - **Classic AI** (default): expectiminimax search with alpha-beta pruning and evolved genetic parameters.
 - **ML AI**: a value + policy neural network trained through self-play.
@@ -82,9 +82,10 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 ![System overview](docs/diagrams/system-overview.png)
 
 - **Frontend**: Vite, React, TypeScript, Tailwind CSS, Framer Motion, Zustand
-- **AI engine**: Rust compiled to WebAssembly, running in Web Workers
-- **Analytics**: anonymous lifecycle counters in the shared Cloudflare Analytics Engine `app_usage` dataset
-- **Deployment**: Cloudflare Worker + Static Assets, deployed by GitHub Actions
+- **State**: canonical local persistence with board, status, winner, and legal-move projections rebuilt on hydration
+- **AI engine**: Rust compiled to WebAssembly in one lazy Web Worker; requests carry only a narrow `AIPosition`
+- **Analytics**: anonymous, short-retention lifecycle counters in the shared Cloudflare Analytics Engine `app_usage` dataset; no database
+- **Deployment**: Cloudflare Worker + Static Assets, serialized and release-verified by GitHub Actions
 
 See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for details.
 

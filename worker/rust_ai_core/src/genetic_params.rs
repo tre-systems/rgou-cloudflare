@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct GeneticParams {
     pub win_score: i32,
     pub finished_piece_value: i32,
@@ -51,47 +51,48 @@ impl GeneticParams {
 
     pub fn random_mutation(&self, mutation_rate: f64, mutation_strength: f64) -> Self {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         Self {
-            win_score: if rng.gen_bool(mutation_rate) {
-                self.win_score + (rng.gen_range(-1000.0..1000.0) * mutation_strength) as i32
+            win_score: if rng.random_bool(mutation_rate) {
+                self.win_score + (rng.random_range(-1000.0..1000.0) * mutation_strength) as i32
             } else {
                 self.win_score
             },
-            finished_piece_value: if rng.gen_bool(mutation_rate) {
+            finished_piece_value: if rng.random_bool(mutation_rate) {
                 self.finished_piece_value
-                    + (rng.gen_range(-100.0..100.0) * mutation_strength) as i32
+                    + (rng.random_range(-100.0..100.0) * mutation_strength) as i32
             } else {
                 self.finished_piece_value
             },
-            position_weight: if rng.gen_bool(mutation_rate) {
-                self.position_weight + (rng.gen_range(-5.0..5.0) * mutation_strength) as i32
+            position_weight: if rng.random_bool(mutation_rate) {
+                self.position_weight + (rng.random_range(-5.0..5.0) * mutation_strength) as i32
             } else {
                 self.position_weight
             },
-            safety_bonus: if rng.gen_bool(mutation_rate) {
-                self.safety_bonus + (rng.gen_range(-10.0..10.0) * mutation_strength) as i32
+            safety_bonus: if rng.random_bool(mutation_rate) {
+                self.safety_bonus + (rng.random_range(-10.0..10.0) * mutation_strength) as i32
             } else {
                 self.safety_bonus
             },
-            rosette_control_bonus: if rng.gen_bool(mutation_rate) {
-                self.rosette_control_bonus + (rng.gen_range(-20.0..20.0) * mutation_strength) as i32
+            rosette_control_bonus: if rng.random_bool(mutation_rate) {
+                self.rosette_control_bonus
+                    + (rng.random_range(-20.0..20.0) * mutation_strength) as i32
             } else {
                 self.rosette_control_bonus
             },
-            advancement_bonus: if rng.gen_bool(mutation_rate) {
-                self.advancement_bonus + (rng.gen_range(-3.0..3.0) * mutation_strength) as i32
+            advancement_bonus: if rng.random_bool(mutation_rate) {
+                self.advancement_bonus + (rng.random_range(-3.0..3.0) * mutation_strength) as i32
             } else {
                 self.advancement_bonus
             },
-            capture_bonus: if rng.gen_bool(mutation_rate) {
-                self.capture_bonus + (rng.gen_range(-10.0..10.0) * mutation_strength) as i32
+            capture_bonus: if rng.random_bool(mutation_rate) {
+                self.capture_bonus + (rng.random_range(-10.0..10.0) * mutation_strength) as i32
             } else {
                 self.capture_bonus
             },
-            center_lane_bonus: if rng.gen_bool(mutation_rate) {
-                self.center_lane_bonus + (rng.gen_range(-2.0..2.0) * mutation_strength) as i32
+            center_lane_bonus: if rng.random_bool(mutation_rate) {
+                self.center_lane_bonus + (rng.random_range(-2.0..2.0) * mutation_strength) as i32
             } else {
                 self.center_lane_bonus
             },
@@ -100,45 +101,45 @@ impl GeneticParams {
 
     pub fn crossover(&self, other: &Self, crossover_rate: f64) -> Self {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         Self {
-            win_score: if rng.gen_bool(crossover_rate) {
+            win_score: if rng.random_bool(crossover_rate) {
                 other.win_score
             } else {
                 self.win_score
             },
-            finished_piece_value: if rng.gen_bool(crossover_rate) {
+            finished_piece_value: if rng.random_bool(crossover_rate) {
                 other.finished_piece_value
             } else {
                 self.finished_piece_value
             },
-            position_weight: if rng.gen_bool(crossover_rate) {
+            position_weight: if rng.random_bool(crossover_rate) {
                 other.position_weight
             } else {
                 self.position_weight
             },
-            safety_bonus: if rng.gen_bool(crossover_rate) {
+            safety_bonus: if rng.random_bool(crossover_rate) {
                 other.safety_bonus
             } else {
                 self.safety_bonus
             },
-            rosette_control_bonus: if rng.gen_bool(crossover_rate) {
+            rosette_control_bonus: if rng.random_bool(crossover_rate) {
                 other.rosette_control_bonus
             } else {
                 self.rosette_control_bonus
             },
-            advancement_bonus: if rng.gen_bool(crossover_rate) {
+            advancement_bonus: if rng.random_bool(crossover_rate) {
                 other.advancement_bonus
             } else {
                 self.advancement_bonus
             },
-            capture_bonus: if rng.gen_bool(crossover_rate) {
+            capture_bonus: if rng.random_bool(crossover_rate) {
                 other.capture_bonus
             } else {
                 self.capture_bonus
             },
-            center_lane_bonus: if rng.gen_bool(crossover_rate) {
+            center_lane_bonus: if rng.random_bool(crossover_rate) {
                 other.center_lane_bonus
             } else {
                 self.center_lane_bonus
