@@ -36,7 +36,7 @@ export default function CaptureExplosion({ position, onComplete }: CaptureExplos
         transition={{ duration: 1.2, ease: 'easeOut' }}
       />
 
-      {[...Array(12)].map((_, i) => (
+      {Array.from({ length: 12 }, (_, i) => (
         <motion.div
           key={i}
           className={cn(
@@ -46,14 +46,14 @@ export default function CaptureExplosion({ position, onComplete }: CaptureExplos
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
             scale: [0, 1, 0.5, 0],
-            x: Math.cos(i * (360 / 12) * (Math.PI / 180)) * (30 + Math.random() * 30),
-            y: Math.sin(i * (360 / 12) * (Math.PI / 180)) * (30 + Math.random() * 30),
+            x: Math.cos((i * 2 * Math.PI) / 12) * (30 + ((i * 17) % 31)),
+            y: Math.sin((i * 2 * Math.PI) / 12) * (30 + ((i * 17) % 31)),
             opacity: [1, 1, 0.5, 0],
           }}
           transition={{
             duration: 1.5,
             ease: 'easeOut',
-            delay: Math.random() * 0.3,
+            delay: ((i * 7) % 10) * 0.03,
           }}
         />
       ))}

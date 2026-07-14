@@ -1,6 +1,10 @@
-import { OpponentModeSchema, type AISource, type OpponentMode, type Player } from './schemas';
-
-type Participant = 'human' | 'heuristic' | 'classic' | 'ml';
+import {
+  OpponentModeSchema,
+  type AISource,
+  type OpponentMode,
+  type Participant,
+  type Player,
+} from './schemas';
 
 export type ModeConfiguration = {
   player1: AISource | null;

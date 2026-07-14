@@ -4,10 +4,14 @@ import { initializeGame, processDiceRoll } from '../game-logic';
 
 class FakeWorker {
   static instances: FakeWorker[] = [];
+  static postError: Error | null = null;
 
   onmessage: ((event: MessageEvent) => void) | null = null;
   onerror: ((event: ErrorEvent) => void) | null = null;
-  postMessage = vi.fn();
+  onmessageerror: ((event: MessageEvent) => void) | null = null;
+  postMessage = vi.fn(() => {
+    if (FakeWorker.postError) throw FakeWorker.postError;
+  });
   terminate = vi.fn();
 
   constructor() {
@@ -22,6 +26,7 @@ class FakeWorker {
 describe('AIWorkerClient', () => {
   beforeEach(() => {
     FakeWorker.instances = [];
+    FakeWorker.postError = null;
     vi.stubGlobal('Worker', FakeWorker);
   });
 
@@ -80,5 +85,26 @@ describe('AIWorkerClient', () => {
     const secondRejection = expect(secondRequest).rejects.toThrow('AI worker terminated');
     client.terminate();
     await secondRejection;
+  });
+
+  it('rejects immediately when posting or decoding a message fails', async () => {
+    const gameState = processDiceRoll(
+      initializeGame(() => 0.1),
+      2
+    );
+    const postFailure = new Error('clone failed');
+    FakeWorker.postError = postFailure;
+
+    const failedPostClient = new AIWorkerClient();
+    await expect(failedPostClient.request('classic', gameState)).rejects.toThrow('clone failed');
+    expect(FakeWorker.instances[0].terminate).toHaveBeenCalledOnce();
+
+    FakeWorker.postError = null;
+    const invalidResponseClient = new AIWorkerClient();
+    const response = invalidResponseClient.request('classic', gameState);
+    FakeWorker.instances[1].respond({ invalid: true });
+
+    await expect(response).rejects.toThrow('AI worker returned an invalid response');
+    expect(FakeWorker.instances[1].terminate).toHaveBeenCalledOnce();
   });
 });

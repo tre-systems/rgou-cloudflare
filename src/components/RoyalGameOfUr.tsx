@@ -1,50 +1,20 @@
-import { useCallback, useState, useEffect } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Brain, Cpu, Eye, Github } from 'lucide-react';
+import { Bug, ChevronDown, ChevronRight, ExternalLink, Github } from 'lucide-react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
 import { isDevelopment, getAIName } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
-import AIDiagnosticsPanel from './AIDiagnosticsPanel';
 import HowToPlayPanel from './HowToPlayPanel';
 import AnimatedBackground from './AnimatedBackground';
-import { Bug, ChevronDown, ChevronRight } from 'lucide-react';
-import ModeSelectionCard from './ModeSelectionCard';
+import ModeSelection from './ModeSelection';
 import { getModeConfiguration } from '@/lib/game-mode';
 import type { OpponentMode } from '@/lib/types';
 import { useGameAudio } from '@/hooks/useGameAudio';
 import { useGameTurnScheduler } from '@/hooks/useGameTurnScheduler';
 
-const MODE_OPTIONS = [
-  {
-    key: 'classic',
-    label: 'Classic AI',
-    description: 'A strategic opponent using a classic game AI algorithm.',
-    subtitle: 'Expectiminimax algorithm',
-    icon: Cpu,
-    colorClass: 'text-blue-400',
-    borderColorClass: 'border-blue-400/30 hover:border-blue-400/60',
-  },
-  {
-    key: 'ml',
-    label: 'Machine Learning AI',
-    description: 'A modern opponent that learned by observing thousands of games.',
-    subtitle: 'Neural network model',
-    icon: Brain,
-    colorClass: 'text-purple-400',
-    borderColorClass: 'border-purple-400/30 hover:border-purple-400/60',
-  },
-  {
-    key: 'watch',
-    label: 'Watch a Match',
-    description: 'Sit back and watch the Classic AI challenge the ML AI.',
-    subtitle: 'AI vs AI battle',
-    icon: Eye,
-    colorClass: 'text-orange-400',
-    borderColorClass: 'border-orange-400/30 hover:border-orange-400/60',
-  },
-] as const;
+const AIDiagnosticsPanel = lazy(() => import('./AIDiagnosticsPanel'));
 
 function isStandalonePWA() {
   if (typeof window === 'undefined') return false;
@@ -148,26 +118,27 @@ export default function RoyalGameOfUr() {
     setShowModelOverlay(false);
     reset();
     reportGameStarted(mode);
-
-    setTimeout(() => {
-      processDiceRoll();
-    }, 0);
+    processDiceRoll();
   };
 
   const diagnosticsPanelOrPlaceholder = isDevelopment() ? (
     lastAIDiagnostics ? (
-      <AIDiagnosticsPanel
-        lastAIDiagnostics={lastAIDiagnostics}
-        lastAIMoveDuration={lastAIMoveDuration}
-        isOpen={diagnosticsPanelOpen}
-        onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
-        gameState={gameState}
-      />
+      <Suspense fallback={null}>
+        <AIDiagnosticsPanel
+          lastAIDiagnostics={lastAIDiagnostics}
+          lastAIMoveDuration={lastAIMoveDuration}
+          isOpen={diagnosticsPanelOpen}
+          onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+          gameState={gameState}
+        />
+      </Suspense>
     ) : (
       <div className="glass-dark rounded-lg p-3">
         <button
+          type="button"
           className="w-full text-left flex justify-between items-center"
           onClick={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
+          aria-expanded={diagnosticsPanelOpen}
         >
           <div className="flex items-center space-x-2">
             <Bug className="w-4 h-4 text-green-400" />
@@ -184,7 +155,7 @@ export default function RoyalGameOfUr() {
           <div className="mt-3 text-xs text-white/70">
             <p>No AI diagnostics available yet. Make a move to see AI analysis.</p>
             <p className="mt-2">
-              Current AI source: {selectedMode === 'watch' ? 'N/A' : getAIName('ml')}
+              Current AI source: {selectedMode === 'watch' ? 'N/A' : getAIName(aiSourceP2)}
             </p>
           </div>
         )}
@@ -205,15 +176,16 @@ export default function RoyalGameOfUr() {
         <Github className="w-6 h-6" />
       </a>
       <AnimatedBackground />
-      <div className="relative min-h-screen w-full flex items-center justify-center p-4 pb-24">
+      <main className="relative flex min-h-screen w-full items-center justify-center p-4 pb-24">
         {!isStandalone && (
           <div className="hidden md:block absolute top-4 right-4 z-50">
             <button
+              type="button"
               onClick={() => {
                 window.open(
                   '/',
                   'GamePopout',
-                  'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no'
+                  'width=420,height=800,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no,noopener,noreferrer'
                 );
               }}
               className="glass-dark rounded-lg px-4 py-2 flex items-center space-x-2 text-white/80 hover:text-white font-semibold shadow-lg backdrop-blur-md border border-white/10 transition-colors"
@@ -270,6 +242,7 @@ export default function RoyalGameOfUr() {
                 stroke="currentColor"
                 strokeWidth="2"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -286,6 +259,7 @@ export default function RoyalGameOfUr() {
                 stroke="currentColor"
                 strokeWidth="2"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -294,41 +268,11 @@ export default function RoyalGameOfUr() {
                 />
               </svg>
             </motion.div>
-            <div className="h-4"></div>
+            <div className="h-4" />
           </motion.div>
 
           {showModelOverlay ? (
-            <motion.div
-              className="mt-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-            >
-              <div
-                className="glass-dark rounded-2xl p-6 md:p-8 w-full text-center space-y-4"
-                data-testid="ai-model-selection"
-              >
-                <h2 className="text-xl font-bold text-white">Select Your Opponent</h2>
-                <p className="text-gray-300 text-sm">
-                  Choose an AI to challenge, or watch them battle.
-                </p>
-                <div className="space-y-3 pt-2">
-                  {MODE_OPTIONS.map(mode => (
-                    <ModeSelectionCard
-                      key={mode.key}
-                      icon={mode.icon}
-                      title={mode.label}
-                      description={mode.description}
-                      subtitle={mode.subtitle}
-                      onClick={() => handleOverlaySelect(mode.key)}
-                      colorClass={mode.colorClass}
-                      borderColorClass={mode.borderColorClass}
-                      data-testid={`mode-select-${mode.key}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+            <ModeSelection onSelect={handleOverlaySelect} />
           ) : (
             <GameBoard
               gameState={gameState}
@@ -351,7 +295,7 @@ export default function RoyalGameOfUr() {
 
           <HowToPlayPanel isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
 
-          <div className="h-4"></div>
+          <div className="h-4" />
           <motion.div
             className="text-center"
             initial={{ opacity: 0 }}
@@ -371,7 +315,7 @@ export default function RoyalGameOfUr() {
             </p>
           </motion.div>
         </motion.div>
-      </div>
+      </main>
     </>
   );
 }

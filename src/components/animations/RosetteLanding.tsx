@@ -73,21 +73,21 @@ export default function RosetteLanding({ position, onComplete }: RosetteLandingP
         transition={{ duration: 1.8, ease: 'easeOut', delay: 0.2 }}
       />
 
-      {[...Array(16)].map((_, i) => (
+      {Array.from({ length: 16 }, (_, i) => (
         <motion.div
           key={i}
           className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full"
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
             scale: [0, 1, 0.5, 0],
-            x: Math.cos(i * (360 / 16) * (Math.PI / 180)) * (25 + Math.random() * 15),
-            y: Math.sin(i * (360 / 16) * (Math.PI / 180)) * (25 + Math.random() * 15),
+            x: Math.cos((i * 2 * Math.PI) / 16) * (25 + ((i * 7) % 16)),
+            y: Math.sin((i * 2 * Math.PI) / 16) * (25 + ((i * 7) % 16)),
             opacity: [1, 1, 0.6, 0],
           }}
           transition={{
             duration: 1.8,
             ease: 'easeOut',
-            delay: Math.random() * 0.5,
+            delay: ((i * 11) % 16) / 32,
           }}
         />
       ))}
@@ -101,21 +101,21 @@ export default function RosetteLanding({ position, onComplete }: RosetteLandingP
         transition={{ duration: 2, ease: 'easeOut' }}
       />
 
-      {[...Array(6)].map((_, i) => (
+      {Array.from({ length: 6 }, (_, i) => (
         <motion.div
           key={i}
           className="absolute w-2 h-2 bg-yellow-300 rounded-full"
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
             scale: [0, 1, 0.5, 0],
-            x: Math.cos(i * (360 / 6) * (Math.PI / 180)) * (40 + Math.random() * 20),
-            y: Math.sin(i * (360 / 6) * (Math.PI / 180)) * (40 + Math.random() * 20),
+            x: Math.cos((i * 2 * Math.PI) / 6) * (40 + ((i * 13) % 21)),
+            y: Math.sin((i * 2 * Math.PI) / 6) * (40 + ((i * 13) % 21)),
             opacity: [1, 1, 0.4, 0],
           }}
           transition={{
             duration: 2.2,
             ease: 'easeOut',
-            delay: Math.random() * 0.8,
+            delay: ((i * 3) % 6) * 0.13,
           }}
         />
       ))}

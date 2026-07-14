@@ -1,26 +1,4 @@
-//! # ML Training Module
-//!
-//! This module provides comprehensive machine learning training capabilities for the Royal Game of Ur AI.
-//! It includes intelligent CPU optimization, unified configuration management, and efficient training pipelines.
-//!
-//! ## Key Features
-//!
-//! ### 🍎 Intelligent CPU Optimization
-//! - **Apple Silicon Detection**: Automatically detects M1/M2/M3 Macs and optimizes for performance cores
-//! - **Cross-Platform Compatibility**: Adapts to any CPU configuration without hardcoded values
-//! - **System Responsiveness**: Leaves appropriate cores for system tasks
-//!
-//! ### 🚀 Performance Optimizations
-//! - **Parallel Game Generation**: Uses all available cores for training data generation
-//! - **Optimized Thread Pool**: Configures rayon thread pool for maximum efficiency
-//! - **Memory Management**: 8MB stack size for deep recursion operations
-//!
-//! ### 📊 Unified Configuration
-//! - **Single Source of Truth**: All training parameters in `ml/config/training.json`
-//! - **Network Architecture**: Centralized neural network configuration
-//! - **Training Presets**: Quick, default, and production settings
-//!
-//! ## Usage Examples
+//! Rust self-play generation and CPU neural-network training.
 //!
 //! ```rust,no_run
 //! use rgou_ai_core::training::{Trainer, TrainingConfig};
@@ -42,25 +20,6 @@
 //!     Ok(())
 //! }
 //! ```
-//!
-//! ## CPU Optimization Strategy
-//!
-//! The module automatically detects system characteristics and optimizes CPU utilization:
-//!
-//! | System Type | Core Allocation | Description |
-//! |-------------|-----------------|-------------|
-//! | Apple Silicon | 8 performance cores | M1/M2/M3 Macs: Uses all performance cores, leaves efficiency cores for system |
-//! | High-core (16+) | total - 2 cores | High-end systems: Leaves 2 cores for system tasks |
-//! | High-core (8-15) | total - 1 core | Mid-range systems: Leaves 1 core for system tasks |
-//! | Standard | all cores | Smaller systems: Uses all available cores |
-//!
-//! ## Performance Monitoring
-//!
-//! The training process provides detailed progress information:
-//! - Real-time game generation progress with ETA
-//! - Per-epoch training metrics and trends
-//! - Validation loss tracking with early stopping
-//! - Comprehensive training metadata and statistics
 
 use crate::features::GameFeatures;
 use crate::neural_network::{NetworkConfig, NeuralNetwork};
@@ -1281,8 +1240,8 @@ impl Trainer {
         let policy_weights: Vec<f32> =
             serde_json::from_value(weights_data["policy_weights"].clone())?;
 
-        self.value_network.load_weights(&value_weights);
-        self.policy_network.load_weights(&policy_weights);
+        self.value_network.load_weights(&value_weights)?;
+        self.policy_network.load_weights(&policy_weights)?;
 
         println!("Weights loaded from {filename}");
         Ok(())
@@ -1611,10 +1570,8 @@ mod tests {
             });
         }
 
-        // Train for one epoch
         trainer.train_epoch(&training_data);
 
-        // Save weights
         let metadata = TrainingMetadata {
             training_date: "2025-01-01".to_string(),
             version: "test".to_string(),
@@ -1629,24 +1586,25 @@ mod tests {
             improvements: vec!["test".to_string()],
         };
 
-        let save_result = trainer.save_weights("test_weights.json", &metadata);
+        let weights_path = std::env::temp_dir().join(format!(
+            "rgou-training-weights-test-{}.json",
+            std::process::id()
+        ));
+        let weights_path = weights_path.to_string_lossy();
+        let save_result = trainer.save_weights(&weights_path, &metadata);
         assert!(save_result.is_ok(), "Weight saving should succeed");
 
-        // Create new trainer and load weights
         let mut new_trainer = Trainer::new(config);
-        let load_result = new_trainer.load_weights("test_weights.json");
+        let load_result = new_trainer.load_weights(&weights_path);
         assert!(load_result.is_ok(), "Weight loading should succeed");
 
-        // Test that outputs are similar (not identical due to randomness)
         let test_features = ndarray::Array1::from_vec(vec![0.1; 150]);
         let original_value = trainer.value_network.forward(&test_features);
         let loaded_value = new_trainer.value_network.forward(&test_features);
 
-        // Outputs should be similar (within reasonable tolerance)
         assert!((original_value[0] - loaded_value[0]).abs() < 0.1);
 
-        // Clean up
-        let _ = std::fs::remove_file("test_weights.json");
+        let _ = std::fs::remove_file(weights_path.as_ref());
     }
 
     #[test]

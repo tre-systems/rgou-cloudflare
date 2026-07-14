@@ -27,6 +27,16 @@ interface GameBoardProps {
   lastMovePlayer: Player | null;
 }
 
+const BOARD_LAYOUT = [
+  16, 17, 18, 19, -1, -1, 15, 14, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, -1, -1, 13, 12,
+] as const;
+
+function getElementCenter(element: Element | null) {
+  if (!element) return null;
+  const rect = element.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
 export default function GameBoard({
   gameState,
   onPieceClick,
@@ -56,78 +66,43 @@ export default function GameBoard({
   const gameMode: GameMode = watchMode ? 'watch' : 'play';
 
   useEffect(() => {
-    if (lastMoveType && lastMovePlayer) {
-      switch (lastMoveType) {
-        case 'capture':
-          if (gameState.history.length > 0) {
-            const lastMove = gameState.history[gameState.history.length - 1];
-            const squareElement = boardRef.current?.querySelector(
-              `[data-square-id='${lastMove.toSquare}']`
-            );
-            if (squareElement) {
-              const rect = squareElement.getBoundingClientRect();
-              setExplosions(prevExplosions => [
-                ...prevExplosions,
-                {
-                  id: `explosion-${Date.now()}-${lastMove.toSquare}`,
-                  position: {
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2,
-                  },
-                },
-              ]);
-              setScreenShake(true);
-            }
-          }
-          break;
-        case 'rosette':
-          if (gameState.history.length > 0) {
-            const lastMove = gameState.history[gameState.history.length - 1];
-            const squareElement = boardRef.current?.querySelector(
-              `[data-square-id='${lastMove.toSquare}']`
-            );
-            if (squareElement) {
-              const rect = squareElement.getBoundingClientRect();
-              setRosetteLandings(prevRosettes => [
-                ...prevRosettes,
-                {
-                  id: `rosette-${Date.now()}-${lastMove.toSquare}`,
-                  position: {
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2,
-                  },
-                },
-              ]);
-            }
-          }
-          break;
-        case 'finish': {
-          const boardRect = boardRef.current?.getBoundingClientRect();
-          if (boardRect) {
-            const isPlayer1 = lastMovePlayer === 'player1';
-            setCelebrations(prevCelebrations => [
-              ...prevCelebrations,
-              {
-                id: `celebration-${Date.now()}-${lastMovePlayer}`,
-                position: {
-                  x: boardRect.left + boardRect.width / 2,
-                  y: isPlayer1 ? boardRect.bottom + 60 : boardRect.top - 60,
-                },
-                player: lastMovePlayer,
-              },
-            ]);
-          }
-          break;
-        }
-      }
-    }
-  }, [lastMoveType, lastMovePlayer, gameState.history]);
+    if (!lastMoveType || !lastMovePlayer) return;
 
-  const boardLayout = [
-    [16, 17, 18, 19, -1, -1, 15, 14],
-    [4, 5, 6, 7, 8, 9, 10, 11],
-    [0, 1, 2, 3, -1, -1, 13, 12],
-  ];
+    const animationId = `${Date.now()}-${gameState.history.length}`;
+    const lastMove = gameState.history.at(-1);
+
+    if (lastMoveType === 'capture' || lastMoveType === 'rosette') {
+      if (!lastMove) return;
+      const position = getElementCenter(
+        boardRef.current?.querySelector(`[data-square-id='${lastMove.toSquare}']`) ?? null
+      );
+      if (!position) return;
+
+      if (lastMoveType === 'capture') {
+        setExplosions(current => [...current, { id: `explosion-${animationId}`, position }]);
+        setScreenShake(true);
+      } else {
+        setRosetteLandings(current => [...current, { id: `rosette-${animationId}`, position }]);
+      }
+      return;
+    }
+
+    if (lastMoveType !== 'finish') return;
+
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    if (!boardRect) return;
+    setCelebrations(current => [
+      ...current,
+      {
+        id: `celebration-${animationId}`,
+        position: {
+          x: boardRect.left + boardRect.width / 2,
+          y: lastMovePlayer === 'player1' ? boardRect.bottom + 60 : boardRect.top - 60,
+        },
+        player: lastMovePlayer,
+      },
+    ]);
+  }, [lastMoveType, lastMovePlayer, gameState.history]);
 
   return (
     <>
@@ -210,40 +185,31 @@ export default function GameBoard({
             />
           </div>
           <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
-            {boardLayout
-              .flat()
-              .map((sq, i) =>
-                sq !== -1 ? (
-                  <GameSquare
-                    key={`sq-${i}`}
-                    squareIndex={sq}
-                    piece={gameState.board[sq]}
-                    pieceIndex={
-                      gameState.board[sq]
-                        ? gameState.board[sq].player === 'player1'
-                          ? gameState.player1Pieces.findIndex(p => p.square === sq)
-                          : gameState.player2Pieces.findIndex(p => p.square === sq)
-                        : 0
-                    }
-                    isClickable={
-                      !!(
-                        gameState.board[sq] &&
-                        gameState.validMoves.includes(
-                          gameState.board[sq].player === 'player1'
-                            ? gameState.player1Pieces.findIndex(p => p.square === sq)
-                            : gameState.player2Pieces.findIndex(p => p.square === sq)
-                        ) &&
-                        gameState.currentPlayer === gameState.board[sq].player &&
-                        gameState.board[sq].player === 'player1'
-                      )
-                    }
-                    isFinishing={!!(gameState.board[sq]?.player && sq === 20)}
-                    onPieceClick={onPieceClick}
-                  />
-                ) : (
-                  <div key={`empty-${i}`} className="aspect-square" />
-                )
-              )}
+            {BOARD_LAYOUT.map((sq, i) => {
+              if (sq === -1) return <div key={`empty-${i}`} className="aspect-square" />;
+
+              const piece = gameState.board[sq];
+              const playerPieces =
+                piece?.player === 'player1' ? gameState.player1Pieces : gameState.player2Pieces;
+              const pieceIndex = piece ? playerPieces.findIndex(item => item.square === sq) : -1;
+              const isClickable = Boolean(
+                piece &&
+                gameState.validMoves.includes(pieceIndex) &&
+                gameState.currentPlayer === piece.player &&
+                piece.player === 'player1'
+              );
+
+              return (
+                <GameSquare
+                  key={`sq-${i}`}
+                  squareIndex={sq}
+                  piece={piece}
+                  pieceIndex={pieceIndex}
+                  isClickable={isClickable}
+                  onPieceClick={onPieceClick}
+                />
+              );
+            })}
           </div>
           <GameControls
             soundEnabled={soundEnabled}

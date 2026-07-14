@@ -1,14 +1,28 @@
 import { motion } from 'framer-motion';
 import { Trophy, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { GameState, GameMode } from '@/lib/types';
+import { cn, getAISubtitle } from '@/lib/utils';
+import type { GameMode, GameState } from '@/lib/types';
 import { useGameStats } from '@/lib/stats-store';
-import { getAISubtitle } from '@/lib/utils';
 
 interface GameCompletionOverlayProps {
   gameState: GameState;
   onResetGame: () => void;
   gameMode: GameMode;
+}
+
+const CONFETTI_COLORS = [
+  '#ff6b6b',
+  '#4ecdc4',
+  '#45b7d1',
+  '#96ceb4',
+  '#feca57',
+  '#ff9ff3',
+  '#54a0ff',
+] as const;
+
+function seededFraction(index: number, salt: number) {
+  const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
+  return value - Math.floor(value);
 }
 
 export default function GameCompletionOverlay({
@@ -43,6 +57,9 @@ export default function GameCompletionOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       data-testid="game-completion-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="game-completion-title"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 50 }).map((_, i) => (
@@ -50,28 +67,21 @@ export default function GameCompletionOverlay({
             key={i}
             className="absolute w-2 h-2 rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
+              left: `${seededFraction(i, 1) * 100}%`,
               top: '-10px',
-              backgroundColor: [
-                '#ff6b6b',
-                '#4ecdc4',
-                '#45b7d1',
-                '#96ceb4',
-                '#feca57',
-                '#ff9ff3',
-                '#54a0ff',
-              ][Math.floor(Math.random() * 7)],
+              backgroundColor:
+                CONFETTI_COLORS[Math.floor(seededFraction(i, 2) * CONFETTI_COLORS.length)],
             }}
             initial={{ y: -10, x: 0, rotate: 0, scale: 0 }}
             animate={{
               y: ['100vh', '100vh'],
-              x: [0, Math.random() * 200 - 100],
+              x: [0, seededFraction(i, 3) * 200 - 100],
               rotate: [0, 360],
               scale: [0, 1, 0],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
-              delay: Math.random() * 2,
+              duration: 3 + seededFraction(i, 4) * 2,
+              delay: seededFraction(i, 5) * 2,
               ease: 'easeOut',
             }}
           />
@@ -112,7 +122,7 @@ export default function GameCompletionOverlay({
                 left: `${20 + i * 10}%`,
                 top: '0',
                 height: '100%',
-                transform: `skewX(${Math.random() * 20 - 10}deg)`,
+                transform: `skewX(${seededFraction(i, 6) * 20 - 10}deg)`,
               }}
               initial={{ scaleY: 0, opacity: 0 }}
               animate={{ scaleY: 1, opacity: [0, 0.8, 0] }}
@@ -179,8 +189,8 @@ export default function GameCompletionOverlay({
                 key={i}
                 className="absolute w-1 h-1 rounded-full"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
+                  left: `${seededFraction(i, 7) * 100}%`,
+                  top: `${seededFraction(i, 8) * 100}%`,
                   backgroundColor: isPlayer1Winner ? '#22c55e' : '#ec4899',
                 }}
                 animate={{
@@ -239,6 +249,7 @@ export default function GameCompletionOverlay({
           </motion.div>
 
           <motion.h2
+            id="game-completion-title"
             className={cn(
               'text-4xl font-bold neon-text mb-6',
               isPlayer1Winner ? 'text-green-400' : 'text-pink-400'
@@ -311,6 +322,8 @@ export default function GameCompletionOverlay({
           </motion.div>
 
           <motion.button
+            type="button"
+            autoFocus
             onClick={onResetGame}
             className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg relative overflow-hidden group"
             whileHover={{

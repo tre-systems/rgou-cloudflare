@@ -1,33 +1,16 @@
 use rand::Rng;
 
-/// Dice roll probabilities for 4 tetrahedral dice
-/// Roll 0: 1/16 (all 0s)
-/// Roll 1: 4/16 (one 1, three 0s)
-/// Roll 2: 6/16 (two 1s, two 0s)
-/// Roll 3: 4/16 (three 1s, one 0)
-/// Roll 4: 1/16 (all 1s)
+/// Probabilities for the sum of four binary tetrahedral dice.
 pub const DICE_PROBABILITIES: [f32; 5] =
     [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
 
-/// Generate a random dice roll (0-4) with the correct probability distribution
-/// for 4 tetrahedral dice
+/// Rolls four tetrahedral dice and returns their sum (0–4).
 pub fn roll_dice() -> u8 {
     let mut rng = rand::rng();
-    let roll: f32 = rng.random();
-
-    let mut cumulative_prob = 0.0;
-    for (i, &prob) in DICE_PROBABILITIES.iter().enumerate() {
-        cumulative_prob += prob;
-        if roll <= cumulative_prob {
-            return i as u8;
-        }
-    }
-
-    // Fallback (should never happen with exact probabilities)
-    2
+    roll_dice_with_rng(&mut rng)
 }
 
-/// Generate a random dice roll using a provided RNG
+/// Rolls using an injected RNG, allowing deterministic simulations.
 pub fn roll_dice_with_rng<R: Rng>(rng: &mut R) -> u8 {
     let roll: f32 = rng.random();
 
@@ -39,13 +22,13 @@ pub fn roll_dice_with_rng<R: Rng>(rng: &mut R) -> u8 {
         }
     }
 
-    // Fallback (should never happen with exact probabilities)
-    2
+    4
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::{rngs::StdRng, SeedableRng};
     use std::collections::HashMap;
 
     #[test]
@@ -96,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_roll_dice_with_rng() {
-        let mut rng = rand::rng();
+        let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..1000 {
             let roll = roll_dice_with_rng(&mut rng);
             assert!(roll <= 4);

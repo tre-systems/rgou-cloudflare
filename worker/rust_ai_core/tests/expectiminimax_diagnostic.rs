@@ -1,23 +1,18 @@
 use rgou_ai_core::{dice, genetic_params::GeneticParams, GameState, AI};
-use std::time::Instant;
-
-fn get_evolved_params() -> GeneticParams {
-    GeneticParams::load_from_file("../../ml/data/genetic_params/evolved.json")
-        .unwrap_or_else(|_| GeneticParams::default())
-}
+use std::time::{Duration, Instant};
 
 #[test]
 fn test_expectiminimax_diagnostic() {
     println!("🔍 Expectiminimax Diagnostic Test");
     println!("{}", "=".repeat(50));
 
-    let evolved_params = get_evolved_params();
+    let evolved_params = GeneticParams::evolved();
     println!("Using evolved parameters: {:?}", evolved_params);
 
     let mut game_state = GameState::with_genetic_params(evolved_params);
     let mut ai = AI::new();
     let mut total_nodes = 0;
-    let mut total_time = 0;
+    let mut total_time = Duration::ZERO;
     let mut moves_analyzed = 0;
 
     println!("Starting diagnostic game...");
@@ -39,9 +34,7 @@ fn test_expectiminimax_diagnostic() {
 
         let start_time = Instant::now();
         let (best_move, move_evaluations) = ai.get_best_move(&game_state, 3);
-        let end_time = Instant::now();
-
-        let move_time = end_time.duration_since(start_time).as_millis();
+        let move_time = start_time.elapsed();
         total_time += move_time;
         total_nodes += ai.nodes_evaluated as u64;
         moves_analyzed += 1;
@@ -53,7 +46,10 @@ fn test_expectiminimax_diagnostic() {
 
         println!(
             "  Best move: {:?}, Nodes: {}, Time: {}ms, Cache hits: {}",
-            best_move, ai.nodes_evaluated, move_time, ai.transposition_hits
+            best_move,
+            ai.nodes_evaluated,
+            move_time.as_millis(),
+            ai.transposition_hits
         );
 
         if let Some(move_piece) = best_move {
@@ -80,18 +76,18 @@ fn test_expectiminimax_diagnostic() {
     println!("Diagnostic Results:");
     println!("  Total moves analyzed: {}", moves_analyzed);
     println!("  Total nodes evaluated: {}", total_nodes);
-    println!("  Total time: {}ms", total_time);
+    println!("  Total time: {}ms", total_time.as_millis());
     println!(
         "  Average nodes per move: {:.1}",
         total_nodes as f64 / moves_analyzed as f64
     );
     println!(
         "  Average time per move: {:.1}ms",
-        total_time as f64 / moves_analyzed as f64
+        total_time.as_secs_f64() * 1000.0 / moves_analyzed as f64
     );
     println!(
         "  Nodes per second: {:.0}",
-        (total_nodes as f64 / total_time as f64) * 1000.0
+        total_nodes as f64 / total_time.as_secs_f64()
     );
 
     let p1_finished = game_state
@@ -120,5 +116,8 @@ fn test_expectiminimax_diagnostic() {
 
     assert!(moves_analyzed > 0, "Should have analyzed at least one move");
     assert!(total_nodes > 0, "Should have evaluated at least one node");
-    assert!(total_time > 0, "Should have taken some time to compute");
+    assert!(
+        total_time > Duration::ZERO,
+        "Search timing should be recorded"
+    );
 }

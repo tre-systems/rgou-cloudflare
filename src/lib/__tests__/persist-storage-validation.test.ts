@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { initializeGame, processDiceRoll } from '../game-logic';
 import {
+  getBrowserStorage,
   parsePersistedGameState,
   parsePersistedGameStats,
   removeLegacyPlayerIdentity,
@@ -8,11 +9,22 @@ import {
 
 describe('persisted state validation', () => {
   it('removes the identifier used by the retired result database', () => {
+    const removeItem = vi.spyOn(localStorage, 'removeItem');
     localStorage.setItem('rgou-player-id', 'player_legacy');
 
     removeLegacyPlayerIdentity();
 
-    expect(vi.mocked(localStorage.removeItem)).toHaveBeenCalledWith('rgou-player-id');
+    expect(removeItem).toHaveBeenCalledWith('rgou-player-id');
+  });
+
+  it('falls back when browser storage is unavailable', () => {
+    const localStorageGetter = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(getBrowserStorage().getItem('anything')).toBeNull();
+    expect(() => removeLegacyPlayerIdentity()).not.toThrow();
+    localStorageGetter.mockRestore();
   });
 
   it('accepts valid game and statistics state', () => {

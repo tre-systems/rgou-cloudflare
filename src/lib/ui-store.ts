@@ -20,28 +20,25 @@ type UIStore = {
   };
 };
 
+const INITIAL_UI_STATE = {
+  showModelOverlay: true,
+  selectedMode: null,
+  soundEnabled: true,
+  diagnosticsPanelOpen: false,
+  howToPlayOpen: false,
+} satisfies Omit<UIStore, 'actions'>;
+
 export const useUIStore = create<UIStore>()(
   persist(
     set => ({
-      showModelOverlay: true,
-      selectedMode: null,
-      soundEnabled: true,
-      diagnosticsPanelOpen: false,
-      howToPlayOpen: false,
+      ...INITIAL_UI_STATE,
       actions: {
         setShowModelOverlay: show => set({ showModelOverlay: show }),
         setSelectedMode: mode => set({ selectedMode: mode }),
         setSoundEnabled: enabled => set({ soundEnabled: enabled }),
         setDiagnosticsPanelOpen: open => set({ diagnosticsPanelOpen: open }),
         setHowToPlayOpen: open => set({ howToPlayOpen: open }),
-        reset: () =>
-          set({
-            showModelOverlay: true,
-            selectedMode: null,
-            soundEnabled: true,
-            diagnosticsPanelOpen: false,
-            howToPlayOpen: false,
-          }),
+        reset: () => set(INITIAL_UI_STATE),
       },
     }),
     {

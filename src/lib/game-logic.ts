@@ -1,11 +1,5 @@
-import {
-  GameState,
-  Player,
-  PiecePosition,
-  MoveType,
-  GameConstants,
-  PersistedGameState,
-} from './schemas';
+import { GameConstants, MAX_GAME_HISTORY } from './schemas';
+import type { GameState, MoveType, PersistedGameState, PiecePosition, Player } from './schemas';
 
 const { ROSETTE_SQUARES, BOARD_ARRAY_SIZE, PIECES_PER_PLAYER, PLAYER1_TRACK, PLAYER2_TRACK } =
   GameConstants;
@@ -93,11 +87,12 @@ function isRosette(square: number): boolean {
 }
 
 export function getValidMoves(gameState: GameState): number[] {
+  const { diceRoll } = gameState;
   if (
     gameState.gameStatus !== 'playing' ||
-    !Number.isInteger(gameState.diceRoll) ||
-    !gameState.diceRoll ||
-    gameState.diceRoll > 4
+    !Number.isInteger(diceRoll) ||
+    !diceRoll ||
+    diceRoll > 4
   ) {
     return [];
   }
@@ -114,7 +109,7 @@ export function getValidMoves(gameState: GameState): number[] {
     }
     const currentTrackPos =
       piece.square === -1 ? -1 : getPlayerTrack(gameState.currentPlayer).indexOf(piece.square);
-    const newTrackPos = currentTrackPos + gameState.diceRoll!;
+    const newTrackPos = currentTrackPos + diceRoll;
 
     if (newTrackPos >= getPlayerTrack(gameState.currentPlayer).length) {
       if (newTrackPos === getPlayerTrack(gameState.currentPlayer).length) {
@@ -164,7 +159,7 @@ export function toPersistedGameState(gameState: GameState): PersistedGameState {
     player2Pieces: gameState.player2Pieces,
     currentPlayer: gameState.currentPlayer,
     diceRoll: gameState.diceRoll,
-    history: gameState.history,
+    history: gameState.history.slice(-MAX_GAME_HISTORY),
     ...(gameState.startTime === undefined ? {} : { startTime: gameState.startTime }),
   };
 }
