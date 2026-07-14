@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def source_revision() -> str:
+def source_commit() -> Tuple[str, str]:
     source_paths = [
         "ml/config",
         "ml/scripts",
@@ -45,9 +45,15 @@ def source_revision() -> str:
     if status.stdout.strip():
         raise RuntimeError("training sources must be committed before starting a run")
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True
+        ["git", "show", "-s", "--format=%H%x00%cI", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
     )
-    return result.stdout.strip()
+    revision, separator, committed_at = result.stdout.strip().partition("\x00")
+    if not separator:
+        raise RuntimeError("could not determine the training source commit")
+    return revision, committed_at
 
 
 @dataclass
@@ -151,7 +157,7 @@ class PolicyNetwork(nn.Module):
 class PyTorchTrainer:
     def __init__(self, config: TrainingConfig):
         self.config = config
-        self.source_revision = source_revision()
+        self.source_revision, self.source_committed_at = source_commit()
         self.configure_reproducibility()
         
         # Detect best available device - REQUIRE GPU acceleration
@@ -472,6 +478,7 @@ class PyTorchTrainer:
             "training_time_seconds": training_time,
             "best_validation_loss": best_val_loss,
             "source_revision": self.source_revision,
+            "source_committed_at": self.source_committed_at,
             "python_version": platform.python_version(),
             "numpy_version": np.__version__,
             "torch_version": torch.__version__,

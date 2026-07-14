@@ -1,6 +1,5 @@
 import gzip
 import importlib.util
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -51,21 +50,19 @@ class ModelProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "expected 2"):
             model_provenance.validate_weights("value", [0.0], 2)
 
-    def test_prefers_recorded_training_source_revision(self):
-        revision = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=model_provenance.REPOSITORY_ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-
+    def test_uses_recorded_training_source_commit(self):
+        revision = "a" * 40
+        committed_at = "2025-07-20T22:01:01+01:00"
         source = model_provenance.model_revision(
-            model_provenance.DEFAULT_MODEL, {"source_revision": revision}
+            {
+                "source_revision": revision,
+                "source_committed_at": committed_at,
+            }
         )
 
         self.assertEqual(source["kind"], "training_source_commit")
         self.assertEqual(source["revision"], revision)
+        self.assertEqual(source["committed_at"], committed_at)
 
     def test_gzip_output_is_deterministic_and_reversible(self):
         content = b'{"model":"fixture"}\n'

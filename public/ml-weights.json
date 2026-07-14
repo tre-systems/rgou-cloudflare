@@ -164045,6 +164045,8 @@
   ],
   "metadata": {
     "training_date": "2025-07-20 21:50:41",
+    "source_revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4",
+    "source_committed_at": "2025-07-20T22:01:01+01:00",
     "version": "pytorch_v1",
     "num_games": 2000,
     "num_training_samples": 303228,
