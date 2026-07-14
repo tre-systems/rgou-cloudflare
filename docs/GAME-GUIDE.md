@@ -4,7 +4,7 @@ The Royal Game of Ur — history, rules, strategy, and the AI opponents.
 
 ## History
 
-The Royal Game of Ur is one of the oldest known board games, dating to around 2500 BCE in Mesopotamia and found in the Royal Cemetery of Ur. It was played for over 3000 years. The rules were reconstructed from archaeological finds and cuneiform tablets, notably by Irving Finkel of the British Museum. It blends luck (dice) with strategy, with special "rosette" squares that grant extra turns and safe havens — a bit like backgammon with sharper tactics.
+The Royal Game of Ur is one of the oldest known board games. Surviving boards from the Royal Cemetery of Ur date to the third millennium BCE. Irving Finkel of the British Museum reconstructed a playable ruleset from a later cuneiform tablet; this application implements that commonly played modern ruleset.
 
 ## How the game works
 
@@ -15,7 +15,7 @@ Two players race all seven of their pieces along a track and off the board. Each
 ![Royal Game of Ur board, with squares numbered](board-numbered.png)
 
 - 20 squares, with a shared center lane (squares 4–11)
-- Rosette squares: **0, 7, 13, 15, 16** (safe; grant an extra turn)
+- Rosette squares: **0, 7, 13, 15, 16** (grant an extra turn and cannot be captured)
 - Pieces start off the board and finish off the end of the track
 
 Each player follows their own track, sharing only the center lane:
@@ -26,7 +26,7 @@ Each player follows their own track, sharing only the center lane:
 ### Rules
 
 - **Move**: roll the dice, then move one piece that many squares along your track. A roll of 0 is a missed turn.
-- **Finish**: a piece must land exactly past the last square to come off; you cannot overshoot.
+- **Finish**: bearing off requires the exact roll; you cannot overshoot.
 - **Capture**: landing on an opponent's piece sends it back to the start — except on a rosette, where pieces are safe and cannot be captured.
 - **Extra turn**: landing on a rosette lets you roll again.
 - **Win**: the first player to bear off all seven pieces wins.
@@ -34,7 +34,7 @@ Each player follows their own track, sharing only the center lane:
 ## Strategy
 
 - **Hold the rosettes**, especially the shared square 7 — they give free turns and protect your pieces.
-- **Spread out** so you threaten several captures and aren't easy to block.
+- **Spread out** so you threaten several captures and do not block your own landing squares.
 - **Capture pieces near the end of their track** — sending them back costs the opponent the most.
 - **Mind the roll of 0** and the odds: 2 is the most likely roll (6/16), 0 and 4 the least (1/16 each). Don't leave a key move depending on a rare roll.
 - **Late game, prioritize bearing off** over chasing captures, and keep vulnerable pieces on rosettes.
@@ -44,12 +44,12 @@ Each player follows their own track, sharing only the center lane:
 Both AIs run locally in the browser. See [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for win rates and speed, and [AI-SYSTEM.md](./AI-SYSTEM.md) for how they work.
 
 - **Classic AI** (default): expectiminimax search to depth 4 with alpha-beta pruning. Strong positional play; values rosettes and safe moves.
-- **ML AI**: a neural network trained on self-play, with a different, pattern-driven style.
+- **ML AI**: a value + policy neural network trained from expectiminimax-labelled simulated games.
 - **AI vs AI**: watch the two play each other automatically to compare their styles.
 
 ## Further reading
 
-- [Wikipedia: Royal Game of Ur](https://en.wikipedia.org/wiki/Royal_Game_of_Ur) — history, mechanics, and cultural background
+- [British Museum: Royal Game of Ur](https://www.britishmuseum.org/visit/object-trails/one-hour-museum) — the game's early history and Irving Finkel's reconstruction
+- [British Museum: cuneiform rules tablet](https://www.britishmuseum.org/collection/object/W_Rm-III-6-b) — the surviving instructions for the game of 20 squares
 - [Tom Scott vs Irving Finkel (YouTube)](https://www.youtube.com/watch?v=WZskjLq040I) — the British Museum curator teaches the game
-- [RoyalUr.net: Rules and History](https://royalur.net/learn) — rules, strategy, and context
 - [Strongly Solving the Royal Game of Ur](https://royalur.net/solved) — how researchers computed optimal play

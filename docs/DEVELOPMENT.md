@@ -11,9 +11,10 @@ npm run preview      # serve the production build locally
 npm run deploy       # build and deploy with Wrangler
 npm run smoke:production # verify assets, validation, release identity, and every canonical redirect
 npm run lint         # lint            (lint:fix to autofix)
+npm run check:docs   # documentation integrity and generated-report contract
 npm run lint:rust    # Rust formatting and Clippy with warnings denied
 npm run type-check   # TypeScript
-npm run check        # lint + diagrams + type-check + all Rust tests + unit + e2e
+npm run check        # docs + lint + diagrams + types + Rust + unit + e2e
 npm run nuke         # clean reinstall and restart dev
 ```
 
@@ -23,7 +24,7 @@ npm run nuke         # clean reinstall and restart dev
 npm run build:wasm-assets   # build the Rust AI to WASM and copy into public/wasm
 npm run build:wasm          # WASM only
 npm run build:rust-ai       # native Rust build
-npm run generate:sw         # service worker (embeds the Git commit hash for cache-busting)
+npm run generate:sw         # service worker (CI commit SHA or local timestamp cache version)
 ```
 
 The production build keeps the application, animation runtime, and lazy error-monitoring code in separate chunks. Treat a new Vite chunk-size warning as a design signal; split the responsible boundary instead of raising the warning threshold.
@@ -43,7 +44,7 @@ See [docs/diagrams/README.md](./diagrams/README.md) for the diagram catalogue, r
 
 | Layer                        | Tool                | What to test                            |
 | ---------------------------- | ------------------- | --------------------------------------- |
-| Pure logic (rules, reducers) | Vitest              | High value, low maintenance             |
+| Pure logic (rules, policies) | Vitest              | High value, low maintenance             |
 | Schema / domain types        | Vitest              | Zod schemas and types                   |
 | Store transitions            | Vitest              | Zustand actions                         |
 | UI smoke / full game         | Playwright          | Critical flows only                     |
@@ -74,42 +75,14 @@ The two rule implementations share `test-fixtures/rules-conformance.json`. Every
 
 ## Machine learning
 
-Training presets (`quick`, `default`, `production`) and the network architecture are described in [AI-SYSTEM.md](./AI-SYSTEM.md).
-
-```bash
-# PyTorch backend (needs a GPU: CUDA or Apple Metal)
-npm run train:pytorch
-npm run train:pytorch:quick
-npm run train:pytorch:production
-
-# Rust backend (CPU, always available)
-npm run train:rust
-npm run train:rust:quick
-npm run train:rust:production
-
-# Custom parameters
-./ml/scripts/train.sh --backend rust --num-games 500 --epochs 25
-
-# Genetic parameters for the Classic AI
-npm run evolve:genetic-params
-npm run validate:genetic-params
-
-# Convert/publish trained weights
-npm run load:ml-weights
-```
-
-Rust self-play derives each game's random stream from the configured seed and game index. Parallel scheduling and core allocation therefore do not change the generated corpus or its game order. This guarantee applies to CPU data generation; GPU training can still vary across hardware.
-
-## Usage analytics
-
-The browser reports validated `game_started` and `game_completed` events to the same-origin `/api/usage` Worker endpoint. Development does not require a database. In production the optional `APP_USAGE` binding writes anonymous counters to the account-level `app_usage` Analytics Engine dataset; reporting failures never interrupt play. Analytics Engine retention is three months, by design: these counters are aggregate operational telemetry rather than historical records.
+[AI-SYSTEM.md](./AI-SYSTEM.md) defines the algorithms and model contract. [ml/README.md](../ml/README.md) is the authority for training, reproducibility, and model promotion. Development and tests require no database or analytics setup; production telemetry is described in [ARCHITECTURE.md](./ARCHITECTURE.md#persistence-and-analytics).
 
 ## Troubleshooting
 
 | Symptom                 | Fix                                                                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | WASM not loading        | `npm run build:wasm-assets`                                                                                               |
-| ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                   |
+| ML AI not working       | Run `npm run test:model-provenance`, rebuild with `npm run build:wasm-assets`, then inspect the Worker console.           |
 | E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                          |
 | Diagram rendering fails | Install Graphviz with `brew install graphviz`, then run `npm run diagrams`                                                |
 | Cloudflare deploy fails | Run `npm ci`, remove `out` and `.wrangler`, then run `npm run build`. Deploy the generated `out/rgou_main/wrangler.json`. |

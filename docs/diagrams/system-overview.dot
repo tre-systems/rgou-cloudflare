@@ -11,7 +11,7 @@ digraph SystemOverview {
     newrank=true,
     forcelabels=true,
     fontname="Avenir",
-    label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><FONT POINT-SIZE="34"><B>Royal Game of Ur — System Overview</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="14" COLOR="#5b6b80">Canonical gameplay stays local; the edge delivers a verified release and receives anonymous aggregates.</FONT></TD></TR></TABLE>>,
+    label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><FONT POINT-SIZE="34"><B>Royal Game of Ur — System Overview</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="14" COLOR="#5b6b80">Canonical gameplay stays local; the edge delivers a verified release and receives anonymous lifecycle events.</FONT></TD></TR></TABLE>>,
     labelloc=t,
     labeljust=c
   ];
@@ -104,7 +104,7 @@ digraph SystemOverview {
 
   subgraph cluster_cloud_data {
     graph [
-      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#0f766e"><B>CLOUDFLARE ANALYTICS</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#357a74">Three-month aggregate retention; no database, identity, board state, or move history.</FONT></TD></TR></TABLE>>,
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#0f766e"><B>CLOUDFLARE ANALYTICS</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#357a74">Three-month retention for aggregate queries; no database, identity, board state, or move history.</FONT></TD></TR></TABLE>>,
       labelloc=t,
       labeljust=l,
       color="#99d5cf",
@@ -121,5 +121,5 @@ digraph SystemOverview {
   WORKER -> FRONT [label="lazy WASM / model fetch", ltail=cluster_browser, lhead=cluster_edge, style=dashed, color="#6b7280", fontcolor="#6b7280"];
   SW -> FRONT [label="update check", ltail=cluster_browser, lhead=cluster_edge, style=dashed, color="#6b7280", fontcolor="#6b7280"];
   USAGE -> FRONT [label="sendBeacon / fetch", ltail=cluster_browser, lhead=cluster_edge, style=dashed, color="#6b7280", fontcolor="#6b7280"];
-  API -> ANALYTICS [label="one data point", ltail=cluster_edge, lhead=cluster_cloud_data];
+  API -> ANALYTICS [ltail=cluster_edge, lhead=cluster_cloud_data];
 }
