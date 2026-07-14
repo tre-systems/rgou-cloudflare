@@ -122,7 +122,7 @@ export default function GameDice({ gameState }: GameDiceProps) {
         ))}
 
         <motion.span
-          className="w-4 select-none text-center font-mono text-sm font-semibold leading-none text-[#e2ca91]"
+          className="w-4 select-none text-center font-mono text-sm font-semibold leading-none text-brass-light"
           animate={
             numberPulse
               ? {
@@ -140,7 +140,7 @@ export default function GameDice({ gameState }: GameDiceProps) {
       <AnimatePresence>
         {burst && (
           <motion.div
-            className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c7a65d]"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-brass"
             initial={{ opacity: 0.7, scale: 0.7 }}
             animate={{ opacity: 0, scale: 1.8 }}
             exit={{ opacity: 0 }}

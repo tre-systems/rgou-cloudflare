@@ -20,18 +20,18 @@ export default class AppErrorBoundary extends Component<Props, State> {
 
     return (
       <main
-        className="min-h-screen bg-[#151613] px-6 py-16 text-[#eee7d8]"
+        className="min-h-screen bg-ink px-6 py-16 text-bone"
         data-testid="global-error"
       >
         <div className="mx-auto flex max-w-md flex-col gap-5">
           <h1 className="display-title text-4xl">The game hit a problem.</h1>
-          <p className="text-[#aca99e]">
+          <p className="text-bone-muted">
             Reload the game to continue. Your saved game stays on this device.
           </p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="w-fit rounded-md bg-[#c7a65d] px-4 py-2 font-semibold text-[#191a17] hover:bg-[#e2ca91]"
+            className="w-fit rounded-md bg-brass px-4 py-2 font-semibold text-ink hover:bg-brass-light"
             data-testid="global-error-reset"
           >
             Reload game

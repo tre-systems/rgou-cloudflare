@@ -23,7 +23,7 @@ export default function GameStatus({
       return {
         text: gameState.winner === 'player1' ? 'Victory!' : 'AI Wins!',
         icon: gameState.winner === 'player1' ? Trophy : Zap,
-        color: gameState.winner === 'player1' ? 'text-[#e2ca91]' : 'text-[#dfa18c]',
+        color: gameState.winner === 'player1' ? 'text-brass-light' : 'text-clay-light',
       };
     }
 
@@ -32,7 +32,7 @@ export default function GameStatus({
       return {
         text: `${getAIName(currentAISource)}'s turn`,
         icon: currentAISource === 'ml' ? Brain : Cpu,
-        color: currentAISource === 'ml' ? 'text-[#dfa18c]' : 'text-[#a7cad7]',
+        color: currentAISource === 'ml' ? 'text-clay-light' : 'text-lapis-light',
       };
     }
 
@@ -41,20 +41,20 @@ export default function GameStatus({
         return {
           text: 'Roll the dice!',
           icon: Dice6,
-          color: 'text-[#a7cad7]',
+          color: 'text-lapis-light',
         };
       }
       if (!gameState.canMove) {
         return {
           text: 'No valid moves',
           icon: XCircle,
-          color: 'text-[#dfa18c]',
+          color: 'text-clay-light',
         };
       }
       return {
         text: 'Your turn',
         icon: Crown,
-        color: 'text-[#a7cad7]',
+        color: 'text-lapis-light',
       };
     }
 
@@ -62,13 +62,13 @@ export default function GameStatus({
       return {
         text: 'AI thinking...',
         icon: Zap,
-        color: 'text-[#dfa18c]',
+        color: 'text-clay-light',
       };
     }
     return {
       text: 'AI turn',
       icon: Zap,
-      color: 'text-[#dfa18c]',
+      color: 'text-clay-light',
     };
   };
 
@@ -77,20 +77,27 @@ export default function GameStatus({
 
   return (
     <div className="relative mt-1 flex h-11 flex-col justify-start pt-1">
-      <motion.div
-        className="flex h-7 items-center justify-center gap-2"
-        animate={{ opacity: aiThinking ? [0.72, 1, 0.72] : 1 }}
-        transition={{ repeat: aiThinking ? Infinity : 0, duration: 1.4, ease: 'easeInOut' }}
-      >
-        <StatusIcon className={cn('w-4 h-4', status.color)} data-testid="game-status-icon" />
-        <span
-          className={cn('text-base font-semibold tracking-tight', status.color)}
-          data-testid="game-status-text"
-          aria-live="polite"
-        >
-          {status.text}
-        </span>
-      </motion.div>
+      <div className="flex h-7 items-center justify-center">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={status.text}
+            className="flex items-center justify-center gap-2"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <StatusIcon className={cn('h-4 w-4', status.color)} data-testid="game-status-icon" />
+            <span
+              className={cn('text-base font-semibold tracking-tight', status.color)}
+              data-testid="game-status-text"
+              aria-live="polite"
+            >
+              {status.text}
+            </span>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {aiThinking && (
@@ -104,7 +111,7 @@ export default function GameStatus({
             {Array.from({ length: 3 }, (_, i) => (
               <motion.div
                 key={i}
-                className="h-1 w-1 rounded-full bg-[#dfa18c]"
+                className="h-1 w-1 rounded-full bg-clay-light"
                 animate={{
                   y: [0, -3, 0],
                   opacity: [0.3, 1, 0.3],

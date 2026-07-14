@@ -39,21 +39,21 @@ export default function PlayerArea({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           {isAI ? (
-            <Cpu className="h-4 w-4 shrink-0 text-[#dfa18c]" />
+            <Cpu className="h-4 w-4 shrink-0 text-clay-light" />
           ) : (
-            <CircleUserRound className="h-4 w-4 shrink-0 text-[#a7cad7]" />
+            <CircleUserRound className="h-4 w-4 shrink-0 text-lapis-light" />
           )}
           <div className="flex min-w-0 items-baseline gap-2">
             <h3
               className={cn(
                 'truncate text-sm font-semibold',
-                isAI ? 'text-[#dfa18c]' : 'text-[#a7cad7]'
+                isAI ? 'text-clay-light' : 'text-lapis-light'
               )}
             >
               {isAI ? getAIName(aiType) : 'You'}
             </h3>
             {isAI && (
-              <span className="hidden truncate text-[11px] text-[#8e9184] min-[380px]:inline">
+              <span className="hidden truncate text-[11px] text-muted min-[380px]:inline">
                 {getAISubtitle(aiType)}
               </span>
             )}
@@ -61,11 +61,11 @@ export default function PlayerArea({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {isCurrentPlayer && (
-            <span className="rounded-full border border-[#6d705f] bg-[#303229] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#e2ca91]">
+            <span className="rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-brass-light">
               Turn
             </span>
           )}
-          <span className="font-mono text-xs text-[#c7a65d]">{finishedPieces.length}/7 home</span>
+          <span className="font-mono text-xs text-brass">{finishedPieces.length}/7 home</span>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default function PlayerArea({
             )}
             data-testid={`${player}-start-area`}
           >
-            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8e9184]">
+            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
               Start
             </p>
             <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
@@ -100,7 +100,7 @@ export default function PlayerArea({
                 ) : (
                   <div
                     key={i}
-                    className="h-5 w-5 rounded-full border border-[#45483e] opacity-40"
+                    className="h-5 w-5 rounded-full border border-line opacity-40"
                   />
                 );
               })}
@@ -108,7 +108,7 @@ export default function PlayerArea({
           </div>
 
           <div className="rounded-md p-1">
-            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8e9184]">
+            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
               Finish
             </p>
             <div
