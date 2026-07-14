@@ -148,33 +148,39 @@ export type GameStats = z.infer<typeof GameStatsSchema>;
 export const GameModeSchema = z.enum(['play', 'watch']);
 export type GameMode = z.infer<typeof GameModeSchema>;
 
+export const OpponentModeSchema = z.enum(['heuristic', 'classic', 'ml', 'watch']);
+export type OpponentMode = z.infer<typeof OpponentModeSchema>;
+
+export const AISourceSchema = z.enum(['heuristic', 'client', 'ml']);
+export type AISource = z.infer<typeof AISourceSchema>;
+
 export const MoveEvaluationSchema = z.object({
-  pieceIndex: z.number(),
-  score: z.number(),
+  pieceIndex: z.number().int().min(0).max(6),
+  score: z.number().finite(),
   moveType: z.string(),
-  fromSquare: z.number(),
-  toSquare: z.number().nullable(),
+  fromSquare: z.number().int().min(-1).max(20),
+  toSquare: z.number().int().min(0).max(20).nullable(),
 });
 export type MoveEvaluation = z.infer<typeof MoveEvaluationSchema>;
 
 export const DiagnosticsSchema = z.object({
-  searchDepth: z.number(),
-  validMoves: z.array(z.number()),
-  moveEvaluations: z.array(MoveEvaluationSchema),
-  transpositionHits: z.number(),
-  nodesEvaluated: z.number(),
+  searchDepth: z.number().int().nonnegative(),
+  validMoves: z.array(z.number().int().min(0).max(6)).max(7),
+  moveEvaluations: z.array(MoveEvaluationSchema).max(7),
+  transpositionHits: z.number().int().nonnegative(),
+  nodesEvaluated: z.number().int().nonnegative(),
 });
 export type Diagnostics = z.infer<typeof DiagnosticsSchema>;
 
 export const TimingsSchema = z.object({
-  aiMoveCalculation: z.number(),
-  totalHandlerTime: z.number(),
+  aiMoveCalculation: z.number().finite().nonnegative(),
+  totalHandlerTime: z.number().finite().nonnegative(),
 });
 export type Timings = z.infer<typeof TimingsSchema>;
 
 export const AIResponseSchema = z.object({
-  move: z.number().nullable(),
-  evaluation: z.number(),
+  move: z.number().int().min(0).max(6).nullable(),
+  evaluation: z.number().finite(),
   thinking: z.string(),
   timings: TimingsSchema,
   diagnostics: DiagnosticsSchema,

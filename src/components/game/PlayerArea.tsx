@@ -1,10 +1,8 @@
-'use client';
-
 import { motion } from 'framer-motion';
 import { Crown, Zap, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAIName, getAISubtitle } from '@/lib/utils';
-import { Player, PiecePosition } from '@/lib/types';
+import type { AISource, PiecePosition, Player } from '@/lib/types';
 import GamePiece from './GamePiece';
 
 interface PlayerAreaProps {
@@ -15,7 +13,7 @@ interface PlayerAreaProps {
   isStartMoveValid: boolean;
   validMoves: number[];
   onPieceClick: (pieceIndex: number) => void;
-  aiType?: 'client' | 'ml' | 'heuristic' | null;
+  aiType?: AISource | null;
 }
 
 export default function PlayerArea({

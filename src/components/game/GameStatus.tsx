@@ -1,16 +1,14 @@
-'use client';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, getAIName } from '@/lib/utils';
-import { GameState } from '@/lib/types';
+import type { AISource, GameState } from '@/lib/types';
 import { Dice6, Crown, Zap, Trophy, XCircle, Brain, Cpu } from 'lucide-react';
 
 interface GameStatusProps {
   gameState: GameState;
   aiThinking: boolean;
   watchMode?: boolean;
-  aiSourceP1?: 'client' | 'ml' | 'heuristic' | null;
-  aiSourceP2?: 'client' | 'ml' | 'heuristic';
+  aiSourceP1?: AISource | null;
+  aiSourceP2?: AISource;
 }
 
 export default function GameStatus({

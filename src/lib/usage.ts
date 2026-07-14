@@ -1,8 +1,9 @@
 import { z } from 'zod';
-import type { GameState, Player } from './types';
+import { getModeConfiguration } from './game-mode';
+import { OpponentModeSchema, type GameState, type OpponentMode, type Player } from './types';
 
-export const GameUsageModeSchema = z.enum(['heuristic', 'classic', 'ml', 'watch']);
-export type GameUsageMode = z.infer<typeof GameUsageModeSchema>;
+export const GameUsageModeSchema = OpponentModeSchema;
+export type GameUsageMode = OpponentMode;
 
 const ParticipantSchema = z.enum(['human', 'heuristic', 'classic', 'ml']);
 const UsageContextSchema = z.object({
@@ -24,15 +25,8 @@ const UsageEventSchema = z.discriminatedUnion('event', [
 
 export type UsageEvent = z.infer<typeof UsageEventSchema>;
 
-function participants(
-  mode: GameUsageMode
-): [z.infer<typeof ParticipantSchema>, z.infer<typeof ParticipantSchema>] {
-  if (mode === 'watch') return ['classic', 'ml'];
-  return ['human', mode];
-}
-
 function context(mode: GameUsageMode, startedBy: Player) {
-  const [player1, player2] = participants(mode);
+  const [player1, player2] = getModeConfiguration(mode).participants;
   return { mode, player1, player2, startedBy };
 }
 

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX, HelpCircle, RotateCcw, Dice1 } from 'lucide-react';

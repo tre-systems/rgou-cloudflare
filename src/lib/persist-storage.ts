@@ -7,12 +7,18 @@ const noopStorage: StateStorage = {
   removeItem: () => undefined,
 };
 
+const LEGACY_PLAYER_ID_KEY = 'rgou-player-id';
+
 export function getBrowserStorage(): StateStorage {
   if (typeof window === 'undefined' || !window.localStorage) {
     return noopStorage;
   }
 
   return window.localStorage;
+}
+
+export function removeLegacyPlayerIdentity(): void {
+  getBrowserStorage().removeItem(LEGACY_PLAYER_ID_KEY);
 }
 
 export function parsePersistedGameState(value: unknown): GameState | null {

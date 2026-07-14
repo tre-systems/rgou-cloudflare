@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
-import type { GameState } from './types';
-import type { ServerAIResponse } from './types';
+import { parseServerAIResponseJson } from './ai-protocol';
+import { GameStateSchema, type GameState, type ServerAIResponse } from './types';
 
 interface WasmModule {
   default: (input?: { module_or_path: string | URL }) => Promise<unknown>;
@@ -81,13 +81,13 @@ const getAIMove = (gameState: GameState): ServerAIResponse => {
 
   if (classicAiInitialized && typeof wasmModule.get_classic_ai_move_optimized === 'function') {
     try {
-      return JSON.parse(wasmModule.get_classic_ai_move_optimized(request)) as ServerAIResponse;
+      return parseServerAIResponseJson(wasmModule.get_classic_ai_move_optimized(request));
     } catch (error) {
       console.warn('AI Worker: optimized Classic AI failed, falling back:', error);
     }
   }
 
-  return JSON.parse(wasmModule.get_ai_move_wasm(request)) as ServerAIResponse;
+  return parseServerAIResponseJson(wasmModule.get_ai_move_wasm(request));
 };
 
 const getHeuristicAIMove = (gameState: GameState): ServerAIResponse => {
@@ -95,7 +95,7 @@ const getHeuristicAIMove = (gameState: GameState): ServerAIResponse => {
 
   if (heuristicAiInitialized && typeof wasmModule.get_heuristic_ai_move === 'function') {
     try {
-      return JSON.parse(wasmModule.get_heuristic_ai_move(request)) as ServerAIResponse;
+      return parseServerAIResponseJson(wasmModule.get_heuristic_ai_move(request));
     } catch (error) {
       console.warn('AI Worker: Heuristic AI failed, falling back to Classic AI:', error);
     }
@@ -110,7 +110,10 @@ self.addEventListener(
     try {
       await loadWasm();
 
-      const { id, gameState, type } = event.data;
+      const { id, type } = event.data;
+      const gameState = event.data.gameState
+        ? GameStateSchema.parse(event.data.gameState)
+        : undefined;
 
       if (gameState) {
         const response =

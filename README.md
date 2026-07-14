@@ -66,7 +66,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 
 ## Documentation
 
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, data flow, analytics, and deployment
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, pattern catalogue, dependency rules, data flow, and deployment
 - **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** — Classic AI, ML AI, training, and genetic evolution
 - **[AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md)** — generated AI win-rate and speed results
 - **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — commands, testing, and troubleshooting

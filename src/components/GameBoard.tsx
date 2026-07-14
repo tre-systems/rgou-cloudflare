@@ -1,9 +1,6 @@
-'use client';
-
-import React, { useState, useEffect, useRef } from 'react';
-import { GameState, Player, GameMode } from '@/lib/types';
+import { useState, useEffect, useRef } from 'react';
+import type { AISource, GameMode, GameState, MoveType, Player } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore } from '@/lib/game-store';
 import CaptureExplosion from './animations/CaptureExplosion';
 import RosetteLanding from './animations/RosetteLanding';
 import VictoryCelebration from './animations/VictoryCelebration';
@@ -24,8 +21,10 @@ interface GameBoardProps {
   onShowHowToPlay: () => void;
   onCreateNearWinningState: () => void;
   watchMode?: boolean;
-  aiSourceP1?: 'client' | 'ml' | 'heuristic' | null;
-  aiSourceP2?: 'client' | 'ml' | 'heuristic';
+  aiSourceP1?: AISource | null;
+  aiSourceP2?: AISource;
+  lastMoveType: MoveType | null;
+  lastMovePlayer: Player | null;
 }
 
 export default function GameBoard({
@@ -40,6 +39,8 @@ export default function GameBoard({
   watchMode = false,
   aiSourceP1 = null,
   aiSourceP2 = 'ml',
+  lastMoveType,
+  lastMovePlayer,
 }: GameBoardProps) {
   const [screenShake, setScreenShake] = useState(false);
   const [explosions, setExplosions] = useState<
@@ -52,16 +53,7 @@ export default function GameBoard({
     Array<{ id: string; position: { x: number; y: number } }>
   >([]);
   const boardRef = useRef<HTMLDivElement>(null);
-  const { actions } = useGameStore();
-  const lastMoveType = useGameStore(state => state.lastMoveType);
-  const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
   const gameMode: GameMode = watchMode ? 'watch' : 'play';
-
-  React.useEffect(() => {
-    if (gameState.gameStatus === 'finished' && gameState.winner) {
-      actions.reportGameCompleted();
-    }
-  }, [gameState.gameStatus, gameState.winner, actions]);
 
   useEffect(() => {
     if (lastMoveType && lastMovePlayer) {

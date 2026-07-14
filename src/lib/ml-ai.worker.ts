@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 
-import type { GameState } from './types';
+import { MLWeightsSchema, parseMLAIResponseJson } from './ai-protocol';
+import { GameStateSchema, type GameState } from './types';
 
 interface MLWasmModule {
   default: (input?: { module_or_path: string | URL }) => Promise<unknown>;
@@ -47,17 +48,6 @@ const transformGameStateToRequest = (gameState: GameState) => {
   };
 };
 
-const transformMLResponse = (responseJson: string) => {
-  const parsed = JSON.parse(responseJson);
-  return {
-    move: parsed.move,
-    evaluation: parsed.evaluation,
-    thinking: parsed.thinking,
-    diagnostics: parsed.diagnostics,
-    timings: parsed.timings || {},
-  };
-};
-
 self.addEventListener(
   'message',
   async (
@@ -71,10 +61,7 @@ self.addEventListener(
       switch (type) {
         case 'loadWeights':
           if (event.data.weights) {
-            const weights = event.data.weights as {
-              value_weights: number[];
-              policy_weights: number[];
-            };
+            const weights = MLWeightsSchema.parse(event.data.weights);
             mlWasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
             weightsLoaded = true;
             self.postMessage({ type: 'success', id, response: { status: 'weights_loaded' } });
@@ -88,9 +75,14 @@ self.addEventListener(
             if (!weightsLoaded) {
               console.warn('ML AI Worker: weights not loaded, using untrained networks');
             }
-            const request = transformGameStateToRequest(event.data.gameState);
+            const gameState = GameStateSchema.parse(event.data.gameState);
+            const request = transformGameStateToRequest(gameState);
             const responseJson = mlWasmModule.get_ml_ai_move(request);
-            self.postMessage({ type: 'success', id, response: transformMLResponse(responseJson) });
+            self.postMessage({
+              type: 'success',
+              id,
+              response: parseMLAIResponseJson(responseJson),
+            });
           } else {
             throw new Error('No game state provided');
           }

@@ -1,5 +1,3 @@
-'use client';
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bug, ChevronDown, ChevronRight, Brain, Zap } from 'lucide-react';
 import { AIResponse, MoveEvaluation } from '@/lib/types';

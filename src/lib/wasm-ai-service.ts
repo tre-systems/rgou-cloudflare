@@ -1,9 +1,12 @@
-import type { GameState, ServerAIResponse } from './schemas';
+import { ServerAIResponseSchema, type GameState, type ServerAIResponse } from './schemas';
 
 type PendingRequest = {
   resolve: (value: ServerAIResponse) => void;
   reject: (reason?: unknown) => void;
+  timeout: ReturnType<typeof setTimeout>;
 };
+
+const AI_REQUEST_TIMEOUT_MS = 30_000;
 
 export class WasmAiService {
   private worker: Worker | null = null;
@@ -32,19 +35,33 @@ export class WasmAiService {
           } else if (event.data.type === 'success' || event.data.type === 'error') {
             const promise = this.pendingRequests.get(event.data.id);
             if (promise) {
-              if (event.data.type === 'success') {
-                promise.resolve(event.data.response);
-              } else {
-                promise.reject(new Error(event.data.error));
+              clearTimeout(promise.timeout);
+              try {
+                if (event.data.type === 'success') {
+                  promise.resolve(ServerAIResponseSchema.parse(event.data.response));
+                } else {
+                  promise.reject(new Error(event.data.error));
+                }
+              } catch (error) {
+                promise.reject(error);
+              } finally {
+                this.pendingRequests.delete(event.data.id);
               }
-              this.pendingRequests.delete(event.data.id);
+            } else if (event.data.type === 'error' && event.data.id === -1) {
+              reject(new Error(event.data.error));
             }
           }
         };
 
         this.worker.onerror = (error: ErrorEvent) => {
           console.error('AI Worker failed to initialize:', error.message, error);
-          reject(new Error(`AI Worker failed to initialize: ${error.message}`));
+          const workerError = new Error(`AI Worker failed to initialize: ${error.message}`);
+          for (const pending of this.pendingRequests.values()) {
+            clearTimeout(pending.timeout);
+            pending.reject(workerError);
+          }
+          this.pendingRequests.clear();
+          reject(workerError);
         };
       });
     }
@@ -71,7 +88,11 @@ export class WasmAiService {
 
       const messageId = this.messageCounter++;
       const promise = new Promise<ServerAIResponse>((resolve, reject) => {
-        this.pendingRequests.set(messageId, { resolve, reject });
+        const timeout = setTimeout(() => {
+          this.pendingRequests.delete(messageId);
+          reject(new Error(`${type} AI request timed out`));
+        }, AI_REQUEST_TIMEOUT_MS);
+        this.pendingRequests.set(messageId, { resolve, reject, timeout });
       });
 
       this.worker!.postMessage(
