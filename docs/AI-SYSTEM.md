@@ -89,6 +89,8 @@ Self-play generates games (value targets from outcomes, policy targets from move
 | PyTorch | GPU (CUDA or Apple Metal/MPS) | Faster; requires a GPU          |
 | Rust    | CPU (parallel)                | Always available; no GPU needed |
 
+Rust self-play derives an independent random stream for each game from the configured seed and game index. Indexed parallel collection keeps both game results and corpus ordering stable regardless of Rayon scheduling or core allocation.
+
 | Preset     | Games | Epochs | Batch |
 | ---------- | ----- | ------ | ----- |
 | quick      | 100   | 10     | 32    |

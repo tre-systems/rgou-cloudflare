@@ -44,6 +44,7 @@ flowchart TD
 | Single writer                      | Zustand actions own application-state mutation; components request transitions rather than editing state.   | `src/lib/game-store.ts`, `src/lib/ui-store.ts`, `src/lib/stats-store.ts`                  |
 | Canonical state / projections      | Persistence contains only irreducible state; board, status, winner, legal moves, and `canMove` are rebuilt. | `PersistedGameStateSchema`, `materializeGameState`, and `toPersistedGameState`            |
 | Injected entropy                   | Random choices can be reproduced by supplying a controlled source.                                          | `RandomSource`, `initializeGame`, `rollDice`, and `processDiceRoll` in `game-logic.ts`    |
+| Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.       | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
 | Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                                 | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
 | Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                       | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                      |
 
@@ -161,7 +162,7 @@ See [AI-SYSTEM.md](./AI-SYSTEM.md) for algorithms and models. The Rust core is `
 
 ## Deployment
 
-The application deploys as a Cloudflare Worker with Static Assets through the Cloudflare Vite plugin. GitHub Actions audits JavaScript and Rust dependencies, runs `npm run check`, builds with the commit SHA, deploys the generated Wrangler configuration, and smoke-tests production. Per-ref concurrency cancels obsolete workflow runs so an older release cannot overtake a newer one. `/healthz` and `X-App-Release` expose the deployed SHA, and the production smoke test requires it to match. Configuration lives in `wrangler.toml`; the canonical site is `https://gameofur.org`.
+The application deploys as a Cloudflare Worker with Static Assets through the Cloudflare Vite plugin. GitHub Actions audits JavaScript and Rust dependencies, runs `npm run check`, builds with the commit SHA, deploys the generated Wrangler configuration, and smoke-tests production. Per-ref concurrency cancels obsolete workflow runs so an older release cannot overtake a newer one. `/healthz` and `X-App-Release` expose the deployed SHA, and the production smoke test requires it to match. The same test exercises every configured alias with a non-root path and query, requiring a permanent redirect to the canonical origin without losing either component. Configuration lives in `wrangler.toml`; the canonical site is `https://gameofur.org`.
 
 The Worker permanently redirects `www.gameofur.org`, `gameofur.net`, `www.gameofur.net`, and `rgou.tre.systems` while preserving path and query. It owns `/api/usage` and delegates all other requests to Static Assets with SPA fallback. No D1 or R2 binding is required.
 
