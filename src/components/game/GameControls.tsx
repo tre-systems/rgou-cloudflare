@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Volume2, VolumeX, HelpCircle, RotateCcw, Dice1 } from 'lucide-react';
+import { Volume2, VolumeX, HelpCircle, RefreshCcw, Dice1 } from 'lucide-react';
 import { isDevelopment } from '@/lib/utils';
 
 interface GameControlsProps {
@@ -22,27 +22,17 @@ export default function GameControls({
 }: GameControlsProps) {
   return (
     <>
-      <hr className="my-4 border-white/10" />
-      <div className="flex items-center justify-between w-full">
+      <hr className="my-4 border-[#45483e]" />
+      <div className="flex w-full items-center justify-between gap-3">
         <div className="flex items-center">{diceElement}</div>
 
         {isDevelopment() && (
           <div className="flex items-center space-x-2">
             <motion.button
               type="button"
-              onClick={onResetGame}
-              className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="Reset game"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </motion.button>
-            <motion.button
-              type="button"
               onClick={onCreateNearWinningState}
-              className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
+              className="icon-button"
+              whileHover={{ y: -1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Create near-winning state"
               data-testid="create-near-winning-state"
@@ -52,14 +42,27 @@ export default function GameControls({
           </div>
         )}
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
+          <motion.button
+            type="button"
+            onClick={onResetGame}
+            className="icon-button"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.96 }}
+            aria-label="Choose another opponent"
+            title="Choose another opponent"
+            data-testid="change-opponent"
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </motion.button>
           <motion.button
             type="button"
             onClick={onShowHowToPlay}
-            className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-            whileHover={{ scale: 1.05 }}
+            className="icon-button"
+            whileHover={{ y: -1 }}
             whileTap={{ scale: 0.95 }}
             aria-label="How to Play"
+            title="How to play"
             data-testid="help-button"
           >
             <HelpCircle className="w-4 h-4" />
@@ -67,10 +70,11 @@ export default function GameControls({
           <motion.button
             type="button"
             onClick={onToggleSound}
-            className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
-            whileHover={{ scale: 1.05 }}
+            className="icon-button"
+            whileHover={{ y: -1 }}
             whileTap={{ scale: 0.95 }}
             aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
+            title={soundEnabled ? 'Disable sound' : 'Enable sound'}
             data-testid="sound-toggle"
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}

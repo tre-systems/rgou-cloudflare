@@ -1,28 +1,34 @@
 import { Wifi, WifiOff } from 'lucide-react';
+import SiteBackdrop from './SiteBackdrop';
 
 export default function OfflinePage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
-      <div className="max-w-md mx-auto text-center">
-        <WifiOff className="mx-auto mb-4 h-24 w-24 text-slate-400" aria-hidden="true" />
-        <h1 className="text-3xl font-bold text-white mb-2">You&apos;re Offline</h1>
-        <p className="mb-8 text-lg text-slate-300">No internet connection detected.</p>
-        <div className="bg-slate-800/50 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-white mb-3">Royal Game of Ur</h2>
-          <p className="text-slate-300 mb-4">The game and AI remain available offline.</p>
-          <div className="flex items-center justify-center space-x-2 text-sm text-slate-400">
-            <Wifi className="h-4 w-4" aria-hidden="true" />
-            <span>Your game and statistics remain stored locally</span>
+    <>
+      <SiteBackdrop />
+      <main className="relative z-10 flex min-h-screen items-center justify-center p-4">
+        <div className="surface-panel mx-auto max-w-md rounded-2xl p-7 text-center sm:p-9">
+          <WifiOff className="mx-auto mb-5 h-10 w-10 text-[#c7a65d]" aria-hidden="true" />
+          <h1 className="display-title mb-2 text-4xl text-[#eee7d8]">You&apos;re offline</h1>
+          <p className="mb-7 text-[#aca99e]">No internet connection was detected.</p>
+          <div className="surface-inset mb-6 rounded-xl p-5">
+            <h2 className="mb-2 text-lg font-semibold text-[#eee7d8]">Your game is safe</h2>
+            <p className="mb-4 text-sm leading-6 text-[#bdb9ad]">
+              The board and both AI opponents remain available offline.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs text-[#8e9184]">
+              <Wifi className="h-4 w-4" aria-hidden="true" />
+              <span>Progress and statistics stay on this device</span>
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-lg border border-[#c7a65d] bg-[#c7a65d] px-6 py-2.5 text-sm font-semibold text-[#191a17] transition-colors hover:border-[#e2ca91] hover:bg-[#e2ca91]"
+          >
+            Try again
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg"
-        >
-          Try again
-        </button>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

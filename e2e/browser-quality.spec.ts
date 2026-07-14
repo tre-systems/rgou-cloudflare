@@ -20,6 +20,7 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
   await expect(classicMode).toBeVisible();
   await expect(page.getByRole('button', { name: /^Machine Learning AI/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Watch a Match/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'How to play' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub Repository' })).toHaveAttribute(
     'rel',
     /noopener/
@@ -32,6 +33,26 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
   await expect(page.getByTestId('game-board')).toBeVisible();
   await expect(page.getByRole('button', { name: 'How to Play' })).toBeVisible();
   await expect(page.getByRole('button', { name: /sound/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choose another opponent' })).toBeVisible();
+});
+
+test('honors the reduced-motion preference', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  const durations = await page.evaluate(() => {
+    const element = document.createElement('div');
+    element.className = 'clickable-square';
+    document.body.appendChild(element);
+    const result = element.getAnimations().map(animation => {
+      const duration = animation.effect?.getTiming().duration;
+      return typeof duration === 'number' ? duration : Number.POSITIVE_INFINITY;
+    });
+    element.remove();
+    return result;
+  });
+  expect(durations.length).toBeGreaterThan(0);
+  expect(durations.every(duration => duration <= 1)).toBe(true);
 });
 
 test.describe('offline service worker', () => {

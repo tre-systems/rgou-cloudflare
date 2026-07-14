@@ -3,7 +3,6 @@ import type { AISource, GameMode, GameState, MoveType, Player } from '@/lib/type
 import { motion, AnimatePresence } from 'framer-motion';
 import CaptureExplosion from './animations/CaptureExplosion';
 import RosetteLanding from './animations/RosetteLanding';
-import VictoryCelebration from './animations/VictoryCelebration';
 import GameSquare from './game/GameSquare';
 import PlayerArea from './game/PlayerArea';
 import GameCompletionOverlay from './game/GameCompletionOverlay';
@@ -52,12 +51,8 @@ export default function GameBoard({
   lastMoveType,
   lastMovePlayer,
 }: GameBoardProps) {
-  const [screenShake, setScreenShake] = useState(false);
   const [explosions, setExplosions] = useState<
     Array<{ id: string; position: { x: number; y: number } }>
-  >([]);
-  const [celebrations, setCelebrations] = useState<
-    Array<{ id: string; position: { x: number; y: number }; player: Player }>
   >([]);
   const [rosetteLandings, setRosetteLandings] = useState<
     Array<{ id: string; position: { x: number; y: number } }>
@@ -80,28 +75,10 @@ export default function GameBoard({
 
       if (lastMoveType === 'capture') {
         setExplosions(current => [...current, { id: `explosion-${animationId}`, position }]);
-        setScreenShake(true);
       } else {
         setRosetteLandings(current => [...current, { id: `rosette-${animationId}`, position }]);
       }
-      return;
     }
-
-    if (lastMoveType !== 'finish') return;
-
-    const boardRect = boardRef.current?.getBoundingClientRect();
-    if (!boardRect) return;
-    setCelebrations(current => [
-      ...current,
-      {
-        id: `celebration-${animationId}`,
-        position: {
-          x: boardRect.left + boardRect.width / 2,
-          y: lastMovePlayer === 'player1' ? boardRect.bottom + 60 : boardRect.top - 60,
-        },
-        player: lastMovePlayer,
-      },
-    ]);
   }, [lastMoveType, lastMovePlayer, gameState.history]);
 
   return (
@@ -113,18 +90,6 @@ export default function GameBoard({
             position={explosion.position}
             onComplete={() =>
               setExplosions(current => current.filter(item => item.id !== explosion.id))
-            }
-          />
-        ))}
-      </AnimatePresence>
-      <AnimatePresence>
-        {celebrations.map(celebration => (
-          <VictoryCelebration
-            key={celebration.id}
-            position={celebration.position}
-            player={celebration.player}
-            onComplete={() =>
-              setCelebrations(current => current.filter(item => item.id !== celebration.id))
             }
           />
         ))}
@@ -149,15 +114,7 @@ export default function GameBoard({
           />
         )}
       </AnimatePresence>
-      <motion.div
-        className="w-full max-w-sm mx-auto space-y-3"
-        animate={screenShake ? { x: [0, -2, 2, -2, 2, 0] } : { x: 0 }}
-        transition={{ duration: 0.5 }}
-        onAnimationComplete={() => {
-          if (screenShake) setScreenShake(false);
-        }}
-        data-testid="game-board"
-      >
+      <motion.div className="mx-auto w-full max-w-md space-y-3" data-testid="game-board">
         <PlayerArea
           player="player2"
           pieces={gameState.player2Pieces}
@@ -170,12 +127,12 @@ export default function GameBoard({
         />
         <motion.div
           ref={boardRef}
-          className="glass mystical-glow rounded-xl p-4 relative"
-          initial={{ opacity: 0, y: 20 }}
+          className="surface-panel relative rounded-2xl p-3.5 sm:p-4"
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
         >
-          <div className="text-center mb-3">
+          <div className="mb-3 text-center">
             <GameStatus
               gameState={gameState}
               aiThinking={aiThinking}
@@ -184,7 +141,7 @@ export default function GameBoard({
               aiSourceP2={aiSourceP2}
             />
           </div>
-          <div className="grid grid-cols-8 gap-1 bg-black/20 p-2 rounded-lg backdrop-blur">
+          <div className="surface-inset board-grid grid grid-cols-8 gap-1 rounded-xl p-2.5">
             {BOARD_LAYOUT.map((sq, i) => {
               if (sq === -1) return <div key={`empty-${i}`} className="aspect-square" />;
 
