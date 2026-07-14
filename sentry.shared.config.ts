@@ -1,4 +1,4 @@
-import type { ErrorEvent, EventHint } from '@sentry/nextjs';
+import type { ErrorEvent } from '@sentry/nextjs';
 
 const SENSITIVE_EXTRA_KEYS = [
   'apiKey',
@@ -33,7 +33,7 @@ function redactHeaders(headers: Record<string, string> | undefined) {
   );
 }
 
-export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent {
+export function beforeSend(event: ErrorEvent): ErrorEvent {
   if (event.request) {
     const headers = redactHeaders(event.request.headers);
     if (headers) {

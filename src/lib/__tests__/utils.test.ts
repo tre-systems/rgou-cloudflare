@@ -40,7 +40,21 @@ describe('Utils', () => {
       vi.stubGlobal('localStorage', localStorageMock);
       vi.stubGlobal('window', { localStorage: localStorageMock });
       const result = getPlayerId();
-      expect(result).toMatch(/^player_\d+_[a-z0-9]{9}$/);
+      expect(result).toMatch(/^player_[0-9a-f-]{36}$/);
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('rgou-player-id', result);
+    });
+
+    it('should replace an invalid stored player ID', () => {
+      const localStorageMock = {
+        getItem: vi.fn().mockReturnValue('invalid player id'),
+        setItem: vi.fn(),
+      };
+      vi.stubGlobal('localStorage', localStorageMock);
+      vi.stubGlobal('window', { localStorage: localStorageMock });
+
+      const result = getPlayerId();
+
+      expect(result).toMatch(/^player_[0-9a-f-]{36}$/);
       expect(localStorageMock.setItem).toHaveBeenCalledWith('rgou-player-id', result);
     });
 

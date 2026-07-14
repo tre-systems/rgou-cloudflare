@@ -495,7 +495,10 @@ fn test_ai_matrix() {
         }
     }
 
-    println!("🎯 Running {} AI match combinations in parallel...", match_combinations.len());
+    println!(
+        "🎯 Running {} AI match combinations in parallel...",
+        match_combinations.len()
+    );
 
     let start_time = Instant::now();
 
@@ -608,10 +611,7 @@ fn test_ai_matrix() {
         );
         println!(
             "  Average time: {} {:.1}ms, {} {:.1}ms",
-            result.ai1,
-            result.ai1_avg_time_ms,
-            result.ai2,
-            result.ai2_avg_time_ms
+            result.ai1, result.ai1_avg_time_ms, result.ai2, result.ai2_avg_time_ms
         );
         println!();
     }

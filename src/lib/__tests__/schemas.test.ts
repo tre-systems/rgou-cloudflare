@@ -37,6 +37,23 @@ describe('Schemas', () => {
       expect(() => GameStateSchema.parse(invalidGameState)).toThrow();
     });
 
+    it('should reject internally inconsistent game state', () => {
+      const gameState = {
+        board: Array(21).fill(null),
+        player1Pieces: Array(7).fill({ square: -1, player: 'player1' as const }),
+        player2Pieces: Array(7).fill({ square: -1, player: 'player2' as const }),
+        currentPlayer: 'player1' as const,
+        gameStatus: 'playing' as const,
+        winner: 'player1' as const,
+        diceRoll: 2,
+        canMove: false,
+        validMoves: [0],
+        history: [],
+      };
+
+      expect(() => GameStateSchema.parse(gameState)).toThrow();
+    });
+
     it('should validate finished game state', () => {
       const finishedGameState = {
         board: Array(21).fill(null),
@@ -86,14 +103,15 @@ describe('Schemas', () => {
   describe('SaveGamePayloadSchema', () => {
     const validMove = {
       player: 'player1' as const,
-      diceRoll: 4,
+      diceRoll: 1,
       pieceIndex: 0,
-      fromSquare: -1,
-      toSquare: 0,
-      moveType: 'rosette' as const,
+      fromSquare: 13,
+      toSquare: 20,
+      moveType: 'finish' as const,
     };
 
     const validPayload = {
+      gameId: 'game_test',
       winner: 'player1' as const,
       history: [validMove],
       playerId: 'test-player',
@@ -143,6 +161,22 @@ describe('Schemas', () => {
               diceRoll: 5,
             },
           ],
+        })
+      ).toThrow();
+    });
+
+    it('should reject inconsistent completion data', () => {
+      expect(() =>
+        SaveGamePayloadSchema.parse({
+          ...validPayload,
+          moveCount: 2,
+        })
+      ).toThrow();
+
+      expect(() =>
+        SaveGamePayloadSchema.parse({
+          ...validPayload,
+          winner: 'player2',
         })
       ).toThrow();
     });

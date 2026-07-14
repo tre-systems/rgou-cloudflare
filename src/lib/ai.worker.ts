@@ -4,7 +4,7 @@ import type { GameState } from './types';
 import type { ServerAIResponse } from './types';
 
 interface WasmModule {
-  default: (input?: string | URL) => Promise<unknown>;
+  default: (input?: { module_or_path: string | URL }) => Promise<unknown>;
   get_ai_move_wasm: (gameState: unknown) => string;
   get_classic_ai_move_optimized: (gameState: unknown) => string;
   init_classic_ai: () => string;
@@ -26,7 +26,7 @@ const loadWasm = (): Promise<void> => {
       wasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
 
       const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
-      await wasmModule.default(wasmUrl);
+      await wasmModule.default({ module_or_path: wasmUrl });
 
       if (typeof wasmModule.get_ai_move_wasm !== 'function') {
         throw new Error('WASM module does not have get_ai_move_wasm function');

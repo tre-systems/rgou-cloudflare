@@ -9,8 +9,9 @@ npm run dev          # dev server (http://localhost:3000)
 npm run build        # production build
 npm run build:cf     # build for Cloudflare (OpenNext)
 npm run lint         # lint            (lint:fix to autofix)
+npm run lint:rust    # Rust formatting and Clippy with warnings denied
 npm run type-check   # TypeScript
-npm run check        # lint + type-check + Rust AI matrix + unit + e2e
+npm run check        # lint + type-check + all Rust tests + unit + e2e
 npm run nuke         # clean reinstall and restart dev
 ```
 
@@ -83,14 +84,14 @@ npm run migrate:d1         # apply migrations to Cloudflare D1
 
 ## Troubleshooting
 
-| Symptom                 | Fix                                                                                                                                                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WASM not loading        | `npm run build:wasm-assets`                                                                                                                                           |
-| ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                                                               |
-| Database errors         | `npm run db:setup`                                                                                                                                                    |
-| E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                                                                      |
-| Cloudflare deploy fails | Pin exact versions: `npm install --save-exact next@15.3.4 @opennextjs/cloudflare@1.3.1 wrangler@4.22.0`, then `rm -rf .next .open-next .wrangler && npm run build:cf` |
-| Anything else           | `npm run nuke`                                                                                                                                                        |
+| Symptom                 | Fix                                                                                                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WASM not loading        | `npm run build:wasm-assets`                                                                                                                                                                  |
+| ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                                                                                      |
+| Database errors         | `npm run db:setup`                                                                                                                                                                           |
+| E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                                                                                             |
+| Cloudflare deploy fails | Run `npm ci`, remove `.next`, `.open-next`, and `.wrangler`, then run `npm run build:cf`. Keep the pinned Next, OpenNext, and Wrangler versions in `package.json` aligned with the lockfile. |
+| Anything else           | `npm run nuke`                                                                                                                                                                               |
 
 If a WASM build fails, confirm `wasm-pack` is exactly `0.12.1` (`cargo install wasm-pack --version 0.12.1 --locked`), then `cd worker/rust_ai_core && cargo clean` and `npm run build:wasm`.
 

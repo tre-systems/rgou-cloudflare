@@ -196,8 +196,17 @@ impl NeuralNetwork {
         let mut activations = vec![input.clone()];
         let mut linear_outputs = Vec::new();
 
-        for layer in &self.layers {
-            let (activated, linear) = layer.forward_with_cache(activations.last().unwrap());
+        for (layer_idx, layer) in self.layers.iter().enumerate() {
+            let linear = layer.forward_linear(activations.last().unwrap());
+            let activated = if layer_idx == self.layers.len() - 1 {
+                if self.config.output_size == 1 {
+                    linear.mapv(|value| value.tanh())
+                } else {
+                    self.softmax(&linear)
+                }
+            } else {
+                linear.mapv(|value| value.max(0.0))
+            };
             activations.push(activated);
             linear_outputs.push(linear);
         }
@@ -205,12 +214,15 @@ impl NeuralNetwork {
         // Calculate loss and initial gradient
         let output = activations.last().unwrap();
         let (loss, mut gradient) = if self.config.output_size == 1 {
-            // MSE loss for value network
             let diff = output - target;
             let loss = diff.dot(&diff);
-            (loss, diff)
+            let gradient = Array1::from_iter(
+                diff.iter()
+                    .zip(output.iter())
+                    .map(|(difference, value)| 2.0 * difference * (1.0 - value * value)),
+            );
+            (loss, gradient)
         } else {
-            // Cross-entropy loss for policy network
             let epsilon = 1e-7;
             let mut ce_loss = 0.0;
             let mut grad = Array1::zeros(output.len());
@@ -236,6 +248,7 @@ impl NeuralNetwork {
                 layer_input,
                 linear_output,
                 &gradient,
+                layer_idx < num_layers - 1,
             );
 
             // Update weights and biases
@@ -260,10 +273,14 @@ impl NeuralNetwork {
         input: &Array1<f32>,
         linear_output: &Array1<f32>,
         output_gradient: &Array1<f32>,
+        apply_relu: bool,
     ) -> (Array2<f32>, Array1<f32>, Array1<f32>) {
-        // Compute activation gradient (ReLU derivative)
-        let activation_gradient = linear_output.mapv(|x| if x > 0.0 { 1.0 } else { 0.0 });
-        let layer_gradient = output_gradient * &activation_gradient;
+        let layer_gradient = if apply_relu {
+            let activation_gradient = linear_output.mapv(|x| if x > 0.0 { 1.0 } else { 0.0 });
+            output_gradient * &activation_gradient
+        } else {
+            output_gradient.clone()
+        };
 
         // Compute weight gradients
         let shape = layer.weights.shape();
@@ -296,10 +313,7 @@ mod tests {
             output_size: 1,
         };
 
-        assert_eq!(
-            config.total_weights(),
-            (10 + 1) * 5 + (5 + 1) * 3 + (3 + 1) * 1
-        );
+        assert_eq!(config.total_weights(), (10 + 1) * 5 + (5 + 1) * 3 + (3 + 1));
     }
 
     #[test]
@@ -416,7 +430,9 @@ mod tests {
             output_size: 1,
         };
 
+        let weight_count = config.total_weights();
         let mut network = NeuralNetwork::new(config);
+        network.load_weights(&vec![0.1; weight_count]);
         let input = Array1::from_vec(vec![1.0, 2.0]);
         let target = Array1::from_vec(vec![0.5]);
 
@@ -425,8 +441,12 @@ mod tests {
         println!("Initial output: {:?}", initial_output);
 
         // Train for more steps to ensure learning
+        let mut first_loss = None;
+        let mut final_loss = 0.0;
         for i in 0..100 {
             let loss = network.train_step(&input, &target, 0.01);
+            first_loss.get_or_insert(loss);
+            final_loss = loss;
             if i % 20 == 0 {
                 println!("Step {}: loss = {}", i, loss);
             }
@@ -436,13 +456,13 @@ mod tests {
         let final_output = network.forward(&input);
         println!("Final output: {:?}", final_output);
 
-        // Verify training actually changed the output or loss decreased
-        let output_changed = (initial_output[0] - final_output[0]).abs() > 1e-6;
-        let loss_decreased = true; // We'll assume loss decreased if we got here
-
         assert!(
-            output_changed || loss_decreased,
-            "Training should either change output or decrease loss"
+            (final_output[0] - target[0]).abs() < (initial_output[0] - target[0]).abs(),
+            "Training should move the value output toward its target"
+        );
+        assert!(
+            final_loss < first_loss.unwrap(),
+            "Training loss should decrease"
         );
     }
 
@@ -454,7 +474,9 @@ mod tests {
             output_size: 4,
         };
 
+        let weight_count = config.total_weights();
         let mut network = NeuralNetwork::new(config);
+        network.load_weights(&vec![0.1; weight_count]);
         let input = Array1::from_vec(vec![1.0, 2.0]);
         let target = Array1::from_vec(vec![0.0, 1.0, 0.0, 0.0]); // One-hot encoding
 
@@ -518,9 +540,12 @@ mod tests {
         let target_improvement = final_target_prob - initial_target_prob;
         let other_change = final_other_probs - initial_other_probs;
 
-        // The target class should improve relative to other classes
         assert!(
-            target_improvement > other_change - 0.1, // Allow some tolerance
+            final_target_prob > initial_target_prob,
+            "Target class probability should increase"
+        );
+        assert!(
+            target_improvement > other_change,
             "Target class should improve relative to others: target_improvement={}, other_change={}",
             target_improvement, other_change
         );
@@ -541,7 +566,7 @@ mod tests {
         let output_gradient = Array1::from_vec(vec![0.1, 0.2, 0.3]);
 
         let (weight_gradients, bias_gradients, input_gradient) =
-            network.compute_layer_gradients(layer, &input, &linear_output, &output_gradient);
+            network.compute_layer_gradients(layer, &input, &linear_output, &output_gradient, true);
 
         // Check dimensions
         assert_eq!(weight_gradients.shape(), [2, 3]);

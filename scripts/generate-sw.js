@@ -3,7 +3,8 @@
 import fs from 'fs';
 import path from 'path';
 
-const CACHE_VERSION = `${Date.now()}-${process.env.GITHUB_SHA?.slice(0, 7) || 'local'}-v1.0.0`;
+const releaseId = process.env.GITHUB_SHA?.slice(0, 12) || `local-${Date.now()}`;
+const CACHE_VERSION = `${releaseId}-v1.0.0`;
 
 const serviceWorkerTemplate = `const CACHE_VERSION = '${CACHE_VERSION}';
 const CACHE_NAME = \`royal-game-of-ur-\${CACHE_VERSION}\`;
@@ -17,15 +18,10 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-  console.log('[SW] Install event');
-
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
-      })
+      .then(cache => cache.addAll(STATIC_ASSETS))
       .catch(error => {
         console.error('[SW] Failed to cache static assets:', error);
       })
@@ -35,25 +31,20 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  console.log('[SW] Activate event');
-
   event.waitUntil(
     caches
       .keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('[SW] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('[SW] Taking control of all pages');
-        return self.clients.claim();
-      })
+      .then(cacheNames =>
+        Promise.all(
+          cacheNames
+            .filter(
+              cacheName =>
+                cacheName.startsWith('royal-game-of-ur-') && cacheName !== CACHE_NAME
+            )
+            .map(cacheName => caches.delete(cacheName))
+        )
+      )
+      .then(() => self.clients.claim())
   );
 });
 
@@ -67,123 +58,58 @@ self.addEventListener('fetch', event => {
   }
 
   const url = new URL(event.request.url);
-  
-  // Static assets (JS, CSS, images) - cache first
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   if (url.pathname.startsWith('/_next/') || url.pathname.startsWith('/static/') || url.pathname.startsWith('/wasm/')) {
     event.respondWith(
-      caches.match(event.request).then(cachedResponse => {
+      caches.match(event.request).then(async cachedResponse => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        
-        return fetch(event.request).then(response => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        });
+
+        const response = await fetch(event.request);
+        if (response.status === 200) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, response.clone());
+        }
+        return response;
       })
     );
     return;
   }
 
-  // For HTML pages and API calls - network first
   event.respondWith(
     fetch(event.request)
-      .then(response => {
+      .then(async response => {
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
 
-        const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME).then(cache => {
-          if (event.request.url.startsWith(self.location.origin)) {
-            console.log('[SW] Caching new resource:', event.request.url);
-            cache.put(event.request, responseToCache);
-          }
-        });
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(event.request, response.clone());
 
         return response;
       })
-      .catch(error => {
-        console.log('[SW] Fetch failed, trying cache:', error);
-        
-        return caches.match(event.request).then(cachedResponse => {
+      .catch(() =>
+        caches.match(event.request).then(cachedResponse => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          
+
           if (event.request.destination === 'document') {
             return caches.match(OFFLINE_URL);
           }
-          
-          throw error;
-        });
-      })
+
+          return Response.error();
+        })
+      )
   );
-});
-
-self.addEventListener('sync', event => {
-  console.log('[SW] Background sync event:', event.tag);
-
-  if (event.tag === 'background-sync') {
-    event.waitUntil(doBackgroundSync());
-  }
-});
-
-async function doBackgroundSync() {
-  console.log('[SW] Performing background sync');
-}
-
-self.addEventListener('push', event => {
-  console.log('[SW] Push message received');
-
-  const options = {
-    body: event.data ? event.data.text() : 'rgou notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1,
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Play Game',
-        icon: '/icons/icon-72x72.png',
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/icons/icon-72x72.png',
-      },
-    ],
-  };
-
-  event.waitUntil(self.registration.showNotification('rgou', options));
-});
-
-self.addEventListener('notificationclick', event => {
-  console.log('[SW] Notification click received');
-
-  event.notification.close();
-
-  if (event.action === 'explore') {
-    event.waitUntil(clients.openWindow('/'));
-  }
-});
-
-self.addEventListener('message', event => {
-  console.log('[SW] Message received:', event.data);
-  
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
 });
 `;
 

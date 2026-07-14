@@ -3,7 +3,7 @@
 import type { GameState } from './types';
 
 interface MLWasmModule {
-  default: (input?: string | URL) => Promise<unknown>;
+  default: (input?: { module_or_path: string | URL }) => Promise<unknown>;
   init_ml_ai: () => void;
   load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
   get_ml_ai_move: (gameState: unknown) => string;
@@ -21,7 +21,7 @@ const loadMLWasm = (): Promise<void> => {
       mlWasmModule = await import(/* webpackIgnore: true */ '/wasm/rgou_ai_core.js');
 
       const wasmUrl = `${self.location.origin}/wasm/rgou_ai_worker_bg.wasm`;
-      await mlWasmModule.default(wasmUrl);
+      await mlWasmModule.default({ module_or_path: wasmUrl });
 
       if (typeof mlWasmModule.init_ml_ai !== 'function') {
         throw new Error('ML WASM module does not have init_ml_ai function');

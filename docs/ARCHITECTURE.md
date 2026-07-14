@@ -30,7 +30,7 @@ See [AI-SYSTEM.md](./AI-SYSTEM.md) for the algorithms and models. Core: `worker/
 
 **AI turn**: `RoyalGameOfUr.tsx` detects an AI turn → `makeAIMove` in `game-store.ts` → the relevant AI service → the chosen move is applied by `makeMove` → UI updates.
 
-**Game completion**: state is set to finished → local stats update → `postGameToServer` calls the `saveGame` action → the game is written to the database → the completion overlay shows stats.
+**Game completion**: state is set to finished → local stats update → `postGameToServer` calls the `saveGame` action → the game is written idempotently to the database using its client-generated game ID → the completion overlay shows stats.
 
 ## Database
 
@@ -39,9 +39,7 @@ Drizzle ORM over SQLite locally (`local.db`, `npm run db:setup`) and Cloudflare 
 ```typescript
 // src/lib/db/schema.ts
 export const games = sqliteTable('games', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
+  id: text('id').primaryKey(),
   playerId: text('playerId').notNull(),
   winner: text('winner', { enum: ['player1', 'player2'] }),
   completedAt: integer('completedAt', { mode: 'timestamp_ms' }),
@@ -55,11 +53,13 @@ export const games = sqliteTable('games', {
 });
 ```
 
-Players are identified by an anonymous `nanoid()`. Win/loss statistics are tracked in Zustand with persistent local storage and update immediately on completion; completed games are also saved to the database for analytics.
+Players are identified by an anonymous local ID. In-progress games and player settings are validated and restored from local storage. Win/loss statistics update immediately on completion, exclude AI-vs-AI watch matches, and are also saved to the database for analytics.
 
 ## Deployment
 
-The app deploys to **Cloudflare Workers** via [OpenNext](https://opennext.js.org/cloudflare). GitHub Actions (`.github/workflows/deploy.yml`) runs `npm run check`, builds with `npm run build:cf`, and deploys with Wrangler. Configuration lives in `wrangler.toml`; production serves from `https://rgou.tre.systems`.
+The app deploys to **Cloudflare Workers** via [OpenNext](https://opennext.js.org/cloudflare). GitHub Actions (`.github/workflows/deploy.yml`) runs `npm run check`, builds with `npm run build:cf`, and deploys with Wrangler. Configuration lives in `wrangler.toml`; the canonical production site is `https://gameofur.org`, with `www.gameofur.org`, `gameofur.net`, `www.gameofur.net`, and `rgou.tre.systems` routed to the same Worker.
+
+The app does not use Next.js incremental regeneration, so OpenNext uses its default in-process/dummy cache configuration and requires no R2 binding. Static PWA and WebAssembly assets are served by the Worker assets binding.
 
 WASM requires cross-origin isolation headers, set in `public/_headers`:
 

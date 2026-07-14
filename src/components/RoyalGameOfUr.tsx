@@ -67,14 +67,23 @@ export default function RoyalGameOfUr() {
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
   const uiStore = useUIStore();
-  const { setSelectedMode, setAiSourceP1, setAiSourceP2 } = uiStore.actions;
+  const {
+    reset: resetUI,
+    setAiSourceP1,
+    setAiSourceP2,
+    setDiagnosticsPanelOpen,
+    setHowToPlayOpen,
+    setSelectedMode,
+    setShowModelOverlay,
+    setSoundEnabled,
+  } = uiStore.actions;
+  const showModelOverlay = uiStore.showModelOverlay;
   const selectedMode = uiStore.selectedMode;
   const aiSourceP1 = uiStore.aiSourceP1;
   const aiSourceP2 = uiStore.aiSourceP2;
-  const [showModelOverlay, setShowModelOverlay] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [diagnosticsPanelOpen, setDiagnosticsPanelOpen] = useState(false);
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  const soundEnabled = uiStore.soundEnabled;
+  const diagnosticsPanelOpen = uiStore.diagnosticsPanelOpen;
+  const howToPlayOpen = uiStore.howToPlayOpen;
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -180,10 +189,7 @@ export default function RoyalGameOfUr() {
 
   const handleReset = () => {
     reset();
-    setShowModelOverlay(true);
-    setSelectedMode(null);
-    setAiSourceP1(null);
-    setAiSourceP2('ml');
+    resetUI();
   };
 
   const toggleSound = () => {
@@ -264,7 +270,7 @@ export default function RoyalGameOfUr() {
   return (
     <>
       <a
-        href="https://github.com/rgilks/rgou-cloudflare"
+        href="https://github.com/tre-systems/rgou-cloudflare"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="GitHub Repository"

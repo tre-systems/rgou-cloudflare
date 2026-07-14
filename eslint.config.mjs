@@ -18,11 +18,20 @@ const eslintConfig = [
       // Ignore build output
       '.next/**/*',
       '.open-next/**/*',
+      'coverage/**/*',
       'out/**/*',
       'dist/**/*',
+      'playwright-report/**/*',
+      'test-results/**/*',
       // Ignore node_modules
       'node_modules/**/*',
       '.venv/',
+      // Ignore generated framework and WASM artifacts
+      'next-env.d.ts',
+      'public/sw.js',
+      'public/wasm/**/*',
+      'worker/rust_ai_core/pkg/**/*',
+      'worker/rust_ai_core/target/**/*',
     ],
   },
   {
@@ -35,6 +44,12 @@ const eslintConfig = [
     files: ['e2e/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['**/*.cjs'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ];

@@ -63,7 +63,14 @@ function isRosette(square: number): boolean {
 }
 
 export function getValidMoves(gameState: GameState): number[] {
-  if (!gameState.diceRoll || gameState.diceRoll === 0) return [];
+  if (
+    gameState.gameStatus !== 'playing' ||
+    !Number.isInteger(gameState.diceRoll) ||
+    !gameState.diceRoll ||
+    gameState.diceRoll > 4
+  ) {
+    return [];
+  }
 
   const currentPieces =
     gameState.currentPlayer === 'player1' ? gameState.player1Pieces : gameState.player2Pieces;
@@ -99,7 +106,13 @@ export function makeMove(
   gameState: GameState,
   pieceIndex: number
 ): [GameState, MoveType | null, Player] {
-  if (!gameState.validMoves.includes(pieceIndex) || !gameState.diceRoll) {
+  const validMoves = getValidMoves(gameState);
+  if (
+    !gameState.canMove ||
+    !Number.isInteger(pieceIndex) ||
+    !validMoves.includes(pieceIndex) ||
+    !gameState.diceRoll
+  ) {
     return [gameState, null, gameState.currentPlayer];
   }
 
@@ -197,6 +210,17 @@ export function makeMove(
 }
 
 export function processDiceRoll(gameState: GameState, providedRoll?: number): GameState {
+  if (gameState.gameStatus !== 'playing' || gameState.diceRoll !== null) {
+    return gameState;
+  }
+
+  if (
+    providedRoll !== undefined &&
+    (!Number.isInteger(providedRoll) || providedRoll < 0 || providedRoll > 4)
+  ) {
+    throw new RangeError('Dice roll must be an integer between 0 and 4');
+  }
+
   const diceRoll = providedRoll !== undefined ? providedRoll : rollDice();
   const validMoves = getValidMoves({ ...gameState, diceRoll });
 
@@ -205,5 +229,19 @@ export function processDiceRoll(gameState: GameState, providedRoll?: number): Ga
     diceRoll,
     validMoves,
     canMove: diceRoll > 0 && validMoves.length > 0,
+  };
+}
+
+export function endTurn(gameState: GameState): GameState {
+  if (gameState.gameStatus !== 'playing' || gameState.diceRoll === null || gameState.canMove) {
+    return gameState;
+  }
+
+  return {
+    ...gameState,
+    currentPlayer: gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
+    diceRoll: null,
+    canMove: false,
+    validMoves: [],
   };
 }

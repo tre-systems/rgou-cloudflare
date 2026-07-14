@@ -1,22 +1,34 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { initializeGame, processDiceRoll, makeMove as makeMoveLogic } from './game-logic';
+import {
+  endTurn as endTurnLogic,
+  initializeGame,
+  processDiceRoll,
+  makeMove as makeMoveLogic,
+} from './game-logic';
 import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
 import { useStatsStore } from './stats-store';
 import type { GameState, Player, MoveType, AIResponse } from './types';
 import { saveGame } from './actions';
-import { getPlayerId } from './utils';
+import { createId, getPlayerId } from './utils';
 import { useUIStore } from './ui-store';
-import { getBrowserStorage } from './persist-storage';
+import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
 
-const LATEST_VERSION = 1;
+const LATEST_VERSION = 2;
 
 const wasmAiService = new WasmAiService();
 const mlAiService = new MLAIService();
 
+function restoreGameId(value: unknown): string {
+  return typeof value === 'string' && /^game_[A-Za-z0-9_-]+$/.test(value) && value.length <= 128
+    ? value
+    : createId('game');
+}
+
 type GameStore = {
+  gameId: string;
   gameState: GameState;
   aiThinking: boolean;
   lastAIDiagnostics: AIResponse | null;
@@ -38,6 +50,7 @@ type GameStore = {
 export const useGameStore = create<GameStore>()(
   persist(
     immer((set, get) => ({
+      gameId: createId('game'),
       gameState: { ...initializeGame(), startTime: Date.now() },
       aiThinking: false,
       lastAIDiagnostics: null,
@@ -48,6 +61,7 @@ export const useGameStore = create<GameStore>()(
         initialize: (fromStorage = false) => {
           if (!fromStorage) {
             set(state => {
+              state.gameId = createId('game');
               state.gameState = { ...initializeGame(), startTime: Date.now() };
               state.aiThinking = false;
               state.lastAIDiagnostics = null;
@@ -59,6 +73,10 @@ export const useGameStore = create<GameStore>()(
         },
         processDiceRoll: roll => {
           const { gameState } = get();
+          if (gameState.gameStatus !== 'playing' || gameState.diceRoll !== null) {
+            return;
+          }
+
           const newState = processDiceRoll(gameState, roll);
           set(state => {
             state.gameState = newState;
@@ -66,11 +84,7 @@ export const useGameStore = create<GameStore>()(
         },
         endTurn: () => {
           set(state => {
-            state.gameState.currentPlayer =
-              state.gameState.currentPlayer === 'player1' ? 'player2' : 'player1';
-            state.gameState.diceRoll = null;
-            state.gameState.canMove = false;
-            state.gameState.validMoves = [];
+            state.gameState = endTurnLogic(state.gameState);
           });
         },
         makeMove: (pieceIndex: number) => {
@@ -82,7 +96,10 @@ export const useGameStore = create<GameStore>()(
               state.lastMoveType = moveType;
               state.lastMovePlayer = movePlayer;
 
-              if (newState.gameStatus === 'finished') {
+              if (
+                newState.gameStatus === 'finished' &&
+                useUIStore.getState().selectedMode !== 'watch'
+              ) {
                 if (newState.winner === 'player1') {
                   useStatsStore.getState().actions.incrementWins();
                 } else {
@@ -93,25 +110,11 @@ export const useGameStore = create<GameStore>()(
           }
         },
         makeAIMove: async (aiSource: 'heuristic' | 'client' | 'ml', isPlayer1AI = false) => {
-          const { gameState, actions } = get();
+          const { aiThinking, gameId, gameState, actions } = get();
 
-          if (!gameState.canMove) return;
+          if (aiThinking || !gameState.canMove) return;
 
           if (!isPlayer1AI && gameState.currentPlayer !== 'player2') {
-            return;
-          }
-
-          if (gameState.validMoves.length === 0) {
-            set(state => {
-              state.gameState = processDiceRoll({
-                ...state.gameState,
-                currentPlayer: state.gameState.currentPlayer === 'player1' ? 'player2' : 'player1',
-                diceRoll: null,
-                canMove: false,
-                validMoves: [],
-              });
-              state.aiThinking = false;
-            });
             return;
           }
 
@@ -120,6 +123,15 @@ export const useGameStore = create<GameStore>()(
           });
 
           const startTime = performance.now();
+          const isCurrentTurn = () => {
+            const current = get();
+            return (
+              current.gameId === gameId &&
+              current.gameState.currentPlayer === gameState.currentPlayer &&
+              current.gameState.diceRoll === gameState.diceRoll &&
+              current.gameState.history.length === gameState.history.length
+            );
+          };
 
           try {
             let aiResponse;
@@ -159,6 +171,10 @@ export const useGameStore = create<GameStore>()(
 
             const duration = performance.now() - startTime;
 
+            if (!isCurrentTurn()) {
+              return;
+            }
+
             set(state => {
               state.lastAIMoveDuration = duration;
               state.lastAIDiagnostics = aiResponse;
@@ -175,7 +191,7 @@ export const useGameStore = create<GameStore>()(
             }
           } catch (error) {
             console.error('GameStore: AI move failed:', error);
-            if (gameState.validMoves.length > 0) {
+            if (isCurrentTurn() && gameState.validMoves.length > 0) {
               const fallbackMove =
                 gameState.validMoves[Math.floor(Math.random() * gameState.validMoves.length)];
               console.warn('GameStore: Using fallback random move:', fallbackMove);
@@ -183,12 +199,15 @@ export const useGameStore = create<GameStore>()(
             }
           } finally {
             set(state => {
-              state.aiThinking = false;
+              if (state.gameId === gameId) {
+                state.aiThinking = false;
+              }
             });
           }
         },
         reset: () => {
           set(state => {
+            state.gameId = createId('game');
             state.gameState = { ...initializeGame(), startTime: Date.now() };
             state.aiThinking = false;
             state.lastAIDiagnostics = null;
@@ -199,6 +218,8 @@ export const useGameStore = create<GameStore>()(
         },
         createNearWinningState: () => {
           set(state => {
+            state.gameId = createId('game');
+            state.gameState = { ...initializeGame(), startTime: Date.now() };
             for (let i = 0; i < 6; i++) {
               state.gameState.player1Pieces[i].square = 20;
             }
@@ -220,7 +241,7 @@ export const useGameStore = create<GameStore>()(
           });
         },
         postGameToServer: async () => {
-          const { gameState } = get();
+          const { gameId, gameState } = get();
           if (gameState.gameStatus !== 'finished' || !gameState.winner) {
             return;
           }
@@ -236,6 +257,7 @@ export const useGameStore = create<GameStore>()(
             const gameMode = uiStore.selectedMode || 'classic';
 
             const payload = {
+              gameId,
               winner: gameState.winner,
               history: gameState.history,
               playerId: getPlayerId(),
@@ -245,7 +267,10 @@ export const useGameStore = create<GameStore>()(
               gameType: gameMode,
             };
 
-            await saveGame(payload);
+            const result = await saveGame(payload);
+            if (result?.error) {
+              console.error('Failed to save game result:', result.error);
+            }
           } catch (error) {
             console.error('Failed to save game result:', error);
           }
@@ -266,12 +291,39 @@ export const useGameStore = create<GameStore>()(
       version: LATEST_VERSION,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<GameStore>;
-        if (version < LATEST_VERSION || !state || !state.gameState) {
-          return { gameState: { ...initializeGame(), startTime: Date.now() } };
+        const gameState = parsePersistedGameState(state?.gameState);
+
+        if (!gameState) {
+          return {
+            gameId: createId('game'),
+            gameState: { ...initializeGame(), startTime: Date.now() },
+          };
         }
-        return { gameState: state.gameState };
+
+        return {
+          gameId:
+            version >= LATEST_VERSION && typeof state.gameId === 'string'
+              ? restoreGameId(state.gameId)
+              : createId('game'),
+          gameState,
+        };
+      },
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<GameStore>;
+        const gameState = parsePersistedGameState(persisted?.gameState);
+
+        if (!gameState) {
+          return currentState;
+        }
+
+        return {
+          ...currentState,
+          gameId: restoreGameId(persisted.gameId),
+          gameState,
+        };
       },
       partialize: state => ({
+        gameId: state.gameId,
         gameState: state.gameState,
       }),
     }
