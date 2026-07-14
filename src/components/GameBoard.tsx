@@ -30,6 +30,26 @@ const BOARD_LAYOUT = [
   16, 17, 18, 19, -1, -1, 15, 14, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2, 3, -1, -1, 13, 12,
 ] as const;
 
+const BOARD_ENTRANCE = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } },
+} as const;
+
+const PANEL_TOP = {
+  hidden: { opacity: 0, y: -14 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 280, damping: 28 } },
+} as const;
+
+const PANEL_MID = {
+  hidden: { opacity: 0, y: 10, scale: 0.985 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 260, damping: 30 } },
+} as const;
+
+const PANEL_BOTTOM = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 280, damping: 28 } },
+} as const;
+
 function getElementCenter(element: Element | null) {
   if (!element) return null;
   const rect = element.getBoundingClientRect();
@@ -114,23 +134,29 @@ export default function GameBoard({
           />
         )}
       </AnimatePresence>
-      <motion.div className="mx-auto w-full max-w-md space-y-3" data-testid="game-board">
-        <PlayerArea
-          player="player2"
-          pieces={gameState.player2Pieces}
-          isCurrentPlayer={gameState.currentPlayer === 'player2'}
-          isAI={true}
-          aiType={aiSourceP2}
-          isStartMoveValid={false}
-          validMoves={gameState.validMoves}
-          onPieceClick={onPieceClick}
-        />
+      <motion.div
+        className="mx-auto w-full max-w-md space-y-3"
+        data-testid="game-board"
+        variants={BOARD_ENTRANCE}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={PANEL_TOP}>
+          <PlayerArea
+            player="player2"
+            pieces={gameState.player2Pieces}
+            isCurrentPlayer={gameState.currentPlayer === 'player2'}
+            isAI={true}
+            aiType={aiSourceP2}
+            isStartMoveValid={false}
+            validMoves={gameState.validMoves}
+            onPieceClick={onPieceClick}
+          />
+        </motion.div>
         <motion.div
           ref={boardRef}
           className="surface-panel relative rounded-2xl p-3.5 sm:p-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: 'easeOut' }}
+          variants={PANEL_MID}
         >
           <div className="mb-3 text-center">
             <GameStatus
@@ -177,23 +203,25 @@ export default function GameBoard({
             diceElement={<GameDice gameState={gameState} />}
           />
         </motion.div>
-        <PlayerArea
-          player="player1"
-          pieces={gameState.player1Pieces}
-          isCurrentPlayer={gameState.currentPlayer === 'player1'}
-          isAI={watchMode}
-          aiType={watchMode ? aiSourceP1 : null}
-          isStartMoveValid={
-            gameState.currentPlayer === 'player1' &&
-            gameState.validMoves.some(
-              moveIndex =>
-                gameState.player1Pieces[moveIndex] &&
-                gameState.player1Pieces[moveIndex].square === -1
-            )
-          }
-          validMoves={gameState.validMoves}
-          onPieceClick={onPieceClick}
-        />
+        <motion.div variants={PANEL_BOTTOM}>
+          <PlayerArea
+            player="player1"
+            pieces={gameState.player1Pieces}
+            isCurrentPlayer={gameState.currentPlayer === 'player1'}
+            isAI={watchMode}
+            aiType={watchMode ? aiSourceP1 : null}
+            isStartMoveValid={
+              gameState.currentPlayer === 'player1' &&
+              gameState.validMoves.some(
+                moveIndex =>
+                  gameState.player1Pieces[moveIndex] &&
+                  gameState.player1Pieces[moveIndex].square === -1
+              )
+            }
+            validMoves={gameState.validMoves}
+            onPieceClick={onPieceClick}
+          />
+        </motion.div>
       </motion.div>
     </>
   );

@@ -36,6 +36,11 @@ const MODE_OPTIONS = [
   },
 ] as const;
 
+const CARDS_CONTAINER = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.12 } },
+};
+
 export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelectionProps) {
   return (
     <motion.section
@@ -49,25 +54,30 @@ export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelecti
         className="surface-panel w-full rounded-2xl p-5 sm:p-7 lg:p-8"
         data-testid="ai-model-selection"
       >
-        <div className="flex flex-col gap-4 border-b border-[#45483e] pb-6 text-left sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 border-b border-line pb-6 text-left sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c7a65d]">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
               Choose a table
             </div>
-            <h2 id="opponent-selection-title" className="display-title text-3xl text-[#eee7d8]">
+            <h2 id="opponent-selection-title" className="display-title text-3xl text-bone">
               Select your opponent
             </h2>
           </div>
           <button
             type="button"
             onClick={onShowHowToPlay}
-            className="inline-flex items-center gap-2 self-start text-sm font-medium text-[#bdb9ad] transition-colors hover:text-[#eee7d8] sm:self-auto"
+            className="inline-flex items-center gap-2 self-start text-sm font-medium text-bone-muted transition-colors hover:text-bone sm:self-auto"
           >
             <BookOpen className="h-4 w-4" />
             How to play
           </button>
         </div>
-        <div className="grid gap-3 pt-5 md:grid-cols-3">
+        <motion.div
+          className="grid gap-3 pt-5 md:grid-cols-3"
+          variants={CARDS_CONTAINER}
+          initial="hidden"
+          animate="show"
+        >
           {MODE_OPTIONS.map(mode => (
             <ModeSelectionCard
               key={mode.key}
@@ -80,7 +90,7 @@ export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelecti
               data-testid={`mode-select-${mode.key}`}
             />
           ))}
-        </div>
+        </motion.div>
       </div>
     </motion.section>
   );

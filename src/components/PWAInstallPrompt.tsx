@@ -71,24 +71,24 @@ export default function PWAInstallPrompt() {
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
-              <Download className="h-5 w-5 text-[#c7a65d]" />
-              <h3 className="text-sm font-semibold text-[#eee7d8]">Install Game of Ur</h3>
+              <Download className="h-5 w-5 text-brass" />
+              <h3 className="text-sm font-semibold text-bone">Install Game of Ur</h3>
             </div>
-            <p className="mb-3 text-xs text-[#aca99e]">
+            <p className="mb-3 text-xs text-bone-muted">
               Add it to your home screen for quick access and offline play.
             </p>
             <div className="flex space-x-2">
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="rounded bg-[#c7a65d] px-3 py-2 text-xs font-semibold text-[#191a17] transition-colors hover:bg-[#e2ca91]"
+                className="rounded bg-brass px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-brass-light"
               >
                 Install
               </button>
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="rounded border border-[#45483e] px-3 py-2 text-xs font-medium text-[#bdb9ad] transition-colors hover:bg-[#303229] hover:text-[#eee7d8]"
+                className="rounded border border-line px-3 py-2 text-xs font-medium text-bone-muted transition-colors hover:bg-surface-raised hover:text-bone"
               >
                 Not now
               </button>
@@ -97,7 +97,7 @@ export default function PWAInstallPrompt() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="text-[#8e9184] transition-colors hover:text-[#eee7d8]"
+            className="text-muted transition-colors hover:text-bone"
             aria-label="Dismiss install prompt"
           >
             <X className="h-4 w-4" aria-hidden="true" />

@@ -55,7 +55,7 @@ export default function GameSquare({
     >
       {isRosette && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Star className="h-5 w-5 text-[#c7a65d]" strokeWidth={1.5} />
+          <Star className="h-5 w-5 text-brass" strokeWidth={1.5} />
         </div>
       )}
 

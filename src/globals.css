@@ -1,27 +1,49 @@
 @import 'tailwindcss';
 
+@theme {
+  /* Base surfaces */
+  --color-ink: #151613;
+  --color-ink-soft: #1d1f1b;
+  --color-scrim: #0e0f0d;
+  --color-surface: #242620;
+  --color-surface-raised: #2b2e27;
+  --color-surface-inset: #1b1d19;
+
+  /* Structure lines */
+  --color-line: #45483e;
+  --color-line-soft: #35382f;
+  --color-line-strong: #6d705f;
+
+  /* Text: warm bone through to cool grey */
+  --color-bone: #eee7d8;
+  --color-bone-muted: #bdb9ad;
+  --color-muted: #8e9184;
+  --color-faint: #777a6d;
+
+  /* Accents */
+  --color-brass: #c7a65d;
+  --color-brass-light: #e2ca91;
+  --color-lapis: #5d8fa6;
+  --color-lapis-light: #a7cad7;
+  --color-clay: #b96852;
+  --color-clay-light: #dfa18c;
+
+  /* Player pieces */
+  --color-p1: #477a91;
+  --color-p1-edge: #9abfce;
+  --color-p1-core: #d1e0e4;
+  --color-p2: #a75542;
+  --color-p2-edge: #d89b87;
+  --color-p2-core: #efd1c6;
+}
+
 :root {
   color-scheme: dark;
-  --ink: #151613;
-  --ink-soft: #1d1f1b;
-  --surface: #242620;
-  --surface-raised: #2b2e27;
-  --surface-inset: #1b1d19;
-  --line: #45483e;
-  --line-soft: #35382f;
-  --bone: #eee7d8;
-  --bone-muted: #aca99e;
-  --lapis: #5d8fa6;
-  --lapis-light: #a7cad7;
-  --clay: #b96852;
-  --clay-light: #dfa18c;
-  --brass: #c7a65d;
-  --brass-light: #e2ca91;
 }
 
 html {
   min-height: 100vh;
-  background: var(--ink);
+  background: var(--color-ink);
 }
 
 body {
@@ -32,8 +54,8 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   overflow-x: hidden;
-  background: var(--ink);
-  color: var(--bone);
+  background: var(--color-ink);
+  color: var(--color-bone);
   font-family:
     Inter,
     ui-sans-serif,
@@ -54,7 +76,7 @@ a {
 button:focus-visible,
 a:focus-visible,
 [role='button']:focus-visible {
-  outline: 2px solid var(--brass-light);
+  outline: 2px solid var(--color-brass-light);
   outline-offset: 3px;
 }
 
@@ -69,29 +91,41 @@ a:focus-visible,
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-color: var(--ink);
+  background-color: var(--color-ink);
   background-image:
     linear-gradient(30deg, transparent 47%, rgba(199, 166, 93, 0.035) 48%, transparent 49%),
     linear-gradient(150deg, transparent 47%, rgba(93, 143, 166, 0.025) 48%, transparent 49%);
   background-size: 88px 52px;
 }
 
+.site-backdrop::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background:
+    radial-gradient(56% 48% at 50% 42%, rgba(199, 166, 93, 0.055), transparent 70%),
+    radial-gradient(135% 118% at 50% 30%, transparent 45%, rgba(0, 0, 0, 0.34) 100%);
+}
+
 .site-backdrop::after {
   position: absolute;
   inset: 0;
   content: '';
-  background: radial-gradient(circle at 50% 30%, rgba(238, 231, 216, 0.04), transparent 42%);
+  background: radial-gradient(circle at 50% 26%, rgba(238, 231, 216, 0.045), transparent 40%);
 }
 
 .surface-panel {
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+  transition:
+    border-color 240ms ease,
+    box-shadow 240ms ease;
 }
 
 .surface-inset {
-  border: 1px solid var(--line-soft);
-  background: var(--surface-inset);
+  border: 1px solid var(--color-line-soft);
+  background: var(--color-surface-inset);
 }
 
 .icon-button {
@@ -100,10 +134,10 @@ a:focus-visible,
   min-height: 2.5rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-line);
   border-radius: 0.625rem;
-  background: var(--surface-inset);
-  color: var(--bone-muted);
+  background: var(--color-surface-inset);
+  color: var(--color-bone-muted);
   transition:
     color 160ms ease,
     border-color 160ms ease,
@@ -113,8 +147,8 @@ a:focus-visible,
 
 .icon-button:hover {
   border-color: #65695b;
-  background: var(--surface-raised);
-  color: var(--bone);
+  background: var(--color-surface-raised);
+  color: var(--color-bone);
   transform: translateY(-1px);
 }
 
@@ -142,7 +176,7 @@ a:focus-visible,
 
 .clickable-square {
   cursor: pointer;
-  border-color: var(--brass-light);
+  border-color: var(--color-brass-light);
   background: #3c3a2f;
   animation: move-hint 1.8s ease-in-out infinite;
 }
@@ -153,16 +187,16 @@ a:focus-visible,
 }
 
 .start-area-valid {
-  border-color: var(--brass);
+  border-color: var(--color-brass);
   background: rgba(199, 166, 93, 0.08);
   animation: start-hint 1.8s ease-in-out infinite;
 }
 
 .player-area-current {
-  border-color: #6d705f;
+  border-color: var(--color-line-strong);
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.22),
-    inset 3px 0 var(--brass);
+    inset 3px 0 var(--color-brass);
 }
 
 @keyframes move-hint {
@@ -194,11 +228,11 @@ a:focus-visible,
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--ink-soft);
+  background: var(--color-ink-soft);
 }
 
 ::-webkit-scrollbar-thumb {
-  border: 2px solid var(--ink-soft);
+  border: 2px solid var(--color-ink-soft);
   border-radius: 999px;
   background: #5c6053;
 }

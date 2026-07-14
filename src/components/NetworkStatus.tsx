@@ -36,9 +36,9 @@ export default function NetworkStatus() {
       aria-live="polite"
     >
       {isOnline ? (
-        <Wifi className="h-5 w-5 text-[#a7cad7]" aria-hidden="true" />
+        <Wifi className="h-5 w-5 text-lapis-light" aria-hidden="true" />
       ) : (
-        <WifiOff className="h-5 w-5 text-[#dfa18c]" aria-hidden="true" />
+        <WifiOff className="h-5 w-5 text-clay-light" aria-hidden="true" />
       )}
       <span className="sr-only">{isOnline ? 'Back online' : 'You are offline'}</span>
     </div>

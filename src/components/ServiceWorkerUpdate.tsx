@@ -50,7 +50,7 @@ export default function ServiceWorkerUpdate() {
 
   return (
     <aside
-      className="surface-panel fixed left-1/2 top-4 z-[10000] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl px-5 py-4 text-[#eee7d8]"
+      className="surface-panel fixed left-1/2 top-4 z-[10000] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl px-5 py-4 text-bone"
       role="status"
     >
       <p className="mb-3">A new version is available.</p>
@@ -58,14 +58,14 @@ export default function ServiceWorkerUpdate() {
         <button
           type="button"
           onClick={applyUpdate}
-          className="rounded-lg bg-[#c7a65d] px-4 py-2 font-semibold text-[#191a17] hover:bg-[#e2ca91]"
+          className="rounded-lg bg-brass px-4 py-2 font-semibold text-ink hover:bg-brass-light"
         >
           Update now
         </button>
         <button
           type="button"
           onClick={() => setWaiting(null)}
-          className="px-3 py-2 text-[#aca99e] underline underline-offset-4 hover:text-[#eee7d8]"
+          className="px-3 py-2 text-bone-muted underline underline-offset-4 hover:text-bone"
         >
           Later
         </button>

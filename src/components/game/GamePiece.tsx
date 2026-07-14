@@ -10,12 +10,12 @@ interface GamePieceProps {
 
 const PLAYER_COLORS = {
   player1: {
-    classes: 'bg-[#477a91] border-[#9abfce]',
-    center: 'border-[#d1e0e4]',
+    classes: 'bg-p1 border-p1-edge',
+    center: 'border-p1-core',
   },
   player2: {
-    classes: 'bg-[#a75542] border-[#d89b87]',
-    center: 'border-[#efd1c6]',
+    classes: 'bg-p2 border-p2-edge',
+    center: 'border-p2-core',
   },
 } as const;
 

@@ -22,7 +22,7 @@ export default function GameControls({
 }: GameControlsProps) {
   return (
     <>
-      <hr className="my-4 border-[#45483e]" />
+      <hr className="my-4 border-line" />
       <div className="flex w-full items-center justify-between gap-3">
         <div className="flex items-center">{diceElement}</div>
 

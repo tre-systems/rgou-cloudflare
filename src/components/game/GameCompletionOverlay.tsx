@@ -29,7 +29,7 @@ export default function GameCompletionOverlay({
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0e0f0d]/88 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/88 p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -46,7 +46,7 @@ export default function GameCompletionOverlay({
         exit={{ opacity: 0, scale: 0.98, y: 8 }}
         transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       >
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[#5b5e51] bg-[#303229] text-[#c7a65d]">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-line-strong bg-surface-raised text-brass">
           {isPlayer1Winner ? (
             <Trophy className="h-6 w-6" strokeWidth={1.6} />
           ) : (
@@ -55,19 +55,19 @@ export default function GameCompletionOverlay({
         </div>
 
         {isWatchMode && (
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8e9184]">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
             {getAISubtitle(isPlayer1Winner ? 'classic' : 'ml')}
           </div>
         )}
         <h2
           id="game-completion-title"
-          className="display-title text-4xl text-[#eee7d8]"
+          className="display-title text-4xl text-bone"
           data-testid="game-completion-title"
         >
           {title}
         </h2>
         <p
-          className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#aca99e]"
+          className="mx-auto mt-3 max-w-xs text-sm leading-6 text-bone-muted"
           data-testid="game-completion-message"
         >
           {message}
@@ -75,29 +75,29 @@ export default function GameCompletionOverlay({
 
         {!isWatchMode && (
           <div
-            className="surface-inset mt-6 grid grid-cols-3 divide-x divide-[#45483e] rounded-xl px-3 py-4"
+            className="surface-inset mt-6 grid grid-cols-3 divide-x divide-line rounded-xl px-3 py-4"
             data-testid="stats-panel"
           >
             <div>
-              <div className="font-mono text-xl text-[#a7cad7]" data-testid="wins-count">
+              <div className="font-mono text-xl text-lapis-light" data-testid="wins-count">
                 {gameStats.wins}
               </div>
-              <div className="mt-1 text-[10px] uppercase tracking-wider text-[#8e9184]">Wins</div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-muted">Wins</div>
             </div>
             <div>
-              <div className="font-mono text-xl text-[#dfa18c]" data-testid="losses-count">
+              <div className="font-mono text-xl text-clay-light" data-testid="losses-count">
                 {gameStats.losses}
               </div>
-              <div className="mt-1 text-[10px] uppercase tracking-wider text-[#8e9184]">Losses</div>
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-muted">Losses</div>
             </div>
             <div data-testid="games-played">
-              <div className="font-mono text-xl text-[#e2ca91]">
+              <div className="font-mono text-xl text-brass-light">
                 {gameStats.gamesPlayed > 0
                   ? Math.round((gameStats.wins / gameStats.gamesPlayed) * 100)
                   : 0}
                 %
               </div>
-              <div className="mt-1 text-[10px] uppercase tracking-wider text-[#8e9184]">
+              <div className="mt-1 text-[10px] uppercase tracking-wider text-muted">
                 Win rate
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function GameCompletionOverlay({
           type="button"
           autoFocus
           onClick={onResetGame}
-          className="mt-6 w-full rounded-lg border border-[#c7a65d] bg-[#c7a65d] px-6 py-3 text-sm font-semibold text-[#191a17] transition-colors hover:border-[#e2ca91] hover:bg-[#e2ca91]"
+          className="mt-6 w-full rounded-lg border border-brass bg-brass px-6 py-3 text-sm font-semibold text-ink transition-colors hover:border-brass-light hover:bg-brass-light"
           data-testid="reset-game-button"
         >
           Choose another opponent

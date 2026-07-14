@@ -179,7 +179,7 @@ export default function RoyalGameOfUr() {
                     'width=440,height=820,menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=no,noopener,noreferrer'
                   );
                 }}
-                className="hidden items-center gap-2 text-sm font-medium text-[#8e9184] transition-colors hover:text-[#eee7d8] md:inline-flex"
+                className="hidden items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-bone md:inline-flex"
                 title="Open the game in a compact window"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -203,13 +203,13 @@ export default function RoyalGameOfUr() {
             >
               <header className="text-center">
                 {showModelOverlay && (
-                  <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c7a65d]">
+                  <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.28em] text-brass">
                     An ancient race game
                   </div>
                 )}
                 <h1
                   className={cn(
-                    'display-title text-[#eee7d8]',
+                    'display-title text-bone',
                     showModelOverlay ? 'text-4xl sm:text-5xl' : 'text-2xl sm:text-3xl'
                   )}
                   data-testid="main-title"
@@ -218,7 +218,7 @@ export default function RoyalGameOfUr() {
                 </h1>
                 {showModelOverlay && (
                   <div
-                    className="mt-3 text-sm tracking-wide text-[#8e9184]"
+                    className="mt-3 text-sm tracking-wide text-muted"
                     data-testid="main-subtitle"
                   >
                     Mesopotamia · Third millennium BCE
@@ -254,7 +254,7 @@ export default function RoyalGameOfUr() {
             </motion.div>
           </div>
 
-          <footer className="flex flex-col items-center justify-between gap-3 border-t border-[#35382f] pt-5 text-xs text-[#8e9184] sm:flex-row">
+          <footer className="flex flex-col items-center justify-between gap-3 border-t border-line-soft pt-5 text-xs text-muted sm:flex-row">
             <span>Open source · Built for the web</span>
             <div className="flex items-center gap-5">
               <a
@@ -262,7 +262,7 @@ export default function RoyalGameOfUr() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub Repository"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-[#eee7d8]"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-bone"
                 data-testid="github-link"
               >
                 <Github className="h-3.5 w-3.5" />
@@ -272,7 +272,7 @@ export default function RoyalGameOfUr() {
                 href="https://ko-fi.com/N4N31DPNUS"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-[#eee7d8]"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-bone"
               >
                 <Heart className="h-3.5 w-3.5" />
                 Support the project
