@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { GameStats } from './schemas';
+import type { GameStats } from './schemas';
 import { getBrowserStorage, parsePersistedGameStats } from './persist-storage';
 
 type StatsStore = {
@@ -13,7 +13,7 @@ type StatsStore = {
 
 export const useStatsStore = create<StatsStore>()(
   persist(
-    (set, get) => ({
+    set => ({
       stats: {
         wins: 0,
         losses: 0,
@@ -21,24 +21,22 @@ export const useStatsStore = create<StatsStore>()(
       },
       actions: {
         incrementWins: () => {
-          const { stats } = get();
-          set({
+          set(state => ({
             stats: {
-              ...stats,
-              wins: stats.wins + 1,
-              gamesPlayed: stats.gamesPlayed + 1,
+              ...state.stats,
+              wins: state.stats.wins + 1,
+              gamesPlayed: state.stats.gamesPlayed + 1,
             },
-          });
+          }));
         },
         incrementLosses: () => {
-          const { stats } = get();
-          set({
+          set(state => ({
             stats: {
-              ...stats,
-              losses: stats.losses + 1,
-              gamesPlayed: stats.gamesPlayed + 1,
+              ...state.stats,
+              losses: state.stats.losses + 1,
+              gamesPlayed: state.stats.gamesPlayed + 1,
             },
-          });
+          }));
         },
       },
     }),

@@ -1,5 +1,24 @@
 import { useEffect, useRef } from 'react';
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  opacity: number;
+  color: string;
+  life: number;
+}
+
+const PARTICLE_COLORS = [
+  'rgba(99, 102, 241, 0.6)',
+  'rgba(236, 72, 153, 0.6)',
+  'rgba(251, 191, 36, 0.6)',
+  'rgba(34, 197, 94, 0.6)',
+  'rgba(147, 51, 234, 0.6)',
+];
+
 export default function AnimatedBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -9,46 +28,35 @@ export default function AnimatedBackground() {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const pixelRatio = Math.min(window.devicePixelRatio, 2);
+      canvas.width = Math.round(window.innerWidth * pixelRatio);
+      canvas.height = Math.round(window.innerHeight * pixelRatio);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    const particles: Array<{
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      size: number;
-      opacity: number;
-      color: string;
-      life: number;
-    }> = [];
-
-    const colors = [
-      'rgba(99, 102, 241, 0.6)', // Indigo
-      'rgba(236, 72, 153, 0.6)', // Pink
-      'rgba(251, 191, 36, 0.6)', // Amber
-      'rgba(34, 197, 94, 0.6)', // Green
-      'rgba(147, 51, 234, 0.6)', // Purple
-    ];
+    const particles: Particle[] = [];
 
     const createParticle = () => ({
-      x: Math.random() * canvas.width,
-      y: canvas.height + 10,
+      x: Math.random() * window.innerWidth,
+      y: window.innerHeight + 10,
       vx: (Math.random() - 0.5) * 0.5,
       vy: -Math.random() * 2 - 0.5,
       size: Math.random() * 3 + 1,
       opacity: Math.random() * 0.8 + 0.2,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
       life: 1.0,
     });
 
-    for (let i = 0; i < 100; i++) {
+    const particleCount = window.innerWidth < 640 ? 60 : 100;
+    for (let i = 0; i < particleCount; i++) {
       particles.push(createParticle());
     }
 
@@ -56,7 +64,7 @@ export default function AnimatedBackground() {
 
     const animate = () => {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
       for (let i = particles.length - 1; i >= 0; i--) {
         const particle = particles[i];
@@ -107,10 +115,6 @@ export default function AnimatedBackground() {
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ background: 'transparent' }}
-    />
+    <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" aria-hidden="true" />
   );
 }

@@ -1,8 +1,8 @@
-import React from 'react';
+import type { ElementType } from 'react';
 import { motion } from 'framer-motion';
 
 interface ModeSelectionCardProps {
-  icon: React.ElementType;
+  icon: ElementType;
   title: string;
   description: string;
   subtitle?: string;
@@ -24,6 +24,7 @@ export default function ModeSelectionCard({
 }: ModeSelectionCardProps) {
   return (
     <motion.button
+      type="button"
       onClick={onClick}
       className={`
         w-full p-6 rounded-xl border-2 text-left transition-all duration-300

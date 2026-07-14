@@ -26,6 +26,8 @@ npm run build:rust-ai       # native Rust build
 npm run generate:sw         # service worker (embeds the Git commit hash for cache-busting)
 ```
 
+The production build keeps the application, animation runtime, and lazy error-monitoring code in separate chunks. Treat a new Vite chunk-size warning as a design signal; split the responsible boundary instead of raising the warning threshold.
+
 ## Architecture diagrams
 
 Graphviz/DOT sources are authoritative and rendered PNGs are committed for GitHub. Install Graphviz with `brew install graphviz`, then run:

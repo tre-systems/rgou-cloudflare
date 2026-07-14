@@ -7,6 +7,7 @@ import {
   reportUsage,
   usageDataPoint,
 } from '../usage';
+import { MAX_GAME_HISTORY } from '../schemas';
 
 describe('usage reporting', () => {
   beforeEach(() => {
@@ -45,17 +46,33 @@ describe('usage reporting', () => {
         },
       ],
     });
-    const completed = gameCompletedUsage('watch', game);
+    const completed = gameCompletedUsage('watch', game, 'player2');
     expect(completed).toMatchObject({
       event: 'game_completed',
       mode: 'watch',
       player1: 'classic',
       player2: 'ml',
       winner: 'player1',
+      startedBy: 'player2',
       moves: 1,
     });
     expect(completed).not.toHaveProperty('history');
     expect(parseUsageEvent(completed)).toEqual(completed);
+  });
+
+  it('keeps completion counters inside the analytics contract', () => {
+    const game = createTestGameState({ gameStatus: 'finished', winner: 'player2', history: [] });
+
+    expect(gameCompletedUsage('ml', game).moves).toBe(0);
+    game.history = Array(MAX_GAME_HISTORY + 1).fill({
+      player: 'player1',
+      diceRoll: 1,
+      pieceIndex: 0,
+      fromSquare: -1,
+      toSquare: 3,
+      moveType: 'move',
+    });
+    expect(gameCompletedUsage('ml', game).moves).toBe(MAX_GAME_HISTORY);
   });
 
   it('rejects unknown events and extra fields', () => {

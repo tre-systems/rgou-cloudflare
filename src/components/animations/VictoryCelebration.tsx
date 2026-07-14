@@ -56,21 +56,21 @@ export default function VictoryCelebration({
         transition={{ duration: 1.5, ease: 'easeOut' }}
       />
 
-      {[...Array(8)].map((_, i) => (
+      {Array.from({ length: 8 }, (_, i) => (
         <motion.div
           key={i}
           className={`absolute w-2 h-2 rounded-full ${colors.bg}`}
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
             scale: [0, 1, 0.5, 0],
-            x: Math.cos(i * (360 / 8) * (Math.PI / 180)) * (35 + Math.random() * 25),
-            y: Math.sin(i * (360 / 8) * (Math.PI / 180)) * (35 + Math.random() * 25),
+            x: Math.cos((i * 2 * Math.PI) / 8) * (35 + ((i * 11) % 26)),
+            y: Math.sin((i * 2 * Math.PI) / 8) * (35 + ((i * 11) % 26)),
             opacity: [1, 1, 0.5, 0],
           }}
           transition={{
             duration: 2,
             ease: 'easeOut',
-            delay: Math.random() * 0.4,
+            delay: ((i * 5) % 8) * 0.05,
           }}
         />
       ))}
@@ -91,21 +91,21 @@ export default function VictoryCelebration({
         transition={{ duration: 0.8, delay: 0.3 }}
       />
 
-      {[...Array(4)].map((_, i) => (
+      {Array.from({ length: 4 }, (_, i) => (
         <motion.div
           key={i}
           className={`absolute w-3 h-3 rounded-full ${colors.bg}`}
           initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
           animate={{
             scale: [0, 1, 0.5, 0],
-            x: Math.cos(i * (360 / 4) * (Math.PI / 180)) * (50 + Math.random() * 30),
-            y: Math.sin(i * (360 / 4) * (Math.PI / 180)) * (50 + Math.random() * 30),
+            x: Math.cos((i * 2 * Math.PI) / 4) * (50 + ((i * 17) % 31)),
+            y: Math.sin((i * 2 * Math.PI) / 4) * (50 + ((i * 17) % 31)),
             opacity: [1, 1, 0.3, 0],
           }}
           transition={{
             duration: 2.5,
             ease: 'easeOut',
-            delay: Math.random() * 0.6,
+            delay: i * 0.14,
           }}
         />
       ))}

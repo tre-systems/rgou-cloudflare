@@ -1,66 +1,56 @@
-import React from 'react';
+import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Player } from '@/lib/types';
+import type { Player } from '@/lib/types';
 
 interface GamePieceProps {
   player: Player;
   isClickable: boolean;
-  isBeingCaptured?: boolean;
   isFinishing?: boolean;
 }
 
-const GamePiece = React.memo(function GamePiece({
+const PLAYER_COLORS = {
+  player1: {
+    classes: 'bg-blue-500 border-blue-400 shadow-blue-500/50',
+    center: 'bg-blue-300',
+    glow: 'rgba(96, 165, 250, 0.9)',
+  },
+  player2: {
+    classes: 'bg-pink-500 border-pink-400 shadow-pink-500/50',
+    center: 'bg-pink-300',
+    glow: 'rgba(244, 114, 182, 0.9)',
+  },
+} as const;
+
+const GamePiece = memo(function GamePiece({
   player,
   isClickable,
-  isBeingCaptured = false,
   isFinishing = false,
 }: GamePieceProps) {
-  const isPlayer1 = player === 'player1';
-  const colors = isPlayer1
-    ? {
-        bg: 'bg-blue-500',
-        border: 'border-blue-400',
-        shadow: 'shadow-blue-500/50',
-        glow: 'shadow-blue-400',
-      }
-    : {
-        bg: 'bg-pink-500',
-        border: 'border-pink-400',
-        shadow: 'shadow-pink-500/50',
-        glow: 'shadow-pink-400',
-      };
+  const colors = PLAYER_COLORS[player];
 
   return (
     <motion.div
-      className={`w-full h-full rounded-full border-2 relative overflow-hidden ${
+      className={`relative h-full w-full overflow-hidden rounded-full border-2 ${
         isClickable ? 'cursor-pointer' : 'cursor-default'
-      } ${colors.bg} ${colors.border} ${colors.shadow}`}
+      } ${colors.classes}`}
       whileHover={isClickable ? { scale: 1.1, boxShadow: `0 0 20px ${colors.glow}` } : {}}
       whileTap={isClickable ? { scale: 0.95 } : {}}
       animate={
-        isBeingCaptured
+        isFinishing
           ? {
-              scale: [1, 1.2, 0],
-              rotate: [0, 180, 360],
-              opacity: [1, 0.8, 0],
+              scale: [1, 1.1, 1],
+              boxShadow: [
+                `0 0 10px ${colors.glow}`,
+                `0 0 20px ${colors.glow}`,
+                `0 0 10px ${colors.glow}`,
+              ],
             }
-          : isFinishing
-            ? {
-                scale: [1, 1.1, 1],
-                boxShadow: [
-                  `0 0 10px ${colors.glow}`,
-                  `0 0 20px ${colors.glow}`,
-                  `0 0 10px ${colors.glow}`,
-                ],
-              }
-            : {}
+          : {}
       }
       transition={
-        isBeingCaptured
-          ? { duration: 0.8, ease: 'easeInOut' }
-          : isFinishing
-            ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
-            : { type: 'spring', stiffness: 400, damping: 25 }
+        isFinishing
+          ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+          : { type: 'spring', stiffness: 400, damping: 25 }
       }
       data-testid={`game-piece-${player}-${isClickable ? 'clickable' : 'static'}`}
     >
@@ -88,11 +78,7 @@ const GamePiece = React.memo(function GamePiece({
       )}
 
       <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className={`w-1/3 h-1/3 rounded-full ${
-            isPlayer1 ? 'bg-blue-300' : 'bg-pink-300'
-          } shadow-inner`}
-        />
+        <div className={`h-1/3 w-1/3 rounded-full shadow-inner ${colors.center}`} />
       </div>
     </motion.div>
   );

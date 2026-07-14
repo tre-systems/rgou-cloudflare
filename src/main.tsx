@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { initializeObservability } from './lib/observability';
 import { removeLegacyPlayerIdentity } from './lib/persist-storage';
-import './app/globals.css';
+import './globals.css';
 
 initializeObservability();
 removeLegacyPlayerIdentity();

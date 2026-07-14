@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { Crown, Zap, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { getAIName, getAISubtitle } from '@/lib/utils';
+import { cn, getAIName, getAISubtitle } from '@/lib/utils';
 import type { AISource, PiecePosition, Player } from '@/lib/types';
 import GamePiece from './GamePiece';
 
@@ -80,20 +79,18 @@ export default function PlayerArea({
               {pieces.map((p, i) => {
                 const isPieceClickable = validMoves.includes(i) && player === 'player1';
                 return p.square === -1 ? (
-                  <motion.div
+                  <motion.button
                     key={i}
+                    type="button"
                     className="w-5 h-5"
                     whileHover={{ scale: 1.05 }}
-                    onClick={() => isPieceClickable && onPieceClick(i)}
+                    onClick={() => onPieceClick(i)}
+                    disabled={!isPieceClickable}
+                    aria-label={`Move ${player === 'player1' ? 'your' : 'opponent'} piece ${i + 1} from start`}
                     data-testid={`${player}-start-piece-${i}`}
                   >
-                    <GamePiece
-                      player={player}
-                      isClickable={isPieceClickable}
-                      isBeingCaptured={false}
-                      isFinishing={false}
-                    />
-                  </motion.div>
+                    <GamePiece player={player} isClickable={isPieceClickable} />
+                  </motion.button>
                 ) : (
                   <div key={i} className="w-5 h-5 opacity-20 rounded-full border border-white/20" />
                 );
@@ -104,47 +101,39 @@ export default function PlayerArea({
           <div className="rounded-md p-1">
             <p className="text-xs text-white/70 font-semibold mb-1 text-center">FINISH</p>
             <div
-              id={`${player}-finish-area`}
               className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1"
               data-testid={`${player}-finish-area`}
             >
-              {Array(7)
-                .fill(0)
-                .map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="w-5 h-5 rounded-full flex items-center justify-center relative"
-                    style={{
-                      background:
-                        i < finishedPieces.length
-                          ? 'linear-gradient(45deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))'
-                          : 'rgba(255, 255, 255, 0.05)',
-                    }}
-                    animate={{
-                      boxShadow:
-                        i < finishedPieces.length ? '0 0 10px rgba(34, 197, 94, 0.3)' : 'none',
-                    }}
-                    data-testid={
-                      i < finishedPieces.length ? `${player}-finish-piece-${i}` : undefined
-                    }
-                  >
-                    {i < finishedPieces.length && (
-                      <motion.div
-                        className="w-full h-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: i * 0.1 }}
-                      >
-                        <GamePiece
-                          player={player}
-                          isClickable={false}
-                          isBeingCaptured={false}
-                          isFinishing={true}
-                        />
-                      </motion.div>
-                    )}
-                  </motion.div>
-                ))}
+              {Array.from({ length: 7 }, (_, i) => (
+                <motion.div
+                  key={i}
+                  className="w-5 h-5 rounded-full flex items-center justify-center relative"
+                  style={{
+                    background:
+                      i < finishedPieces.length
+                        ? 'linear-gradient(45deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))'
+                        : 'rgba(255, 255, 255, 0.05)',
+                  }}
+                  animate={{
+                    boxShadow:
+                      i < finishedPieces.length ? '0 0 10px rgba(34, 197, 94, 0.3)' : 'none',
+                  }}
+                  data-testid={
+                    i < finishedPieces.length ? `${player}-finish-piece-${i}` : undefined
+                  }
+                >
+                  {i < finishedPieces.length && (
+                    <motion.div
+                      className="w-full h-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <GamePiece player={player} isClickable={false} isFinishing={true} />
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>

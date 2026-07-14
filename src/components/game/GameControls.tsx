@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX, HelpCircle, RotateCcw, Dice1 } from 'lucide-react';
 import { isDevelopment } from '@/lib/utils';
@@ -9,7 +9,7 @@ interface GameControlsProps {
   onShowHowToPlay: () => void;
   onResetGame: () => void;
   onCreateNearWinningState: () => void;
-  diceElement: React.ReactNode;
+  diceElement: ReactNode;
 }
 
 export default function GameControls({
@@ -29,20 +29,22 @@ export default function GameControls({
         {isDevelopment() && (
           <div className="flex items-center space-x-2">
             <motion.button
+              type="button"
               onClick={onResetGame}
               className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title="Reset Game"
+              aria-label="Reset game"
             >
               <RotateCcw className="w-4 h-4" />
             </motion.button>
             <motion.button
+              type="button"
               onClick={onCreateNearWinningState}
               className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title="Create Near-Winning State (Dev)"
+              aria-label="Create near-winning state"
               data-testid="create-near-winning-state"
             >
               <Dice1 className="w-4 h-4" />
@@ -52,21 +54,23 @@ export default function GameControls({
 
         <div className="flex items-center space-x-2">
           <motion.button
+            type="button"
             onClick={onShowHowToPlay}
             className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            title="How to Play"
+            aria-label="How to Play"
             data-testid="help-button"
           >
             <HelpCircle className="w-4 h-4" />
           </motion.button>
           <motion.button
+            type="button"
             onClick={onToggleSound}
             className="p-2 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            title={soundEnabled ? 'Disable Sound' : 'Enable Sound'}
+            aria-label={soundEnabled ? 'Disable sound' : 'Enable sound'}
             data-testid="sound-toggle"
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}

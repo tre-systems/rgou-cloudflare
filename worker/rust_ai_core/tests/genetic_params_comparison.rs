@@ -72,20 +72,14 @@ fn play_single_game(
             continue;
         }
 
-        // Use different parameters based on whose turn it is
         let test_params = if is_evolved_turn {
             evolved_params.clone()
         } else {
             default_params.clone()
         };
 
-        // Create a new game state with the test parameters
-        let mut test_state = GameState::with_genetic_params(test_params);
-        test_state.board = game_state.board.clone();
-        test_state.player1_pieces = game_state.player1_pieces.clone();
-        test_state.player2_pieces = game_state.player2_pieces.clone();
-        test_state.current_player = game_state.current_player;
-        test_state.dice_roll = game_state.dice_roll;
+        let mut test_state = game_state.clone();
+        test_state.genetic_params = test_params;
 
         let mut ai = AI::new();
         let start_time = Instant::now();
@@ -111,7 +105,6 @@ fn play_single_game(
         moves_played += 1;
     }
 
-    // Determine winner
     let p1_finished = game_state
         .player1_pieces
         .iter()
@@ -128,7 +121,6 @@ fn play_single_game(
     } else if p1_finished >= 7 {
         false
     } else {
-        // Game ended by move limit, evaluate final position
         let evolved_eval = game_state.evaluate();
         evolved_eval > 0
     };
@@ -146,19 +138,10 @@ fn test_genetic_params_comparison() {
     println!("🧬 Genetic Parameters Comparison Test");
     println!("{}", "=".repeat(50));
 
-    // Optimize CPU usage
     println!("🚀 Optimizing CPU usage for maximum performance...");
     optimize_cpu_usage();
 
-    // Load evolved parameters
-    let evolved_params =
-        match GeneticParams::load_from_file("../../ml/data/genetic_params/evolved.json") {
-            Ok(params) => params,
-            Err(e) => {
-                eprintln!("Failed to load evolved parameters: {}", e);
-                return;
-            }
-        };
+    let evolved_params = GeneticParams::evolved();
 
     let default_params = GeneticParams::default();
 
@@ -166,14 +149,12 @@ fn test_genetic_params_comparison() {
     println!("Evolved parameters: {:?}", evolved_params);
     println!();
 
-    // Test parameters in actual games
     let num_games = 100;
     println!("Playing {} games: Evolved vs Default parameters", num_games);
     println!("{}", "-".repeat(40));
 
     let start_time = Instant::now();
 
-    // Parallelize game execution
     let game_results: Vec<GameResult> = (0..num_games)
         .into_par_iter()
         .map(|game_num| {
@@ -186,14 +167,12 @@ fn test_genetic_params_comparison() {
 
     let total_time = start_time.elapsed();
 
-    // Aggregate results
     let evolved_wins = game_results.iter().filter(|r| r.evolved_wins).count();
     let default_wins = num_games - evolved_wins;
     let total_moves: u32 = game_results.iter().map(|r| r.moves_played).sum();
     let evolved_total_time: u64 = game_results.iter().map(|r| r.evolved_time).sum();
     let default_total_time: u64 = game_results.iter().map(|r| r.default_time).sum();
 
-    // Calculate statistics
     let evolved_win_rate = (evolved_wins as f64 / num_games as f64) * 100.0;
     let default_win_rate = (default_wins as f64 / num_games as f64) * 100.0;
     let avg_moves = total_moves as f64 / num_games as f64;
@@ -215,7 +194,6 @@ fn test_genetic_params_comparison() {
     println!("Default avg time per game: {:.1}ms", default_avg_time);
     println!("Total test time: {:.2}s", total_time.as_secs_f64());
 
-    // Performance analysis
     println!("\n🎯 Performance Analysis:");
     println!("{}", "=".repeat(25));
 
@@ -229,7 +207,6 @@ fn test_genetic_params_comparison() {
         println!("⚠️  Evolved parameters perform similarly to default");
     }
 
-    // Parameter analysis
     println!("\n🔍 Parameter Changes:");
     println!("{}", "=".repeat(20));
     println!(
@@ -252,7 +229,6 @@ fn test_genetic_params_comparison() {
     );
     println!("Other parameters: unchanged");
 
-    // Assertions for test validation
     assert!(
         evolved_wins + default_wins == num_games,
         "All games should have a winner"

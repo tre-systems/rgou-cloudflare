@@ -56,20 +56,20 @@ export default function GameStatus({
         icon: Crown,
         color: 'text-blue-400',
       };
-    } else {
-      if (aiThinking) {
-        return {
-          text: 'AI thinking...',
-          icon: Zap,
-          color: 'text-pink-400',
-        };
-      }
+    }
+
+    if (aiThinking) {
       return {
-        text: 'AI turn',
+        text: 'AI thinking...',
         icon: Zap,
         color: 'text-pink-400',
       };
     }
+    return {
+      text: 'AI turn',
+      icon: Zap,
+      color: 'text-pink-400',
+    };
   };
 
   const status = getStatusMessage();
@@ -86,6 +86,7 @@ export default function GameStatus({
         <span
           className={cn('font-bold text-lg', status.color, 'neon-text')}
           data-testid="game-status-text"
+          aria-live="polite"
         >
           {status.text}
         </span>
@@ -98,8 +99,9 @@ export default function GameStatus({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            aria-hidden="true"
           >
-            {[...Array(3)].map((_, i) => (
+            {Array.from({ length: 3 }, (_, i) => (
               <motion.div
                 key={i}
                 className="w-1.5 h-1.5 bg-pink-400 rounded-full"

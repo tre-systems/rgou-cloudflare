@@ -177,10 +177,13 @@ mod tests {
     #[test]
     fn test_save_and_load() {
         let params = GeneticParams::default();
-        let temp_path = "test_params.json";
+        let temp_path = std::env::temp_dir().join(format!(
+            "rgou-genetic-params-test-{}.json",
+            std::process::id()
+        ));
 
-        params.save_to_file(temp_path).unwrap();
-        let loaded_params = GeneticParams::load_from_file(temp_path).unwrap();
+        params.save_to_file(&temp_path).unwrap();
+        let loaded_params = GeneticParams::load_from_file(&temp_path).unwrap();
 
         assert_eq!(params.win_score, loaded_params.win_score);
         assert_eq!(
@@ -197,7 +200,6 @@ mod tests {
         assert_eq!(params.capture_bonus, loaded_params.capture_bonus);
         assert_eq!(params.center_lane_bonus, loaded_params.center_lane_bonus);
 
-        // Clean up
         let _ = fs::remove_file(temp_path);
     }
 

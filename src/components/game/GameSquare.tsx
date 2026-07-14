@@ -2,14 +2,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { cn, isDevelopment } from '@/lib/utils';
 import { ROSETTE_SQUARES } from '@/lib/types';
+import type { PiecePosition } from '@/lib/types';
 import GamePiece from './GamePiece';
 
 interface GameSquareProps {
   squareIndex: number;
-  piece: { player: 'player1' | 'player2'; square: number } | null;
+  piece: PiecePosition | null;
   pieceIndex: number;
   isClickable: boolean;
-  isFinishing: boolean;
   onPieceClick: (pieceIndex: number) => void;
 }
 
@@ -18,7 +18,6 @@ export default function GameSquare({
   piece,
   pieceIndex,
   isClickable,
-  isFinishing,
   onPieceClick,
 }: GameSquareProps) {
   const isRosette = (ROSETTE_SQUARES as readonly number[]).includes(squareIndex);
@@ -45,6 +44,17 @@ export default function GameSquare({
       data-square-id={squareIndex}
       data-testid={`square-${squareIndex}`}
       onClick={handleSquareClick}
+      onKeyDown={event => {
+        if (isClickable && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onPieceClick(pieceIndex);
+        }
+      }}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      aria-label={
+        isClickable ? `Move piece ${pieceIndex + 1} from square ${squareIndex}` : undefined
+      }
     >
       {isRosette && (
         <motion.div
@@ -70,12 +80,7 @@ export default function GameSquare({
             layoutId={`piece-${piece.player}-${pieceIndex}`}
             data-testid={`piece-${pieceIndex}`}
           >
-            <GamePiece
-              player={piece.player}
-              isClickable={isClickable}
-              isBeingCaptured={false}
-              isFinishing={isFinishing}
-            />
+            <GamePiece player={piece.player} isClickable={isClickable} />
           </motion.div>
         )}
       </AnimatePresence>

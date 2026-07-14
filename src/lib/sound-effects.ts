@@ -14,12 +14,17 @@ class SoundEffects {
     return null;
   }
 
-  private async ensureAudioContext() {
+  private async ensureAudioContext(): Promise<AudioContext | null> {
     this.audioContext ??= this.createAudioContext();
     if (!this.audioContext) return null;
 
     if (this.audioContext.state === 'suspended') {
-      await this.audioContext.resume();
+      try {
+        await this.audioContext.resume();
+      } catch (error) {
+        console.warn('Could not resume Web Audio:', error);
+        return null;
+      }
     }
 
     return this.audioContext;
@@ -30,27 +35,31 @@ class SoundEffects {
     duration: number,
     type: OscillatorType = 'sine',
     volume = 0.1
-  ) {
+  ): Promise<void> {
     if (!this.enabled) return;
 
-    const ctx = await this.ensureAudioContext();
-    if (!ctx) return;
+    try {
+      const ctx = await this.ensureAudioContext();
+      if (!ctx) return;
 
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
-    oscillator.frequency.value = frequency;
-    oscillator.type = type;
+      oscillator.frequency.value = frequency;
+      oscillator.type = type;
 
-    gainNode.gain.setValueAtTime(0, ctx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      gainNode.gain.setValueAtTime(0, ctx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + duration);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + duration);
+    } catch (error) {
+      console.warn('Could not play sound:', error);
+    }
   }
 
   private async playChord(
@@ -58,79 +67,81 @@ class SoundEffects {
     duration: number,
     type: OscillatorType = 'sine',
     volume = 0.05
-  ) {
-    frequencies.forEach(freq => this.playTone(freq, duration, type, volume));
+  ): Promise<void> {
+    await Promise.all(
+      frequencies.map(frequency => this.playTone(frequency, duration, type, volume))
+    );
   }
 
-  async diceRoll() {
+  async diceRoll(): Promise<void> {
     for (let i = 0; i < 4; i++) {
       setTimeout(() => {
-        this.playTone(200 + Math.random() * 100, 0.1, 'square', 0.05);
+        void this.playTone(200 + Math.random() * 100, 0.1, 'square', 0.05);
       }, i * 50);
     }
   }
 
-  async pieceMove() {
+  async pieceMove(): Promise<void> {
     await this.playTone(523.25, 0.2, 'sine', 0.08); // C5
   }
 
-  async pieceCapture() {
+  async pieceCapture(): Promise<void> {
     await this.playTone(220, 0.3, 'sawtooth', 0.1); // A3
-    setTimeout(() => this.playTone(174.61, 0.4, 'sawtooth', 0.08), 100); // F3
+    setTimeout(() => void this.playTone(174.61, 0.4, 'sawtooth', 0.08), 100); // F3
   }
 
-  async rosetteLanding() {
+  async rosetteLanding(): Promise<void> {
     const frequencies = [523.25, 659.25, 783.99]; // C5-E5-G5 chord
     await this.playChord(frequencies, 0.5, 'sine', 0.06);
   }
 
-  async pieceFinish() {
+  async pieceFinish(): Promise<void> {
     const melody = [523.25, 659.25, 783.99]; // C5-E5-G5 ascending
     melody.forEach((freq, i) => {
-      setTimeout(() => this.playTone(freq, 0.25, 'sine', 0.12), i * 120);
+      setTimeout(() => void this.playTone(freq, 0.25, 'sine', 0.12), i * 120);
     });
 
     setTimeout(() => {
-      this.playChord([523.25, 659.25, 783.99], 0.8, 'sine', 0.08);
+      void this.playChord([523.25, 659.25, 783.99], 0.8, 'sine', 0.08);
     }, 360);
   }
 
-  async gameWin() {
+  async gameWin(): Promise<void> {
     const melody = [523.25, 659.25, 783.99, 1046.5]; // C5-E5-G5-C6
     melody.forEach((freq, i) => {
-      setTimeout(() => this.playTone(freq, 0.3, 'sine', 0.1), i * 200);
+      setTimeout(() => void this.playTone(freq, 0.3, 'sine', 0.1), i * 200);
     });
   }
 
-  async gameLoss() {
+  async gameLoss(): Promise<void> {
     const melody = [523.25, 493.88, 440, 392]; // C5-B4-A4-G4 descending
     melody.forEach((freq, i) => {
-      setTimeout(() => this.playTone(freq, 0.4, 'sine', 0.08), i * 150);
+      setTimeout(() => void this.playTone(freq, 0.4, 'sine', 0.08), i * 150);
     });
   }
 
-  async aiThinking() {
+  async aiThinking(): Promise<void> {
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
-        this.playTone(400 + i * 50, 0.1, 'sine', 0.03);
+        void this.playTone(400 + i * 50, 0.1, 'sine', 0.03);
       }, i * 300);
     }
   }
 
-  async buttonClick() {
+  async buttonClick(): Promise<void> {
     await this.playTone(800, 0.1, 'square', 0.05);
   }
 
-  toggle() {
+  toggle(): boolean {
     this.enabled = !this.enabled;
     return this.enabled;
   }
 
-  setEnabled(enabled: boolean) {
+  setEnabled(enabled: boolean): void {
     this.enabled = enabled;
   }
 
-  get isEnabled() {
+  get isEnabled(): boolean {
     return this.enabled;
   }
 }

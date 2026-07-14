@@ -76,6 +76,34 @@ describe('AI protocol', () => {
     ).toThrow();
   });
 
+  it('rejects unknown engine move categories', () => {
+    expect(() =>
+      parseEngineAIResponseJson(
+        JSON.stringify({
+          move: 0,
+          evaluation: 0,
+          thinking: 'invalid category',
+          timings: { aiMoveCalculation: 1, totalHandlerTime: 1 },
+          diagnostics: {
+            searchDepth: 1,
+            validMoves: [0],
+            moveEvaluations: [
+              {
+                pieceIndex: 0,
+                score: 0,
+                moveType: 'teleport',
+                fromSquare: -1,
+                toSquare: 3,
+              },
+            ],
+            transpositionHits: 0,
+            nodesEvaluated: 1,
+          },
+        })
+      )
+    ).toThrow();
+  });
+
   it('validates Classic AI responses from Rust', () => {
     const response = parseEngineAIResponseJson(
       JSON.stringify({
@@ -124,9 +152,7 @@ describe('AI protocol', () => {
   });
 
   it('accepts the exact production model artifact', () => {
-    const artifact = JSON.parse(
-      readFileSync(resolve('public/ml-weights.json'), 'utf8')
-    ) as unknown;
+    const artifact = JSON.parse(readFileSync(resolve('public/ml-weights.json'), 'utf8')) as unknown;
 
     expect(MLWeightsSchema.safeParse(artifact).success).toBe(true);
   });

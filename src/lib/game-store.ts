@@ -18,6 +18,7 @@ import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
 import { gameCompletedUsage, gameStartedUsage, reportUsage, type GameUsageMode } from './usage';
 import { captureException } from './observability';
+import type { MLAIResponse } from './ai-protocol';
 
 const LATEST_VERSION = 4;
 
@@ -39,6 +40,7 @@ type GameStore = {
   lastMoveType: MoveType | null;
   lastMovePlayer: Player | null;
   usageStarted: boolean;
+  usageStartedBy: Player | null;
   usageCompleted: boolean;
   actions: {
     initialize: (fromStorage?: boolean) => void;
@@ -53,31 +55,77 @@ type GameStore = {
   };
 };
 
+type GameSession = Omit<GameStore, 'actions'>;
+
+function createGameSession(): GameSession {
+  return {
+    gameId: createId('game'),
+    gameState: { ...initializeGame(), startTime: Date.now() },
+    aiThinking: false,
+    lastAIDiagnostics: null,
+    lastAIMoveDuration: null,
+    lastMoveType: null,
+    lastMovePlayer: null,
+    usageStarted: false,
+    usageStartedBy: null,
+    usageCompleted: false,
+  };
+}
+
+function normalizeMLResponse(response: MLAIResponse): AIResponse {
+  return {
+    move: response.move,
+    evaluation: Math.round(response.evaluation * 1000),
+    thinking: response.thinking,
+    timings: response.timings,
+    diagnostics: {
+      searchDepth: 4,
+      validMoves: response.diagnostics.valid_moves,
+      moveEvaluations: response.diagnostics.move_evaluations.map(evaluation => ({
+        pieceIndex: evaluation.piece_index,
+        score: evaluation.score,
+        moveType: evaluation.move_type,
+        fromSquare: evaluation.from_square,
+        toSquare: evaluation.to_square ?? null,
+      })),
+      transpositionHits: 0,
+      nodesEvaluated: 1,
+    },
+    aiType: 'ml',
+  };
+}
+
+function fallbackAIResponse(
+  move: number,
+  duration: number,
+  validMoves: number[],
+  reason: string
+): AIResponse {
+  return {
+    move,
+    evaluation: 0,
+    thinking: `Deterministic fallback: ${reason}`,
+    timings: { aiMoveCalculation: duration, totalHandlerTime: duration },
+    diagnostics: {
+      searchDepth: 0,
+      validMoves,
+      moveEvaluations: [],
+      transpositionHits: 0,
+      nodesEvaluated: 0,
+    },
+    aiType: 'fallback',
+  };
+}
+
 export const useGameStore = create<GameStore>()(
   persist(
     immer((set, get) => ({
-      gameId: createId('game'),
-      gameState: { ...initializeGame(), startTime: Date.now() },
-      aiThinking: false,
-      lastAIDiagnostics: null,
-      lastAIMoveDuration: null,
-      lastMoveType: null,
-      lastMovePlayer: null,
-      usageStarted: false,
-      usageCompleted: false,
+      ...createGameSession(),
       actions: {
         initialize: (fromStorage = false) => {
           if (!fromStorage) {
             set(state => {
-              state.gameId = createId('game');
-              state.gameState = { ...initializeGame(), startTime: Date.now() };
-              state.aiThinking = false;
-              state.lastAIDiagnostics = null;
-              state.lastAIMoveDuration = null;
-              state.lastMoveType = null;
-              state.lastMovePlayer = null;
-              state.usageStarted = false;
-              state.usageCompleted = false;
+              Object.assign(state, createGameSession());
             });
           }
         },
@@ -145,33 +193,10 @@ export const useGameStore = create<GameStore>()(
           };
 
           try {
-            let aiResponse;
+            let aiResponse: AIResponse;
 
             if (aiSource === 'ml') {
-              const mlResponse = await mlAiService.getAIMove(gameState);
-              aiResponse = {
-                move: mlResponse.move,
-                evaluation: Math.round(mlResponse.evaluation * 1000),
-                thinking: mlResponse.thinking,
-                timings: {
-                  aiMoveCalculation: mlResponse.timings?.aiMoveCalculation || 0,
-                  totalHandlerTime: mlResponse.timings?.totalHandlerTime || 0,
-                },
-                diagnostics: {
-                  searchDepth: 4,
-                  validMoves: mlResponse.diagnostics.valid_moves,
-                  moveEvaluations: mlResponse.diagnostics.move_evaluations.map(e => ({
-                    pieceIndex: e.piece_index,
-                    score: e.score,
-                    moveType: e.move_type,
-                    fromSquare: e.from_square,
-                    toSquare: e.to_square ?? null,
-                  })),
-                  transpositionHits: 0,
-                  nodesEvaluated: 1,
-                },
-                aiType: 'ml' as const,
-              };
+              aiResponse = normalizeMLResponse(await mlAiService.getAIMove(gameState));
             } else if (aiSource === 'heuristic') {
               const heuristicResponse = await wasmAiService.getHeuristicAIMove(gameState);
               aiResponse = { ...heuristicResponse, aiType: 'heuristic' as const };
@@ -193,24 +218,16 @@ export const useGameStore = create<GameStore>()(
 
             const { move: aiMove } = aiResponse;
 
-            if (aiMove === null || aiMove === undefined || !gameState.validMoves.includes(aiMove)) {
+            if (aiMove === null || !gameState.validMoves.includes(aiMove)) {
               if (gameState.validMoves.length > 0) {
                 const fallbackMove = gameState.validMoves[0];
                 set(state => {
-                  state.lastAIDiagnostics = {
-                    move: fallbackMove,
-                    evaluation: 0,
-                    thinking: 'Deterministic fallback: AI returned an invalid move',
-                    timings: { aiMoveCalculation: duration, totalHandlerTime: duration },
-                    diagnostics: {
-                      searchDepth: 0,
-                      validMoves: gameState.validMoves,
-                      moveEvaluations: [],
-                      transpositionHits: 0,
-                      nodesEvaluated: 0,
-                    },
-                    aiType: 'fallback',
-                  };
+                  state.lastAIDiagnostics = fallbackAIResponse(
+                    fallbackMove,
+                    duration,
+                    gameState.validMoves,
+                    'AI returned an invalid move'
+                  );
                 });
                 actions.makeMove(fallbackMove);
               }
@@ -230,20 +247,12 @@ export const useGameStore = create<GameStore>()(
               console.warn('GameStore: Using deterministic fallback move:', fallbackMove);
               set(state => {
                 state.lastAIMoveDuration = duration;
-                state.lastAIDiagnostics = {
-                  move: fallbackMove,
-                  evaluation: 0,
-                  thinking: 'Deterministic fallback: AI request failed',
-                  timings: { aiMoveCalculation: duration, totalHandlerTime: duration },
-                  diagnostics: {
-                    searchDepth: 0,
-                    validMoves: gameState.validMoves,
-                    moveEvaluations: [],
-                    transpositionHits: 0,
-                    nodesEvaluated: 0,
-                  },
-                  aiType: 'fallback',
-                };
+                state.lastAIDiagnostics = fallbackAIResponse(
+                  fallbackMove,
+                  duration,
+                  gameState.validMoves,
+                  'AI request failed'
+                );
               });
               actions.makeMove(fallbackMove);
             }
@@ -257,21 +266,12 @@ export const useGameStore = create<GameStore>()(
         },
         reset: () => {
           set(state => {
-            state.gameId = createId('game');
-            state.gameState = { ...initializeGame(), startTime: Date.now() };
-            state.aiThinking = false;
-            state.lastAIDiagnostics = null;
-            state.lastAIMoveDuration = null;
-            state.lastMoveType = null;
-            state.lastMovePlayer = null;
-            state.usageStarted = false;
-            state.usageCompleted = false;
+            Object.assign(state, createGameSession());
           });
         },
         createNearWinningState: () => {
           set(state => {
-            state.gameId = createId('game');
-            state.gameState = { ...initializeGame(), startTime: Date.now() };
+            Object.assign(state, createGameSession());
             for (let i = 0; i < 6; i++) {
               state.gameState.player1Pieces[i].square = 20;
             }
@@ -284,14 +284,6 @@ export const useGameStore = create<GameStore>()(
             state.gameState.diceRoll = null;
             state.gameState.canMove = false;
             state.gameState.validMoves = [];
-
-            state.aiThinking = false;
-            state.lastAIDiagnostics = null;
-            state.lastAIMoveDuration = null;
-            state.lastMoveType = null;
-            state.lastMovePlayer = null;
-            state.usageStarted = false;
-            state.usageCompleted = false;
           });
         },
         reportGameStarted: mode => {
@@ -299,17 +291,18 @@ export const useGameStore = create<GameStore>()(
           if (usageStarted) return;
           set(state => {
             state.usageStarted = true;
+            state.usageStartedBy = gameState.currentPlayer;
           });
           reportUsage(gameStartedUsage(mode, gameState.currentPlayer));
         },
         reportGameCompleted: () => {
-          const { gameState, usageCompleted } = get();
+          const { gameState, usageCompleted, usageStartedBy } = get();
           const mode = useUIStore.getState().selectedMode;
           if (usageCompleted || gameState.gameStatus !== 'finished' || !mode) return;
           set(state => {
             state.usageCompleted = true;
           });
-          reportUsage(gameCompletedUsage(mode, gameState));
+          reportUsage(gameCompletedUsage(mode, gameState, usageStartedBy ?? undefined));
         },
       },
     })),
@@ -357,6 +350,10 @@ export const useGameStore = create<GameStore>()(
           gameId: restoreGameId(persisted.gameId),
           gameState,
           usageStarted: persisted.usageStarted === true,
+          usageStartedBy:
+            persisted.usageStartedBy === 'player1' || persisted.usageStartedBy === 'player2'
+              ? persisted.usageStartedBy
+              : null,
           usageCompleted: persisted.usageCompleted === true,
         };
       },
@@ -364,6 +361,7 @@ export const useGameStore = create<GameStore>()(
         gameId: state.gameId,
         gameState: toPersistedGameState(state.gameState),
         usageStarted: state.usageStarted,
+        usageStartedBy: state.usageStartedBy,
         usageCompleted: state.usageCompleted,
       }),
     }

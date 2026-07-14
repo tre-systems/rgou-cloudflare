@@ -14,12 +14,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match command.as_str() {
         "train" => {
-            // Full training mode
-            let num_games = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(1000);
-            let epochs = args.get(3).and_then(|s| s.parse().ok()).unwrap_or(100);
-            let learning_rate = args.get(4).and_then(|s| s.parse().ok()).unwrap_or(0.001);
-            let batch_size = args.get(5).and_then(|s| s.parse().ok()).unwrap_or(32);
-            let depth = args.get(6).and_then(|s| s.parse().ok()).unwrap_or(3);
+            let num_games = args
+                .get(2)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(1000);
+            let epochs = args
+                .get(3)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(100);
+            let learning_rate = args
+                .get(4)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(0.001);
+            let batch_size = args
+                .get(5)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(32);
+            let depth = args
+                .get(6)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(3);
             let output_file = args
                 .get(7)
                 .cloned()
@@ -72,7 +91,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         "generate_data" => {
-            // Data generation only mode (for hybrid training)
             let config_file = args
                 .get(2)
                 .ok_or("Config file required for generate_data")?;
@@ -80,7 +98,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let config_content = std::fs::read_to_string(config_file)?;
             let config: TrainingConfig = serde_json::from_str(&config_content)?;
 
-            // Ensure the output directory exists
             if let Some(output_path) = std::path::Path::new(&config.output_file).parent() {
                 std::fs::create_dir_all(output_path)?;
             }
@@ -98,7 +115,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("\n🎮 Starting game generation and data preparation...");
             let training_data = trainer.generate_training_data();
 
-            // Save training data
             println!("\n💾 Saving training data...");
             let output_data = serde_json::to_string_pretty(&training_data)?;
             std::fs::write(&config.output_file, output_data)?;
@@ -116,8 +132,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         _ => {
-            println!("Unknown command: {command}");
-            println!("Available commands: train, generate_data");
+            return Err(format!(
+                "unknown command {command}; available commands: train, generate_data"
+            )
+            .into());
         }
     }
 

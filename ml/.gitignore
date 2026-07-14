@@ -1,1 +1,5 @@
 .venv/
+data/weights/ml_ai_weights.json
+data/weights/ml_ai_weights_pytorch.json
+data/weights/ml_ai_weights_rust.json
+data/weights/test_weights.json

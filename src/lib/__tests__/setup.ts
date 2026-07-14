@@ -1,75 +1,23 @@
 import { vi } from 'vitest';
 
-global.WebAssembly = {
-  instantiate: vi.fn(),
-  instantiateStreaming: vi.fn(),
-  compile: vi.fn(),
-  validate: vi.fn(),
-  Module: class MockWasmModule {
-    constructor() {}
-    static exports = {};
-  },
-  Memory: class MockMemory {
-    constructor() {}
-    buffer = new ArrayBuffer(1024);
-  },
-  Table: class MockTable {
-    constructor() {}
-    get() {}
-    set() {}
-    grow() {}
-    length = 0;
-  },
-  Global: class MockGlobal {
-    constructor() {}
-    value = 0;
-  },
-} as any;
+function createMemoryStorage(): Storage {
+  const values = new Map<string, string>();
 
-global.Worker = class MockWorker {
-  postMessage = vi.fn();
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: ((error: ErrorEvent) => void) | null = null;
-  onmessageerror: ((event: MessageEvent) => void) | null = null;
-  terminate = vi.fn();
-  addEventListener = vi.fn();
-  removeEventListener = vi.fn();
-  dispatchEvent = vi.fn();
+  return {
+    get length() {
+      return values.size;
+    },
+    clear: () => values.clear(),
+    getItem: key => values.get(key) ?? null,
+    key: index => [...values.keys()][index] ?? null,
+    removeItem: key => void values.delete(key),
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+  };
+}
 
-  constructor() {}
-} as any;
-
-global.performance = {
-  now: vi.fn(() => Date.now()),
-  mark: vi.fn(),
-  measure: vi.fn(),
-  clearMarks: vi.fn(),
-  clearMeasures: vi.fn(),
-  getEntries: vi.fn(() => []),
-  getEntriesByName: vi.fn(() => []),
-  getEntriesByType: vi.fn(() => []),
-  timeOrigin: Date.now(),
-  toJSON: vi.fn(),
-} as any;
-
-global.localStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  key: vi.fn(),
-  length: 0,
-} as any;
-
-global.sessionStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  key: vi.fn(),
-  length: 0,
-} as any;
-
-vi.spyOn(console, 'log').mockImplementation(() => {});
-vi.spyOn(console, 'warn').mockImplementation(() => {});
-vi.spyOn(console, 'error').mockImplementation(() => {});
+vi.stubGlobal('localStorage', createMemoryStorage());
+vi.stubGlobal('sessionStorage', createMemoryStorage());
+vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+vi.spyOn(console, 'error').mockImplementation(() => undefined);

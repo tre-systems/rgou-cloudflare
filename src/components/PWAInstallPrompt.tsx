@@ -6,35 +6,28 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const DISMISSED_KEY = 'pwa-install-dismissed';
+
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
-    const checkInstalled = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
-      setIsInstalled(isStandalone || isIOSStandalone);
-    };
+    let promptTimeoutId: number | undefined;
 
-    checkInstalled();
+    const handleBeforeInstallPrompt = (event: BeforeInstallPromptEvent) => {
+      event.preventDefault();
+      setDeferredPrompt(event);
 
-    let promptTimeoutId: ReturnType<typeof setTimeout>;
-
-    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-
-      promptTimeoutId = setTimeout(() => {
-        if (!localStorage.getItem('pwa-install-dismissed')) {
+      window.clearTimeout(promptTimeoutId);
+      promptTimeoutId = window.setTimeout(() => {
+        if (!localStorage.getItem(DISMISSED_KEY)) {
           setShowPrompt(true);
         }
       }, 5000);
     };
 
     const handleAppInstalled = () => {
-      setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
     };
@@ -45,7 +38,7 @@ export default function PWAInstallPrompt() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
       window.removeEventListener('appinstalled', handleAppInstalled);
-      clearTimeout(promptTimeoutId);
+      window.clearTimeout(promptTimeoutId);
     };
   }, []);
 
@@ -65,10 +58,10 @@ export default function PWAInstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    localStorage.setItem(DISMISSED_KEY, 'true');
   };
 
-  if (isInstalled || !showPrompt || !deferredPrompt) {
+  if (!showPrompt || !deferredPrompt) {
     return null;
   }
 
@@ -79,19 +72,21 @@ export default function PWAInstallPrompt() {
           <div className="flex-1">
             <div className="flex items-center space-x-2 mb-2">
               <Download className="h-5 w-5 text-blue-400" />
-              <h3 className="text-sm font-semibold text-white">Install rgou</h3>
+              <h3 className="text-sm font-semibold text-white">Install Game of Ur</h3>
             </div>
             <p className="text-xs text-slate-300 mb-3">
               Add to your home screen for easy access and offline play!
             </p>
             <div className="flex space-x-2">
               <button
+                type="button"
                 onClick={handleInstallClick}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-2 px-3 rounded transition-colors duration-200"
               >
                 Install
               </button>
               <button
+                type="button"
                 onClick={handleDismiss}
                 className="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium py-2 px-3 rounded transition-colors duration-200"
               >
@@ -100,10 +95,12 @@ export default function PWAInstallPrompt() {
             </div>
           </div>
           <button
+            type="button"
             onClick={handleDismiss}
             className="text-slate-400 hover:text-slate-300 transition-colors"
+            aria-label="Dismiss install prompt"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
