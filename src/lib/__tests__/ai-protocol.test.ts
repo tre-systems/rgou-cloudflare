@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   AIPositionSchema,
   AIWorkerRequestSchema,
@@ -119,6 +121,14 @@ describe('AI protocol', () => {
         },
       }).success
     ).toBe(false);
+  });
+
+  it('accepts the exact production model artifact', () => {
+    const artifact = JSON.parse(
+      readFileSync(resolve('public/ml-weights.json'), 'utf8')
+    ) as unknown;
+
+    expect(MLWeightsSchema.safeParse(artifact).success).toBe(true);
   });
 
   it('creates the narrow position contract without board or history data', () => {
