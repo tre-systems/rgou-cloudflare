@@ -1,7 +1,7 @@
 {
   "name": "rgou-cloudflare",
   "version": "1.0.0",
-  "description": "Royal Game of Ur - Ancient Mesopotamian board game with AI opponent",
+  "description": "Offline-first Royal Game of Ur with Rust/WebAssembly AI opponents on Cloudflare Workers",
   "license": "MIT",
   "private": true,
   "type": "module",
