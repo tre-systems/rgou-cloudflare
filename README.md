@@ -3,13 +3,13 @@
 [![CI/CD](https://github.com/tre-systems/rgou-cloudflare/actions/workflows/deploy.yml/badge.svg)](https://github.com/tre-systems/rgou-cloudflare/actions/workflows/deploy.yml)
 
 <div align="center">
-  <img src="docs/screenshot.png" alt="rgou Screenshot" width="408" />
+  <img src="docs/screenshot.png" alt="Royal Game of Ur AI match in progress" width="408" />
   <br />
   <a href='https://ko-fi.com/N4N31DPNUS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
   <hr />
 </div>
 
-A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with dual AI opponents, offline play, and animations. Built with Vite, React, TypeScript, Rust, and WebAssembly.
+An offline-first implementation of the ancient Royal Game of Ur (c. 2500 BCE) with Classic and machine-learning opponents. The React interface runs both Rust/WebAssembly AIs locally in Web Workers and deploys as a Cloudflare Worker with Static Assets.
 
 ## Play Now
 
@@ -17,7 +17,8 @@ A modern web implementation of the ancient Royal Game of Ur (c. 2500 BCE) with d
 
 ## Features
 
-- **Dual AI**: classic expectiminimax and a self-trained neural network, both running locally via WebAssembly
+- **Dual AI**: classic expectiminimax and a self-trained neural network, both running locally through Rust and WebAssembly
+- **Non-blocking play**: both AI engines run in Web Workers, keeping search and inference off the UI thread
 - **Offline-first**: a PWA that is fully playable without a connection
 - **Responsive UI**: animations and sound effects on desktop and mobile
 - **Private by design**: win/loss statistics stay on the device; anonymous aggregate game lifecycle counts are sent to Cloudflare Analytics Engine when online

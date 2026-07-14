@@ -1,7 +1,7 @@
 {
   "name": "Royal Game of Ur",
   "short_name": "Game of Ur",
-  "description": "Play the ancient Mesopotamian board game dating back 4,500 years. Race your pieces around the board and challenge an AI opponent in this historic strategy game.",
+  "description": "Play the ancient Royal Game of Ur offline against Classic and machine-learning AI opponents running locally in your browser.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
