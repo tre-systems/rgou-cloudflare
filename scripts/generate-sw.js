@@ -4,11 +4,31 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-export function createServiceWorkerSource(releaseId) {
-  const cacheVersion = `${releaseId}-v1.1.0`;
+export function findBuildAssets(assetDir) {
+  if (!assetDir || !fs.existsSync(assetDir)) return [];
+
+  const paths = [];
+  const visit = directory => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        visit(entryPath);
+      } else if (!entry.name.endsWith('.map')) {
+        paths.push(`/assets/${path.relative(assetDir, entryPath).split(path.sep).join('/')}`);
+      }
+    }
+  };
+
+  visit(assetDir);
+  return paths.sort();
+}
+
+export function createServiceWorkerSource(releaseId, buildAssets = []) {
+  const cacheVersion = `${releaseId}-v1.2.0`;
   return `const CACHE_VERSION = '${cacheVersion}';
 const CACHE_NAME = \`royal-game-of-ur-\${CACHE_VERSION}\`;
 const OFFLINE_URL = '/offline';
+const BUILD_ASSETS = ${JSON.stringify(buildAssets, null, 2)};
 
 const REQUIRED_ASSETS = [
   '/',
@@ -36,7 +56,7 @@ self.addEventListener('install', event => {
         html.matchAll(/(?:src|href)=["'](\\/assets\\/[^"']+)["']/g),
         match => match[1]
       );
-      await cache.addAll([...new Set(shellAssets)]);
+      await cache.addAll([...new Set([...shellAssets, ...BUILD_ASSETS])]);
 
       const results = await Promise.allSettled(
         OPTIONAL_ASSETS.map(asset => cache.add(asset))
@@ -142,15 +162,25 @@ self.addEventListener('message', event => {
 export function generateServiceWorker({
   releaseId = process.env.GITHUB_SHA?.slice(0, 12) || `local-${Date.now()}`,
   publicDir = path.join(process.cwd(), 'public'),
+  assetDir,
 } = {}) {
-  const cacheVersion = `${releaseId}-v1.1.0`;
+  const cacheVersion = `${releaseId}-v1.2.0`;
   const swPath = path.join(publicDir, 'sw.js');
+  const buildAssets = findBuildAssets(assetDir);
 
   console.log('Generating service worker with cache version:', cacheVersion);
-  fs.writeFileSync(swPath, createServiceWorkerSource(releaseId));
+  fs.writeFileSync(swPath, createServiceWorkerSource(releaseId, buildAssets));
   console.log('Service worker generated successfully');
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  generateServiceWorker();
+  const built = process.argv.includes('--built');
+  generateServiceWorker(
+    built
+      ? {
+          publicDir: path.join(process.cwd(), 'out/client'),
+          assetDir: path.join(process.cwd(), 'out/client/assets'),
+        }
+      : undefined
+  );
 }

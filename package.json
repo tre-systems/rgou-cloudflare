@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run build:wasm-assets && npm run generate:sw && vite",
-    "build": "rm -rf out && npm run generate:sw && npm run build:wasm-assets && npm run type-check && vite build",
+    "build": "rm -rf out && npm run generate:sw && npm run build:wasm-assets && npm run type-check && vite build && node scripts/generate-sw.js --built",
     "start": "vite preview",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy --config out/rgou_main/wrangler.json",
