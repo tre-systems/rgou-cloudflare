@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Crown, Zap, Sparkles } from 'lucide-react';
+import { CircleUserRound, Cpu } from 'lucide-react';
 import { cn, getAIName, getAISubtitle } from '@/lib/utils';
 import type { AISource, PiecePosition, Player } from '@/lib/types';
 import GamePiece from './GamePiece';
@@ -30,51 +30,57 @@ export default function PlayerArea({
   return (
     <motion.div
       className={cn(
-        'glass rounded-lg p-3 relative overflow-hidden',
-        isCurrentPlayer && 'ring-2 ring-white/30'
+        'surface-panel relative overflow-hidden rounded-xl p-3.5',
+        isCurrentPlayer && 'player-area-current'
       )}
-      animate={{
-        boxShadow: isCurrentPlayer
-          ? '0 0 20px rgba(99, 102, 241, 0.2)'
-          : '0 0 8px rgba(0, 0, 0, 0.1)',
-      }}
-      transition={{ duration: 0.5 }}
+      layout
+      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
     >
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
           {isAI ? (
-            <Zap className="w-4 h-4 text-pink-400" />
+            <Cpu className="h-4 w-4 shrink-0 text-[#dfa18c]" />
           ) : (
-            <Crown className="w-4 h-4 text-blue-400" />
+            <CircleUserRound className="h-4 w-4 shrink-0 text-[#a7cad7]" />
           )}
-          <h3
-            className={cn(
-              'font-bold text-base neon-text',
-              isAI ? 'text-pink-400' : 'text-blue-400',
-              isCurrentPlayer && 'animate-pulse'
+          <div className="flex min-w-0 items-baseline gap-2">
+            <h3
+              className={cn(
+                'truncate text-sm font-semibold',
+                isAI ? 'text-[#dfa18c]' : 'text-[#a7cad7]'
+              )}
+            >
+              {isAI ? getAIName(aiType) : 'You'}
+            </h3>
+            {isAI && (
+              <span className="hidden truncate text-[11px] text-[#8e9184] min-[380px]:inline">
+                {getAISubtitle(aiType)}
+              </span>
             )}
-          >
-            {isAI ? getAIName(aiType) : 'You'}
-          </h3>
+          </div>
         </div>
-        {isAI && <div className="text-xs text-gray-400 -mt-1 mb-1">{getAISubtitle(aiType)}</div>}
-
-        <div className="flex items-center space-x-1">
-          <Sparkles className="w-3 h-3 text-amber-400" />
-          <span className="text-amber-400 font-bold text-sm">{finishedPieces.length}/7</span>
+        <div className="flex shrink-0 items-center gap-2">
+          {isCurrentPlayer && (
+            <span className="rounded-full border border-[#6d705f] bg-[#303229] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#e2ca91]">
+              Turn
+            </span>
+          )}
+          <span className="font-mono text-xs text-[#c7a65d]">{finishedPieces.length}/7 home</span>
         </div>
       </div>
 
-      <div className="glass-dark rounded-lg p-2">
+      <div className="surface-inset rounded-lg p-2">
         <div className="grid grid-cols-2 gap-3">
           <div
             className={cn(
-              'rounded-md p-1 transition-all duration-300',
-              isStartMoveValid && 'ring-2 ring-green-400 animate-pulse'
+              'rounded-md border border-transparent p-1 transition-colors duration-200',
+              isStartMoveValid && 'start-area-valid'
             )}
             data-testid={`${player}-start-area`}
           >
-            <p className={cn('text-xs text-white/70 font-semibold mb-1 text-center')}>START</p>
+            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8e9184]">
+              Start
+            </p>
             <div className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1">
               {pieces.map((p, i) => {
                 const isPieceClickable = validMoves.includes(i) && player === 'player1';
@@ -92,14 +98,19 @@ export default function PlayerArea({
                     <GamePiece player={player} isClickable={isPieceClickable} />
                   </motion.button>
                 ) : (
-                  <div key={i} className="w-5 h-5 opacity-20 rounded-full border border-white/20" />
+                  <div
+                    key={i}
+                    className="h-5 w-5 rounded-full border border-[#45483e] opacity-40"
+                  />
                 );
               })}
             </div>
           </div>
 
           <div className="rounded-md p-1">
-            <p className="text-xs text-white/70 font-semibold mb-1 text-center">FINISH</p>
+            <p className="mb-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8e9184]">
+              Finish
+            </p>
             <div
               className="flex flex-nowrap gap-0.5 justify-center overflow-x-auto py-1"
               data-testid={`${player}-finish-area`}
@@ -108,16 +119,7 @@ export default function PlayerArea({
                 <motion.div
                   key={i}
                   className="w-5 h-5 rounded-full flex items-center justify-center relative"
-                  style={{
-                    background:
-                      i < finishedPieces.length
-                        ? 'linear-gradient(45deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))'
-                        : 'rgba(255, 255, 255, 0.05)',
-                  }}
-                  animate={{
-                    boxShadow:
-                      i < finishedPieces.length ? '0 0 10px rgba(34, 197, 94, 0.3)' : 'none',
-                  }}
+                  style={{ background: i < finishedPieces.length ? '#34372f' : '#242620' }}
                   data-testid={
                     i < finishedPieces.length ? `${player}-finish-piece-${i}` : undefined
                   }
@@ -127,7 +129,7 @@ export default function PlayerArea({
                       className="w-full h-full"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ delay: i * 0.1 }}
+                      transition={{ duration: 0.25, delay: i * 0.04 }}
                     >
                       <GamePiece player={player} isClickable={false} isFinishing={true} />
                     </motion.div>
@@ -138,14 +140,6 @@ export default function PlayerArea({
           </div>
         </div>
       </div>
-
-      {isCurrentPlayer && (
-        <motion.div
-          className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full"
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ repeat: Infinity, duration: 1 }}
-        />
-      )}
     </motion.div>
   );
 }

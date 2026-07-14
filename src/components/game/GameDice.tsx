@@ -7,8 +7,7 @@ interface GameDiceProps {
 }
 
 const EMPTY_PATTERN = [false, false, false, false];
-const PIP_COLOR = '#FFD600';
-const PIP_GLOW = '#FFF200';
+const PIP_COLOR = '#eee7d8';
 const PIP_SIZE = 7;
 const FACE_SIZE = 14;
 
@@ -84,10 +83,10 @@ export default function GameDice({ gameState }: GameDiceProps) {
 
   return (
     <motion.div
-      className="relative flex h-10 min-h-[40px] w-24 min-w-[96px] items-center overflow-visible rounded-xl border border-amber-200/30 bg-black/30"
+      className="surface-inset relative flex h-10 min-h-[40px] w-24 min-w-[96px] items-center overflow-visible rounded-lg"
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 34 }}
       data-testid="dice-display"
       role="img"
       aria-label={ariaLabel}
@@ -102,15 +101,13 @@ export default function GameDice({ gameState }: GameDiceProps) {
             className="overflow-visible"
             animate={
               rolling
-                ? { scale: [1, 1.25, 1], filter: `drop-shadow(0 0 3px ${PIP_GLOW})` }
+                ? { scale: [1, 1.18, 1], opacity: [0.5, 1, 0.5] }
                 : isMarked
                   ? {
-                      scale: [1, burst ? 1.5 : 1, 1],
-                      filter: burst
-                        ? `drop-shadow(0 0 6px ${PIP_GLOW})`
-                        : `drop-shadow(0 0 3px ${PIP_COLOR})`,
+                      scale: [1, burst ? 1.3 : 1, 1],
+                      opacity: 1,
                     }
-                  : { scale: 1, filter: 'none' }
+                  : { scale: 1, opacity: 0.16 }
             }
             transition={{
               duration: rolling ? 0.4 : burst ? 0.35 : 0.2,
@@ -119,24 +116,17 @@ export default function GameDice({ gameState }: GameDiceProps) {
             aria-hidden="true"
           >
             {isMarked && (
-              <circle
-                cx={FACE_SIZE / 2}
-                cy={FACE_SIZE / 2}
-                r={PIP_SIZE / 2}
-                fill={PIP_COLOR}
-                style={{ filter: `drop-shadow(0 0 2px ${PIP_GLOW})` }}
-              />
+              <circle cx={FACE_SIZE / 2} cy={FACE_SIZE / 2} r={PIP_SIZE / 2} fill={PIP_COLOR} />
             )}
           </motion.svg>
         ))}
 
         <motion.span
-          className="w-4 select-none text-center text-base font-bold leading-none tracking-wider text-yellow-400 [text-shadow:0_0_10px_#FFD600,0_0_2px_#fff]"
+          className="w-4 select-none text-center font-mono text-sm font-semibold leading-none text-[#e2ca91]"
           animate={
             numberPulse
               ? {
                   scale: [1, 1.3, 1],
-                  textShadow: '0 0 24px #FFD600, 0 0 2px #fff',
                 }
               : { scale: 1 }
           }
@@ -150,20 +140,12 @@ export default function GameDice({ gameState }: GameDiceProps) {
       <AnimatePresence>
         {burst && (
           <motion.div
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c7a65d]"
             initial={{ opacity: 0.7, scale: 0.7 }}
-            animate={{ opacity: 0, scale: 2.2 }}
+            animate={{ opacity: 0, scale: 1.8 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
-          >
-            {Array.from({ length: 8 }, (_, index) => (
-              <span
-                key={index}
-                className="absolute h-1.5 w-1.5 rounded-full bg-[#FFD600] shadow-[0_0_12px_4px_#FFF200]"
-                style={{ transform: `rotate(${index * 45}deg) translateY(-18px)` }}
-              />
-            ))}
-          </motion.div>
+          ></motion.div>
         )}
       </AnimatePresence>
     </motion.div>

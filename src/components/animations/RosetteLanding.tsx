@@ -9,116 +9,30 @@ interface RosetteLandingProps {
 export default function RosetteLanding({ position, onComplete }: RosetteLandingProps) {
   return (
     <motion.div
-      className="fixed pointer-events-none z-50"
+      className="pointer-events-none fixed z-50"
       style={{ left: position.x, top: position.y }}
       initial={{ opacity: 1 }}
       animate={{ opacity: 0 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 3 }}
+      transition={{ duration: 1.4, ease: 'easeOut' }}
       onAnimationComplete={onComplete}
+      aria-hidden="true"
     >
       <motion.div
-        className="absolute -translate-x-1/2 -translate-y-10 text-amber-400 font-bold text-lg drop-shadow-lg"
-        initial={{ scale: 0, y: 0 }}
-        animate={{
-          scale: [0, 1.2, 1, 0],
-          y: [0, -15, -20, -30],
-        }}
-        transition={{ duration: 2.2, ease: 'easeOut' }}
+        className="absolute -translate-x-1/2 -translate-y-11 whitespace-nowrap rounded-full border border-[#c7a65d]/60 bg-[#1d1f1b] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#e2ca91]"
+        initial={{ y: 4, opacity: 0, scale: 0.94 }}
+        animate={{ y: -8, opacity: [0, 1, 1, 0], scale: 1 }}
+        transition={{ duration: 1.25, ease: 'easeOut' }}
       >
-        ROSETTE!
+        Extra turn
       </motion.div>
-
       <motion.div
-        className="absolute -translate-x-1/2 -translate-y-4 text-amber-300 font-semibold text-sm drop-shadow-lg"
-        initial={{ scale: 0, y: 0 }}
-        animate={{
-          scale: [0, 1, 0.9, 0],
-          y: [0, -10, -15, -25],
-        }}
-        transition={{ duration: 2.2, ease: 'easeOut', delay: 0.3 }}
+        className="absolute -translate-x-1/2 -translate-y-1/2 text-[#c7a65d]"
+        initial={{ scale: 0.5, rotate: -20, opacity: 0 }}
+        animate={{ scale: [0.5, 1.25, 1], rotate: 0, opacity: [0, 1, 0] }}
+        transition={{ duration: 0.9, ease: 'easeOut' }}
       >
-        Extra Turn!
+        <Star className="h-7 w-7" strokeWidth={1.5} />
       </motion.div>
-
-      <motion.div
-        className="absolute -translate-x-4 -translate-y-4"
-        initial={{ scale: 0, rotate: 0 }}
-        animate={{
-          scale: [0, 1.5, 1.2, 0],
-          rotate: [0, 720],
-        }}
-        transition={{ duration: 2.5, ease: 'easeOut' }}
-      >
-        <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
-      </motion.div>
-
-      <motion.div
-        className="absolute w-16 h-16 -translate-x-8 -translate-y-8 border-2 border-amber-400 rounded-full"
-        initial={{ scale: 0, opacity: 1 }}
-        animate={{
-          scale: [0, 1, 1.5],
-          opacity: [1, 0.6, 0],
-        }}
-        transition={{ duration: 2, ease: 'easeOut' }}
-      />
-
-      <motion.div
-        className="absolute w-12 h-12 -translate-x-6 -translate-y-6 border-2 border-yellow-300 rounded-full"
-        initial={{ scale: 0, opacity: 1 }}
-        animate={{
-          scale: [0, 1.2, 2],
-          opacity: [1, 0.7, 0],
-        }}
-        transition={{ duration: 1.8, ease: 'easeOut', delay: 0.2 }}
-      />
-
-      {Array.from({ length: 16 }, (_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full"
-          initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-          animate={{
-            scale: [0, 1, 0.5, 0],
-            x: Math.cos((i * 2 * Math.PI) / 16) * (25 + ((i * 7) % 16)),
-            y: Math.sin((i * 2 * Math.PI) / 16) * (25 + ((i * 7) % 16)),
-            opacity: [1, 1, 0.6, 0],
-          }}
-          transition={{
-            duration: 1.8,
-            ease: 'easeOut',
-            delay: ((i * 11) % 16) / 32,
-          }}
-        />
-      ))}
-
-      <motion.div
-        className="absolute w-20 h-20 -translate-x-10 -translate-y-10 bg-amber-400 rounded-full opacity-20"
-        initial={{ scale: 0 }}
-        animate={{
-          scale: [0, 1, 1.5, 0],
-        }}
-        transition={{ duration: 2, ease: 'easeOut' }}
-      />
-
-      {Array.from({ length: 6 }, (_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-2 h-2 bg-yellow-300 rounded-full"
-          initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-          animate={{
-            scale: [0, 1, 0.5, 0],
-            x: Math.cos((i * 2 * Math.PI) / 6) * (40 + ((i * 13) % 21)),
-            y: Math.sin((i * 2 * Math.PI) / 6) * (40 + ((i * 13) % 21)),
-            opacity: [1, 1, 0.4, 0],
-          }}
-          transition={{
-            duration: 2.2,
-            ease: 'easeOut',
-            delay: ((i * 3) % 6) * 0.13,
-          }}
-        />
-      ))}
     </motion.div>
   );
 }

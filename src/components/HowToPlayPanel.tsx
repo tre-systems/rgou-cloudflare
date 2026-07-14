@@ -11,18 +11,24 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
   useEffect(() => {
     if (!isOpen) return;
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [isOpen, onClose]);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0e0f0d]/85 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -30,23 +36,24 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
           data-testid="help-panel"
         >
           <motion.div
-            className="glass mystical-glow rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="surface-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl p-5 sm:p-7"
+            initial={{ scale: 0.98, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            exit={{ scale: 0.98, opacity: 0, y: 8 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             onClick={e => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="how-to-play-title"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 id="how-to-play-title" className="text-xl font-bold text-white neon-text">
+            <div className="mb-7 flex items-center justify-between border-b border-[#45483e] pb-5">
+              <h2 id="how-to-play-title" className="display-title text-3xl text-[#eee7d8]">
                 How to Play
               </h2>
               <motion.button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 glass-dark rounded-lg text-white/70 hover:text-white transition-colors"
+                className="icon-button"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label="Close how to play"
@@ -56,10 +63,10 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
               </motion.button>
             </div>
 
-            <div className="space-y-6 text-white/90">
+            <div className="space-y-7 text-[#c9c5b9]">
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <Crown className="w-5 h-5 mr-2 text-amber-400" />
+                <h3 className="mb-3 flex items-center text-base font-semibold text-[#eee7d8]">
+                  <Crown className="mr-2 h-4 w-4 text-[#c7a65d]" />
                   Objective
                 </h3>
                 <p className="text-sm leading-relaxed">
@@ -69,8 +76,8 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <Dice6 className="w-5 h-5 mr-2 text-blue-400" />
+                <h3 className="mb-3 flex items-center text-base font-semibold text-[#eee7d8]">
+                  <Dice6 className="mr-2 h-4 w-4 text-[#a7cad7]" />
                   Rolling Dice
                 </h3>
                 <p className="text-sm leading-relaxed mb-2">
@@ -79,37 +86,37 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
                   your move:
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="glass-dark p-2 rounded">0 corners = 0 moves</div>
-                  <div className="glass-dark p-2 rounded">1 corner = 1 move</div>
-                  <div className="glass-dark p-2 rounded">2 corners = 2 moves</div>
-                  <div className="glass-dark p-2 rounded">3 corners = 3 moves</div>
-                  <div className="glass-dark p-2 rounded">4 corners = 4 moves</div>
+                  {Array.from({ length: 5 }, (_, roll) => (
+                    <div key={roll} className="surface-inset rounded-md p-2.5">
+                      {roll} marked = {roll} {roll === 1 ? 'space' : 'spaces'}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <ArrowRight className="w-5 h-5 mr-2 text-green-400" />
+                <h3 className="mb-3 flex items-center text-base font-semibold text-[#eee7d8]">
+                  <ArrowRight className="mr-2 h-4 w-4 text-[#a7cad7]" />
                   Movement
                 </h3>
                 <ul className="text-sm space-y-2">
                   <li className="flex items-start">
                     <span
-                      className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"
+                      className="mt-2 mr-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#c7a65d]"
                       aria-hidden="true"
                     />
                     Move pieces along your designated track from start to finish
                   </li>
                   <li className="flex items-start">
                     <span
-                      className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"
+                      className="mt-2 mr-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#c7a65d]"
                       aria-hidden="true"
                     />
                     You must move a piece if possible, even if it&apos;s not advantageous
                   </li>
                   <li className="flex items-start">
                     <span
-                      className="w-2 h-2 bg-green-400 rounded-full mt-2 mr-2 flex-shrink-0"
+                      className="mt-2 mr-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#c7a65d]"
                       aria-hidden="true"
                     />
                     If no moves are possible, your turn is skipped
@@ -118,8 +125,8 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <Zap className="w-5 h-5 mr-2 text-red-400" />
+                <h3 className="mb-3 flex items-center text-base font-semibold text-[#eee7d8]">
+                  <Zap className="mr-2 h-4 w-4 text-[#dfa18c]" />
                   Combat
                 </h3>
                 <p className="text-sm leading-relaxed">
@@ -129,8 +136,8 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <Star className="w-5 h-5 mr-2 text-amber-400" />
+                <h3 className="mb-3 flex items-center text-base font-semibold text-[#eee7d8]">
+                  <Star className="mr-2 h-4 w-4 text-[#c7a65d]" />
                   Rosettes
                 </h3>
                 <p className="text-sm leading-relaxed">
@@ -140,8 +147,8 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                  <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
+                <h3 className="mb-3 flex items-center text-base font-semibold text-[#eee7d8]">
+                  <Trophy className="mr-2 h-4 w-4 text-[#c7a65d]" />
                   Winning
                 </h3>
                 <p className="text-sm leading-relaxed">
@@ -150,11 +157,10 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-white/10">
-                <p className="text-xs text-white/60 text-center">
-                  The Royal Game of Ur dates back to 2600-2400 BCE and was discovered in the Royal
-                  Cemetery at Ur. The rules were deciphered from a cuneiform tablet by Irving Finkel
-                  at the British Museum.
+              <div className="border-t border-[#45483e] pt-5">
+                <p className="text-center text-xs leading-5 text-[#8e9184]">
+                  Boards from the Royal Cemetery at Ur date to the early third millennium BCE.
+                  Irving Finkel decoded a later cuneiform tablet describing the game.
                 </p>
               </div>
 
@@ -162,7 +168,7 @@ export default function HowToPlayPanel({ isOpen, onClose }: HowToPlayPanelProps)
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="rounded-lg border border-[#c7a65d] bg-[#c7a65d] px-7 py-2.5 text-sm font-semibold text-[#191a17] transition-colors hover:border-[#e2ca91] hover:bg-[#e2ca91]"
                   data-testid="help-close"
                 >
                   Close

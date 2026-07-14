@@ -1,14 +1,14 @@
 import type { ElementType } from 'react';
 import { motion } from 'framer-motion';
+import { ArrowUpRight } from 'lucide-react';
 
 interface ModeSelectionCardProps {
   icon: ElementType;
   title: string;
   description: string;
-  subtitle?: string;
+  subtitle: string;
+  index: string;
   onClick: () => void;
-  colorClass: string;
-  borderColorClass: string;
   'data-testid'?: string;
 }
 
@@ -17,33 +17,38 @@ export default function ModeSelectionCard({
   title,
   description,
   subtitle,
+  index,
   onClick,
-  colorClass,
-  borderColorClass,
   'data-testid': dataTestId,
 }: ModeSelectionCardProps) {
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      className={`
-        w-full p-6 rounded-xl border-2 text-left transition-all duration-300
-        bg-gray-800/50 hover:bg-gray-700/50 focus:ring-4 focus:outline-none
-        ${borderColorClass}
-      `}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
+      className="group flex h-full w-full flex-col rounded-xl border border-[#45483e] bg-[#1b1d19] p-5 text-left transition-colors duration-200 hover:border-[#777967] hover:bg-[#292c25] sm:p-6"
+      whileHover={{ y: -3 }}
+      whileTap={{ y: 0 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+      aria-label={title}
       data-testid={dataTestId}
     >
-      <div className="flex items-center space-x-4">
-        <div className={`p-3 rounded-full bg-gray-900/50 ${colorClass}`}>
-          <Icon className="w-6 h-6" />
+      <div className="mb-8 flex items-start justify-between">
+        <span className="font-mono text-[11px] tracking-[0.18em] text-[#777a6d]" aria-hidden="true">
+          {index}
+        </span>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#45483e] text-[#c7a65d] transition-colors group-hover:border-[#c7a65d]/60 group-hover:text-[#e2ca91]">
+          <Icon className="h-4.5 w-4.5" aria-hidden="true" />
         </div>
-        <div>
-          <h3 className={`text-lg font-bold ${colorClass}`}>{title}</h3>
-          {subtitle && <div className="text-xs text-gray-400 mt-0.5">{subtitle}</div>}
-          <p className="text-sm text-gray-300 mt-1">{description}</p>
+      </div>
+      <div className="mt-auto">
+        <div className="mb-2 flex items-center justify-between gap-4">
+          <h3 className="text-lg font-semibold tracking-tight text-[#eee7d8]">{title}</h3>
+          <ArrowUpRight className="h-4 w-4 text-[#777a6d] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#e2ca91]" />
         </div>
+        <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#8e9184]">
+          {subtitle}
+        </div>
+        <p className="mt-3 text-sm leading-6 text-[#bdb9ad]">{description}</p>
       </div>
     </motion.button>
   );

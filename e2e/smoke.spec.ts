@@ -108,6 +108,13 @@ test.describe('Game Interactions', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('help-panel')).not.toBeVisible();
   });
+
+  test('can return to opponent selection', async ({ page }) => {
+    await page.getByTestId('change-opponent').click();
+
+    await expect(page.getByTestId('ai-model-selection')).toBeVisible();
+    await expect(page.getByTestId('game-board')).not.toBeVisible();
+  });
 });
 
 test.describe('Game Completion and Usage Reporting', () => {
@@ -197,5 +204,8 @@ test.describe('Mobile Responsiveness', () => {
     await expect(page.getByTestId('help-button')).toBeVisible();
 
     await expect(page.getByTestId('dice-display')).toHaveAttribute('aria-label', 'Dice roll: 1');
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    ).toBe(true);
   });
 });

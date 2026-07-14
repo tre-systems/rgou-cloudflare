@@ -31,14 +31,14 @@ export default function NetworkStatus() {
 
   return (
     <div
-      className="fixed left-4 top-4 z-50 flex items-center justify-center rounded-full bg-white/10 p-2 shadow-lg backdrop-blur-sm transition-all duration-300"
+      className="surface-panel fixed left-4 top-4 z-50 flex items-center justify-center rounded-full p-2 transition-all duration-300"
       role="status"
       aria-live="polite"
     >
       {isOnline ? (
-        <Wifi className="h-5 w-5 text-green-400" aria-hidden="true" />
+        <Wifi className="h-5 w-5 text-[#a7cad7]" aria-hidden="true" />
       ) : (
-        <WifiOff className="h-5 w-5 text-red-400" aria-hidden="true" />
+        <WifiOff className="h-5 w-5 text-[#dfa18c]" aria-hidden="true" />
       )}
       <span className="sr-only">{isOnline ? 'Back online' : 'You are offline'}</span>
     </div>

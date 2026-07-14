@@ -32,15 +32,12 @@ export default function GameSquare({
     <motion.div
       className={cn(
         'aspect-square relative flex items-center justify-center overflow-hidden',
-        'board-square rounded-lg',
-        isRosette && 'rosette-glow',
+        'board-square',
+        isRosette && 'rosette-square',
         isClickable && 'clickable-square cursor-pointer'
       )}
-      whileHover={{
-        scale: 1.02,
-        rotateY: isRosette ? 5 : 0,
-      }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      whileTap={isClickable ? { scale: 0.96 } : undefined}
+      transition={{ type: 'spring', stiffness: 500, damping: 34 }}
       data-square-id={squareIndex}
       data-testid={`square-${squareIndex}`}
       onClick={handleSquareClick}
@@ -57,13 +54,9 @@ export default function GameSquare({
       }
     >
       {isRosette && (
-        <motion.div
-          className="absolute inset-0 flex items-center justify-center"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-        >
-          <Star className="w-6 h-6 text-amber-400 drop-shadow-lg" />
-        </motion.div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Star className="h-5 w-5 text-[#c7a65d]" strokeWidth={1.5} />
+        </div>
       )}
 
       {isDevelopment() && (
@@ -84,16 +77,6 @@ export default function GameSquare({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {isClickable && (
-        <motion.div
-          className="absolute inset-0 rounded-lg border-2 border-green-400 pointer-events-none"
-          animate={{
-            boxShadow: ['0 0 0 0 rgba(34, 197, 94, 0.7)', '0 0 0 10px rgba(34, 197, 94, 0)'],
-          }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      )}
     </motion.div>
   );
 }
