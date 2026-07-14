@@ -57,7 +57,7 @@ See [AI-SYSTEM.md](./docs/AI-SYSTEM.md) for the algorithms, models, and training
 ## Testing
 
 ```bash
-npm run check                    # lint, type-check, Rust AI matrix, unit + e2e tests
+npm run check                    # lint, diagrams, type-check, Rust AI matrix, unit + e2e tests
 npm run test                     # unit tests (Vitest)
 npm run test:e2e                 # end-to-end tests (Playwright)
 npm run test:ai-comparison:fast  # quick AI comparison
@@ -68,6 +68,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 ## Documentation
 
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, pattern catalogue, dependency rules, data flow, and deployment
+- **[Architecture diagrams](./docs/diagrams/README.md)** — Graphviz sources, rendered system views, and visual conventions
 - **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** — Classic AI, ML AI, training, and genetic evolution
 - **[AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md)** — generated AI win-rate and speed results
 - **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — commands, testing, and troubleshooting
@@ -77,6 +78,8 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 - **[worker/rust_ai_core/tests/README.md](./worker/rust_ai_core/tests/README.md)** — Rust test suite
 
 ## Architecture
+
+![System overview](docs/diagrams/system-overview.png)
 
 - **Frontend**: Vite, React, TypeScript, Tailwind CSS, Framer Motion, Zustand
 - **AI engine**: Rust compiled to WebAssembly, running in Web Workers

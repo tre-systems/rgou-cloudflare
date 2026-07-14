@@ -1,0 +1,119 @@
+digraph SystemOverview {
+  graph [
+    rankdir=TB,
+    bgcolor="#ffffff",
+    pad="0.55",
+    nodesep="0.58",
+    ranksep="0.88",
+    splines=polyline,
+    outputorder=edgesfirst,
+    compound=true,
+    newrank=true,
+    forcelabels=true,
+    fontname="Avenir",
+    label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><FONT POINT-SIZE="34"><B>Royal Game of Ur — System Overview</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="14" COLOR="#5b6b80">Gameplay is local; the edge delivers assets and receives anonymous aggregate usage events.</FONT></TD></TR></TABLE>>,
+    labelloc=t,
+    labeljust=c
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    margin="0.21,0.13",
+    width=2.85,
+    height=0.72,
+    fontname="Avenir",
+    fontsize=18,
+    penwidth=2.4,
+    fontcolor="#14213d",
+    color="#2264c7",
+    fillcolor="#eaf3ff:#ffffff",
+    gradientangle=270
+  ];
+
+  edge [
+    color="#263a59",
+    fontname="Avenir",
+    fontsize=13,
+    fontcolor="#3d4a5c",
+    penwidth=2.2,
+    arrowsize=0.78
+  ];
+
+  subgraph cluster_browser {
+    graph [
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1f5fbf"><B>BROWSER — COMPLETE GAMEPLAY PATH</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#496f9f">React, state, rules, both AI engines, personal data, and offline assets stay on the device.</FONT></TD></TR></TABLE>>,
+      labelloc=t,
+      labeljust=l,
+      color="#b9d8ff",
+      fillcolor="#f5faff",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    UI [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>React interface</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">board, controls, animation, sound</FONT></TD></TR></TABLE>>];
+    STORE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Zustand orchestration</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">single writers + guarded effects</FONT></TD></TR></TABLE>>];
+    CORE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Pure TypeScript core</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">rules, policies, schemas, transitions</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    SERVICES [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>AI service strategy</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">request IDs, timeouts, response schemas</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    WORKERS [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Web Workers</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic + ML isolated off the UI thread</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    WASM [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Rust / WebAssembly</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">expectiminimax + neural networks</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    USAGE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Usage reporter</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">best-effort lifecycle events only</FONT></TD></TR></TABLE>>];
+    SW [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Service Worker</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">versioned offline application shell</FONT></TD></TR></TABLE>>];
+    LOCAL [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Local Storage</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">game, settings, personal statistics</FONT></TD></TR></TABLE>>, fillcolor="#e6fffb:#ffffff", color="#0f766e"];
+    CACHE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Cache Storage</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">offline shell + required AI files</FONT></TD></TR></TABLE>>, fillcolor="#e6fffb:#ffffff", color="#0f766e"];
+
+    UI -> STORE [label="actions + selectors"];
+    STORE -> CORE [label="pure transitions"];
+    STORE -> SERVICES [label="AI turn"];
+    SERVICES -> WORKERS [label="typed request"];
+    WORKERS -> WASM [label="validated boundary"];
+    STORE -> LOCAL [label="validated persistence"];
+    STORE -> USAGE [label="start / complete", style=dashed, color="#6b7280", fontcolor="#6b7280"];
+    UI -> SW [label="registers", style=dashed, color="#6b7280", fontcolor="#6b7280"];
+    SW -> CACHE [label="cache shell"];
+
+    { rank=same; CORE; SERVICES; USAGE; }
+    { rank=same; LOCAL; WORKERS; SW; }
+  }
+
+  subgraph cluster_edge {
+    graph [
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#1e6b43"><B>CLOUDFLARE WORKER</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#4e7a61">One edge front controller owns canonical routing, API validation, security headers, and static delivery.</FONT></TD></TR></TABLE>>,
+      labelloc=t,
+      labeljust=l,
+      color="#b8e5c8",
+      fillcolor="#f4fbf6",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    FRONT [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Front controller</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">canonical host + route policy</FONT></TD></TR></TABLE>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    ASSETS [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Static Assets</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">SPA, WASM, weights, service worker</FONT></TD></TR></TABLE>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+    API [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>/api/usage</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">limits, origin checks, strict schema</FONT></TD></TR></TABLE>>, fillcolor="#eaf8ef:#ffffff", color="#22865a"];
+
+    FRONT -> ASSETS [label="all other routes"];
+    FRONT -> API [label="usage events"];
+  }
+
+  subgraph cluster_cloud_data {
+    graph [
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#0f766e"><B>CLOUDFLARE DATA</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#357a74">Aggregate events contain no player identifier, board state, or move history.</FONT></TD></TR></TABLE>>,
+      labelloc=t,
+      labeljust=l,
+      color="#99d5cf",
+      fillcolor="#f0fdfa",
+      style="rounded,filled",
+      penwidth=1.8,
+      margin=22
+    ];
+
+    ANALYTICS [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Analytics Engine</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">app_usage dataset, indexed by rgou</FONT></TD></TR></TABLE>>, fillcolor="#e6fffb:#ffffff", color="#0f766e"];
+  }
+
+  UI -> FRONT [label="navigation + asset requests", ltail=cluster_browser, lhead=cluster_edge];
+  SW -> FRONT [label="update check", ltail=cluster_browser, lhead=cluster_edge, style=dashed, color="#6b7280", fontcolor="#6b7280"];
+  USAGE -> FRONT [label="sendBeacon / fetch", ltail=cluster_browser, lhead=cluster_edge, style=dashed, color="#6b7280", fontcolor="#6b7280"];
+  API -> ANALYTICS [label="one data point", ltail=cluster_edge, lhead=cluster_cloud_data];
+}
