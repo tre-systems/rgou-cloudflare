@@ -71,6 +71,10 @@ export function sanitizeErrorEvent(event: ErrorEvent): ErrorEvent {
 export function initializeObservability() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
   if (!dsn) return;
+  if (!navigator.onLine) {
+    window.addEventListener('online', initializeObservability, { once: true });
+    return;
+  }
 
   void loadSentry()
     .then(Sentry => {

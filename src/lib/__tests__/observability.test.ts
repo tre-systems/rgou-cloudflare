@@ -1,6 +1,17 @@
 import type { ErrorEvent } from '@sentry/browser';
-import { describe, expect, it } from 'vitest';
-import { sanitizeErrorEvent } from '../observability';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { initializeObservability, sanitizeErrorEvent } from '../observability';
+
+vi.mock('@sentry/browser', () => ({
+  captureException: vi.fn(),
+  init: vi.fn(),
+}));
+
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.unstubAllEnvs();
+  Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+});
 
 describe('observability privacy filter', () => {
   it('removes identity, request data, query strings, and sensitive context', () => {
@@ -48,5 +59,21 @@ describe('observability privacy filter', () => {
     const event = { type: undefined, request: { url: 'not a URL' } } as ErrorEvent;
 
     expect(sanitizeErrorEvent(event).request).not.toHaveProperty('url');
+  });
+});
+
+describe('observability initialization', () => {
+  it('waits for connectivity before starting error monitoring', async () => {
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://public@example.invalid/1');
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    const Sentry = await import('@sentry/browser');
+
+    initializeObservability();
+    expect(Sentry.init).not.toHaveBeenCalled();
+
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+    window.dispatchEvent(new Event('online'));
+
+    await vi.waitFor(() => expect(Sentry.init).toHaveBeenCalledOnce());
   });
 });

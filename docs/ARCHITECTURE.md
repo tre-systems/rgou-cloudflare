@@ -16,7 +16,7 @@ The browser cluster is the complete gameplay path. The Cloudflare Worker deliver
 - **Deterministic core** — starting-player and dice entropy can be injected; tests and simulations do not depend on ambient randomness.
 - **Validate every untrusted boundary** — persisted data, Worker requests, and WASM JSON are runtime values, not trusted TypeScript objects.
 - **Privacy by data minimization** — do not create or retain identifiers when anonymous lifecycle events are enough.
-- **Progressive resilience** — offline play, AI fallbacks, stale-response guards, request timeouts, and best-effort analytics keep optional failures out of the game loop.
+- **Progressive resilience** — offline play, online-only monitoring, AI fallbacks, stale-response guards, request timeouts, and best-effort analytics keep optional failures out of the game loop.
 
 ## Layers and dependency direction
 
