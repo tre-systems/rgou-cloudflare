@@ -65,7 +65,6 @@
 use crate::features::GameFeatures;
 use crate::neural_network::{NetworkConfig, NeuralNetwork};
 use crate::{GameState, AI, PIECES_PER_PLAYER};
-use rand::Rng;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Once;
@@ -88,7 +87,7 @@ enum SystemType {
 /// This structure represents one training example used to train the neural networks.
 /// Each sample contains the game state features and the expected outputs for
 /// both the value network (game state evaluation) and policy network (move selection).
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TrainingSample {
     /// Game state features (150-dimensional vector)
     ///
@@ -163,10 +162,12 @@ pub struct TrainingConfig {
     /// Typical values: 3 (default), 4 (production), 5+ (high quality)
     pub depth: u8,
 
-    /// Random seed for reproducible results
+    /// Random seed for reproducible self-play data
     ///
-    /// Using the same seed ensures reproducible training runs.
-    /// Set to 0 for truly random behavior.
+    /// The same non-zero seed produces the same generated game corpus and
+    /// sample order. Network initialization and optimization have separate
+    /// randomness, so trained weights are not guaranteed to be identical.
+    /// Set to 0 to choose a fresh random seed for each generated corpus.
     pub seed: u64,
 
     /// Output file path for trained weights
@@ -174,6 +175,29 @@ pub struct TrainingConfig {
     /// The trained neural network weights will be saved to this file
     /// in JSON format with metadata.
     pub output_file: String,
+}
+
+/// Stable random stream for a single simulated game.
+///
+/// SplitMix64 is deliberately implemented here instead of using `StdRng`, whose
+/// output algorithm is not a compatibility guarantee. This keeps generated
+/// training data reproducible across platforms and rand crate upgrades.
+struct GameRng {
+    state: u64,
+}
+
+impl GameRng {
+    fn new(seed: u64) -> Self {
+        Self { state: seed }
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        self.state = self.state.wrapping_add(0x9e37_79b9_7f4a_7c15);
+        let mut value = self.state;
+        value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+        value = (value ^ (value >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+        value ^ (value >> 31)
+    }
 }
 
 /// Neural network architecture configuration
@@ -289,9 +313,10 @@ pub struct TrainingMetadata {
     /// Fraction of data reserved for validation (e.g., 0.2 for 20% validation).
     pub validation_split: f32,
 
-    /// Random seed used for reproducibility
+    /// Random seed used for self-play data generation
     ///
-    /// Using the same seed should produce identical results.
+    /// A non-zero value identifies a reproducible generated game corpus. It
+    /// does not imply byte-identical trained weights.
     pub seed: u64,
 
     /// Total training time in seconds
@@ -651,10 +676,15 @@ impl Trainer {
         println!("🎮 Starting game generation...");
 
         let completed_games = std::sync::atomic::AtomicUsize::new(0);
+        let run_seed = if self.config.seed == 0 {
+            rand::random()
+        } else {
+            self.config.seed
+        };
 
-        let training_data: Vec<TrainingSample> = (0..self.config.num_games)
+        let games_training_data: Vec<Vec<TrainingSample>> = (0..self.config.num_games)
             .into_par_iter()
-            .map(|_game_id| {
+            .map(|game_id| {
                 let completed =
                     completed_games.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
 
@@ -684,10 +714,14 @@ impl Trainer {
                 }
 
                 let mut ai = AI::new();
-                self.simulate_game(&mut ai)
+                let mut rng = GameRng::new(Self::game_seed(run_seed, game_id));
+                self.simulate_game(&mut ai, &mut rng)
             })
-            .flatten()
             .collect();
+        let training_data = games_training_data
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>();
 
         let generation_time = start_time.elapsed();
         println!("✅ === Data Generation Complete ===");
@@ -712,14 +746,20 @@ impl Trainer {
         training_data
     }
 
-    fn simulate_game(&self, ai: &mut AI) -> Vec<TrainingSample> {
+    fn game_seed(run_seed: u64, game_id: usize) -> u64 {
+        let mut mixer =
+            GameRng::new(run_seed ^ (game_id as u64).wrapping_mul(0xd134_2543_de82_ef95));
+        mixer.next_u64()
+    }
+
+    fn simulate_game(&self, ai: &mut AI, rng: &mut GameRng) -> Vec<TrainingSample> {
         let mut game_state = GameState::new();
         let mut samples = Vec::new();
         let mut turn_count = 0;
         let max_turns = 200;
 
         while !game_state.is_game_over() && turn_count < max_turns {
-            let dice_roll = self.roll_dice();
+            let dice_roll = self.roll_dice(rng);
             game_state.dice_roll = dice_roll;
 
             let valid_moves = game_state.get_valid_moves();
@@ -751,19 +791,14 @@ impl Trainer {
         samples
     }
 
-    fn roll_dice(&self) -> u8 {
-        let mut rng = rand::rng();
-        let probabilities = [1, 4, 6, 4, 1];
-        let roll = rng.random_range(0..16);
-
-        let mut cumulative = 0;
-        for (value, &prob) in (0..5).zip(probabilities.iter()) {
-            cumulative += prob;
-            if roll < cumulative {
-                return value;
-            }
+    fn roll_dice(&self, rng: &mut GameRng) -> u8 {
+        match rng.next_u64() & 0xf {
+            0 => 0,
+            1..=4 => 1,
+            5..=10 => 2,
+            11..=14 => 3,
+            _ => 4,
         }
-        4
     }
 
     fn calculate_value_target(&self, game_state: &GameState) -> f32 {
@@ -1258,6 +1293,19 @@ impl Trainer {
 mod tests {
     use super::*;
 
+    fn reproducibility_config(seed: u64) -> TrainingConfig {
+        TrainingConfig {
+            num_games: 4,
+            epochs: 1,
+            batch_size: 1,
+            learning_rate: 0.001,
+            validation_split: 0.2,
+            depth: 1,
+            seed,
+            output_file: "test_output.json".to_string(),
+        }
+    }
+
     #[test]
     fn test_trainer_creation() {
         let config = TrainingConfig {
@@ -1291,9 +1339,10 @@ mod tests {
 
         let trainer = Trainer::new(config);
         let mut counts = [0; 5];
+        let mut rng = GameRng::new(Trainer::game_seed(42, 0));
 
         for _ in 0..1000 {
-            let roll = trainer.roll_dice();
+            let roll = trainer.roll_dice(&mut rng);
             counts[roll as usize] += 1;
         }
 
@@ -1368,7 +1417,8 @@ mod tests {
 
         let trainer = Trainer::new(config);
         let mut ai = AI::new();
-        let samples = trainer.simulate_game(&mut ai);
+        let mut rng = GameRng::new(Trainer::game_seed(42, 0));
+        let samples = trainer.simulate_game(&mut ai, &mut rng);
 
         // Should generate some training samples
         assert!(!samples.is_empty());
@@ -1414,6 +1464,25 @@ mod tests {
                 "Policy target should have a clear preferred move"
             );
         }
+    }
+
+    #[test]
+    fn same_seed_generates_identical_training_data() {
+        let first = Trainer::new(reproducibility_config(2025)).generate_training_data();
+        let second = Trainer::new(reproducibility_config(2025)).generate_training_data();
+
+        assert!(!first.is_empty());
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn different_seeds_generate_different_training_data() {
+        let first = Trainer::new(reproducibility_config(2025)).generate_training_data();
+        let second = Trainer::new(reproducibility_config(2026)).generate_training_data();
+
+        assert!(!first.is_empty());
+        assert!(!second.is_empty());
+        assert_ne!(first, second);
     }
 
     #[test]
@@ -1634,7 +1703,8 @@ mod tests {
 
         let trainer = Trainer::new(config);
         let mut ai = AI::new();
-        let samples = trainer.simulate_game(&mut ai);
+        let mut rng = GameRng::new(Trainer::game_seed(42, 0));
+        let samples = trainer.simulate_game(&mut ai, &mut rng);
 
         // Check that features are consistent across samples
         for (sample_idx, sample) in samples.iter().enumerate() {

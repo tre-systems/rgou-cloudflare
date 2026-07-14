@@ -67,7 +67,9 @@ Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.
 
 ## Reproducibility and model promotion
 
-The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. GPU kernels and parallel Rust data generation can still vary across hardware, so the seed supports repeatable investigation but is not a promise of byte-identical retraining.
+The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. Rust self-play derives an independent random stream for each game from the configured seed and game index, then preserves game-index order when collecting parallel results. The generated corpus therefore does not depend on Rayon scheduling or core allocation.
+
+New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. GPU kernels can still vary across hardware, so the seed makes CPU data generation reproducible and supports repeatable investigation, but it is not a promise of byte-identical GPU retraining.
 
 The checked-in `model-manifest.json` is the production artifact contract. It records:
 
