@@ -12,7 +12,6 @@ export type {
   Timings,
   AIResponse,
   ServerAIResponse,
-  SaveGamePayload,
 } from './schemas';
 
 export {
@@ -29,7 +28,6 @@ export {
   TimingsSchema,
   AIResponseSchema,
   ServerAIResponseSchema,
-  SaveGamePayloadSchema,
   GameConstants,
 } from './schemas';
 

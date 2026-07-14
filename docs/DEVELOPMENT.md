@@ -5,9 +5,11 @@ Commands, testing, and troubleshooting for the Royal Game of Ur. Prerequisites a
 ## Everyday commands
 
 ```bash
-npm run dev          # dev server (http://localhost:3000)
+npm run dev          # dev server (normally http://localhost:5173)
 npm run build        # production build
-npm run build:cf     # build for Cloudflare (OpenNext)
+npm run preview      # serve the production build locally
+npm run deploy       # build and deploy with Wrangler
+npm run smoke:production # verify production assets, validation, and redirects
 npm run lint         # lint            (lint:fix to autofix)
 npm run lint:rust    # Rust formatting and Clippy with warnings denied
 npm run type-check   # TypeScript
@@ -34,7 +36,7 @@ npm run generate:sw         # service worker (embeds the Git commit hash for cac
 | UI smoke / full game         | Playwright          | Critical flows only          |
 | AI behavior & matchups       | Rust (`cargo test`) | Game logic and AI comparison |
 
-UI components are not unit-tested; logic is extracted to `src/lib` and tested there. E2E tests use `data-testid` selectors and verify real database saves.
+UI components are not unit-tested; logic is extracted to `src/lib` and tested there. E2E tests use `data-testid` selectors and verify the built app and anonymous usage lifecycle.
 
 ```bash
 npm run test                     # unit tests (Vitest)
@@ -73,28 +75,22 @@ npm run validate:genetic-params
 npm run load:ml-weights
 ```
 
-## Database
+## Usage analytics
 
-```bash
-npm run db:setup           # set up / reset local SQLite (alias of db:local:reset)
-npm run migrate:local      # apply local migrations
-npm run migrate:generate   # generate a new migration
-npm run migrate:d1         # apply migrations to Cloudflare D1
-```
+The browser reports validated `game_started` and `game_completed` events to the same-origin `/api/usage` Worker endpoint. Development does not require a database. In production the optional `APP_USAGE` binding writes anonymous counters to the account-level `app_usage` Analytics Engine dataset; reporting failures never interrupt play.
 
 ## Troubleshooting
 
-| Symptom                 | Fix                                                                                                                                                                                          |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| WASM not loading        | `npm run build:wasm-assets`                                                                                                                                                                  |
-| ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                                                                                      |
-| Database errors         | `npm run db:setup`                                                                                                                                                                           |
-| E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                                                                                             |
-| Cloudflare deploy fails | Run `npm ci`, remove `.next`, `.open-next`, and `.wrangler`, then run `npm run build:cf`. Keep the pinned Next, OpenNext, and Wrangler versions in `package.json` aligned with the lockfile. |
-| Anything else           | `npm run nuke`                                                                                                                                                                               |
+| Symptom                 | Fix                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| WASM not loading        | `npm run build:wasm-assets`                                                                                               |
+| ML AI not working       | `npm run load:ml-weights`, then check `ls public/wasm/`                                                                   |
+| E2E failures            | `npx playwright install --with-deps`, then `npm run test:e2e:ui`                                                          |
+| Cloudflare deploy fails | Run `npm ci`, remove `out` and `.wrangler`, then run `npm run build`. Deploy the generated `out/rgou_main/wrangler.json`. |
+| Anything else           | `npm run nuke`                                                                                                            |
 
 If a WASM build fails, confirm `wasm-pack` is exactly `0.12.1` (`cargo install wasm-pack --version 0.12.1 --locked`), then `cd worker/rust_ai_core && cargo clean` and `npm run build:wasm`.
 
 ## Continuous integration
 
-`.github/workflows/deploy.yml` runs `npm run check` on every push and deploys to Cloudflare on success. Run `npm run check` locally before pushing; use `npm run check:slow` to include depth-4 tests.
+`.github/workflows/deploy.yml` runs `npm run check` on every push, builds the Vite/Worker artifact, deploys it on `main`, and smoke-tests production. Run `npm run check` locally before pushing; use `npm run check:slow` to include depth-4 tests.

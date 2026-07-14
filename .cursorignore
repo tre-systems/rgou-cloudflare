@@ -18,23 +18,18 @@ src/lib/wasm/
 public/wasm/
 
 # Build outputs
-.next/
 out/
 dist/
 build/
 worker/build/
 worker/dist/
-.open-next/
 
 # Test results and coverage
 coverage/
 test-results/
 playwright-report/
 
-# Local database and cache
-local.db
-*.sqlite
-*.db
+# Local cache
 .cache/
 .parcel-cache/
 .turbo/
@@ -44,4 +39,3 @@ local.db
 .venv/
 .wrangler/
 .vercel/
-

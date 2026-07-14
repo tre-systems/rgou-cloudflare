@@ -30,10 +30,6 @@ vi.mock('../stats-store', () => ({
   },
 }));
 
-vi.mock('@/lib/actions', () => ({
-  saveGame: vi.fn(),
-}));
-
 describe('GameStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -204,42 +200,6 @@ describe('GameStore', () => {
       expect(state.lastAIMoveDuration).toBe(null);
       expect(state.lastMoveType).toBe(null);
       expect(state.lastMovePlayer).toBe(null);
-    });
-  });
-
-  describe('postGameToServer', () => {
-    it('should not post game when game is not finished', async () => {
-      const { actions } = useGameStore.getState();
-      await actions.postGameToServer();
-
-      // Should not throw or call saveGame
-    });
-
-    it('should not post game when winner is null', async () => {
-      useGameStore.setState(state => {
-        state.gameState.gameStatus = 'finished';
-        state.gameState.winner = null;
-      });
-
-      const { actions } = useGameStore.getState();
-      await actions.postGameToServer();
-
-      // Should not throw or call saveGame
-    });
-
-    it('should post game when game is finished with winner', async () => {
-      const { saveGame } = await import('@/lib/actions');
-      const mockSaveGame = vi.mocked(saveGame);
-
-      useGameStore.setState(state => {
-        state.gameState.gameStatus = 'finished';
-        state.gameState.winner = 'player1';
-      });
-
-      const { actions } = useGameStore.getState();
-      await actions.postGameToServer();
-
-      expect(mockSaveGame).toHaveBeenCalled();
     });
   });
 

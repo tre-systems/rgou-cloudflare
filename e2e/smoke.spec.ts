@@ -1,16 +1,4 @@
 import { test, expect, Page } from '@playwright/test';
-import Database from 'better-sqlite3';
-import { existsSync } from 'fs';
-import { execSync } from 'child_process';
-
-// Ensure database is set up before running tests
-test.beforeAll(async () => {
-  const dbPath = 'local.db';
-  if (!existsSync(dbPath)) {
-    console.log('Database not found, setting up...');
-    execSync('npm run db:local:reset', { stdio: 'inherit' });
-  }
-});
 
 async function startGame(page: Page, mode: 'classic' | 'ml' | 'watch' = 'classic') {
   await page.goto('/');
@@ -24,81 +12,13 @@ async function waitForGameCompletion(page: Page) {
   await expect(page.getByTestId('game-completion-message')).toBeVisible();
 }
 
-async function verifyDatabaseSave(expectedGameType: string, expectedWinner: string = 'player1') {
-  const dbPath = 'local.db';
-  if (!existsSync(dbPath)) {
-    console.error(`Database file not found: ${dbPath}`);
-    console.log('Attempting to set up database...');
-    execSync('npm run db:local:reset', { stdio: 'inherit' });
-
-    if (!existsSync(dbPath)) {
-      throw new Error(`Database file still not found after setup: ${dbPath}`);
-    }
-  }
-
-  const db = new Database(dbPath);
-  try {
-    // Verify the games table exists
-    const tableExists = db
-      .prepare(
-        `
-      SELECT name FROM sqlite_master 
-      WHERE type='table' AND name='games'
-    `
-      )
-      .get();
-
-    if (!tableExists) {
-      console.error('Games table does not exist in database');
-      console.log('Available tables:');
-      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-      console.log(tables);
-      throw new Error(
-        'Games table does not exist in database. Run "npm run db:local:reset" to set up the database.'
-      );
-    }
-
-    const findSavedGame = db.prepare(`
-      SELECT * FROM games
-      WHERE winner = ? AND gameType = ?
-      ORDER BY completedAt DESC
-      LIMIT 1
-    `);
-
-    const deadline = Date.now() + 5000;
-    let row = findSavedGame.get(expectedWinner, expectedGameType) as any;
-    while (!row && Date.now() < deadline) {
-      await pageWait(100);
-      row = findSavedGame.get(expectedWinner, expectedGameType) as any;
-    }
-
-    if (!row) {
-      throw new Error(
-        `No game found with winner=${expectedWinner} and gameType=${expectedGameType}`
-      );
-    }
-
-    // Verify required fields
-    expect(row.winner).toBe(expectedWinner);
-    expect(row.gameType).toBe(expectedGameType);
-    expect(row.playerId).toBeTruthy();
-    expect(row.completedAt).toBeTruthy();
-    expect(row.moveCount).toBeGreaterThan(0);
-    expect(row.history).toBeTruthy();
-
-    // Verify history is valid JSON
-    const history = JSON.parse(row.history);
-    expect(Array.isArray(history)).toBe(true);
-    expect(history.length).toBeGreaterThan(0);
-
-    return row;
-  } finally {
-    db.close();
-  }
-}
-
-function pageWait(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+async function captureUsage(page: Page) {
+  const events: Array<Record<string, unknown>> = [];
+  await page.route('**/api/usage', async route => {
+    events.push(JSON.parse(route.request().postData() ?? '{}') as Record<string, unknown>);
+    await route.fulfill({ status: 202, body: 'Accepted' });
+  });
+  return events;
 }
 
 test.describe('Core Game Functionality', () => {
@@ -171,7 +91,7 @@ test.describe('Game Interactions', () => {
   });
 });
 
-test.describe('Game Completion and Database Saves', () => {
+test.describe('Game Completion and Usage Reporting', () => {
   async function simulateGameWin(page: Page) {
     await page.evaluate(() => {
       const store = (window as any).useGameStore.getState();
@@ -197,59 +117,32 @@ test.describe('Game Completion and Database Saves', () => {
     await expect(page.getByTestId('wins-count')).toContainText('1');
   });
 
-  test('saves completed classic game to database', async ({ page }) => {
-    await startGame(page, 'classic');
-    await simulateGameWin(page);
-
-    // Verify the game was saved to database
-    const savedGame = await verifyDatabaseSave('classic');
-    expect(savedGame).toBeTruthy();
-    expect(savedGame.winner).toBe('player1');
-    expect(savedGame.gameType).toBe('classic');
-  });
-
-  test('saves completed ML game to database', async ({ page }) => {
-    await startGame(page, 'ml');
-    await simulateGameWin(page);
-
-    const savedGame = await verifyDatabaseSave('ml');
-    expect(savedGame).toBeTruthy();
-    expect(savedGame.winner).toBe('player1');
-    expect(savedGame.gameType).toBe('ml');
-  });
-
-  test('saves completed watch game to database', async ({ page }) => {
-    await startGame(page, 'watch');
-    await simulateGameWin(page);
-
-    const savedGame = await verifyDatabaseSave('watch');
-    expect(savedGame).toBeTruthy();
-    expect(savedGame.winner).toBe('player1');
-    expect(savedGame.gameType).toBe('watch');
-  });
-
-  test('saves a completed game only once when the completion effect repeats', async ({ page }) => {
-    await startGame(page, 'classic');
-    await simulateGameWin(page);
-
-    const savedGame = await verifyDatabaseSave('classic');
-    await page.evaluate(async () => {
-      const store = (window as any).useGameStore.getState();
-      await store.actions.postGameToServer();
-      await store.actions.postGameToServer();
+  for (const mode of ['classic', 'ml', 'watch'] as const) {
+    test(`reports ${mode} game lifecycle analytics`, async ({ page }) => {
+      const events = await captureUsage(page);
+      await startGame(page, mode);
+      await simulateGameWin(page);
+      await expect.poll(() => events.length).toBe(2);
+      expect(events).toEqual([
+        expect.objectContaining({ event: 'game_started', mode }),
+        expect.objectContaining({ event: 'game_completed', mode, winner: 'player1', moves: 1 }),
+      ]);
     });
+  }
 
-    const db = new Database('local.db');
-    try {
-      const row = db
-        .prepare('SELECT COUNT(*) AS count FROM games WHERE id = ?')
-        .get(savedGame.id) as {
-        count: number;
-      };
-      expect(row.count).toBe(1);
-    } finally {
-      db.close();
-    }
+  test('reports a completed game only once when the completion effect repeats', async ({
+    page,
+  }) => {
+    const events = await captureUsage(page);
+    await startGame(page, 'classic');
+    await simulateGameWin(page);
+    await page.evaluate(() => {
+      const store = (window as any).useGameStore.getState();
+      store.actions.reportGameCompleted();
+      store.actions.reportGameCompleted();
+    });
+    await expect.poll(() => events.length).toBe(2);
+    expect(events.filter(event => event.event === 'game_completed')).toHaveLength(1);
   });
 
   test('can reset game after completion', async ({ page }) => {

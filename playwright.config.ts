@@ -19,10 +19,8 @@ export default defineConfig({
     },
   ],
 
-  globalSetup: './e2e/global-setup.ts',
-
   webServer: {
-    command: 'NODE_ENV=development PORT=3005 npm run dev',
+    command: 'npm run preview -- --host 127.0.0.1 --port 3005',
     url: 'http://localhost:3005',
     reuseExistingServer: !process.env.CI,
   },

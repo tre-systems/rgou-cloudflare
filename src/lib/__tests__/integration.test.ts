@@ -58,19 +58,6 @@ describe('Integration Tests', () => {
       }).not.toThrow();
     });
 
-    it('should handle network errors gracefully', async () => {
-      const gameStore = useGameStore.getState();
-
-      // Mock network failure
-      vi.spyOn(global, 'fetch').mockRejectedValueOnce(new Error('Network error'));
-
-      try {
-        await gameStore.actions.postGameToServer();
-      } catch (error) {
-        expect(error).toBeDefined();
-        expect(error instanceof Error).toBe(true);
-      }
-    });
   });
 
   describe('Performance Integration', () => {

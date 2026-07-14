@@ -1,57 +1,56 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
+import js from '@eslint/js';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+export default tseslint.config(
   {
     ignores: [
-      // Ignore generated WASM files
-      'src/lib/wasm/**/*',
-      // Ignore build output
-      '.next/**/*',
-      '.open-next/**/*',
-      'coverage/**/*',
-      'out/**/*',
-      'dist/**/*',
-      'playwright-report/**/*',
-      'test-results/**/*',
-      // Ignore node_modules
-      'node_modules/**/*',
-      '.venv/',
-      // Ignore generated framework and WASM artifacts
-      'next-env.d.ts',
-      'public/sw.js',
-      'public/wasm/**/*',
-      'worker/rust_ai_core/pkg/**/*',
-      'worker/rust_ai_core/target/**/*',
+      '.wrangler/**',
+      '.next/**',
+      'node_modules/**',
+      'public/**',
+      'out/**',
+      'coverage/**',
+      'test-results/**',
+      'playwright-report/**',
+      'worker/rust_ai_core/pkg/**',
+      'worker/rust_ai_core/target/**',
+      'src/lib/wasm/**',
     ],
   },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    files: ['src/lib/__tests__/**/*.ts', 'src/lib/__tests__/**/*.tsx'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    plugins: { react, 'react-hooks': reactHooks },
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    settings: { react: { version: 'detect' } },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      ...react.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
   {
-    files: ['e2e/**/*.ts'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-    },
+    files: ['src/lib/__tests__/**/*.{ts,tsx}', 'e2e/**/*.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
+  },
+  {
+    files: ['**/*.{mjs,cjs}'],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ['**/*.cjs'],
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
-  },
-];
-
-export default eslintConfig;
+    languageOptions: { sourceType: 'commonjs' },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  }
+);

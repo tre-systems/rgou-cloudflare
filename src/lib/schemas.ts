@@ -1,10 +1,6 @@
 import { z } from 'zod';
 
 const MAX_SAVE_GAME_HISTORY = 512;
-const MAX_GAME_ID_LENGTH = 128;
-const MAX_PLAYER_ID_LENGTH = 128;
-const MAX_CLIENT_HEADER_LENGTH = 512;
-const MAX_GAME_DURATION_MS = 24 * 60 * 60 * 1000;
 const PLAYER1_TRACK = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as const;
 const PLAYER2_TRACK = [19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15] as const;
 
@@ -188,47 +184,6 @@ export type AIResponse = z.infer<typeof AIResponseSchema>;
 
 export const ServerAIResponseSchema = AIResponseSchema.omit({ aiType: true });
 export type ServerAIResponse = z.infer<typeof ServerAIResponseSchema>;
-
-export const SaveGamePayloadSchema = z
-  .object({
-    gameId: z
-      .string()
-      .trim()
-      .min(1)
-      .max(MAX_GAME_ID_LENGTH)
-      .regex(/^[A-Za-z0-9_-]+$/),
-    winner: PlayerSchema,
-    history: z.array(MoveRecordSchema).min(1).max(MAX_SAVE_GAME_HISTORY),
-    playerId: z
-      .string()
-      .trim()
-      .min(1)
-      .max(MAX_PLAYER_ID_LENGTH)
-      .regex(/^[A-Za-z0-9_-]+$/),
-    moveCount: z.number().int().min(1).max(MAX_SAVE_GAME_HISTORY),
-    duration: z.number().int().min(0).max(MAX_GAME_DURATION_MS).optional(),
-    clientHeader: z.string().max(MAX_CLIENT_HEADER_LENGTH).optional(),
-    gameType: z.enum(['classic', 'ml', 'watch', 'heuristic']).default('classic'),
-  })
-  .superRefine(({ history, moveCount, winner }, context) => {
-    if (moveCount !== history.length) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'moveCount must match history length',
-        path: ['moveCount'],
-      });
-    }
-
-    const finalMove = history.at(-1);
-    if (finalMove?.player !== winner || finalMove.moveType !== 'finish') {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'history must end with the winning finish move',
-        path: ['history'],
-      });
-    }
-  });
-export type SaveGamePayload = z.infer<typeof SaveGamePayloadSchema>;
 
 export const GameConstants = {
   ROSETTE_SQUARES: [0, 7, 13, 15, 16] as const,
