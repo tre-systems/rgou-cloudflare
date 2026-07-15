@@ -26,7 +26,7 @@
       "batch_size": 2048,
       "learning_rate": 0.001,
       "architectures": [[128, 128, 64]],
-      "losses": ["mse"],
+      "losses": ["huber"],
       "seeds": [42, 314159, 271828]
     }
   }
