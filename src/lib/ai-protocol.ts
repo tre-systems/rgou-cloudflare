@@ -9,7 +9,7 @@ import {
 
 const PieceSquareSchema = z.number().int().min(-1).max(20);
 
-export const AIEngineSchema = z.enum(['classic', 'heuristic', 'ml']);
+export const AIEngineSchema = z.enum(['classic', 'heuristic', 'ml', 'oracle']);
 export type AIEngine = z.infer<typeof AIEngineSchema>;
 
 export const AIPositionSchema = z.object({
@@ -111,6 +111,65 @@ export function parseMLWeights(value: unknown): MLWeights {
   return parsed.data;
 }
 
+const SHA256Schema = z.string().regex(/^[a-f0-9]{64}$/);
+const OracleHiddenSizesSchema = z.tuple([z.literal(128), z.literal(128), z.literal(64)]);
+const OracleMetricsSchema = z.object({
+  mae: z.number().finite().nonnegative(),
+  rmse: z.number().finite().nonnegative(),
+  p95_absolute_error: z.number().finite().nonnegative(),
+  max_absolute_error: z.number().finite().nonnegative(),
+});
+
+const OracleCandidateSchema = z.object({
+  hidden_sizes: OracleHiddenSizesSchema,
+  loss: z.enum(['huber', 'mse']),
+  seed: z.number().int(),
+  completed_epochs: z.number().int().positive(),
+  training_time_seconds: z.number().finite().positive(),
+  validation: OracleMetricsSchema,
+  test: OracleMetricsSchema,
+});
+
+const ORACLE_WEIGHT_COUNT = 29_057;
+
+export const OracleWeightsSchema = z.object({
+  weights: z.array(z.number().finite()).length(ORACLE_WEIGHT_COUNT),
+  metadata: z
+    .object({
+      version: z.literal('oracle_v1'),
+      training_date: z.string().datetime({ offset: true }),
+      source_revision: z.string().regex(/^[a-f0-9]{40}$/),
+      training_config_sha256: SHA256Schema,
+      training_script_sha256: SHA256Schema,
+      encoding_script_sha256: SHA256Schema,
+      tablebase_sha256: SHA256Schema,
+      tablebase_entries: z.literal(137_892_016),
+      feature_schema: z.literal('canonical-finkel-v1'),
+      training_samples: z.number().int().positive(),
+      validation_samples: z.number().int().positive(),
+      test_samples: z.number().int().positive(),
+      sample_seed: z.number().int(),
+      sample_keys_sha256: SHA256Schema,
+      selected_candidate: OracleCandidateSchema,
+    })
+    .passthrough(),
+  network_config: z.object({
+    input_size: z.literal(32),
+    hidden_sizes: OracleHiddenSizesSchema,
+    output_size: z.literal(1),
+  }),
+});
+
+export type OracleWeights = z.infer<typeof OracleWeightsSchema>;
+
+export function parseOracleWeights(value: unknown): OracleWeights {
+  const parsed = OracleWeightsSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error('Oracle model artifact does not match the runtime architecture');
+  }
+  return parsed.data;
+}
+
 const MLMoveEvaluationSchema = z.object({
   piece_index: z.number().int().min(0).max(6),
   score: z.number().finite(),
@@ -138,6 +197,8 @@ export const MLAIResponseSchema = z.object({
 });
 
 export type MLAIResponse = z.infer<typeof MLAIResponseSchema>;
+export const OracleAIResponseSchema = MLAIResponseSchema;
+export type OracleAIResponse = MLAIResponse;
 
 export function parseEngineAIResponseJson(value: string): EngineAIResponse {
   return EngineAIResponseSchema.parse(JSON.parse(value) as unknown);
@@ -145,4 +206,8 @@ export function parseEngineAIResponseJson(value: string): EngineAIResponse {
 
 export function parseMLAIResponseJson(value: string): MLAIResponse {
   return MLAIResponseSchema.parse(JSON.parse(value) as unknown);
+}
+
+export function parseOracleAIResponseJson(value: string): OracleAIResponse {
+  return OracleAIResponseSchema.parse(JSON.parse(value) as unknown);
 }

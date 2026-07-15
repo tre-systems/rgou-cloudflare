@@ -31,7 +31,7 @@
     "test:coverage": "vitest run --coverage",
     "test:service-worker": "node --test scripts/generate-sw.test.mjs",
     "test:smoke-production": "node --test scripts/smoke-production.test.mjs",
-    "test:model-provenance": "python3 -m unittest discover -s ml/tests -v && python3 ml/scripts/model_provenance.py verify",
+    "test:model-provenance": "python3 -m unittest discover -s ml/tests -v && python3 ml/scripts/model_provenance.py verify && python3 ml/scripts/oracle_provenance.py verify",
     "test:rust": "cd worker/rust_ai_core && cargo test --all-targets -- --nocapture",
     "test:rust:slow": "cd worker/rust_ai_core && RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture",
     "test:ai-comparison": "./scripts/test-ai-comparison.sh",
@@ -51,6 +51,7 @@
     "train:oracle:pilot": "./ml/scripts/train_oracle.sh --preset pilot",
     "train:oracle:production": "./ml/scripts/train_oracle.sh --preset production",
     "load:ml-weights": "./ml/scripts/load-weights.sh",
+    "load:oracle-weights": "python3 ml/scripts/oracle_provenance.py promote",
     "evolve:genetic-params": "cd worker/rust_ai_core && caffeinate cargo run --release --bin evolve_params",
     "validate:genetic-params": "cd worker/rust_ai_core && caffeinate cargo test test_genetic_params_comparison -- --nocapture",
     "test:ai-matrix:md": "cd worker/rust_ai_core && NUM_GAMES=50 cargo test test_ai_matrix -- --nocapture | node ../../scripts/format-ai-matrix-md.cjs"

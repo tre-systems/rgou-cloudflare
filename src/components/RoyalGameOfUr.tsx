@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bug, ChevronDown, ChevronRight, ExternalLink, Github, Heart } from 'lucide-react';
+import { Bug, ChevronDown, ChevronRight, ExternalLink, Github, Heart, Scale } from 'lucide-react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
 import { cn, isDevelopment, getAIName } from '@/lib/utils';
@@ -257,6 +257,14 @@ export default function RoyalGameOfUr() {
           <footer className="flex flex-col items-center justify-between gap-3 border-t border-line-soft pt-5 text-xs text-muted sm:flex-row">
             <span>Open source · Built for the web</span>
             <div className="flex items-center gap-5">
+              <a
+                href="/oracle-ai"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-bone"
+                data-testid="oracle-ai-link"
+              >
+                <Scale className="h-3.5 w-3.5" aria-hidden="true" />
+                Oracle AI
+              </a>
               <a
                 href="https://github.com/tre-systems/rgou-cloudflare"
                 target="_blank"

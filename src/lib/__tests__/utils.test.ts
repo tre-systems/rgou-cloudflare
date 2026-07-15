@@ -22,6 +22,9 @@ describe('Utils', () => {
       expect(getAIName('ml')).toBe('ML AI');
       expect(getAISubtitle('ml')).toBe('Neural network model');
 
+      expect(getAIName('oracle')).toBe('Oracle AI');
+      expect(getAISubtitle('oracle')).toBe('Exact-solution distillation');
+
       expect(getAIName('fallback')).toBe('Fallback');
       expect(getAISubtitle('fallback')).toBe('');
 

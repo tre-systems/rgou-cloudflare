@@ -32,6 +32,12 @@ const MODE_CONFIGURATION = {
     participants: ['human', 'ml'],
     watch: false,
   },
+  oracle: {
+    player1: null,
+    player2: 'oracle',
+    participants: ['human', 'oracle'],
+    watch: false,
+  },
   watch: {
     player1: 'classic',
     player2: 'ml',

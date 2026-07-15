@@ -11,9 +11,43 @@ assert SPEC and SPEC.loader
 oracle_tablebase = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = oracle_tablebase
 SPEC.loader.exec_module(oracle_tablebase)
+FIXTURES = Path(__file__).parents[2] / "test-fixtures/oracle-features.json"
+
+
+def tablebase_key(case):
+    current = case["currentPlayer"]
+    opponent = "player2" if current == "player1" else "player1"
+    current_squares = case[f"{current}Squares"]
+    opponent_squares = case[f"{opponent}Squares"]
+    tracks = {
+        "player1": (3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13),
+        "player2": (19, 18, 17, 16, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15),
+    }
+    key = current_squares.count(-1) << 28
+    key |= opponent_squares.count(-1) << 25
+    for index, bit in enumerate(oracle_tablebase.PRIVATE_BIT_ORDER):
+        key |= int(tracks[current][(0, 1, 2, 3, 12, 13)[index]] in current_squares) << (19 + bit)
+        key |= int(tracks[opponent][(0, 1, 2, 3, 12, 13)[index]] in opponent_squares) << bit
+
+    raw_middle = 0
+    for square in range(4, 12):
+        occupant = 2 if square in current_squares else int(square in opponent_squares)
+        raw_middle |= occupant << (2 * (square - 4))
+    compressed = oracle_tablebase.middle_lane_states().index(raw_middle)
+    return key | (compressed << 6)
 
 
 class OracleTrainingTests(unittest.TestCase):
+    def test_shared_feature_fixtures_match_tablebase_decoder(self):
+        fixtures = json.loads(FIXTURES.read_text(encoding="utf-8"))
+        self.assertEqual(fixtures["schemaVersion"], 1)
+        for case in fixtures["cases"]:
+            with self.subTest(case=case["name"]):
+                self.assertEqual(
+                    oracle_tablebase.decode_key(tablebase_key(case)),
+                    tuple(case["expected"]),
+                )
+
     def test_decodes_initial_state_from_tablebase_key(self):
         key = (7 << 28) | (7 << 25)
         features = oracle_tablebase.decode_key(key)

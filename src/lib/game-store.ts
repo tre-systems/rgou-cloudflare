@@ -11,6 +11,7 @@ import {
 } from './game-logic';
 import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
+import { OracleAIService } from './oracle-ai-service';
 import { useStatsStore } from './stats-store';
 import type { AISource, GameState, Player, MoveType, AIResponse } from './types';
 import { createId } from './utils';
@@ -18,12 +19,13 @@ import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
 import { gameCompletedUsage, gameStartedUsage, reportUsage, type GameUsageMode } from './usage';
 import { captureException } from './observability';
-import type { MLAIResponse } from './ai-protocol';
+import type { MLAIResponse, OracleAIResponse } from './ai-protocol';
 
 const LATEST_VERSION = 4;
 
 const wasmAiService = new WasmAiService();
 const mlAiService = new MLAIService();
+const oracleAiService = new OracleAIService();
 
 function restoreGameId(value: unknown): string {
   return typeof value === 'string' && /^game_[A-Za-z0-9_-]+$/.test(value) && value.length <= 128
@@ -72,14 +74,17 @@ function createGameSession(): GameSession {
   };
 }
 
-function normalizeMLResponse(response: MLAIResponse): AIResponse {
+function normalizeValueResponse(
+  response: MLAIResponse | OracleAIResponse,
+  aiType: 'ml' | 'oracle'
+): AIResponse {
   return {
     move: response.move,
     evaluation: Math.round(response.evaluation * 1000),
     thinking: response.thinking,
     timings: response.timings,
     diagnostics: {
-      searchDepth: 4,
+      searchDepth: aiType === 'ml' ? 4 : 0,
       validMoves: response.diagnostics.valid_moves,
       moveEvaluations: response.diagnostics.move_evaluations.map(evaluation => ({
         pieceIndex: evaluation.piece_index,
@@ -91,7 +96,7 @@ function normalizeMLResponse(response: MLAIResponse): AIResponse {
       transpositionHits: 0,
       nodesEvaluated: 1,
     },
-    aiType: 'ml',
+    aiType,
   };
 }
 
@@ -196,7 +201,12 @@ export const useGameStore = create<GameStore>()(
             let aiResponse: AIResponse;
 
             if (aiSource === 'ml') {
-              aiResponse = normalizeMLResponse(await mlAiService.getAIMove(gameState));
+              aiResponse = normalizeValueResponse(await mlAiService.getAIMove(gameState), 'ml');
+            } else if (aiSource === 'oracle') {
+              aiResponse = normalizeValueResponse(
+                await oracleAiService.getAIMove(gameState),
+                'oracle'
+              );
             } else if (aiSource === 'heuristic') {
               const heuristicResponse = await wasmAiService.getHeuristicAIMove(gameState);
               aiResponse = { ...heuristicResponse, aiType: 'heuristic' as const };

@@ -15,6 +15,12 @@ describe('game mode policy', () => {
       participants: ['classic', 'ml'],
       watch: true,
     });
+    expect(getModeConfiguration('oracle')).toMatchObject({
+      player1: null,
+      player2: 'oracle',
+      participants: ['human', 'oracle'],
+      watch: false,
+    });
   });
 
   it('identifies AI-controlled turns without duplicating mode conditionals', () => {
@@ -22,10 +28,12 @@ describe('game mode policy', () => {
     expect(isAITurn('ml', 'player2')).toBe(true);
     expect(isAITurn('watch', 'player1')).toBe(true);
     expect(getAISource('heuristic', 'player2')).toBe('heuristic');
+    expect(getAISource('oracle', 'player2')).toBe('oracle');
   });
 
   it('rejects invalid persisted modes', () => {
     expect(parseOpponentMode('classic')).toBe('classic');
+    expect(parseOpponentMode('oracle')).toBe('oracle');
     expect(parseOpponentMode('server')).toBeNull();
     expect(parseOpponentMode({ mode: 'watch' })).toBeNull();
   });

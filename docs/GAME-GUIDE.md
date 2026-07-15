@@ -41,11 +41,12 @@ Each player follows their own track, sharing only the center lane:
 
 ## AI opponents
 
-Both AIs run locally in the browser. See [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for win rates and speed, and [AI-SYSTEM.md](./AI-SYSTEM.md) for how they work.
+All three AIs run locally in the browser. See [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for win rates and speed, and [AI-SYSTEM.md](./AI-SYSTEM.md) for how they work.
 
 - **Classic AI** (default): expectiminimax search to depth 4 with alpha-beta pruning. Strong positional play; values rosettes and safe moves.
 - **ML AI**: a value + policy neural network trained from expectiminimax-labelled simulated games.
-- **AI vs AI**: watch the two play each other automatically to compare their styles.
+- **Oracle AI**: a compact value network trained on positions from the solved game. It estimates each legal successor's long-term win probability; it does not load the 827 MB solution into your browser or claim mathematically perfect play. See the [Oracle AI write-up](./ORACLE-AI.md).
+- **AI vs AI**: watch Classic and ML play each other automatically to compare their styles.
 
 ## Further reading
 

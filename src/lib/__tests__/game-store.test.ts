@@ -5,13 +5,19 @@ import { createTestGameState } from './test-utils';
 
 const incrementWinsMock = vi.fn();
 const incrementLossesMock = vi.fn();
-const { getClassicAIMoveMock, getHeuristicAIMoveMock, getMLAIMoveMock, reportUsageMock } =
-  vi.hoisted(() => ({
-    getClassicAIMoveMock: vi.fn(),
-    getHeuristicAIMoveMock: vi.fn(),
-    getMLAIMoveMock: vi.fn(),
-    reportUsageMock: vi.fn(),
-  }));
+const {
+  getClassicAIMoveMock,
+  getHeuristicAIMoveMock,
+  getMLAIMoveMock,
+  getOracleAIMoveMock,
+  reportUsageMock,
+} = vi.hoisted(() => ({
+  getClassicAIMoveMock: vi.fn(),
+  getHeuristicAIMoveMock: vi.fn(),
+  getMLAIMoveMock: vi.fn(),
+  getOracleAIMoveMock: vi.fn(),
+  reportUsageMock: vi.fn(),
+}));
 
 const classicResponse = (move: number | null) => ({
   move,
@@ -53,6 +59,12 @@ vi.mock('../ml-ai-service', () => ({
   },
 }));
 
+vi.mock('../oracle-ai-service', () => ({
+  OracleAIService: class {
+    getAIMove = getOracleAIMoveMock;
+  },
+}));
+
 vi.mock('../stats-store', () => ({
   useStatsStore: {
     getState: vi.fn(() => ({
@@ -75,6 +87,7 @@ describe('GameStore', () => {
     getClassicAIMoveMock.mockResolvedValue(classicResponse(0));
     getHeuristicAIMoveMock.mockResolvedValue(classicResponse(0));
     getMLAIMoveMock.mockResolvedValue(mlResponse(0));
+    getOracleAIMoveMock.mockResolvedValue(mlResponse(0));
     useUIStore.getState().actions.reset();
     useGameStore.getState().actions.reset();
   });
@@ -197,6 +210,26 @@ describe('GameStore', () => {
       expect(getMLAIMoveMock).toHaveBeenCalledOnce();
       expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
       expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('ml');
+    });
+
+    it('should handle Oracle AI moves through the dedicated service', async () => {
+      useGameStore.setState({
+        gameState: createTestGameState({
+          currentPlayer: 'player2',
+          diceRoll: 2,
+          canMove: true,
+          validMoves: [0],
+        }),
+      });
+
+      await useGameStore.getState().actions.makeAIMove('oracle');
+
+      expect(getOracleAIMoveMock).toHaveBeenCalledOnce();
+      expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
+      expect(useGameStore.getState().lastAIDiagnostics).toMatchObject({
+        aiType: 'oracle',
+        diagnostics: { searchDepth: 0 },
+      });
     });
 
     it('should use fallback when AI returns invalid move', async () => {

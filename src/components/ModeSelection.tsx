@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BookOpen, Brain, Cpu, Eye } from 'lucide-react';
+import { BookOpen, Brain, Cpu, Eye, Scale } from 'lucide-react';
 import type { OpponentMode } from '@/lib/types';
 import ModeSelectionCard from './ModeSelectionCard';
 
@@ -26,8 +26,16 @@ const MODE_OPTIONS = [
     icon: Brain,
   },
   {
-    key: 'watch',
+    key: 'oracle',
     index: '03',
+    label: 'Oracle AI',
+    description: 'A compact value network taught by the solved game to compare every legal move.',
+    subtitle: 'Exact-solution distillation',
+    icon: Scale,
+  },
+  {
+    key: 'watch',
+    index: '04',
     label: 'Watch a Match',
     description:
       'See the search-based and neural opponents play a complete game against each other.',
@@ -73,7 +81,7 @@ export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelecti
           </button>
         </div>
         <motion.div
-          className="grid gap-3 pt-5 md:grid-cols-3"
+          className="grid gap-3 pt-5 md:grid-cols-2 lg:grid-cols-4"
           variants={CARDS_CONTAINER}
           initial="hidden"
           animate="show"

@@ -13,7 +13,7 @@ export default function OfflinePage() {
           <div className="surface-inset mb-6 rounded-xl p-5">
             <h2 className="mb-2 text-lg font-semibold text-bone">Your game is safe</h2>
             <p className="mb-4 text-sm leading-6 text-bone-muted">
-              The board and both AI opponents remain available offline.
+              The board and AI opponents remain available offline.
             </p>
             <div className="flex items-center justify-center gap-2 text-xs text-muted">
               <Wifi className="h-4 w-4" aria-hidden="true" />

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { initializeGame, processDiceRoll } from '../game-logic';
 import { MLAIService } from '../ml-ai-service';
+import { OracleAIService } from '../oracle-ai-service';
 import { WasmAiService } from '../wasm-ai-service';
 
 const { requestMock } = vi.hoisted(() => ({ requestMock: vi.fn() }));
@@ -60,10 +61,30 @@ describe('AI service adapters', () => {
     expect(requestMock).toHaveBeenCalledWith('ml', gameState);
   });
 
+  it('validates Oracle responses returned by the shared client', async () => {
+    const response = {
+      move: 0,
+      evaluation: 0.75,
+      thinking: 'tested',
+      diagnostics: {
+        valid_moves: [0],
+        move_evaluations: [],
+        value_network_output: 0.75,
+        policy_network_outputs: [],
+      },
+      timings: { aiMoveCalculation: 1, totalHandlerTime: 1 },
+    };
+    requestMock.mockResolvedValue(response);
+
+    await expect(new OracleAIService().getAIMove(gameState)).resolves.toEqual(response);
+    expect(requestMock).toHaveBeenCalledWith('oracle', gameState);
+  });
+
   it('rejects malformed engine responses at the adapter boundary', async () => {
     requestMock.mockResolvedValue({ move: 99 });
 
     await expect(new WasmAiService().getAIMove(gameState)).rejects.toThrow();
     await expect(new MLAIService().getAIMove(gameState)).rejects.toThrow();
+    await expect(new OracleAIService().getAIMove(gameState)).rejects.toThrow();
   });
 });

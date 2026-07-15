@@ -134,6 +134,9 @@ impl OracleAI {
         valid_moves: Vec<u8>,
         move_evaluations: Vec<MLMoveEvaluation>,
     ) -> MLResponse {
+        let chosen_value = move_evaluations
+            .first()
+            .map_or(position_value, |evaluation| evaluation.score);
         MLResponse {
             r#move: best_move,
             evaluation: position_value,
@@ -141,9 +144,9 @@ impl OracleAI {
                 || "Oracle AI found no legal move".to_string(),
                 |piece| {
                     format!(
-                        "Oracle AI chose piece {} from a {:.1}% estimated win chance",
+                        "Oracle AI chose piece {} with a {:.1}% estimated win chance",
                         piece + 1,
-                        position_value * 100.0
+                        chosen_value * 100.0
                     )
                 },
             ),
@@ -192,6 +195,24 @@ impl OracleAI {
 mod tests {
     use super::*;
     use crate::PiecePosition;
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct FeatureFixtures {
+        schema_version: u8,
+        cases: Vec<FeatureFixture>,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct FeatureFixture {
+        name: String,
+        current_player: String,
+        player1_squares: Vec<i8>,
+        player2_squares: Vec<i8>,
+        expected: Vec<f32>,
+    }
 
     fn rebuild_board(state: &mut GameState) {
         state.board.fill(None);
@@ -218,6 +239,47 @@ mod tests {
         let mut ai = OracleAI::new();
         ai.load_pretrained(&weights).unwrap();
         ai
+    }
+
+    #[test]
+    fn canonical_features_match_python_tablebase_fixtures() {
+        let fixtures: FeatureFixtures =
+            serde_json::from_str(include_str!("../../../test-fixtures/oracle-features.json"))
+                .unwrap();
+        assert_eq!(fixtures.schema_version, 1);
+
+        for fixture in fixtures.cases {
+            let mut state = GameState::new();
+            state.current_player = match fixture.current_player.as_str() {
+                "player1" => Player::Player1,
+                "player2" => Player::Player2,
+                value => panic!("unknown fixture player {value}"),
+            };
+            state.player1_pieces = fixture
+                .player1_squares
+                .into_iter()
+                .map(|square| PiecePosition {
+                    square,
+                    player: Player::Player1,
+                })
+                .collect();
+            state.player2_pieces = fixture
+                .player2_squares
+                .into_iter()
+                .map(|square| PiecePosition {
+                    square,
+                    player: Player::Player2,
+                })
+                .collect();
+            rebuild_board(&mut state);
+
+            assert_eq!(
+                OracleFeatures::from_game_state(&state).0.as_slice(),
+                fixture.expected,
+                "{}",
+                fixture.name
+            );
+        }
     }
 
     #[test]

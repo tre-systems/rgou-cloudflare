@@ -4,10 +4,13 @@ import {
   AIWorkerRequestSchema,
   parseMLWeights,
   parseMLAIResponseJson,
+  parseOracleAIResponseJson,
+  parseOracleWeights,
   parseEngineAIResponseJson,
   toWasmGameState,
   type AIEngine,
   type MLWeights,
+  type OracleWeights,
 } from './ai-protocol';
 
 interface WasmModule {
@@ -18,6 +21,9 @@ interface WasmModule {
   init_ml_ai: () => string;
   load_ml_weights: (valueWeights: number[], policyWeights: number[]) => void;
   get_ml_ai_move: (gameState: unknown) => string;
+  init_oracle_ai: () => string;
+  load_oracle_weights: (weights: number[]) => void;
+  get_oracle_ai_move: (gameState: unknown) => string;
   init_heuristic_ai: () => string;
   get_heuristic_ai_move: (gameState: unknown) => string;
 }
@@ -29,6 +35,8 @@ let classicAiInitialized = false;
 let heuristicAiInitialized = false;
 let mlAiInitialized = false;
 let mlWeightsReady: Promise<void> | null = null;
+let oracleAiInitialized = false;
+let oracleWeightsReady: Promise<void> | null = null;
 
 function loadWasm(): Promise<void> {
   if (wasmReady) return wasmReady;
@@ -57,6 +65,31 @@ async function parseGzipJson(response: Response): Promise<unknown> {
   return await new Response(body).json();
 }
 
+async function fetchModel<T>(
+  compressedPath: string,
+  fallbackPath: string,
+  parse: (value: unknown) => T,
+  label: string
+): Promise<T> {
+  try {
+    const compressedResponse = await fetch(compressedPath, { cache: 'no-store' });
+    if (compressedResponse.ok) {
+      return parse(await parseGzipJson(compressedResponse));
+    }
+  } catch (error) {
+    console.warn(
+      `${label} worker could not use the compressed model; using the JSON fallback:`,
+      error
+    );
+  }
+
+  const jsonResponse = await fetch(fallbackPath, { cache: 'no-store' });
+  if (!jsonResponse.ok) {
+    throw new Error(`${label} weights request failed with ${jsonResponse.status}`);
+  }
+  return parse(await jsonResponse.json());
+}
+
 async function loadMLWeights(): Promise<void> {
   if (mlWeightsReady) return mlWeightsReady;
 
@@ -66,26 +99,12 @@ async function loadMLWeights(): Promise<void> {
       mlAiInitialized = true;
     }
 
-    let weights: MLWeights | undefined;
-    try {
-      const compressedResponse = await fetch('/ml-weights.json.gz', { cache: 'no-store' });
-      if (compressedResponse.ok) {
-        weights = parseMLWeights(await parseGzipJson(compressedResponse));
-      }
-    } catch (error) {
-      console.warn(
-        'AI worker could not use the compressed model; using the JSON fallback:',
-        error
-      );
-    }
-
-    if (!weights) {
-      const jsonResponse = await fetch('/ml-weights.json', { cache: 'no-store' });
-      if (!jsonResponse.ok) {
-        throw new Error(`ML weights request failed with ${jsonResponse.status}`);
-      }
-      weights = parseMLWeights(await jsonResponse.json());
-    }
+    const weights: MLWeights = await fetchModel(
+      '/ml-weights.json.gz',
+      '/ml-weights.json',
+      parseMLWeights,
+      'ML AI'
+    );
 
     wasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
   })();
@@ -94,6 +113,32 @@ async function loadMLWeights(): Promise<void> {
     await mlWeightsReady;
   } catch (error) {
     mlWeightsReady = null;
+    throw error;
+  }
+}
+
+async function loadOracleWeights(): Promise<void> {
+  if (oracleWeightsReady) return oracleWeightsReady;
+
+  oracleWeightsReady = (async () => {
+    if (!oracleAiInitialized) {
+      wasmModule.init_oracle_ai();
+      oracleAiInitialized = true;
+    }
+
+    const model: OracleWeights = await fetchModel(
+      '/oracle-weights.json.gz',
+      '/oracle-weights.json',
+      parseOracleWeights,
+      'Oracle AI'
+    );
+    wasmModule.load_oracle_weights(model.weights);
+  })();
+
+  try {
+    await oracleWeightsReady;
+  } catch (error) {
+    oracleWeightsReady = null;
     throw error;
   }
 }
@@ -118,6 +163,9 @@ async function getMove(engine: AIEngine, position: Parameters<typeof toWasmGameS
     case 'ml':
       await loadMLWeights();
       return parseMLAIResponseJson(wasmModule.get_ml_ai_move(request));
+    case 'oracle':
+      await loadOracleWeights();
+      return parseOracleAIResponseJson(wasmModule.get_oracle_ai_move(request));
   }
 }
 

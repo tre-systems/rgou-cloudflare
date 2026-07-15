@@ -23,7 +23,7 @@
 
 use crate::features::GameFeatures;
 use crate::neural_network::{NetworkConfig, NeuralNetwork};
-use crate::{GameState, AI, PIECES_PER_PLAYER};
+use crate::{GameState, GeneticParams, AI, PIECES_PER_PLAYER};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Once;
@@ -712,7 +712,7 @@ impl Trainer {
     }
 
     fn simulate_game(&self, ai: &mut AI, rng: &mut GameRng) -> Vec<TrainingSample> {
-        let mut game_state = GameState::new();
+        let mut game_state = GameState::with_genetic_params(GeneticParams::evolved());
         let mut samples = Vec::new();
         let mut turn_count = 0;
         let max_turns = 200;
@@ -723,6 +723,7 @@ impl Trainer {
 
             let valid_moves = game_state.get_valid_moves();
             if valid_moves.is_empty() {
+                game_state.current_player = game_state.current_player.opponent();
                 turn_count += 1;
                 continue;
             }

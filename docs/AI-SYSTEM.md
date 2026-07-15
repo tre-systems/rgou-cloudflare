@@ -1,17 +1,18 @@
 # AI System
 
-The game has two AI opponents, both written in Rust and compiled to WebAssembly. Inference and search run locally; there is no server-side AI service:
+The game has three AI opponents, all written in Rust and compiled to WebAssembly. Search and inference run locally; there is no server-side AI service:
 
 - **Classic AI** — expectiminimax search with alpha-beta pruning and tunable evaluation parameters
 - **ML AI** — a value + policy neural network trained from expectiminimax-labelled simulated games
+- **Oracle AI** — a compact value network distilled from the published strong solution of the game
 
-For measured win rates and speed across every matchup, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md).
+These are preserved as separate strategies: Classic searches at runtime, ML captures the earlier self-play experiment, and Oracle approximates exact tablebase values. For measured win rates and speed across every matchup, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md). For Oracle's research, design, and evidence, see [ORACLE-AI.md](./ORACLE-AI.md).
 
 ## Browser execution
 
-The UI never sends a complete `GameState` to AI code. Both thin main-thread services share one lazily constructed `AIWorkerClient`, which sends a schema-validated `AIPosition`: seven squares per player, current player, and dice roll. The discriminated Worker protocol correlates each request by ID and times it out after 30 seconds. A timeout, transport failure, or invalid response restarts the Worker and rejects every pending request.
+The UI never sends a complete `GameState` to AI code. The thin main-thread services share one lazily constructed `AIWorkerClient`, which sends a schema-validated `AIPosition`: seven squares per player, current player, and dice roll. The discriminated Worker protocol correlates each request by ID and times it out after 30 seconds. A timeout, transport failure, or invalid response restarts the Worker and rejects every pending request.
 
-The single Worker lazily loads one Rust/WASM module and dispatches Classic, heuristic, and ML requests. ML weights are fetched inside the Worker: it prefers the gzip asset, uses streaming `DecompressionStream`, parses and validates model metadata, network dimensions, and exact weight counts, then loads the arrays into WASM. A failed, stale, or incompatible compressed artifact falls back to a freshly fetched uncompressed JSON compatibility asset. Search, inference, decompression, JSON parsing, and validation therefore stay off the UI thread.
+The single Worker lazily loads one Rust/WASM module and dispatches Classic, heuristic, ML, and Oracle requests. Learned weights are fetched inside the Worker: it prefers each gzip asset, uses streaming `DecompressionStream`, parses and validates model metadata, network dimensions, and exact weight counts, then loads the arrays into WASM. A failed, stale, or incompatible compressed artifact falls back to a freshly fetched uncompressed JSON compatibility asset. Search, inference, decompression, JSON parsing, and validation therefore stay off the UI thread.
 
 The TypeScript and Rust rule implementations consume the same `test-fixtures/rules-conformance.json` cases. These fixtures cover entry, blocking, protected rosettes, captures, finishing, overshoot, and mirrored player tracks. Add a shared case whenever rule behavior changes.
 
@@ -82,7 +83,7 @@ The architecture is defined in `ml/config/training.json` and `worker/rust_ai_cor
 
 ### Training
 
-The data generator plays expectiminimax against itself. At each playable position, expectiminimax supplies a normalized evaluation target and a one-hot best-move target for the value and policy networks. Two training backends share the same presets:
+The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized evaluation target and a one-hot best-move target for the value and policy networks. Two training backends share the same presets:
 
 | Backend | Hardware                      | Notes                           |
 | ------- | ----------------------------- | ------------------------------- |
@@ -105,9 +106,19 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) and [ml/README.md](../ml/README.md) for t
 
 `npm run load:ml-weights` validates and publishes the selected production source. `ml/model-manifest.json` records its source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
 
+## Oracle AI
+
+Oracle is a `32 → 128 → 128 → 64 → 1` ReLU value network with a tanh output. Its 32-value canonical input describes current-player and opponent occupancy, reserve counts, and finished counts. It deliberately omits colour identity, dice, piece indices, handcrafted scores, duplicates, and padding.
+
+The teacher is the 16-bit tablebase published with the 2025 strong solution of the Finkel ruleset. Training samples exact pre-roll win probabilities from that external 827 MB artifact; the tablebase never ships to browsers. The production run uses two million training positions, 100,000 validation positions, and 100,000 disjoint test positions. The pinned configuration, source and tablebase hashes, sample identity, candidate results, and held-out metrics are stored with the model.
+
+At runtime Rust enumerates legal moves with the rules engine, evaluates each successor, and converts the successor's current-player probability back to the mover's perspective. A rosette retains the same perspective; a normal turn change uses `1 - V`; an immediate win is `1`. This keeps move legality and turn semantics in the rules engine and avoids a policy head or post-training move bonuses.
+
+The model is an approximation of an exact teacher, not a perfect-play claim. The independent Classic and ML opponents remain available, and the generated matrix reports all three. [ORACLE-AI.md](./ORACLE-AI.md) is the authority for feature semantics, experiment results, promotion gates, reproducibility, and limitations.
+
 ## Testing
 
-The Rust test suite covers game logic, the full position hash, the bounded transposition table, every AI type, shared TypeScript/Rust conformance fixtures, and an AI-vs-AI matrix. See [worker/rust_ai_core/tests/README.md](../worker/rust_ai_core/tests/README.md) for how to run it, and [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for the generated results.
+The Rust test suite covers game logic, the full position hash, the bounded transposition table, every AI type, Oracle symmetry and shared Python/Rust feature fixtures, TypeScript/Rust rule-conformance fixtures, and an AI-vs-AI matrix. See [worker/rust_ai_core/tests/README.md](../worker/rust_ai_core/tests/README.md) for how to run it, and [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for the generated results.
 
 ```bash
 npm run test:ai-comparison:fast            # quick matrix (10 games per match)
