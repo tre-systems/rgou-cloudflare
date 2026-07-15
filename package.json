@@ -48,6 +48,8 @@
     "train:pytorch:quick": "./ml/scripts/train.sh --backend pytorch --preset quick",
     "train:pytorch:production": "./ml/scripts/train.sh --backend pytorch --preset production",
     "train:pytorch:v5": "./ml/scripts/train.sh --backend pytorch --num-games 2000 --epochs 100 --batch-size 64",
+    "train:oracle:pilot": "./ml/scripts/train_oracle.sh --preset pilot",
+    "train:oracle:production": "./ml/scripts/train_oracle.sh --preset production",
     "load:ml-weights": "./ml/scripts/load-weights.sh",
     "evolve:genetic-params": "cd worker/rust_ai_core && caffeinate cargo run --release --bin evolve_params",
     "validate:genetic-params": "cd worker/rust_ai_core && caffeinate cargo test test_genetic_params_comparison -- --nocapture",

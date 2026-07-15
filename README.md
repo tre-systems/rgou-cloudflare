@@ -56,6 +56,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, pattern catalogue, dependency rules, data flow, and deployment
 - **[Architecture diagrams](./docs/diagrams/README.md)** — Graphviz sources, rendered system views, and visual conventions
 - **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** — AI execution, algorithms, model contract, and genetic evolution
+- **[ORACLE-AI.md](./docs/ORACLE-AI.md)** — exact-solution research, distillation design, experiments, and promotion criteria
 - **[AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md)** — generated AI win-rate and speed results
 - **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — commands, testing, and troubleshooting
 - **[GAME-GUIDE.md](./docs/GAME-GUIDE.md)** — rules, strategy, and history
