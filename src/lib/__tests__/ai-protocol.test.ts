@@ -5,6 +5,7 @@ import {
   AIPositionSchema,
   AIWorkerRequestSchema,
   MLWeightsSchema,
+  parseMLWeights,
   parseMLAIResponseJson,
   parseEngineAIResponseJson,
   toAIPosition,
@@ -154,7 +155,13 @@ describe('AI protocol', () => {
   it('accepts the exact production model artifact', () => {
     const artifact = JSON.parse(readFileSync(resolve('public/ml-weights.json'), 'utf8')) as unknown;
 
-    expect(MLWeightsSchema.safeParse(artifact).success).toBe(true);
+    expect(parseMLWeights(artifact).metadata.version).toBeTruthy();
+  });
+
+  it('reports an incompatible model without leaking the full validation payload', () => {
+    expect(() => parseMLWeights({ network_config: { input_size: 100 } })).toThrow(
+      'ML model artifact does not match the runtime architecture'
+    );
   });
 
   it('creates the narrow position contract without board or history data', () => {

@@ -103,6 +103,14 @@ export const MLWeightsSchema = z.object({
 
 export type MLWeights = z.infer<typeof MLWeightsSchema>;
 
+export function parseMLWeights(value: unknown): MLWeights {
+  const parsed = MLWeightsSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error('ML model artifact does not match the runtime architecture');
+  }
+  return parsed.data;
+}
+
 const MLMoveEvaluationSchema = z.object({
   piece_index: z.number().int().min(0).max(6),
   score: z.number().finite(),

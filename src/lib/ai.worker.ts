@@ -2,11 +2,12 @@
 
 import {
   AIWorkerRequestSchema,
-  MLWeightsSchema,
+  parseMLWeights,
   parseMLAIResponseJson,
   parseEngineAIResponseJson,
   toWasmGameState,
   type AIEngine,
+  type MLWeights,
 } from './ai-protocol';
 
 interface WasmModule {
@@ -65,25 +66,27 @@ async function loadMLWeights(): Promise<void> {
       mlAiInitialized = true;
     }
 
-    let value: unknown;
+    let weights: MLWeights | undefined;
     try {
-      const compressedResponse = await fetch('/ml-weights.json.gz');
+      const compressedResponse = await fetch('/ml-weights.json.gz', { cache: 'no-store' });
       if (compressedResponse.ok) {
-        value = await parseGzipJson(compressedResponse);
+        weights = parseMLWeights(await parseGzipJson(compressedResponse));
       }
     } catch (error) {
-      console.warn('AI worker could not load the compressed model; using JSON fallback:', error);
+      console.warn(
+        'AI worker could not use the compressed model; using the JSON fallback:',
+        error
+      );
     }
 
-    if (value === undefined) {
-      const jsonResponse = await fetch('/ml-weights.json');
+    if (!weights) {
+      const jsonResponse = await fetch('/ml-weights.json', { cache: 'no-store' });
       if (!jsonResponse.ok) {
         throw new Error(`ML weights request failed with ${jsonResponse.status}`);
       }
-      value = await jsonResponse.json();
+      weights = parseMLWeights(await jsonResponse.json());
     }
 
-    const weights = MLWeightsSchema.parse(value);
     wasmModule.load_ml_weights(weights.value_weights, weights.policy_weights);
   })();
 
