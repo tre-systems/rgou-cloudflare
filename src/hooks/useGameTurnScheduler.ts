@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import { getAISource, getModeConfiguration, isAITurn } from '@/lib/game-mode';
 import { soundEffects } from '@/lib/sound-effects';
-import type { AISource, GameState, OpponentMode } from '@/lib/types';
+import type { AISource, GameState, OpponentMode, WatchMatchup } from '@/lib/types';
 
 interface GameTurnSchedulerOptions {
   gameState: GameState;
   overlayOpen: boolean;
   selectedMode: OpponentMode | null;
+  watchMatchup: WatchMatchup;
   processDiceRoll: () => void;
   endTurn: () => void;
   makeAIMove: (source: AISource, watchMode: boolean) => Promise<void>;
@@ -16,6 +17,7 @@ export function useGameTurnScheduler({
   gameState,
   overlayOpen,
   selectedMode,
+  watchMatchup,
   processDiceRoll,
   endTurn,
   makeAIMove,
@@ -25,8 +27,8 @@ export function useGameTurnScheduler({
   useEffect(() => {
     if (overlayOpen || gameStatus !== 'playing' || !selectedMode) return;
 
-    const mode = getModeConfiguration(selectedMode);
-    const currentTurnIsAI = isAITurn(selectedMode, currentPlayer);
+    const mode = getModeConfiguration(selectedMode, watchMatchup);
+    const currentTurnIsAI = isAITurn(selectedMode, currentPlayer, watchMatchup);
 
     if (!currentTurnIsAI && canMove) return;
 
@@ -38,7 +40,7 @@ export function useGameTurnScheduler({
     if (currentTurnIsAI && canMove) {
       const timer = window.setTimeout(
         () => {
-          const aiSource = getAISource(selectedMode, currentPlayer);
+          const aiSource = getAISource(selectedMode, currentPlayer, watchMatchup);
           if (!aiSource) return;
 
           if (!mode.watch) void soundEffects.aiThinking();
@@ -65,5 +67,6 @@ export function useGameTurnScheduler({
     overlayOpen,
     processDiceRoll,
     selectedMode,
+    watchMatchup,
   ]);
 }

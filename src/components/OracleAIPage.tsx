@@ -1,41 +1,12 @@
 import { useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, ExternalLink, Github } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Github } from 'lucide-react';
 import SiteBackdrop from './SiteBackdrop';
 
-const REVEAL = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
-} as const;
-
-const PROCESS = [
-  {
-    index: '01',
-    title: 'Read the solution',
-    body: 'Sample exact win probabilities from the published 827 MB Finkel-rules tablebase.',
-  },
-  {
-    index: '02',
-    title: 'Remove accidents',
-    body: 'Describe each position in 32 semantic values, independent of colour and piece numbering.',
-  },
-  {
-    index: '03',
-    title: 'Distil the value',
-    body: 'Train a compact network against soft probabilities, then test on positions it never saw.',
-  },
-  {
-    index: '04',
-    title: 'Keep moves legal',
-    body: 'Let Rust enumerate every valid successor; the network only estimates which is strongest.',
-  },
-] as const;
-
-const FACTS = [
-  ['137.9m', 'stored states'],
-  ['0.344%', 'held-out mean error'],
+const RESULTS = [
+  ['137,892,016', 'states in the tablebase'],
+  ['0.344 points', 'mean error on unseen positions'],
   ['29,057', 'model parameters'],
-  ['Local', 'browser inference'],
+  ['269 KiB', 'compressed download'],
 ] as const;
 
 export default function OracleAIPage() {
@@ -45,12 +16,14 @@ export default function OracleAIPage() {
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     const previousCanonical = canonical?.href;
     const previousDescription = description?.content;
+
     document.title = 'Oracle AI · Royal Game of Ur';
     canonical?.setAttribute('href', 'https://gameofur.org/oracle-ai');
     description?.setAttribute(
       'content',
-      'How Oracle AI distils the strongly solved Royal Game of Ur into a compact local browser opponent.'
+      'How the solved Royal Game of Ur was used to train a small local browser opponent.'
     );
+
     return () => {
       document.title = previousTitle;
       if (canonical && previousCanonical) canonical.href = previousCanonical;
@@ -62,7 +35,7 @@ export default function OracleAIPage() {
     <>
       <SiteBackdrop />
       <main className="relative z-10 min-h-screen" data-testid="oracle-ai-page">
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-9">
+        <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-9">
           <nav className="flex items-center justify-between border-b border-line-soft pb-5">
             <a
               href="/"
@@ -71,193 +44,150 @@ export default function OracleAIPage() {
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Play the game
             </a>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-faint">
-              Research note · 2026
-            </span>
+            <span className="text-xs text-faint">Project note · July 2026</span>
           </nav>
 
-          <motion.article
-            className="pb-12 pt-14 sm:pb-16 sm:pt-20"
-            initial="hidden"
-            animate="visible"
-            variants={REVEAL}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-          >
-            <header className="grid gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)] lg:items-end">
-              <div>
-                <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.22em] text-brass">
-                  Introducing Oracle AI
+          <article className="py-12 sm:py-16">
+            <header className="border-b border-line pb-10 sm:pb-12">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-brass">
+                Oracle AI
+              </p>
+              <h1 className="display-title max-w-3xl text-4xl leading-tight text-bone sm:text-6xl">
+                Using the solved game to build a better opponent
+              </h1>
+              <div className="mt-7 max-w-2xl space-y-4 text-base leading-7 text-bone-muted">
+                <p>
+                  A strong solution now exists for the Finkel rules, so I wanted to see whether it
+                  could improve the game on this site. The complete tablebase is 827 MB, which is
+                  far too large to send to a browser.
                 </p>
-                <h1 className="display-title max-w-3xl text-5xl leading-[0.98] text-bone sm:text-7xl">
-                  A solved game,
-                  <br />
-                  distilled for the browser.
-                </h1>
-              </div>
-              <div className="border-l border-line pl-5 sm:pl-7">
-                <p className="text-base leading-7 text-bone-muted">
-                  We turned a complete mathematical solution into a small local opponent—without
-                  shipping the tablebase or replacing the game&apos;s existing AIs.
+                <p>
+                  Instead, I used the tablebase as training data for a small neural network. The
+                  result is the new Oracle opponent. Classic AI and the earlier ML model are still
+                  available, both for comparison and because they take genuinely different
+                  approaches.
                 </p>
-                <a
-                  href="/"
-                  className="mt-6 inline-flex items-center gap-2 rounded-lg border border-brass bg-brass px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brass-light hover:bg-brass-light"
-                >
-                  Play against Oracle
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </a>
               </div>
+              <a
+                href="/"
+                className="mt-7 inline-flex items-center rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass-light transition-colors hover:bg-brass/10"
+              >
+                Play against Oracle
+              </a>
             </header>
 
-            <section
-              className="mt-14 grid grid-cols-2 border-y border-line sm:mt-20 sm:grid-cols-4"
-              aria-label="Oracle AI at a glance"
-            >
-              {FACTS.map(([value, label], index) => (
-                <div
-                  key={label}
-                  className={`py-5 sm:px-6 sm:py-7 ${
-                    index % 2 === 1 ? 'border-l border-line' : ''
-                  } ${index > 1 ? 'border-t border-line sm:border-t-0' : ''} ${
-                    index > 0 ? 'sm:border-l' : ''
-                  }`}
-                >
-                  <div className="display-title text-3xl text-bone sm:text-4xl">{value}</div>
-                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                    {label}
+            <section className="border-b border-line py-10 sm:py-12" aria-labelledby="approach">
+              <div className="grid gap-5 sm:grid-cols-[10rem_1fr] sm:gap-10">
+                <h2 id="approach" className="text-sm font-semibold text-bone">
+                  What I changed
+                </h2>
+                <div className="space-y-4 text-base leading-7 text-bone-muted">
+                  <p>
+                    The network is trained to estimate the exact pre-roll win probability for a
+                    position. Its 32 inputs describe occupied squares and the number of pieces at
+                    the start and finish. Colour and piece numbering are deliberately left out, so
+                    equivalent positions have the same representation.
+                  </p>
+                  <p>
+                    Rust still applies the rules and generates every legal next position. The
+                    network only compares those positions. This keeps illegal moves out of the model
+                    and means the existing rules tests still cover Oracle.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="border-b border-line py-10 sm:py-12" aria-labelledby="results">
+              <div className="grid gap-7 sm:grid-cols-[10rem_1fr] sm:gap-10">
+                <h2 id="results" className="text-sm font-semibold text-bone">
+                  Results
+                </h2>
+                <div>
+                  <dl className="grid grid-cols-2 border-l border-t border-line">
+                    {RESULTS.map(([value, label]) => (
+                      <div key={label} className="border-b border-r border-line p-4 sm:p-5">
+                        <dt className="text-lg font-semibold text-bone sm:text-xl">{value}</dt>
+                        <dd className="mt-1 text-xs leading-5 text-muted">{label}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="mt-6 space-y-4 text-base leading-7 text-bone-muted">
+                    <p>
+                      On 100,000 test positions that were not used for training, 95% of predictions
+                      were within 0.884 percentage points of the tablebase value.
+                    </p>
+                    <p>
+                      In the current 2,250-game comparison, Oracle won 88% against the deployed ML
+                      model and 92% against Classic at search depth 3. It averaged 1.6 ms per move
+                      on the test machine. Match results include the luck of the dice, so the
+                      held-out tablebase error is the more useful measure of model quality.
+                    </p>
                   </div>
                 </div>
-              ))}
-            </section>
-
-            <section className="grid gap-10 border-b border-line py-14 sm:py-20 lg:grid-cols-[0.55fr_1.45fr]">
-              <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
-                  The method
-                </p>
-                <h2 className="display-title text-4xl text-bone sm:text-5xl">From proof to play</h2>
-                <p className="mt-5 max-w-sm text-sm leading-6 text-bone-muted">
-                  The rules engine and the learned model have deliberately separate jobs. That
-                  makes legality deterministic and the approximation measurable.
-                </p>
               </div>
-              <ol className="grid border-t border-line md:grid-cols-2">
-                {PROCESS.map((step, index) => (
-                  <li
-                    key={step.index}
-                    className={`border-b border-line py-6 md:px-7 ${
-                      index % 2 === 1 ? 'md:border-l' : ''
-                    }`}
-                  >
-                    <div className="font-mono text-[10px] tracking-[0.18em] text-brass">
-                      {step.index}
-                    </div>
-                    <h3 className="mt-4 text-lg font-semibold text-bone">{step.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-bone-muted">{step.body}</p>
-                  </li>
-                ))}
-              </ol>
             </section>
 
-            <section className="grid gap-10 border-b border-line py-14 sm:py-20 lg:grid-cols-2 lg:gap-20">
-              <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
-                  Why it is different
-                </p>
-                <h2 className="display-title text-4xl text-bone sm:text-5xl">
-                  Taught by exact probabilities, not a stronger heuristic.
+            <section className="border-b border-line py-10 sm:py-12" aria-labelledby="limits">
+              <div className="grid gap-5 sm:grid-cols-[10rem_1fr] sm:gap-10">
+                <h2 id="limits" className="text-sm font-semibold text-bone">
+                  A note on the name
                 </h2>
-              </div>
-              <div className="space-y-7 text-base leading-7 text-bone-muted">
-                <p>
-                  Classic AI searches forward and evaluates the positions it reaches. The original
-                  ML AI learns from those searches. Oracle instead learns from the published strong
-                  solution: the optimal pre-roll win probability for every reachable state.
-                </p>
-                <p>
-                  Its input has no player colour, dice roll, persistent piece identity, duplicated
-                  field, or padding. Equivalent positions look equivalent to the network. For each
-                  roll, Rust builds the legal next positions and Oracle compares their values.
-                </p>
-                <p className="border-l-2 border-brass pl-5 text-bone">
-                  The full solution remains training data. Only the compact model and the existing
-                  Rust rules engine reach your browser.
-                </p>
+                <div className="space-y-4 text-base leading-7 text-bone-muted">
+                  <p>
+                    Oracle is named after its teacher. The tablebase is exact to its stored
+                    precision, but the deployed network is still an approximation and can rank two
+                    close moves incorrectly.
+                  </p>
+                  <p>
+                    The model and the Rust rules engine run locally in the browser. The tablebase is
+                    only used during training and is not part of the download.
+                  </p>
+                </div>
               </div>
             </section>
 
-            <section className="grid gap-10 py-14 sm:py-20 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
-              <div>
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
-                  Honest by design
-                </p>
-                <h2 className="display-title max-w-2xl text-4xl text-bone sm:text-5xl">
-                  “Oracle” names the teacher, not a claim of perfect play.
+            <section className="py-10 sm:py-12" aria-labelledby="details">
+              <div className="grid gap-5 sm:grid-cols-[10rem_1fr] sm:gap-10">
+                <h2 id="details" className="text-sm font-semibold text-bone">
+                  More detail
                 </h2>
-                <p className="mt-6 max-w-2xl text-base leading-7 text-bone-muted">
-                  The source tablebase is exact to its stored precision; the deployed neural
-                  network is an approximation learned from a representative sample. We pin the
-                  source hash, separate training, validation, and test positions, preserve model
-                  provenance, and benchmark the result against every existing opponent.
-                </p>
-                <p className="mt-6 max-w-2xl border-l-2 border-brass pl-5 text-base leading-7 text-bone">
-                  On 100,000 unseen positions, mean error was 0.344 percentage points and 95% of
-                  predictions were within 0.884 points. The compressed production model is 269
-                  KiB—82% smaller than the earlier ML model.
-                </p>
-                <p className="mt-5 max-w-2xl text-sm leading-6 text-bone-muted">
-                  In the generated 2,250-game comparison, Oracle averaged a 93.1% win rate across
-                  nine opponents and 1.6 ms per move on the test machine. Match results are
-                  stochastic; held-out tablebase error remains the primary quality measure.
-                </p>
-              </div>
-              <aside className="surface-inset rounded-xl p-6 sm:p-7" aria-label="Further reading">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-bone">
-                  Read the work
-                </h3>
-                <div className="mt-5 space-y-4">
+                <div className="grid gap-3 text-sm">
                   <a
                     href="https://github.com/tre-systems/rgou-cloudflare/blob/main/docs/ORACLE-AI.md"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between gap-4 text-sm text-bone-muted transition-colors hover:text-bone"
+                    className="flex items-center justify-between border-b border-line pb-3 text-bone-muted transition-colors hover:text-bone"
                   >
-                    Technical write-up
-                    <Github className="h-4 w-4 text-faint group-hover:text-brass" aria-hidden="true" />
+                    Implementation and reproducibility notes
+                    <Github className="h-4 w-4 text-faint" aria-hidden="true" />
                   </a>
                   <a
                     href="https://royalur.net/file/solved/Solving_the_RGU_Report.pdf"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between gap-4 border-t border-line pt-4 text-sm text-bone-muted transition-colors hover:text-bone"
+                    className="flex items-center justify-between border-b border-line pb-3 text-bone-muted transition-colors hover:text-bone"
                   >
-                    Solution report
-                    <ExternalLink
-                      className="h-4 w-4 text-faint group-hover:text-brass"
-                      aria-hidden="true"
-                    />
+                    Strong solution report
+                    <ExternalLink className="h-4 w-4 text-faint" aria-hidden="true" />
                   </a>
                   <a
                     href="https://huggingface.co/sothatsit/RoyalUrModels"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between gap-4 border-t border-line pt-4 text-sm text-bone-muted transition-colors hover:text-bone"
+                    className="flex items-center justify-between text-bone-muted transition-colors hover:text-bone"
                   >
                     Published tablebase
-                    <ExternalLink
-                      className="h-4 w-4 text-faint group-hover:text-brass"
-                      aria-hidden="true"
-                    />
+                    <ExternalLink className="h-4 w-4 text-faint" aria-hidden="true" />
                   </a>
                 </div>
-              </aside>
+              </div>
             </section>
-          </motion.article>
+          </article>
 
           <footer className="flex flex-col gap-3 border-t border-line-soft py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>Royal Game of Ur · Oracle AI</span>
             <a href="/" className="transition-colors hover:text-bone">
-              Choose an opponent
+              Choose a game
             </a>
           </footer>
         </div>

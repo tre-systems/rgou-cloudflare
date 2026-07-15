@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 async function startGame(page: Page, mode: 'classic' | 'ml' | 'oracle' | 'watch' = 'classic') {
   await page.goto('/');
   await page.getByTestId(`mode-select-${mode}`).click();
+  if (mode === 'watch') await page.getByTestId('watch-match-start').click();
   await expect(page.getByTestId('game-board')).toBeVisible();
 }
 
@@ -30,6 +31,14 @@ async function setNearWinningRoll(page: Page, roll = 1) {
 }
 
 test.describe('Core Game Functionality', () => {
+  test('lists Oracle as the first opponent', async ({ page }) => {
+    await page.goto('/');
+    const options = page.getByTestId('ai-model-selection').locator('[data-testid^="mode-select-"]');
+
+    await expect(options.first()).toHaveAttribute('data-testid', 'mode-select-oracle');
+    await expect(options.first()).toContainText('Oracle AI');
+  });
+
   test('can start a classic game and see initial state', async ({ page }) => {
     await startGame(page, 'classic');
     await expect(page.getByTestId('game-status-text')).toContainText('Your turn');
@@ -47,7 +56,10 @@ test.describe('Core Game Functionality', () => {
     const failures: string[] = [];
     let modelRequests = 0;
     page.on('console', message => {
-      if (message.type() === 'error' && message.text().includes('AI worker oracle request failed')) {
+      if (
+        message.type() === 'error' &&
+        message.text().includes('AI worker oracle request failed')
+      ) {
         failures.push(message.text());
       }
     });
@@ -70,23 +82,36 @@ test.describe('Core Game Functionality', () => {
     expect(failures).toEqual([]);
   });
 
-  test('can start watch mode and see AI vs AI', async ({ page }) => {
-    const mlFailures: string[] = [];
-    let modelRequests = 0;
+  test('can choose both sides of an AI match', async ({ page }) => {
+    const failures: string[] = [];
     page.on('console', message => {
-      if (message.type() === 'error' && message.text().includes('AI worker ml request failed')) {
-        mlFailures.push(message.text());
+      if (message.type() === 'error' && message.text().includes('AI worker')) {
+        failures.push(message.text());
       }
     });
-    page.on('request', request => {
-      if (new URL(request.url()).pathname === '/ml-weights.json.gz') modelRequests += 1;
-    });
 
-    await startGame(page, 'watch');
+    await page.goto('/');
+    await page.getByTestId('mode-select-watch').click();
+    await expect(page.getByTestId('watch-match-selection')).toBeVisible();
+    await expect(page.getByTestId('watch-player1-oracle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('watch-player2-classic')).toHaveAttribute('aria-pressed', 'true');
+
+    await page.getByTestId('watch-player1-ml').click();
+    await page.getByTestId('watch-player2-oracle').click();
+    await page.getByTestId('watch-match-start').click();
+
+    await expect(page.getByTestId('player1-name')).toHaveText('ML AI');
+    await expect(page.getByTestId('player2-name')).toHaveText('Oracle AI');
     await expect(page.getByTestId('game-status-text')).toContainText("'s turn");
-    await expect.poll(() => modelRequests, { timeout: 10000 }).toBeGreaterThan(0);
-    await expect(page.getByTestId('game-status-text')).not.toBeEmpty();
-    expect(mlFailures).toEqual([]);
+    await expect
+      .poll(() => page.evaluate(() => window.useGameStore.getState().lastAIDiagnostics?.aiType), {
+        timeout: 10000,
+      })
+      .toMatch(/^(ml|oracle)$/);
+    expect(await page.evaluate(() => window.localStorage.getItem('rgou-ui-storage'))).toContain(
+      '"player1":"ml","player2":"oracle"'
+    );
+    expect(failures).toEqual([]);
   });
 });
 
@@ -175,8 +200,18 @@ test.describe('Game Completion and Usage Reporting', () => {
       await simulateGameWin(page);
       await expect.poll(() => events.length).toBe(2);
       expect(events).toEqual([
-        expect.objectContaining({ event: 'game_started', mode }),
-        expect.objectContaining({ event: 'game_completed', mode, winner: 'player1', moves: 1 }),
+        expect.objectContaining({
+          event: 'game_started',
+          mode,
+          ...(mode === 'watch' ? { player1: 'oracle', player2: 'classic' } : {}),
+        }),
+        expect.objectContaining({
+          event: 'game_completed',
+          mode,
+          winner: 'player1',
+          moves: 1,
+          ...(mode === 'watch' ? { player1: 'oracle', player2: 'classic' } : {}),
+        }),
       ]);
     });
   }

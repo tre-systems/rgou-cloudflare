@@ -10,7 +10,7 @@ import HowToPlayPanel from './HowToPlayPanel';
 import SiteBackdrop from './SiteBackdrop';
 import ModeSelection from './ModeSelection';
 import { getModeConfiguration } from '@/lib/game-mode';
-import type { OpponentMode } from '@/lib/types';
+import type { OpponentMode, WatchMatchup } from '@/lib/types';
 import { useGameAudio } from '@/hooks/useGameAudio';
 import { useGameTurnScheduler } from '@/hooks/useGameTurnScheduler';
 
@@ -48,10 +48,12 @@ export default function RoyalGameOfUr() {
     setSelectedMode,
     setShowModelOverlay,
     setSoundEnabled,
+    setWatchMatchup,
   } = uiStore.actions;
   const showModelOverlay = uiStore.showModelOverlay;
   const selectedMode = uiStore.selectedMode;
-  const modeConfiguration = selectedMode ? getModeConfiguration(selectedMode) : null;
+  const watchMatchup = uiStore.watchMatchup;
+  const modeConfiguration = selectedMode ? getModeConfiguration(selectedMode, watchMatchup) : null;
   const aiSourceP1 = modeConfiguration?.player1 ?? null;
   const aiSourceP2 = modeConfiguration?.player2 ?? 'ml';
   const soundEnabled = uiStore.soundEnabled;
@@ -67,6 +69,7 @@ export default function RoyalGameOfUr() {
     gameState,
     overlayOpen: showModelOverlay,
     selectedMode,
+    watchMatchup,
     processDiceRoll,
     endTurn,
     makeAIMove,
@@ -113,11 +116,13 @@ export default function RoyalGameOfUr() {
     createNearWinningStateAction();
   };
 
-  const handleOverlaySelect = (mode: OpponentMode) => {
+  const handleOverlaySelect = (mode: OpponentMode, matchup?: WatchMatchup) => {
+    const selectedWatchMatchup = matchup ?? watchMatchup;
+    if (mode === 'watch') setWatchMatchup(selectedWatchMatchup);
     setSelectedMode(mode);
     setShowModelOverlay(false);
     reset();
-    reportGameStarted(mode);
+    reportGameStarted(mode, selectedWatchMatchup);
     processDiceRoll();
   };
 
@@ -155,7 +160,10 @@ export default function RoyalGameOfUr() {
           <div className="mt-3 text-xs text-white/70">
             <p>No AI diagnostics available yet. Make a move to see AI analysis.</p>
             <p className="mt-2">
-              Current AI source: {selectedMode === 'watch' ? 'N/A' : getAIName(aiSourceP2)}
+              Current AI source:{' '}
+              {selectedMode === 'watch'
+                ? `${getAIName(aiSourceP1)} vs ${getAIName(aiSourceP2)}`
+                : getAIName(aiSourceP2)}
             </p>
           </div>
         )}
@@ -227,7 +235,11 @@ export default function RoyalGameOfUr() {
               </header>
 
               {showModelOverlay ? (
-                <ModeSelection onSelect={handleOverlaySelect} onShowHowToPlay={showHowToPlay} />
+                <ModeSelection
+                  watchMatchup={watchMatchup}
+                  onSelect={handleOverlaySelect}
+                  onShowHowToPlay={showHowToPlay}
+                />
               ) : (
                 <div className="mt-5">
                   <GameBoard

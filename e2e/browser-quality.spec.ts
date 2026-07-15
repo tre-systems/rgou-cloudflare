@@ -14,7 +14,7 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.getByRole('heading', { level: 1, name: 'Royal Game of Ur' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2, name: 'Select Your Opponent' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Choose a game' })).toBeVisible();
 
   const classicMode = page.getByRole('button', { name: /^Classic AI/ });
   await expect(classicMode).toBeVisible();
@@ -37,7 +37,7 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
   await expect(page.getByRole('button', { name: 'Choose another opponent' })).toBeVisible();
 });
 
-test('Oracle AI research page explains the model and returns to the game', async ({ page }) => {
+test('Oracle AI project note explains the model and returns to the game', async ({ page }) => {
   await page.goto('/oracle-ai');
 
   await expect(page).toHaveTitle('Oracle AI · Royal Game of Ur');
@@ -47,14 +47,16 @@ test('Oracle AI research page explains the model and returns to the game', async
   );
   await expect(page.getByTestId('oracle-ai-page')).toBeVisible();
   await expect(
-    page.getByRole('heading', { level: 1, name: 'A solved game, distilled for the browser.' })
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Using the solved game to build a better opponent',
+    })
   ).toBeVisible();
-  await expect(page.getByText('137.9m')).toBeVisible();
-  await expect(page.getByText('0.344%')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Technical write-up' })).toHaveAttribute(
-    'rel',
-    /noopener/
-  );
+  await expect(page.getByText('137,892,016')).toBeVisible();
+  await expect(page.getByText('0.344 points')).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Implementation and reproducibility notes' })
+  ).toHaveAttribute('rel', /noopener/);
 
   await page.getByRole('link', { name: 'Play the game' }).click();
   await expect(page.getByTestId('ai-model-selection')).toBeVisible();

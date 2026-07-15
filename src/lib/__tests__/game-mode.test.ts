@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getAISource, getModeConfiguration, isAITurn, parseOpponentMode } from '../game-mode';
+import {
+  getAISource,
+  getModeConfiguration,
+  isAITurn,
+  parseOpponentMode,
+  parseWatchMatchup,
+} from '../game-mode';
 
 describe('game mode policy', () => {
   it('derives both AI assignments from the selected mode', () => {
@@ -10,9 +16,15 @@ describe('game mode policy', () => {
       watch: false,
     });
     expect(getModeConfiguration('watch')).toMatchObject({
-      player1: 'classic',
-      player2: 'ml',
-      participants: ['classic', 'ml'],
+      player1: 'oracle',
+      player2: 'classic',
+      participants: ['oracle', 'classic'],
+      watch: true,
+    });
+    expect(getModeConfiguration('watch', { player1: 'ml', player2: 'oracle' })).toMatchObject({
+      player1: 'ml',
+      player2: 'oracle',
+      participants: ['ml', 'oracle'],
       watch: true,
     });
     expect(getModeConfiguration('oracle')).toMatchObject({
@@ -27,6 +39,9 @@ describe('game mode policy', () => {
     expect(isAITurn('ml', 'player1')).toBe(false);
     expect(isAITurn('ml', 'player2')).toBe(true);
     expect(isAITurn('watch', 'player1')).toBe(true);
+    expect(getAISource('watch', 'player2', { player1: 'classic', player2: 'oracle' })).toBe(
+      'oracle'
+    );
     expect(getAISource('heuristic', 'player2')).toBe('heuristic');
     expect(getAISource('oracle', 'player2')).toBe('oracle');
   });
@@ -36,5 +51,10 @@ describe('game mode policy', () => {
     expect(parseOpponentMode('oracle')).toBe('oracle');
     expect(parseOpponentMode('server')).toBeNull();
     expect(parseOpponentMode({ mode: 'watch' })).toBeNull();
+    expect(parseWatchMatchup({ player1: 'ml', player2: 'oracle' })).toEqual({
+      player1: 'ml',
+      player2: 'oracle',
+    });
+    expect(parseWatchMatchup({ player1: 'heuristic', player2: 'oracle' })).toBeNull();
   });
 });

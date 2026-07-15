@@ -8,6 +8,8 @@ The game has three AI opponents, all written in Rust and compiled to WebAssembly
 
 These are preserved as separate strategies: Classic searches at runtime, ML captures the earlier self-play experiment, and Oracle approximates exact tablebase values. For measured win rates and speed across every matchup, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md). For Oracle's research, design, and evidence, see [ORACLE-AI.md](./ORACLE-AI.md).
 
+Watch mode accepts an independent choice for each side from Classic, ML, and Oracle. The selected pairing uses the same typed mode policy as normal games and is retained across a page reload.
+
 ## Browser execution
 
 The UI never sends a complete `GameState` to AI code. The thin main-thread services share one lazily constructed `AIWorkerClient`, which sends a schema-validated `AIPosition`: seven squares per player, current player, and dice roll. The discriminated Worker protocol correlates each request by ID and times it out after 30 seconds. A timeout, transport failure, or invalid response restarts the Worker and rejects every pending request.

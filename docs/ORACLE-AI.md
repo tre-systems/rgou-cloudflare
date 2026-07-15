@@ -1,12 +1,12 @@
 # Oracle AI
 
-Oracle AI is a compact neural opponent distilled from the published strong solution of the Finkel ruleset. It adds a third, independently useful strategy alongside Classic search and the earlier self-play ML model; neither existing option is replaced.
+Oracle AI is a small neural opponent trained from the published strong solution of the Finkel ruleset. It sits alongside Classic search and the earlier self-play ML model; the existing options remain available.
 
-This is the technical record. The shorter [public account](https://gameofur.org/oracle-ai) explains the result for players.
+This document records how it was trained, what is deployed, and how the result was checked. The shorter [project note](https://gameofur.org/oracle-ai) covers the same work without the implementation detail.
 
-## Decision
+## Approach
 
-The best practical design for this application is an **exact teacher with a compact value-network student**:
+The full tablebase is useful training data but much too large for this site. The implementation therefore does the following:
 
 1. Validate and sample the solved tablebase outside the repository.
 2. Convert each sampled position to a canonical current-player representation.
@@ -14,7 +14,7 @@ The best practical design for this application is an **exact teacher with a comp
 4. Let the Rust rules engine enumerate legal successors and use the network only to value them.
 5. Ship the model through the existing local Rust/WebAssembly Worker path.
 
-This design improves the source of supervision rather than merely increasing the old self-play run. It preserves local-first play, keeps the browser download small, avoids another inference runtime, and creates measurable error against an exact reference.
+This changes the source of the training labels rather than simply extending the old self-play run. Play remains local, the browser download stays small, and model error can be measured directly against the tablebase.
 
 ```mermaid
 flowchart LR
@@ -40,16 +40,16 @@ The solution is an open author-published report and MIT-licensed artifact, not a
 
 ## Patterns
 
-| Pattern | Invariant | Consequence |
-| --- | --- | --- |
-| Exact teacher / compact student | Labels come from solved-game probabilities, never a heuristic score. | More training cannot amplify a search evaluator's preferences. |
-| Canonical current-player view | Inputs describe the side to move as `current`, regardless of display colour. | One model handles either player without objective inversion. |
-| Semantic occupancy | Identical pieces are represented by occupied squares and counts, not persistent piece numbers. | Renumbering equivalent pieces cannot change a prediction. |
-| Legal successor enumeration | The rules engine creates candidate states; the network only evaluates them. | Invalid-action masking and a policy head are unnecessary. |
-| Soft value distillation | Targets retain win probabilities rather than only the best action. | Calibration, close alternatives, and absolute error remain measurable. |
-| Evidence-gated scaling | A pilot selects architecture and loss before the production run. | Compute follows measured evidence rather than intuition. |
-| Immutable provenance | Data, configuration, code, samples, candidates, and artifacts have recorded identities. | A deployed result can be audited and reproduced. |
-| Strategy behind a shared port | Oracle uses the same typed Worker transport and normalized store result as the other AIs. | Adding an engine does not fork game orchestration. |
+| Pattern                         | Invariant                                                                                      | Consequence                                                            |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Exact teacher / compact student | Labels come from solved-game probabilities, never a heuristic score.                           | More training cannot amplify a search evaluator's preferences.         |
+| Canonical current-player view   | Inputs describe the side to move as `current`, regardless of display colour.                   | One model handles either player without objective inversion.           |
+| Semantic occupancy              | Identical pieces are represented by occupied squares and counts, not persistent piece numbers. | Renumbering equivalent pieces cannot change a prediction.              |
+| Legal successor enumeration     | The rules engine creates candidate states; the network only evaluates them.                    | Invalid-action masking and a policy head are unnecessary.              |
+| Soft value distillation         | Targets retain win probabilities rather than only the best action.                             | Calibration, close alternatives, and absolute error remain measurable. |
+| Evidence-gated scaling          | A pilot selects architecture and loss before the production run.                               | Compute follows measured evidence rather than intuition.               |
+| Immutable provenance            | Data, configuration, code, samples, candidates, and artifacts have recorded identities.        | A deployed result can be audited and reproduced.                       |
+| Strategy behind a shared port   | Oracle uses the same typed Worker transport and normalized store result as the other AIs.      | Adding an engine does not fork game orchestration.                     |
 
 These patterns extend the project-wide [architecture catalogue](./ARCHITECTURE.md#pattern-catalogue); they are not a separate architecture.
 
@@ -105,9 +105,9 @@ The production preset uses 2,000,000 training, 100,000 validation, and 100,000 t
 
 The production search selected Huber loss, seed `42`, and the best checkpoint from 30 completed epochs. Errors below are absolute win-probability error; the percentage-point form is shown for intuition.
 
-| Split | MAE | RMSE | p95 | Maximum |
-| --- | ---: | ---: | ---: | ---: |
-| Validation · 100,000 positions | 0.003437 · 0.344 points | 0.004526 · 0.453 points | 0.008864 · 0.886 points | 0.068689 · 6.869 points |
+| Split                           |                     MAE |                    RMSE |                     p95 |                 Maximum |
+| ------------------------------- | ----------------------: | ----------------------: | ----------------------: | ----------------------: |
+| Validation · 100,000 positions  | 0.003437 · 0.344 points | 0.004526 · 0.453 points | 0.008864 · 0.886 points | 0.068689 · 6.869 points |
 | Test · 100,000 unseen positions | 0.003437 · 0.344 points | 0.004510 · 0.451 points | 0.008841 · 0.884 points | 0.059898 · 5.990 points |
 
 The test MAE is **47.8% lower** and test p95 error is **47.1% lower** than the pilot. The source/JSON artifact is 751,580 bytes; deterministic gzip is 275,643 bytes, **82.3% smaller** than the deployed self-play ML gzip. Model and deployment identities are pinned in `ml/oracle-model-manifest.json`:
@@ -135,14 +135,14 @@ The checked-in [AI matrix](./AI-MATRIX-RESULTS.md) is generated, not hand-edited
 
 ## Alternatives considered
 
-| Approach | Reason not selected |
-| --- | --- |
-| Deploy the complete tablebase | Exact but about 827 MB before browser caching; disproportionate for an offline game. |
-| Run deeper expectiminimax only | Improves Classic incrementally but remains slower and has no exact supervised error signal. |
-| Scale the existing self-play model | More examples would still inherit expectiminimax labels and its padded, index-sensitive representation. |
-| Imitate only the optimal move | Discards value margins, complicates equivalent-action labels, and provides weaker diagnostics. |
-| Reinforcement learning from scratch | Expensive and unnecessary when exact values already exist for every reachable state. |
-| Add ONNX Runtime or WebGPU | The small dense network runs quickly in existing Rust/WASM; another runtime adds download and operational cost without demonstrated benefit. |
+| Approach                            | Reason not selected                                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy the complete tablebase       | Exact but about 827 MB before browser caching; disproportionate for an offline game.                                                         |
+| Run deeper expectiminimax only      | Improves Classic incrementally but remains slower and has no exact supervised error signal.                                                  |
+| Scale the existing self-play model  | More examples would still inherit expectiminimax labels and its padded, index-sensitive representation.                                      |
+| Imitate only the optimal move       | Discards value margins, complicates equivalent-action labels, and provides weaker diagnostics.                                               |
+| Reinforcement learning from scratch | Expensive and unnecessary when exact values already exist for every reachable state.                                                         |
+| Add ONNX Runtime or WebGPU          | The small dense network runs quickly in existing Rust/WASM; another runtime adds download and operational cost without demonstrated benefit. |
 
 ## Trust and limitations
 

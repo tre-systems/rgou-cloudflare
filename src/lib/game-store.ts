@@ -13,7 +13,7 @@ import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
 import { OracleAIService } from './oracle-ai-service';
 import { useStatsStore } from './stats-store';
-import type { AISource, GameState, Player, MoveType, AIResponse } from './types';
+import type { AISource, GameState, Player, MoveType, AIResponse, WatchMatchup } from './types';
 import { createId } from './utils';
 import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
@@ -51,7 +51,7 @@ type GameStore = {
     makeMove: (pieceIndex: number) => void;
     makeAIMove: (aiSource: AISource, isPlayer1AI?: boolean) => Promise<void>;
     reset: () => void;
-    reportGameStarted: (mode: GameUsageMode) => void;
+    reportGameStarted: (mode: GameUsageMode, watchMatchup?: WatchMatchup) => void;
     reportGameCompleted: () => void;
     createNearWinningState: () => void;
   };
@@ -296,23 +296,25 @@ export const useGameStore = create<GameStore>()(
             state.gameState.validMoves = [];
           });
         },
-        reportGameStarted: mode => {
+        reportGameStarted: (mode, watchMatchup) => {
           const { gameState, usageStarted } = get();
           if (usageStarted) return;
           set(state => {
             state.usageStarted = true;
             state.usageStartedBy = gameState.currentPlayer;
           });
-          reportUsage(gameStartedUsage(mode, gameState.currentPlayer));
+          reportUsage(gameStartedUsage(mode, gameState.currentPlayer, watchMatchup));
         },
         reportGameCompleted: () => {
           const { gameState, usageCompleted, usageStartedBy } = get();
-          const mode = useUIStore.getState().selectedMode;
+          const { selectedMode: mode, watchMatchup } = useUIStore.getState();
           if (usageCompleted || gameState.gameStatus !== 'finished' || !mode) return;
           set(state => {
             state.usageCompleted = true;
           });
-          reportUsage(gameCompletedUsage(mode, gameState, usageStartedBy ?? undefined));
+          reportUsage(
+            gameCompletedUsage(mode, gameState, usageStartedBy ?? undefined, watchMatchup)
+          );
         },
       },
     })),

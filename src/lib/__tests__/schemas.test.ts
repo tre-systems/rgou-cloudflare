@@ -5,6 +5,8 @@ import {
   MoveRecordSchema,
   OpponentModeSchema,
   ParticipantSchema,
+  WatchAISourceSchema,
+  WatchMatchupSchema,
 } from '../schemas';
 
 describe('Schemas', () => {
@@ -110,5 +112,17 @@ describe('Schemas', () => {
     expect(OpponentModeSchema.parse('oracle')).toBe('oracle');
     expect(AISourceSchema.parse('oracle')).toBe('oracle');
     expect(ParticipantSchema.parse('oracle')).toBe('oracle');
+  });
+
+  it('limits configurable watch matches to public AI opponents', () => {
+    expect(WatchAISourceSchema.parse('oracle')).toBe('oracle');
+    expect(WatchMatchupSchema.parse({ player1: 'ml', player2: 'classic' })).toEqual({
+      player1: 'ml',
+      player2: 'classic',
+    });
+    expect(() => WatchMatchupSchema.parse({ player1: 'heuristic', player2: 'classic' })).toThrow();
+    expect(() =>
+      WatchMatchupSchema.parse({ player1: 'oracle', player2: 'classic', extra: true })
+    ).toThrow();
   });
 });

@@ -46,7 +46,7 @@ All three AIs run locally in the browser. See [AI-MATRIX-RESULTS.md](./AI-MATRIX
 - **Classic AI** (default): expectiminimax search to depth 4 with alpha-beta pruning. Strong positional play; values rosettes and safe moves.
 - **ML AI**: a value + policy neural network trained from expectiminimax-labelled simulated games.
 - **Oracle AI**: a compact value network trained on positions from the solved game. It estimates each legal successor's long-term win probability; it does not load the 827 MB solution into your browser or claim mathematically perfect play. See the [Oracle AI write-up](./ORACLE-AI.md).
-- **AI vs AI**: watch Classic and ML play each other automatically to compare their styles.
+- **AI vs AI**: choose Classic, ML, or Oracle independently for each side and watch the match play automatically.
 
 ## Further reading
 

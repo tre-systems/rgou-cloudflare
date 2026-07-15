@@ -46,12 +46,15 @@ describe('usage reporting', () => {
         },
       ],
     });
-    const completed = gameCompletedUsage('watch', game, 'player2');
+    const completed = gameCompletedUsage('watch', game, 'player2', {
+      player1: 'ml',
+      player2: 'oracle',
+    });
     expect(completed).toMatchObject({
       event: 'game_completed',
       mode: 'watch',
-      player1: 'classic',
-      player2: 'ml',
+      player1: 'ml',
+      player2: 'oracle',
       winner: 'player1',
       startedBy: 'player2',
       moves: 1,

@@ -4,6 +4,8 @@ import {
   type OpponentMode,
   type Participant,
   type Player,
+  type WatchMatchup,
+  WatchMatchupSchema,
 } from './schemas';
 
 export type ModeConfiguration = {
@@ -13,7 +15,12 @@ export type ModeConfiguration = {
   watch: boolean;
 };
 
-const MODE_CONFIGURATION = {
+export const DEFAULT_WATCH_MATCHUP: WatchMatchup = {
+  player1: 'oracle',
+  player2: 'classic',
+};
+
+const PLAY_MODE_CONFIGURATION = {
   heuristic: {
     player1: null,
     player2: 'heuristic',
@@ -38,27 +45,40 @@ const MODE_CONFIGURATION = {
     participants: ['human', 'oracle'],
     watch: false,
   },
-  watch: {
-    player1: 'classic',
-    player2: 'ml',
-    participants: ['classic', 'ml'],
-    watch: true,
-  },
-} as const satisfies Record<OpponentMode, ModeConfiguration>;
+} as const satisfies Record<Exclude<OpponentMode, 'watch'>, ModeConfiguration>;
 
-export function getModeConfiguration(mode: OpponentMode): ModeConfiguration {
-  return MODE_CONFIGURATION[mode];
+export function getModeConfiguration(
+  mode: OpponentMode,
+  watchMatchup: WatchMatchup = DEFAULT_WATCH_MATCHUP
+): ModeConfiguration {
+  if (mode === 'watch') {
+    return {
+      ...watchMatchup,
+      participants: [watchMatchup.player1, watchMatchup.player2],
+      watch: true,
+    };
+  }
+
+  return PLAY_MODE_CONFIGURATION[mode];
 }
 
 export function parseOpponentMode(value: unknown): OpponentMode | null {
   return OpponentModeSchema.safeParse(value).data ?? null;
 }
 
-export function getAISource(mode: OpponentMode, player: Player): AISource | null {
-  const configuration = getModeConfiguration(mode);
+export function parseWatchMatchup(value: unknown): WatchMatchup | null {
+  return WatchMatchupSchema.safeParse(value).data ?? null;
+}
+
+export function getAISource(
+  mode: OpponentMode,
+  player: Player,
+  watchMatchup?: WatchMatchup
+): AISource | null {
+  const configuration = getModeConfiguration(mode, watchMatchup);
   return player === 'player1' ? configuration.player1 : configuration.player2;
 }
 
-export function isAITurn(mode: OpponentMode, player: Player): boolean {
-  return getAISource(mode, player) !== null;
+export function isAITurn(mode: OpponentMode, player: Player, watchMatchup?: WatchMatchup): boolean {
+  return getAISource(mode, player, watchMatchup) !== null;
 }
