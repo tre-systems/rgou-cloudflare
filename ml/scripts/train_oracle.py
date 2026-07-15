@@ -8,7 +8,6 @@ import hashlib
 import json
 import math
 import mmap
-import os
 import random
 import subprocess
 import sys
@@ -34,6 +33,8 @@ from oracle_tablebase import (  # noqa: E402
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPOSITORY_ROOT / "ml/config/oracle-training.json"
 DEFAULT_DATA_DIR = Path.home() / "Desktop/rgou-training-data"
+TABLEBASE_PATH = DEFAULT_DATA_DIR / "finkel.rgu"
+MODEL_PATH = REPOSITORY_ROOT / "ml/data/weights/oracle_ai_weights_v1.json"
 
 
 class ValueNetwork(nn.Module):
@@ -247,19 +248,19 @@ def git_revision() -> str:
 def run(args: argparse.Namespace) -> int:
     config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
     preset = config["presets"][args.preset]
-    data_dir = Path(os.environ.get("RGOU_TRAINING_DATA_DIR", DEFAULT_DATA_DIR)).expanduser()
-    tablebase_path = Path(args.tablebase).expanduser() if args.tablebase else data_dir / config["tablebase"]["filename"]
-    if not tablebase_path.is_file():
+    if not TABLEBASE_PATH.is_file():
         raise FileNotFoundError(
-            f"missing {tablebase_path}; download {config['tablebase']['url']} first"
+            f"missing {TABLEBASE_PATH}; download {config['tablebase']['url']} first"
         )
-    actual_hash = sha256_file(tablebase_path)
+    actual_hash = sha256_file(TABLEBASE_PATH)
     if actual_hash != config["tablebase"]["sha256"]:
         raise ValueError("tablebase SHA-256 does not match the pinned artifact")
-    layout = parse_tablebase(tablebase_path)
+    layout = parse_tablebase(TABLEBASE_PATH)
 
     total = preset["samples"] + preset["validation_samples"] + preset["test_samples"]
-    features, probabilities, keys = sample_tablebase(tablebase_path, layout, total, args.sample_seed)
+    features, probabilities, keys = sample_tablebase(
+        TABLEBASE_PATH, layout, total, args.sample_seed
+    )
     for index in range(min(32, len(keys))):
         expected = np.asarray(decode_key(int(keys[index])), dtype=np.float32)
         if not np.array_equal(features[index], expected):
@@ -295,8 +296,7 @@ def run(args: argparse.Namespace) -> int:
     best["test"] = evaluate(model, test_loader, device)
     all_results = [result for _, result in candidates]
     source_revision = git_revision()
-    output = Path(args.output or REPOSITORY_ROOT / "ml/data/weights/oracle_ai_weights_v1.json")
-    output.parent.mkdir(parents=True, exist_ok=True)
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     artifact = {
         "weights": flatten_weights(model),
         "metadata": {
@@ -323,16 +323,16 @@ def run(args: argparse.Namespace) -> int:
             "output_size": 1,
         },
     }
-    output.write_text(json.dumps(artifact, indent=2, allow_nan=False) + "\n", encoding="utf-8")
-    print(f"selected={best} output={output}", flush=True)
+    MODEL_PATH.write_text(
+        json.dumps(artifact, indent=2, allow_nan=False) + "\n", encoding="utf-8"
+    )
+    print(f"selected={best} output={MODEL_PATH}", flush=True)
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preset", choices=("pilot", "production"), default="pilot")
-    parser.add_argument("--tablebase")
-    parser.add_argument("--output")
     parser.add_argument("--sample-seed", type=int, default=20250715)
     return run(parser.parse_args())
 

@@ -35,7 +35,7 @@ npm run train:oracle:pilot       # architecture/loss/seed comparison
 npm run train:oracle:production  # selected architecture, 2.2M disjoint positions
 ```
 
-Set `RGOU_TRAINING_DATA_DIR` to use another scratch directory. Both launchers use `caffeinate` when it is available. Never commit the 827 MB tablebase.
+The Oracle trainer deliberately uses this fixed scratch path and a fixed repository output path; its CLI accepts experiment choices, not filesystem paths. Both launchers use `caffeinate` when it is available. Never commit the 827 MB tablebase.
 
 ## Prerequisites
 
@@ -46,7 +46,7 @@ Set `RGOU_TRAINING_DATA_DIR` to use another scratch directory. Both launchers us
 
 `ml/pyproject.toml` declares the supported Python and training dependencies. `ml/uv.lock` pins the complete cross-platform resolution, including artifact hashes. Use `uv sync --project ml --locked`; do not install training dependencies independently with `pip`. Upgrade intentionally with `uv lock --project ml --upgrade`, review the lock diff, and rerun model validation.
 
-Self-play data and the Oracle tablebase live in `~/Desktop/rgou-training-data` by default. Set `RGOU_TRAINING_DATA_DIR` to use another scratch location. Default self-play output names are ignored because they are replaceable run artifacts; give models selected for comparison or promotion a stable versioned name.
+Self-play data and the Oracle tablebase live in `~/Desktop/rgou-training-data` by default. `RGOU_TRAINING_DATA_DIR` changes the self-play location; Oracle remains on its fixed path. Default self-play output names are ignored because they are replaceable run artifacts; give models selected for comparison or promotion a stable versioned name.
 
 ## Backends
 

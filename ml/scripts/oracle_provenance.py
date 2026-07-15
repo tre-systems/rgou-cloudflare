@@ -61,8 +61,8 @@ def expected_weight_count(input_size: int, hidden_sizes: list[int], output_size:
     return count + (previous_size + 1) * output_size
 
 
-def validate_model(model_path: Path) -> dict[str, Any]:
-    absolute_model = repository_path(model_path)
+def validate_model() -> dict[str, Any]:
+    absolute_model = repository_path(DEFAULT_MODEL)
     model_bytes = absolute_model.read_bytes()
     model = json.loads(model_bytes)
     config_path = repository_path(TRAINING_CONFIG)
@@ -196,14 +196,10 @@ def validate_model(model_path: Path) -> dict[str, Any]:
     }
 
 
-def build_manifest(
-    model_path: Path,
-    deployed_json_path: Path = DEFAULT_DEPLOYED_JSON,
-    deployed_gzip_path: Path = DEFAULT_DEPLOYED_GZIP,
-) -> dict[str, Any]:
-    validated = validate_model(model_path)
-    deployed_json = repository_path(deployed_json_path)
-    deployed_gzip = repository_path(deployed_gzip_path)
+def build_manifest() -> dict[str, Any]:
+    validated = validate_model()
+    deployed_json = repository_path(DEFAULT_DEPLOYED_JSON)
+    deployed_gzip = repository_path(DEFAULT_DEPLOYED_GZIP)
     json_bytes = deployed_json.read_bytes()
     gzip_bytes = deployed_gzip.read_bytes()
     if json_bytes != validated["bytes"]:
@@ -259,24 +255,28 @@ def deterministic_gzip(content: bytes) -> bytes:
     return gzip.compress(content, compresslevel=9, mtime=0)
 
 
-def write_manifest(manifest: dict[str, Any], manifest_path: Path) -> None:
-    repository_path(manifest_path).write_text(
+def write_manifest(manifest: dict[str, Any]) -> None:
+    repository_path(DEFAULT_MANIFEST).write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
 
-def promote(model_path: Path, manifest_path: Path, json_path: Path, gzip_path: Path) -> None:
-    model = validate_model(model_path)
-    write_atomic(repository_path(json_path), model["bytes"])
-    write_atomic(repository_path(gzip_path), deterministic_gzip(model["bytes"]))
-    write_manifest(build_manifest(model_path, json_path, gzip_path), manifest_path)
+def promote() -> None:
+    model = validate_model()
+    write_atomic(repository_path(DEFAULT_DEPLOYED_JSON), model["bytes"])
+    write_atomic(
+        repository_path(DEFAULT_DEPLOYED_GZIP), deterministic_gzip(model["bytes"])
+    )
+    write_manifest(build_manifest())
 
 
-def verify(model_path: Path, manifest_path: Path, json_path: Path, gzip_path: Path) -> None:
-    expected = build_manifest(model_path, json_path, gzip_path)
-    actual = json.loads(repository_path(manifest_path).read_text(encoding="utf-8"))
+def verify() -> None:
+    expected = build_manifest()
+    actual = json.loads(
+        repository_path(DEFAULT_MANIFEST).read_text(encoding="utf-8")
+    )
     if actual != expected:
-        raise ValueError(f"{display_path(manifest_path)} is stale")
+        raise ValueError(f"{display_path(DEFAULT_MANIFEST)} is stale")
     print(
         f"Verified {expected['model']['path']} "
         f"({expected['model']['sha256']}, {expected['model']['weight_count']} weights)"
@@ -286,16 +286,12 @@ def verify(model_path: Path, manifest_path: Path, json_path: Path, gzip_path: Pa
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("promote", "verify"))
-    parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
-    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument("--deployed-json", type=Path, default=DEFAULT_DEPLOYED_JSON)
-    parser.add_argument("--deployed-gzip", type=Path, default=DEFAULT_DEPLOYED_GZIP)
     args = parser.parse_args()
     try:
         if args.command == "promote":
-            promote(args.model, args.manifest, args.deployed_json, args.deployed_gzip)
+            promote()
         else:
-            verify(args.model, args.manifest, args.deployed_json, args.deployed_gzip)
+            verify()
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
         print(f"Oracle provenance failed: {error}", file=sys.stderr)
         return 1

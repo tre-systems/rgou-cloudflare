@@ -80,7 +80,7 @@ The highest value wins. Equivalent reserve pieces produce equivalent successors,
 
 ## Training and reproducibility
 
-The tablebase is external scratch data and must never be committed. Download the pinned artifact to `${RGOU_TRAINING_DATA_DIR:-~/Desktop/rgou-training-data}/finkel.rgu`, then run:
+The tablebase is external scratch data and must never be committed. Download the pinned artifact to `~/Desktop/rgou-training-data/finkel.rgu`, then run:
 
 ```bash
 npm run train:oracle:pilot
