@@ -164,6 +164,17 @@ export type OpponentMode = z.infer<typeof OpponentModeSchema>;
 export const AISourceSchema = z.enum(['heuristic', 'classic', 'ml', 'oracle']);
 export type AISource = z.infer<typeof AISourceSchema>;
 
+export const WatchAISourceSchema = z.enum(['classic', 'ml', 'oracle']);
+export type WatchAISource = z.infer<typeof WatchAISourceSchema>;
+
+export const WatchMatchupSchema = z
+  .object({
+    player1: WatchAISourceSchema,
+    player2: WatchAISourceSchema,
+  })
+  .strict();
+export type WatchMatchup = z.infer<typeof WatchMatchupSchema>;
+
 export const ParticipantSchema = z.enum(['human', 'heuristic', 'classic', 'ml', 'oracle']);
 export type Participant = z.infer<typeof ParticipantSchema>;
 

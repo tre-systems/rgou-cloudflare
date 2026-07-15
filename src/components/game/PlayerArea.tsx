@@ -35,6 +35,7 @@ export default function PlayerArea({
       )}
       layout
       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+      data-testid={`${player}-area`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -49,6 +50,7 @@ export default function PlayerArea({
                 'truncate text-sm font-semibold',
                 isAI ? 'text-clay-light' : 'text-lapis-light'
               )}
+              data-testid={`${player}-name`}
             >
               {isAI ? getAIName(aiType) : 'You'}
             </h3>
@@ -98,10 +100,7 @@ export default function PlayerArea({
                     <GamePiece player={player} isClickable={isPieceClickable} />
                   </motion.button>
                 ) : (
-                  <div
-                    key={i}
-                    className="h-5 w-5 rounded-full border border-line opacity-40"
-                  />
+                  <div key={i} className="h-5 w-5 rounded-full border border-line opacity-40" />
                 );
               })}
             </div>

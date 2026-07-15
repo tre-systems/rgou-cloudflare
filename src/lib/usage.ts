@@ -7,6 +7,7 @@ import {
   type GameState,
   type OpponentMode,
   type Player,
+  type WatchMatchup,
 } from './types';
 
 export const GameUsageModeSchema = OpponentModeSchema;
@@ -33,19 +34,24 @@ export type UsageEvent = z.infer<typeof UsageEventSchema>;
 type GameStartedUsageEvent = Extract<UsageEvent, { event: 'game_started' }>;
 type GameCompletedUsageEvent = Extract<UsageEvent, { event: 'game_completed' }>;
 
-function context(mode: GameUsageMode, startedBy: Player) {
-  const [player1, player2] = getModeConfiguration(mode).participants;
+function context(mode: GameUsageMode, startedBy: Player, watchMatchup?: WatchMatchup) {
+  const [player1, player2] = getModeConfiguration(mode, watchMatchup).participants;
   return { mode, player1, player2, startedBy };
 }
 
-export function gameStartedUsage(mode: GameUsageMode, startedBy: Player): GameStartedUsageEvent {
-  return { event: 'game_started', ...context(mode, startedBy) };
+export function gameStartedUsage(
+  mode: GameUsageMode,
+  startedBy: Player,
+  watchMatchup?: WatchMatchup
+): GameStartedUsageEvent {
+  return { event: 'game_started', ...context(mode, startedBy, watchMatchup) };
 }
 
 export function gameCompletedUsage(
   mode: GameUsageMode,
   state: GameState,
-  startedBy: Player = state.history[0]?.player ?? state.currentPlayer
+  startedBy: Player = state.history[0]?.player ?? state.currentPlayer,
+  watchMatchup?: WatchMatchup
 ): GameCompletedUsageEvent {
   if (!state.winner) throw new Error('A completed game must have a winner');
   const durationMs = Math.min(
@@ -54,7 +60,7 @@ export function gameCompletedUsage(
   );
   return {
     event: 'game_completed',
-    ...context(mode, startedBy),
+    ...context(mode, startedBy, watchMatchup),
     winner: state.winner,
     moves: Math.min(MAX_GAME_HISTORY, state.history.length),
     durationMs,

@@ -46,8 +46,8 @@ flowchart TD
 | Injected entropy                   | Random choices can be reproduced by supplying a controlled source.                                        | `RandomSource`, `initializeGame`, `rollDice`, and `processDiceRoll` in `game-logic.ts`    |
 | Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.     | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
 | Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                               | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
-| Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                     | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                      |
-| Canonical representation           | Equivalent positions have one model input regardless of player colour or interchangeable piece identity. | Oracle's `canonical-finkel-v1` features in `oracle_ai.rs` and `oracle_tablebase.py`         |
+| Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                     | Opponent modes and configurable watch matchups in `src/lib/game-mode.ts`                  |
+| Canonical representation           | Equivalent positions have one model input regardless of player colour or interchangeable piece identity.  | Oracle's `canonical-finkel-v1` features in `oracle_ai.rs` and `oracle_tablebase.py`       |
 
 The state machine deliberately remains a small set of pure transition functions instead of a framework. If transitions gain substantially more states, cross-cutting guards, or replay requirements, move to a reducer driven by explicit domain events; do not spread more transition logic through components.
 
@@ -58,7 +58,7 @@ The state machine deliberately remains a small set of pure transition functions 
 | Ports and adapters          | Browser and platform details are isolated behind narrow modules.                                 | AI services, `persist-storage.ts`, `sound-effects.ts`, `observability.ts`, and `usage.ts`          |
 | Anti-corruption layer       | External naming and shapes are translated before entering the domain model.                      | WASM snake-case responses are validated and mapped through `ai-protocol.ts` and the AI services.   |
 | Runtime boundary validation | `unknown` is parsed before use; type assertions do not substitute for validation.                | Persisted-state schemas, usage-event schema, Worker request limits, AI protocol schemas            |
-| Strategy                    | The selected engine changes computation, not the main-thread transport or game-store contract.   | Classic, ML, and Oracle services share `AIWorkerClient`; the store consumes normalized results.   |
+| Strategy                    | The selected engine changes computation, not the main-thread transport or game-store contract.   | Classic, ML, and Oracle services share `AIWorkerClient`; the store consumes normalized results.    |
 | Narrow boundary DTO         | AI work receives positions, not UI, history, board projections, or persistence state.            | `AIPositionSchema` and `toAIPosition` in `ai-protocol.ts`                                          |
 | Typed Worker RPC            | One discriminated protocol validates requests and responses and correlates them by ID.           | `AIWorkerRequestSchema`, `AIWorkerResponseSchema`, and `AIWorkerClient`                            |
 | Async result guard          | A delayed result may update state only if it still belongs to the active game and turn.          | `gameId` and turn snapshot checks in `game-store.ts`                                               |
@@ -83,19 +83,19 @@ Components may contain display decisions and transient animation state. Reusable
 
 ### Data, privacy, and delivery patterns
 
-| Pattern                     | Invariant                                                                                                                            | Implementation                                                                      |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Local-first persistence     | In-progress games, settings, and personal statistics remain in local storage and are validated when restored.                        | Zustand persistence plus `persist-storage.ts`                                       |
-| Data minimization           | Analytics contain only the dimensions required for aggregate product questions.                                                      | `usage.ts`; startup removes the retired `rgou-player-id` key.                       |
-| Best-effort domain events   | Telemetry observes lifecycle transitions but never participates in them.                                                             | `game_started` and `game_completed` via `/api/usage`                                |
-| Front controller            | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                                       | `src/worker.ts`, `canonical-host.ts`                                                |
-| Tiered offline precache     | The complete built application, including lazy chunks, is required; large AI assets are optional; health and API routes stay online. | generated service worker plus its Node and browser contract tests                   |
-| Intentional code splitting  | Optional or heavy UI infrastructure does not inflate the initial application chunk.                                                  | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts` |
-| Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.                                 | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
-| Supply-chain gate           | Known high-severity advisories block deployment; update automation cannot silently change executable CI code.                        | Audits, lockfiles, immutable action SHAs, Dependabot, and GitHub code scanning      |
-| Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation.                       | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
-| Exact teacher / compact student | A large solved-game artifact is used only for training; the browser receives a small approximating model with pinned provenance.   | Oracle training and promotion; see [ORACLE-AI.md](./ORACLE-AI.md)                  |
-| Evidence-gated promotion    | A model reaches production only after held-out error, legal-play, matchup, latency, size, and provenance checks pass.                  | Oracle evaluation gates and generated AI matrix                                    |
+| Pattern                         | Invariant                                                                                                                            | Implementation                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Local-first persistence         | In-progress games, settings, and personal statistics remain in local storage and are validated when restored.                        | Zustand persistence plus `persist-storage.ts`                                       |
+| Data minimization               | Analytics contain only the dimensions required for aggregate product questions.                                                      | `usage.ts`; startup removes the retired `rgou-player-id` key.                       |
+| Best-effort domain events       | Telemetry observes lifecycle transitions but never participates in them.                                                             | `game_started` and `game_completed` via `/api/usage`                                |
+| Front controller                | The edge Worker owns canonical-host policy and API routing before delegating to static assets.                                       | `src/worker.ts`, `canonical-host.ts`                                                |
+| Tiered offline precache         | The complete built application, including lazy chunks, is required; large AI assets are optional; health and API routes stay online. | generated service worker plus its Node and browser contract tests                   |
+| Intentional code splitting      | Optional or heavy UI infrastructure does not inflate the initial application chunk.                                                  | Lazy diagnostics and Sentry imports; the animation vendor group in `vite.config.ts` |
+| Serialized verified release     | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.                                 | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
+| Supply-chain gate               | Known high-severity advisories block deployment; update automation cannot silently change executable CI code.                        | Audits, lockfiles, immutable action SHAs, Dependabot, and GitHub code scanning      |
+| Diagram as code                 | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation.                       | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
+| Exact teacher / compact student | A large solved-game artifact is used only for training; the browser receives a small approximating model with pinned provenance.     | Oracle training and promotion; see [ORACLE-AI.md](./ORACLE-AI.md)                   |
+| Evidence-gated promotion        | A model reaches production only after held-out error, legal-play, matchup, latency, size, and provenance checks pass.                | Oracle evaluation gates and generated AI matrix                                     |
 
 ## Frontend structure
 
@@ -103,7 +103,7 @@ Components may contain display decisions and transient animation state. Reusable
 - `src/hooks/` — focused React effect lifecycles such as turn scheduling and sound coordination
 - `src/lib/schemas.ts` — canonical domain schemas and inferred types
 - `src/lib/game-logic.ts` — pure rules, state transitions, persistence projections, and injectable entropy
-- `src/lib/game-mode.ts` — exhaustive opponent-mode policy and derived AI assignments
+- `src/lib/game-mode.ts` — exhaustive opponent-mode policy, validated watch matchups, and derived AI assignments
 - `src/lib/game-store.ts` — game orchestration and guarded asynchronous AI turns
 - `src/lib/ui-store.ts` and `stats-store.ts` — focused UI and personal-statistics stores
 - `src/lib/ai-protocol.ts` — narrow `AIPosition` and validated Worker/WASM contracts
@@ -154,7 +154,7 @@ flowchart LR
 
 ## Persistence and analytics
 
-In-progress games, settings, and personal win/loss statistics are stored only in browser local storage. Watch-mode matches are excluded from personal statistics.
+In-progress games, settings, the selected watch matchup, and personal win/loss statistics are stored only in browser local storage. Watch-mode matches are excluded from personal statistics.
 
 The app has no database. It reports only `game_started` and `game_completed` events to the shared account-level Analytics Engine dataset `app_usage`, indexed by `rgou`. [Analytics Engine retains data for three months](https://developers.cloudflare.com/analytics/analytics-engine/limits/#data-retention); this dataset is operational aggregate telemetry, not historical product data. Events contain mode, anonymous participant categories, starting side, and—on completion—winner, move count, and duration. They contain no player identifier, user agent, board state, or move history.
 

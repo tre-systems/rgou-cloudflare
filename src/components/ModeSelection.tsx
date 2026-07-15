@@ -1,17 +1,28 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, Brain, Cpu, Eye, Scale } from 'lucide-react';
-import type { OpponentMode } from '@/lib/types';
+import type { OpponentMode, WatchMatchup } from '@/lib/types';
 import ModeSelectionCard from './ModeSelectionCard';
+import WatchMatchSelection from './WatchMatchSelection';
 
 interface ModeSelectionProps {
-  onSelect: (mode: OpponentMode) => void;
+  watchMatchup: WatchMatchup;
+  onSelect: (mode: OpponentMode, watchMatchup?: WatchMatchup) => void;
   onShowHowToPlay: () => void;
 }
 
 const MODE_OPTIONS = [
   {
-    key: 'classic',
+    key: 'oracle',
     index: '01',
+    label: 'Oracle AI',
+    description: 'A compact value network trained from the solved game.',
+    subtitle: 'Solved-game model',
+    icon: Scale,
+  },
+  {
+    key: 'classic',
+    index: '02',
     label: 'Classic AI',
     description: 'A deliberate tactical opponent that searches the possible outcomes of each move.',
     subtitle: 'Expectiminimax · depth 4',
@@ -19,27 +30,18 @@ const MODE_OPTIONS = [
   },
   {
     key: 'ml',
-    index: '02',
+    index: '03',
     label: 'Machine Learning AI',
     description: 'A quick, instinctive opponent trained on positions generated through self-play.',
     subtitle: 'Neural network',
     icon: Brain,
   },
   {
-    key: 'oracle',
-    index: '03',
-    label: 'Oracle AI',
-    description: 'A compact value network taught by the solved game to compare every legal move.',
-    subtitle: 'Exact-solution distillation',
-    icon: Scale,
-  },
-  {
     key: 'watch',
     index: '04',
     label: 'Watch a Match',
-    description:
-      'See the search-based and neural opponents play a complete game against each other.',
-    subtitle: 'Classic vs machine learning',
+    description: 'Choose any two AI opponents and watch them play a complete game.',
+    subtitle: 'AI vs AI',
     icon: Eye,
   },
 ] as const;
@@ -49,7 +51,13 @@ const CARDS_CONTAINER = {
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.12 } },
 };
 
-export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelectionProps) {
+export default function ModeSelection({
+  watchMatchup,
+  onSelect,
+  onShowHowToPlay,
+}: ModeSelectionProps) {
+  const [watchSetupOpen, setWatchSetupOpen] = useState(false);
+
   return (
     <motion.section
       className="mt-8 w-full"
@@ -65,10 +73,10 @@ export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelecti
         <div className="flex flex-col gap-4 border-b border-line pb-6 text-left sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
-              Choose a table
+              Play or watch
             </div>
             <h2 id="opponent-selection-title" className="display-title text-3xl text-bone">
-              Select your opponent
+              Choose a game
             </h2>
           </div>
           <button
@@ -94,11 +102,20 @@ export default function ModeSelection({ onSelect, onShowHowToPlay }: ModeSelecti
               description={mode.description}
               subtitle={mode.subtitle}
               index={mode.index}
-              onClick={() => onSelect(mode.key)}
+              onClick={() => (mode.key === 'watch' ? setWatchSetupOpen(true) : onSelect(mode.key))}
               data-testid={`mode-select-${mode.key}`}
             />
           ))}
         </motion.div>
+        <AnimatePresence>
+          {watchSetupOpen && (
+            <WatchMatchSelection
+              initialMatchup={watchMatchup}
+              onCancel={() => setWatchSetupOpen(false)}
+              onStart={matchup => onSelect('watch', matchup)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </motion.section>
   );

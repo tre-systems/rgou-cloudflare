@@ -18,6 +18,7 @@ An offline-first implementation of the ancient Royal Game of Ur with search, sel
 ## Features
 
 - **Three distinct AIs**: Classic expectiminimax, a self-play neural network, and Oracle AI distilled from the solved game, all running locally through Rust and WebAssembly
+- **Configurable AI matches**: choose any two of the three opponents and watch them play
 - **Non-blocking play**: one lazily created Web Worker hosts every AI engine, keeping search, inference, and model loading off the UI thread
 - **Offline-first**: HTML plus its hashed JS/CSS shell are installed atomically while larger AI assets are cached opportunistically
 - **Responsive UI**: keyboard-accessible play, restrained motion, reduced-motion support, and sound on desktop and mobile

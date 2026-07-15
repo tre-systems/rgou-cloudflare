@@ -12,6 +12,7 @@ describe('UIStore', () => {
     expect(state).toMatchObject({
       showModelOverlay: true,
       selectedMode: null,
+      watchMatchup: { player1: 'oracle', player2: 'classic' },
       soundEnabled: true,
       diagnosticsPanelOpen: false,
       howToPlayOpen: false,
@@ -23,6 +24,7 @@ describe('UIStore', () => {
 
     actions.setShowModelOverlay(false);
     actions.setSelectedMode('classic');
+    actions.setWatchMatchup({ player1: 'ml', player2: 'oracle' });
     actions.setSoundEnabled(false);
     actions.setDiagnosticsPanelOpen(true);
     actions.setHowToPlayOpen(true);
@@ -30,6 +32,7 @@ describe('UIStore', () => {
     expect(useUIStore.getState()).toMatchObject({
       showModelOverlay: false,
       selectedMode: 'classic',
+      watchMatchup: { player1: 'ml', player2: 'oracle' },
       soundEnabled: false,
       diagnosticsPanelOpen: true,
       howToPlayOpen: true,
@@ -40,6 +43,7 @@ describe('UIStore', () => {
     const actions = useUIStore.getState().actions;
     actions.setShowModelOverlay(false);
     actions.setSelectedMode('ml');
+    actions.setWatchMatchup({ player1: 'classic', player2: 'ml' });
     actions.setSoundEnabled(false);
     actions.setDiagnosticsPanelOpen(true);
     actions.setHowToPlayOpen(true);
@@ -49,6 +53,7 @@ describe('UIStore', () => {
     expect(useUIStore.getState()).toMatchObject({
       showModelOverlay: true,
       selectedMode: null,
+      watchMatchup: { player1: 'oracle', player2: 'classic' },
       soundEnabled: true,
       diagnosticsPanelOpen: false,
       howToPlayOpen: false,
