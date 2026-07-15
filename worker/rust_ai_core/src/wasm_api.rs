@@ -1,10 +1,11 @@
 use super::{genetic_params::GeneticParams, GameState, HeuristicAI, PiecePosition, Player, AI};
-use crate::{dice, ml_ai::MLAI, MoveEvaluation};
+use crate::{dice, ml_ai::MLAI, oracle_ai::OracleAI, MoveEvaluation};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 
 static ML_AI_INSTANCE: Mutex<Option<MLAI>> = Mutex::new(None);
+static ORACLE_AI_INSTANCE: Mutex<Option<OracleAI>> = Mutex::new(None);
 static CLASSIC_AI_INSTANCE: Mutex<Option<AI>> = Mutex::new(None);
 static HEURISTIC_AI_INSTANCE: Mutex<Option<HeuristicAI>> = Mutex::new(None);
 static EVOLVED_PARAMS: Mutex<Option<GeneticParams>> = Mutex::new(None);
@@ -251,6 +252,49 @@ pub fn get_ml_ai_move(game_state_request_js: JsValue) -> Result<JsValue, JsValue
             "ML AI not initialized. Call init_ml_ai() first.",
         ))
     }
+}
+
+#[wasm_bindgen]
+pub fn init_oracle_ai() -> Result<JsValue, JsValue> {
+    let mut instance = ORACLE_AI_INSTANCE.lock().unwrap();
+    *instance = Some(OracleAI::new());
+
+    let response = serde_json::to_string(&"Oracle AI initialized")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
+    Ok(JsValue::from_str(&response))
+}
+
+#[wasm_bindgen]
+pub fn load_oracle_weights(weights_js: JsValue) -> Result<JsValue, JsValue> {
+    let weights: Vec<f32> = serde_wasm_bindgen::from_value(weights_js)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let mut instance = ORACLE_AI_INSTANCE.lock().unwrap();
+    let oracle_ai = instance.get_or_insert_with(OracleAI::new);
+    oracle_ai
+        .load_pretrained(&weights)
+        .map_err(|error| JsValue::from_str(&error))?;
+
+    let response = serde_json::to_string(&"Oracle weights loaded")
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
+    Ok(JsValue::from_str(&response))
+}
+
+#[wasm_bindgen]
+pub fn get_oracle_ai_move(game_state_request_js: JsValue) -> Result<JsValue, JsValue> {
+    let game_state_request: GameStateRequest =
+        serde_wasm_bindgen::from_value(game_state_request_js)
+            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let game_state = convert_request_to_game_state(&game_state_request);
+
+    let instance = ORACLE_AI_INSTANCE.lock().unwrap();
+    let oracle_ai = instance.as_ref().ok_or_else(|| {
+        JsValue::from_str("Oracle AI not initialized. Call init_oracle_ai() first.")
+    })?;
+    let response = oracle_ai.get_best_move(&game_state);
+    let response_json = serde_json::to_string(&response)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize response: {e}")))?;
+    Ok(JsValue::from_str(&response_json))
 }
 
 #[wasm_bindgen]

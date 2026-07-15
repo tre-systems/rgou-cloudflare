@@ -9,7 +9,7 @@
   <hr />
 </div>
 
-An offline-first implementation of the ancient Royal Game of Ur with Classic and machine-learning opponents. The React interface runs both Rust/WebAssembly AIs locally in one lazy Web Worker and is served by a Cloudflare Worker with Static Assets.
+An offline-first implementation of the ancient Royal Game of Ur with search, self-play, and solved-game-distilled opponents. The React interface runs all three Rust/WebAssembly AIs locally in one lazy Web Worker and is served by a Cloudflare Worker with Static Assets.
 
 ## Play Now
 
@@ -17,7 +17,7 @@ An offline-first implementation of the ancient Royal Game of Ur with Classic and
 
 ## Features
 
-- **Dual AI**: classic expectiminimax and a neural network trained from simulated games, both running locally through Rust and WebAssembly
+- **Three distinct AIs**: Classic expectiminimax, a self-play neural network, and Oracle AI distilled from the solved game, all running locally through Rust and WebAssembly
 - **Non-blocking play**: one lazily created Web Worker hosts every AI engine, keeping search, inference, and model loading off the UI thread
 - **Offline-first**: HTML plus its hashed JS/CSS shell are installed atomically while larger AI assets are cached opportunistically
 - **Responsive UI**: keyboard-accessible play, restrained motion, reduced-motion support, and sound on desktop and mobile
@@ -56,6 +56,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — system design, pattern catalogue, dependency rules, data flow, and deployment
 - **[Architecture diagrams](./docs/diagrams/README.md)** — Graphviz sources, rendered system views, and visual conventions
 - **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** — AI execution, algorithms, model contract, and genetic evolution
+- **[ORACLE-AI.md](./docs/ORACLE-AI.md)** — Oracle AI rationale, distillation, implementation, evidence, and reproducibility
 - **[AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md)** — generated AI win-rate and speed results
 - **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — commands, testing, and troubleshooting
 - **[GAME-GUIDE.md](./docs/GAME-GUIDE.md)** — rules, strategy, and history

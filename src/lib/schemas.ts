@@ -158,13 +158,13 @@ export type GameStats = z.infer<typeof GameStatsSchema>;
 export const GameModeSchema = z.enum(['play', 'watch']);
 export type GameMode = z.infer<typeof GameModeSchema>;
 
-export const OpponentModeSchema = z.enum(['heuristic', 'classic', 'ml', 'watch']);
+export const OpponentModeSchema = z.enum(['heuristic', 'classic', 'ml', 'oracle', 'watch']);
 export type OpponentMode = z.infer<typeof OpponentModeSchema>;
 
-export const AISourceSchema = z.enum(['heuristic', 'classic', 'ml']);
+export const AISourceSchema = z.enum(['heuristic', 'classic', 'ml', 'oracle']);
 export type AISource = z.infer<typeof AISourceSchema>;
 
-export const ParticipantSchema = z.enum(['human', 'heuristic', 'classic', 'ml']);
+export const ParticipantSchema = z.enum(['human', 'heuristic', 'classic', 'ml', 'oracle']);
 export type Participant = z.infer<typeof ParticipantSchema>;
 
 export const MoveEvaluationSchema = z.object({
@@ -197,7 +197,7 @@ export const AIResponseSchema = z.object({
   thinking: z.string(),
   timings: TimingsSchema,
   diagnostics: DiagnosticsSchema,
-  aiType: z.enum(['classic', 'fallback', 'ml', 'heuristic']),
+  aiType: z.enum(['classic', 'fallback', 'ml', 'oracle', 'heuristic']),
 });
 export type AIResponse = z.infer<typeof AIResponseSchema>;
 

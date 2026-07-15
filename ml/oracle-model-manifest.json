@@ -1,0 +1,141 @@
+{
+  "architecture": {
+    "hidden_sizes": [
+      128,
+      128,
+      64
+    ],
+    "input_size": 32,
+    "output_size": 1
+  },
+  "deployment": {
+    "gzip": {
+      "content_encoding": "gzip",
+      "decompressed_sha256": "4bd7e1e6ca8b8cc5147c702f11bf38a1e8e942cab9cf0891bbf270fb7a956b7d",
+      "path": "public/oracle-weights.json.gz",
+      "sha256": "ac86b5d2dd47aeb7913389102c523b1e15c17f0a34098522ce2a29d8318ce2e9",
+      "size_bytes": 275643
+    },
+    "json": {
+      "path": "public/oracle-weights.json",
+      "sha256": "4bd7e1e6ca8b8cc5147c702f11bf38a1e8e942cab9cf0891bbf270fb7a956b7d",
+      "size_bytes": 751580
+    }
+  },
+  "inputs": {
+    "ml/config/oracle-training.json": "d027c0f9d059fcc6b7ac11b9a844c04509ab811721fcb2b1b8a5ab393bd3d673",
+    "ml/scripts/oracle_tablebase.py": "dc845b4fe54a9828a98ddb60b6e86c6d9c3e1abf6d510bd9a353ce36cf2951c1",
+    "ml/scripts/train_oracle.py": "1c7f146fe338af747f875da34e275b1952984205dbf74448b97417ed160a30c3"
+  },
+  "model": {
+    "format": "rgou-canonical-value-network-json-v1",
+    "path": "ml/data/weights/oracle_ai_weights_v1.json",
+    "sha256": "4bd7e1e6ca8b8cc5147c702f11bf38a1e8e942cab9cf0891bbf270fb7a956b7d",
+    "size_bytes": 751580,
+    "weight_count": 29057,
+    "weights_sha256": "4efcfdb934a1298bab8e3aee699a56955a081d64dff6f66ce19b8b52a9afdc9f"
+  },
+  "schema_version": 1,
+  "source": {
+    "kind": "training_source_commit",
+    "revision": "c326562a485ca1a39769ed4a4333698d0a80886d"
+  },
+  "training": {
+    "candidates": [
+      {
+        "completed_epochs": 30,
+        "hidden_sizes": [
+          128,
+          128,
+          64
+        ],
+        "loss": "huber",
+        "seed": 42,
+        "test": {
+          "mae": 0.003437458537518978,
+          "max_absolute_error": 0.05989775061607361,
+          "p95_absolute_error": 0.008841129019856453,
+          "rmse": 0.004510457161813974
+        },
+        "training_time_seconds": 344.14090716606006,
+        "validation": {
+          "mae": 0.0034374913666397333,
+          "max_absolute_error": 0.06868860870599747,
+          "p95_absolute_error": 0.00886380672454834,
+          "rmse": 0.0045258114114403725
+        }
+      },
+      {
+        "completed_epochs": 30,
+        "hidden_sizes": [
+          128,
+          128,
+          64
+        ],
+        "loss": "huber",
+        "seed": 314159,
+        "training_time_seconds": 391.24632199993357,
+        "validation": {
+          "mae": 0.003640286158770323,
+          "max_absolute_error": 0.05173450708389282,
+          "p95_absolute_error": 0.009321628138422966,
+          "rmse": 0.004781525116413832
+        }
+      },
+      {
+        "completed_epochs": 30,
+        "hidden_sizes": [
+          128,
+          128,
+          64
+        ],
+        "loss": "huber",
+        "seed": 271828,
+        "training_time_seconds": 406.8743408329319,
+        "validation": {
+          "mae": 0.0035897213965654373,
+          "max_absolute_error": 0.057316720485687256,
+          "p95_absolute_error": 0.00927024707198143,
+          "rmse": 0.0047140102833509445
+        }
+      }
+    ],
+    "encoding_script_sha256": "dc845b4fe54a9828a98ddb60b6e86c6d9c3e1abf6d510bd9a353ce36cf2951c1",
+    "feature_schema": "canonical-finkel-v1",
+    "sample_keys_sha256": "c8a51ac3d4ba4a78c29f14fa4c39fb9a5ba06f83219b152c3906323f1a504510",
+    "sample_seed": 20250715,
+    "selected_candidate": {
+      "completed_epochs": 30,
+      "hidden_sizes": [
+        128,
+        128,
+        64
+      ],
+      "loss": "huber",
+      "seed": 42,
+      "test": {
+        "mae": 0.003437458537518978,
+        "max_absolute_error": 0.05989775061607361,
+        "p95_absolute_error": 0.008841129019856453,
+        "rmse": 0.004510457161813974
+      },
+      "training_time_seconds": 344.14090716606006,
+      "validation": {
+        "mae": 0.0034374913666397333,
+        "max_absolute_error": 0.06868860870599747,
+        "p95_absolute_error": 0.00886380672454834,
+        "rmse": 0.0045258114114403725
+      }
+    },
+    "source_revision": "c326562a485ca1a39769ed4a4333698d0a80886d",
+    "tablebase_entries": 137892016,
+    "tablebase_sha256": "d0f33ba40f01b81527d30664d576d8920e06dea6459be966e06e4f704e8e9092",
+    "test_samples": 100000,
+    "training_config_sha256": "d027c0f9d059fcc6b7ac11b9a844c04509ab811721fcb2b1b8a5ab393bd3d673",
+    "training_date": "2026-07-15T10:18:54+00:00",
+    "training_samples": 2000000,
+    "training_script_sha256": "1c7f146fe338af747f875da34e275b1952984205dbf74448b97417ed160a30c3",
+    "validation_samples": 100000,
+    "version": "oracle_v1"
+  }
+}

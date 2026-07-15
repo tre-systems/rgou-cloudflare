@@ -22,6 +22,8 @@ export function getAIName(aiSource: AIResponse['aiType'] | null): string {
       return 'Classic';
     case 'ml':
       return 'ML AI';
+    case 'oracle':
+      return 'Oracle AI';
     case 'fallback':
       return 'Fallback';
     case 'heuristic':
@@ -37,6 +39,8 @@ export function getAISubtitle(aiSource: AIResponse['aiType'] | null): string {
       return 'Expectiminimax algorithm';
     case 'ml':
       return 'Neural network model';
+    case 'oracle':
+      return 'Exact-solution distillation';
     case 'heuristic':
       return 'Immediate evaluation';
     default:

@@ -59,7 +59,7 @@ test('optional precache failure does not reject service worker installation', as
   const installPromise = installPromiseFor(
     {
       add: async asset => {
-        if (asset === '/ml-weights.json.gz') throw new Error('model unavailable');
+        if (asset.endsWith('-weights.json.gz')) throw new Error('model unavailable');
       },
       addAll: async () => undefined,
       match: async () =>
@@ -72,8 +72,9 @@ test('optional precache failure does not reject service worker installation', as
   );
 
   await assert.doesNotReject(installPromise);
-  assert.equal(errors.length, 1);
+  assert.equal(errors.length, 2);
   assert.equal(errors[0][1], '/ml-weights.json.gz');
+  assert.equal(errors[1][1], '/oracle-weights.json.gz');
 });
 
 test('hashed application assets are part of the required offline shell', async () => {

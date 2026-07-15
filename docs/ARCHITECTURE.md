@@ -1,6 +1,6 @@
 # Architecture
 
-The Royal Game of Ur is a local-first React application built with Vite and served by a small Cloudflare Worker. Its Rust AI engines are compiled to WebAssembly and run in one lazy Web Worker.
+The Royal Game of Ur is a local-first React application built with Vite and served by a small Cloudflare Worker. Its three Rust AI opponents are compiled to WebAssembly and run in one lazy Web Worker.
 
 This document is also the project's pattern catalogue. A pattern is useful here only when it gives the code a clear invariant. New code should use the vocabulary and dependency rules below instead of introducing a parallel way to solve the same problem.
 
@@ -47,6 +47,7 @@ flowchart TD
 | Derived random streams             | Parallel simulations derive one stable stream per game; scheduling cannot change results or ordering.     | `TrainingConfig.seed` and the indexed parallel generator in Rust `training.rs`            |
 | Cross-language conformance         | The TypeScript UI rules and Rust AI rules must agree on the same positions.                               | `test-fixtures/rules-conformance.json` is consumed by Vitest and Cargo integration tests. |
 | Policy table                       | A closed set of choices is expressed as typed data rather than repeated conditionals.                     | The exhaustive opponent-mode configuration in `src/lib/game-mode.ts`                      |
+| Canonical representation           | Equivalent positions have one model input regardless of player colour or interchangeable piece identity. | Oracle's `canonical-finkel-v1` features in `oracle_ai.rs` and `oracle_tablebase.py`         |
 
 The state machine deliberately remains a small set of pure transition functions instead of a framework. If transitions gain substantially more states, cross-cutting guards, or replay requirements, move to a reducer driven by explicit domain events; do not spread more transition logic through components.
 
@@ -57,7 +58,7 @@ The state machine deliberately remains a small set of pure transition functions 
 | Ports and adapters          | Browser and platform details are isolated behind narrow modules.                                 | AI services, `persist-storage.ts`, `sound-effects.ts`, `observability.ts`, and `usage.ts`          |
 | Anti-corruption layer       | External naming and shapes are translated before entering the domain model.                      | WASM snake-case responses are validated and mapped through `ai-protocol.ts` and the AI services.   |
 | Runtime boundary validation | `unknown` is parsed before use; type assertions do not substitute for validation.                | Persisted-state schemas, usage-event schema, Worker request limits, AI protocol schemas            |
-| Strategy                    | The selected engine changes computation, not the main-thread transport or game-store contract.   | `WasmAiService` and `MLAIService` share `AIWorkerClient`; the store consumes normalized results.   |
+| Strategy                    | The selected engine changes computation, not the main-thread transport or game-store contract.   | Classic, ML, and Oracle services share `AIWorkerClient`; the store consumes normalized results.   |
 | Narrow boundary DTO         | AI work receives positions, not UI, history, board projections, or persistence state.            | `AIPositionSchema` and `toAIPosition` in `ai-protocol.ts`                                          |
 | Typed Worker RPC            | One discriminated protocol validates requests and responses and correlates them by ID.           | `AIWorkerRequestSchema`, `AIWorkerResponseSchema`, and `AIWorkerClient`                            |
 | Async result guard          | A delayed result may update state only if it still belongs to the active game and turn.          | `gameId` and turn snapshot checks in `game-store.ts`                                               |
@@ -93,6 +94,8 @@ Components may contain display decisions and transient animation state. Reusable
 | Serialized verified release | Only the newest run for a ref deploys; production reports and smoke-tests the exact commit identity.                                 | workflow concurrency, `/healthz`, `X-App-Release`, production smoke test            |
 | Supply-chain gate           | Known high-severity advisories block deployment; update automation cannot silently change executable CI code.                        | Audits, lockfiles, immutable action SHAs, Dependabot, and GitHub code scanning      |
 | Diagram as code             | Relationship-heavy views have reviewable DOT sources, committed renders, one question each, and CI validation.                       | `docs/diagrams/`, `scripts/render-diagrams.mjs`, `scripts/check-diagrams.mjs`       |
+| Exact teacher / compact student | A large solved-game artifact is used only for training; the browser receives a small approximating model with pinned provenance.   | Oracle training and promotion; see [ORACLE-AI.md](./ORACLE-AI.md)                  |
+| Evidence-gated promotion    | A model reaches production only after held-out error, legal-play, matchup, latency, size, and provenance checks pass.                  | Oracle evaluation gates and generated AI matrix                                    |
 
 ## Frontend structure
 
@@ -105,8 +108,8 @@ Components may contain display decisions and transient animation state. Reusable
 - `src/lib/ui-store.ts` and `stats-store.ts` — focused UI and personal-statistics stores
 - `src/lib/ai-protocol.ts` — narrow `AIPosition` and validated Worker/WASM contracts
 - `src/lib/ai-worker-client.ts` — lazy Worker ownership, request correlation, timeout, and restart
-- `src/lib/wasm-ai-service.ts` and `ml-ai-service.ts` — thin engine-specific response adapters
-- `src/lib/ai.worker.ts` — the single Worker/WASM adapter for Classic, heuristic, and ML engines
+- `src/lib/` AI service modules — thin engine-specific response adapters
+- `src/lib/ai.worker.ts` — the single Worker/WASM adapter for Classic, heuristic, ML, and Oracle engines
 - `src/lib/usage.ts` — anonymous lifecycle event contract and Analytics Engine mapping
 - `src/worker.ts` — edge front controller, API validation, security headers, and static assets
 
@@ -121,8 +124,8 @@ Components may contain display decisions and transient animation state. Reusable
 1. `useGameTurnScheduler` derives whether the active player is AI-controlled from `game-mode.ts`.
 2. `makeAIMove` snapshots the active game and turn.
 3. A thin engine adapter asks the shared lazy `AIWorkerClient` to send a validated `AIPosition`.
-4. The single Worker lazily loads WASM, dispatches to Classic, heuristic, or ML, and validates the returned JSON through `ai-protocol.ts`.
-5. For ML, the Worker fetches, streams gzip decompression, parses, validates, and loads model weights without blocking the UI thread. A failed or stale compressed artifact falls back to a freshly fetched uncompressed model.
+4. The single Worker lazily loads WASM, dispatches to Classic, heuristic, ML, or Oracle, and validates the returned JSON through `ai-protocol.ts`.
+5. For a learned engine, the Worker fetches, streams gzip decompression, parses, validates, and loads the matching model without blocking the UI thread. A failed or stale compressed artifact falls back to a freshly fetched uncompressed model.
 6. The store discards stale results, normalizes diagnostics, and applies a legal move through `makeMove`.
 7. Failure, timeout, invalid data, or an illegal suggestion falls back to a legal local move; timeout also restarts the Worker.
 

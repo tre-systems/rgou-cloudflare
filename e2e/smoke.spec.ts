@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function startGame(page: Page, mode: 'classic' | 'ml' | 'watch' = 'classic') {
+async function startGame(page: Page, mode: 'classic' | 'ml' | 'oracle' | 'watch' = 'classic') {
   await page.goto('/');
   await page.getByTestId(`mode-select-${mode}`).click();
   await expect(page.getByTestId('game-board')).toBeVisible();
@@ -41,6 +41,33 @@ test.describe('Core Game Functionality', () => {
     await startGame(page, 'ml');
     await expect(page.getByTestId('game-status-text')).toContainText('Your turn');
     await expect(page.getByTestId('dice-display')).toBeVisible();
+  });
+
+  test('loads Oracle and returns a legal move from the production model', async ({ page }) => {
+    const failures: string[] = [];
+    let modelRequests = 0;
+    page.on('console', message => {
+      if (message.type() === 'error' && message.text().includes('AI worker oracle request failed')) {
+        failures.push(message.text());
+      }
+    });
+    page.on('request', request => {
+      if (new URL(request.url()).pathname === '/oracle-weights.json.gz') modelRequests += 1;
+    });
+
+    await startGame(page, 'oracle');
+    await page.evaluate(async () => {
+      const { actions } = window.useGameStore.getState();
+      actions.createNearWinningState();
+      actions.processDiceRoll(2);
+      await actions.makeAIMove('oracle', true);
+    });
+
+    await expect.poll(() => modelRequests, { timeout: 10000 }).toBeGreaterThan(0);
+    await expect
+      .poll(() => page.evaluate(() => window.useGameStore.getState().lastAIDiagnostics?.aiType))
+      .toBe('oracle');
+    expect(failures).toEqual([]);
   });
 
   test('can start watch mode and see AI vs AI', async ({ page }) => {
@@ -141,7 +168,7 @@ test.describe('Game Completion and Usage Reporting', () => {
     await expect(page.getByTestId('wins-count')).toContainText('1');
   });
 
-  for (const mode of ['classic', 'ml', 'watch'] as const) {
+  for (const mode of ['classic', 'ml', 'oracle', 'watch'] as const) {
     test(`reports ${mode} game lifecycle analytics`, async ({ page }) => {
       const events = await captureUsage(page);
       await startGame(page, mode);

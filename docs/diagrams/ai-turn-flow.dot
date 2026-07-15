@@ -71,7 +71,7 @@ digraph AITurnFlow {
       margin=20
     ];
 
-    ADAPTER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Thin engine adapter</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic, heuristic, or ML result schema</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
+    ADAPTER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Thin engine adapter</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic, heuristic, ML, or Oracle</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
     CLIENT [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>AIWorkerClient</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">lazy owner, request ID, 30 s timeout</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
     WORKER [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Single Web Worker</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">validates discriminated request</FONT></TD></TR></TABLE>>, fillcolor="#fff4d1:#fffaf0", color="#d39a00", penwidth=3.2];
 
@@ -81,7 +81,7 @@ digraph AITurnFlow {
 
   subgraph cluster_core {
     graph [
-      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#6b46a3"><B>WORKER-LOCAL RUST / WASM</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#76569b">WASM and ML data are loaded once, on demand, away from the UI thread.</FONT></TD></TR></TABLE>>,
+      label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="2"><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="17" COLOR="#6b46a3"><B>WORKER-LOCAL RUST / WASM</B></FONT></TD></TR><TR><TD ALIGN="LEFT"><FONT POINT-SIZE="12" COLOR="#76569b">WASM and learned models load once, on demand, away from the UI thread.</FONT></TD></TR></TABLE>>,
       labelloc=t,
       labeljust=l,
       color="#d6c3f5",
@@ -93,12 +93,12 @@ digraph AITurnFlow {
 
     ENGINE [shape=diamond, label="Engine?", width=2.0, height=1.02, fillcolor="#fff4d1:#fffaf0", color="#d39a00"];
     SEARCH [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Classic search / heuristic evaluation</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">Classic cache bounded at 50,000</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
-    MODEL [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Load ML weights once</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">fetch, stream gunzip, parse, validate</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
-    NETWORK [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>ML inference</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">value + policy networks</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    MODEL [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Load model weights once</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">fetch, stream gunzip, parse, validate</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
+    NETWORK [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Learned inference</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">ML value + policy; Oracle canonical value</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
     PARSE [label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"><TR><TD><B>Validate and normalize</B></TD></TR><TR><TD CELLPADDING="4"><FONT POINT-SIZE="15">engine result schema</FONT></TD></TR></TABLE>>, fillcolor="#f2eaff:#ffffff", color="#805ad5"];
 
     ENGINE -> SEARCH [label="Classic / heuristic"];
-    ENGINE -> MODEL [label="ML"];
+    ENGINE -> MODEL [label="ML / Oracle"];
     MODEL -> NETWORK;
     SEARCH -> PARSE;
     NETWORK -> PARSE;

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { GameStateSchema, MoveRecordSchema } from '../schemas';
+import {
+  AISourceSchema,
+  GameStateSchema,
+  MoveRecordSchema,
+  OpponentModeSchema,
+  ParticipantSchema,
+} from '../schemas';
 
 describe('Schemas', () => {
   describe('GameStateSchema', () => {
@@ -98,5 +104,11 @@ describe('Schemas', () => {
 
       expect(() => MoveRecordSchema.parse(captureMove)).not.toThrow();
     });
+  });
+
+  it('includes Oracle in mode, AI source, and participant boundaries', () => {
+    expect(OpponentModeSchema.parse('oracle')).toBe('oracle');
+    expect(AISourceSchema.parse('oracle')).toBe('oracle');
+    expect(ParticipantSchema.parse('oracle')).toBe('oracle');
   });
 });

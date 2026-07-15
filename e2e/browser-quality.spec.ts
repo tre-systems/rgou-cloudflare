@@ -19,6 +19,7 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
   const classicMode = page.getByRole('button', { name: /^Classic AI/ });
   await expect(classicMode).toBeVisible();
   await expect(page.getByRole('button', { name: /^Machine Learning AI/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Oracle AI/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Watch a Match/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'How to play' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'GitHub Repository' })).toHaveAttribute(
@@ -34,6 +35,29 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
   await expect(page.getByRole('button', { name: 'How to Play' })).toBeVisible();
   await expect(page.getByRole('button', { name: /sound/i })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Choose another opponent' })).toBeVisible();
+});
+
+test('Oracle AI research page explains the model and returns to the game', async ({ page }) => {
+  await page.goto('/oracle-ai');
+
+  await expect(page).toHaveTitle('Oracle AI · Royal Game of Ur');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://gameofur.org/oracle-ai'
+  );
+  await expect(page.getByTestId('oracle-ai-page')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'A solved game, distilled for the browser.' })
+  ).toBeVisible();
+  await expect(page.getByText('137.9m')).toBeVisible();
+  await expect(page.getByText('0.344%')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Technical write-up' })).toHaveAttribute(
+    'rel',
+    /noopener/
+  );
+
+  await page.getByRole('link', { name: 'Play the game' }).click();
+  await expect(page.getByTestId('ai-model-selection')).toBeVisible();
 });
 
 test('honors the reduced-motion preference', async ({ page }) => {

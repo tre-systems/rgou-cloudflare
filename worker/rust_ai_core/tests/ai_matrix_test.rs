@@ -1,5 +1,7 @@
 use rayon::prelude::*;
-use rgou_ai_core::{dice, genetic_params::GeneticParams, ml_ai::MLAI, GameState, Player, AI};
+use rgou_ai_core::{
+    dice, genetic_params::GeneticParams, ml_ai::MLAI, oracle_ai::OracleAI, GameState, Player, AI,
+};
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -55,6 +57,7 @@ enum AIType {
     MLV4,
     MLHybrid,
     MLPyTorchV5,
+    OracleV1,
 }
 
 impl AIType {
@@ -70,6 +73,7 @@ impl AIType {
             AIType::MLV4 => "ML-V4",
             AIType::MLHybrid => "ML-Hybrid",
             AIType::MLPyTorchV5 => "ML-PyTorch-V5",
+            AIType::OracleV1 => "Oracle-V1",
         }
     }
 
@@ -168,6 +172,33 @@ struct MLAIPlayer {
     ai: MLAI,
 }
 
+struct OracleAIPlayer {
+    ai: OracleAI,
+}
+
+impl OracleAIPlayer {
+    fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        let weights = load_single_network_weights(
+            "../../ml/data/weights/oracle_ai_weights_v1.json",
+            "weights",
+        )?;
+        let mut ai = OracleAI::new();
+        ai.load_pretrained(&weights)?;
+        Ok(Self { ai })
+    }
+}
+
+impl AIPlayer for OracleAIPlayer {
+    fn get_move(&mut self, game_state: &GameState) -> Option<usize> {
+        self.ai
+            .get_best_move(game_state)
+            .r#move
+            .map(|index| index as usize)
+    }
+
+    fn reset(&mut self) {}
+}
+
 impl MLAIPlayer {
     fn new(ai_type: &AIType) -> Result<Self, Box<dyn std::error::Error>> {
         let weights_file = ai_type
@@ -247,6 +278,27 @@ fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn s
         .collect::<Result<_, _>>()?;
 
     Ok((value_weights, policy_weights))
+}
+
+fn load_single_network_weights(
+    weights_file: &str,
+    field: &str,
+) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
+    let content = std::fs::read_to_string(weights_file)?;
+    let data: serde_json::Value = serde_json::from_str(&content)?;
+    let values = data[field]
+        .as_array()
+        .ok_or_else(|| format!("Invalid {field} format"))?;
+    let weights = values
+        .iter()
+        .map(|value| {
+            value
+                .as_f64()
+                .map(|number| number as f32)
+                .ok_or_else(|| format!("{field} contains a non-number"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(weights)
 }
 
 #[derive(Debug)]
@@ -365,6 +417,7 @@ fn create_ai_player(ai_type: &AIType) -> Result<Box<dyn AIPlayer>, Box<dyn std::
                 Err("Depth 4 tests require RUN_SLOW_TESTS=1".into())
             }
         }
+        AIType::OracleV1 => Ok(Box::new(OracleAIPlayer::new()?)),
         _ => {
             // ML AI types
             let ml_ai = MLAIPlayer::new(ai_type)?;
@@ -470,6 +523,7 @@ fn test_ai_matrix() {
         AIType::MLV4,
         AIType::MLHybrid,
         AIType::MLPyTorchV5,
+        AIType::OracleV1,
     ];
 
     // Add depth 4 only if slow tests are enabled

@@ -5,8 +5,10 @@ import {
   AIPositionSchema,
   AIWorkerRequestSchema,
   MLWeightsSchema,
+  OracleWeightsSchema,
   parseMLWeights,
   parseMLAIResponseJson,
+  parseOracleWeights,
   parseEngineAIResponseJson,
   toAIPosition,
 } from '../ai-protocol';
@@ -158,6 +160,26 @@ describe('AI protocol', () => {
     expect(parseMLWeights(artifact).metadata.version).toBeTruthy();
   });
 
+  it('accepts only Oracle artifacts matching the deployed architecture', () => {
+    const artifact = JSON.parse(
+      readFileSync(resolve('ml/data/weights/oracle_ai_weights_v1.json'), 'utf8')
+    ) as unknown;
+
+    expect(parseOracleWeights(artifact).weights).toHaveLength(29_057);
+    expect(
+      OracleWeightsSchema.safeParse({
+        ...(artifact as Record<string, unknown>),
+        network_config: { input_size: 31, hidden_sizes: [128, 128, 64], output_size: 1 },
+      }).success
+    ).toBe(false);
+  });
+
+  it('reports an incompatible Oracle model without exposing its validation payload', () => {
+    expect(() => parseOracleWeights({ weights: [0] })).toThrow(
+      'Oracle model artifact does not match the runtime architecture'
+    );
+  });
+
   it('reports an incompatible model without leaking the full validation payload', () => {
     expect(() => parseMLWeights({ network_config: { input_size: 100 } })).toThrow(
       'ML model artifact does not match the runtime architecture'
@@ -195,5 +217,21 @@ describe('AI protocol', () => {
         position: {},
       }).success
     ).toBe(false);
+  });
+
+  it('accepts Oracle as a local worker engine', () => {
+    const gameState = processDiceRoll(
+      initializeGame(() => 0.1),
+      2
+    );
+
+    expect(
+      AIWorkerRequestSchema.safeParse({
+        id: 1,
+        type: 'getMove',
+        engine: 'oracle',
+        position: toAIPosition(gameState),
+      }).success
+    ).toBe(true);
   });
 });

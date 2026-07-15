@@ -21,6 +21,7 @@ const checks = [
   { path: '/manifest.json', type: 'application/json', includes: 'Royal Game of Ur' },
   { path: '/wasm/rgou_ai_worker_bg.wasm', type: 'application/wasm' },
   { path: '/ml-weights.json.gz', type: 'application/gzip' },
+  { path: '/oracle-weights.json.gz', type: 'application/gzip' },
 ];
 const propagationAttempts = 20;
 

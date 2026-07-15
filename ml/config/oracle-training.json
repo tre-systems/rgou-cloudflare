@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "feature_schema": "canonical-finkel-v1",
+  "tablebase": {
+    "filename": "finkel.rgu",
+    "sha256": "d0f33ba40f01b81527d30664d576d8920e06dea6459be966e06e4f704e8e9092",
+    "url": "https://huggingface.co/sothatsit/RoyalUrModels/resolve/main/finkel.rgu"
+  },
+  "presets": {
+    "pilot": {
+      "samples": 200000,
+      "validation_samples": 25000,
+      "test_samples": 25000,
+      "epochs": 12,
+      "batch_size": 1024,
+      "learning_rate": 0.001,
+      "architectures": [[64, 64, 32], [128, 128, 64]],
+      "losses": ["mse", "huber"],
+      "seeds": [42, 314159]
+    },
+    "production": {
+      "samples": 2000000,
+      "validation_samples": 100000,
+      "test_samples": 100000,
+      "epochs": 30,
+      "batch_size": 2048,
+      "learning_rate": 0.001,
+      "architectures": [[128, 128, 64]],
+      "losses": ["huber"],
+      "seeds": [42, 314159, 271828]
+    }
+  }
+}

@@ -42,6 +42,7 @@ const OPTIONAL_ASSETS = [
   '/wasm/rgou_ai_core.js',
   '/wasm/rgou_ai_worker_bg.wasm',
   '/ml-weights.json.gz',
+  '/oracle-weights.json.gz',
 ];
 
 self.addEventListener('install', event => {
