@@ -113,8 +113,8 @@ The production search selected Huber loss, seed `42`, and the best checkpoint fr
 The test MAE is **47.8% lower** and test p95 error is **47.1% lower** than the pilot. The source/JSON artifact is 751,580 bytes; deterministic gzip is 275,643 bytes, **82.3% smaller** than the deployed self-play ML gzip. Model and deployment identities are pinned in `ml/oracle-model-manifest.json`:
 
 ```text
-source + JSON  9818daa0e0170e2497a697b8563cef1ebbcb7f6eefcc497e90763e1f31c8f16a
-gzip           cd67d3e1721d30f3342688160e47f8b511057a618676b5d159b6b70ef6e0a79a
+source + JSON  4bd7e1e6ca8b8cc5147c702f11bf38a1e8e942cab9cf0891bbf270fb7a956b7d
+gzip           ac86b5d2dd47aeb7913389102c523b1e15c17f0a34098522ce2a29d8318ce2e9
 ```
 
 The final generated matrix played 50 games for each of 45 pairings, alternating seats. Oracle averaged **93.1%** across its nine opponents, including **88%** against the deployed self-play ML model and **92%** against expectiminimax depth 3. It averaged **1.6 ms per move** on the test machine, versus 79.2 ms for the deployed ML model and 24.6 ms for depth 3. These stochastic cells establish a large practical difference; they are not precise estimates of small matchup edges.
