@@ -122,7 +122,7 @@ Components may contain display decisions and transient animation state. Reusable
 2. `makeAIMove` snapshots the active game and turn.
 3. A thin engine adapter asks the shared lazy `AIWorkerClient` to send a validated `AIPosition`.
 4. The single Worker lazily loads WASM, dispatches to Classic, heuristic, or ML, and validates the returned JSON through `ai-protocol.ts`.
-5. For ML, the Worker fetches, streams gzip decompression, parses, validates, and loads model weights without blocking the UI thread. A failed compressed fetch or decompression falls back to the uncompressed model.
+5. For ML, the Worker fetches, streams gzip decompression, parses, validates, and loads model weights without blocking the UI thread. A failed or stale compressed artifact falls back to a freshly fetched uncompressed model.
 6. The store discards stale results, normalizes diagnostics, and applies a legal move through `makeMove`.
 7. Failure, timeout, invalid data, or an illegal suggestion falls back to a legal local move; timeout also restarts the Worker.
 
