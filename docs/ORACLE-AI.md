@@ -1,6 +1,6 @@
 # Oracle AI
 
-Oracle AI is a small neural opponent trained from the published strong solution of the Finkel ruleset. It sits alongside Classic search and the earlier self-play ML model; the existing options remain available.
+Oracle AI is a small neural opponent trained from the published strong solution of the Finkel ruleset. It sits alongside Classic search and the Classic-distilled ML model; the existing options remain available.
 
 This document records how it was trained, what is deployed, and how the result was checked. The shorter [project note](https://gameofur.org/oracle-ai) covers the same work without the implementation detail.
 
@@ -14,7 +14,7 @@ The full tablebase is useful training data but much too large for this site. The
 4. Let the Rust rules engine enumerate legal successors and use the network only to value them.
 5. Ship the model through the existing local Rust/WebAssembly Worker path.
 
-This changes the source of the training labels rather than simply extending the old self-play run. Play remains local, the browser download stays small, and model error can be measured directly against the tablebase.
+This changes the source of the training labels rather than simply extending the older ML run. Play remains local, the browser download stays small, and model error can be measured directly against the tablebase.
 
 ```mermaid
 flowchart LR
@@ -110,16 +110,14 @@ The production search selected Huber loss, seed `42`, and the best checkpoint fr
 | Validation · 100,000 positions  | 0.003437 · 0.344 points | 0.004526 · 0.453 points | 0.008864 · 0.886 points | 0.068689 · 6.869 points |
 | Test · 100,000 unseen positions | 0.003437 · 0.344 points | 0.004510 · 0.451 points | 0.008841 · 0.884 points | 0.059898 · 5.990 points |
 
-The test MAE is **47.8% lower** and test p95 error is **47.1% lower** than the pilot. The source/JSON artifact is 751,580 bytes; deterministic gzip is 275,643 bytes, **82.3% smaller** than the deployed self-play ML gzip. Model and deployment identities are pinned in `ml/oracle-model-manifest.json`:
+The test MAE is **47.8% lower** and test p95 error is **47.1% lower** than the pilot. The source/JSON artifact is 751,580 bytes; deterministic gzip is 275,643 bytes. Model and deployment identities are pinned in `ml/oracle-model-manifest.json`:
 
 ```text
 source + JSON  4bd7e1e6ca8b8cc5147c702f11bf38a1e8e942cab9cf0891bbf270fb7a956b7d
 gzip           ac86b5d2dd47aeb7913389102c523b1e15c17f0a34098522ce2a29d8318ce2e9
 ```
 
-The current broad matrix plays 50 games for each of 45 pairings, alternating seats. Oracle averages **94.4%** across its nine opponents, including **94%** against the production self-play ML model and **82%** against depth-3 expectiminimax. The broad matrix is useful for direction, not precise margins.
-
-The separate [deployed benchmark](./AI-DEPLOYED-RESULTS.md) uses the three browser opponents only, 400 games per pairing, deterministic dice, and 200 games from each seat. Oracle won **85%** against Classic and **88%** against the corrected ML artifact. It also records relative native timings; browser responsiveness is governed by the Worker budget, not those hardware-specific measurements.
+Head-to-head figures are generated separately because they change whenever a deployed opponent changes. The broad [AI matrix](./AI-MATRIX-RESULTS.md) covers research fixtures. The [deployed benchmark](./AI-DEPLOYED-RESULTS.md) covers the three browser opponents with 400 games per pairing, deterministic dice, and equal seats. It also records relative native timings; browser responsiveness is governed by the Worker budget, not those hardware-specific measurements.
 
 ## Evaluation and promotion
 
@@ -128,7 +126,7 @@ A candidate is promoted only when all of these independent checks pass:
 1. Held-out mean and p95 probability error improve on the pilot baseline.
 2. Python tablebase decoding and Rust runtime encoding agree on shared canonical feature fixtures.
 3. Rust unit, rule-conformance, and browser end-to-end tests find no illegal move or perspective error.
-4. Paired results materially improve on the self-play ML model with seats alternated.
+4. Paired results materially improve on the production ML model with seats alternated.
 5. Results remain competitive with Classic and the strongest practical matrix opponent.
 6. Browser latency and compressed size improve on the existing ML model.
 7. Source model, public JSON, deterministic gzip, configuration, code, sample, and tablebase identities agree.
@@ -141,7 +139,7 @@ The checked-in [AI matrix](./AI-MATRIX-RESULTS.md) and [deployed benchmark](./AI
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Deploy the complete tablebase       | Exact but about 827 MB before browser caching; disproportionate for an offline game.                                                         |
 | Run deeper expectiminimax only      | Improves Classic incrementally but remains slower and has no exact supervised error signal.                                                  |
-| Scale the existing self-play model  | More examples would still inherit expectiminimax labels and its padded, index-sensitive representation.                                      |
+| Scale the existing ML model         | More examples would still inherit expectiminimax labels and its padded, index-sensitive representation.                                      |
 | Imitate only the optimal move       | Discards value margins, complicates equivalent-action labels, and provides weaker diagnostics.                                               |
 | Reinforcement learning from scratch | Expensive and unnecessary when exact values already exist for every reachable state.                                                         |
 | Add ONNX Runtime or WebGPU          | The small dense network runs quickly in existing Rust/WASM; another runtime adds download and operational cost without demonstrated benefit. |

@@ -54,7 +54,7 @@ test('keeps opponent choices simple and provides optional AI details', async ({ 
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Value network · solved-game training');
   await expect(dialog).toContainText('Expectiminimax · depth 3');
-  await expect(dialog).toContainText('Policy and value networks · self-play');
+  await expect(dialog).toContainText('Policy and value networks · Classic-trained');
 
   const closeButton = page.getByRole('button', { name: 'Close AI details' });
   await expect(closeButton).toBeFocused();
@@ -174,15 +174,14 @@ test('Oracle AI project note explains the model and returns to the game', async 
   ).toBeVisible();
   await expect(page.getByText('137,892,016')).toBeVisible();
   await expect(page.getByText('0.344 points')).toBeVisible();
-  await expect(page.getByText('85%')).toBeVisible();
-  await expect(page.getByText('88%')).toBeVisible();
+  await expect(page.getByText('29,057')).toBeVisible();
+  await expect(page.getByText('269 KiB')).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Implementation and reproducibility notes' })
   ).toHaveAttribute('rel', /noopener/);
-  await expect(page.getByRole('link', { name: 'Current browser-opponent results' })).toHaveAttribute(
-    'rel',
-    /noopener/
-  );
+  await expect(
+    page.getByRole('link', { name: 'See the current browser-opponent results' })
+  ).toHaveAttribute('rel', /noopener/);
 
   await page.getByRole('link', { name: 'Play the game' }).click();
   await expect(page.getByTestId('ai-model-selection')).toBeVisible();

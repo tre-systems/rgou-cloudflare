@@ -3,7 +3,7 @@ import { ArrowLeft, ExternalLink, Github } from 'lucide-react';
 import SiteBackdrop from './SiteBackdrop';
 
 const RESULTS = [
-  ['137,892,016', 'states in the tablebase'],
+  ['137,892,016', 'stored tablebase positions'],
   ['0.344 points', 'mean error on unseen positions'],
   ['29,057', 'model parameters'],
   ['269 KiB', 'compressed download'],
@@ -63,8 +63,8 @@ export default function OracleAIPage() {
                 </p>
                 <p>
                   Instead, I used the tablebase as training data for a small neural network. The
-                  result is the new Oracle opponent. Classic AI and the earlier ML model are still
-                  available, both for comparison and because they take genuinely different
+                  result is the new Oracle opponent. Classic AI and the Machine Learning AI are
+                  still available, both for comparison and because they take genuinely different
                   approaches.
                 </p>
               </div>
@@ -83,10 +83,10 @@ export default function OracleAIPage() {
                 </h2>
                 <div className="space-y-4 text-base leading-7 text-bone-muted">
                   <p>
-                    The network is trained to estimate the exact pre-roll win probability for a
-                    position. Its 32 inputs describe occupied squares and the number of pieces at
-                    the start and finish. Colour and piece numbering are deliberately left out, so
-                    equivalent positions have the same representation.
+                    The network is trained to estimate the tablebase&apos;s pre-roll win probability
+                    for a position. Its 32 inputs describe occupied squares and the number of pieces
+                    at the start and finish. Colour and piece numbering are deliberately left out,
+                    so equivalent positions have the same representation.
                   </p>
                   <p>
                     Rust still applies the rules and generates every legal next position. The
@@ -116,23 +116,21 @@ export default function OracleAIPage() {
                       On 100,000 test positions that were not used for training, 95% of predictions
                       were within 0.884 percentage points of the tablebase value.
                     </p>
-                    <div className="grid gap-3 sm:grid-cols-2" aria-label="Browser opponent results">
-                      <div className="border-l-2 border-brass/70 pl-4">
-                        <p className="text-2xl font-semibold text-bone">85%</p>
-                        <p className="mt-1 text-sm leading-5 text-muted">wins against Classic AI</p>
-                      </div>
-                      <div className="border-l-2 border-brass/70 pl-4">
-                        <p className="text-2xl font-semibold text-bone">88%</p>
-                        <p className="mt-1 text-sm leading-5 text-muted">
-                          wins against Machine Learning AI
-                        </p>
-                      </div>
-                    </div>
                     <p>
-                      These are 400-game, seat-balanced matchups using the same three opponents
-                      available here. Dice still matter, so the held-out tablebase error is the more
-                      useful measure of model quality.
+                      Oracle remains the strongest of the three browser opponents in the current
+                      seat-balanced benchmark. Those figures are regenerated when an opponent
+                      changes, rather than copied here. Dice still matter, so the held-out tablebase
+                      error is the more useful measure of model quality.
                     </p>
+                    <a
+                      href="https://github.com/tre-systems/rgou-cloudflare/blob/main/docs/AI-DEPLOYED-RESULTS.md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-brass-light transition-colors hover:text-brass"
+                    >
+                      See the current browser-opponent results
+                      <Github className="h-4 w-4" aria-hidden="true" />
+                    </a>
                   </div>
                 </div>
               </div>
@@ -163,15 +161,6 @@ export default function OracleAIPage() {
                   More detail
                 </h2>
                 <div className="grid gap-3 text-sm">
-                  <a
-                    href="https://github.com/tre-systems/rgou-cloudflare/blob/main/docs/AI-DEPLOYED-RESULTS.md"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between border-b border-line pb-3 text-bone-muted transition-colors hover:text-bone"
-                  >
-                    Current browser-opponent results
-                    <Github className="h-4 w-4 text-faint" aria-hidden="true" />
-                  </a>
                   <a
                     href="https://github.com/tre-systems/rgou-cloudflare/blob/main/docs/ORACLE-AI.md"
                     target="_blank"

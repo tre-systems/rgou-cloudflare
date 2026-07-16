@@ -21,9 +21,9 @@ const OPPONENT_DETAILS = [
   },
   {
     name: 'Machine Learning AI',
-    method: 'Policy and value networks · self-play',
+    method: 'Policy and value networks · Classic-trained',
     description:
-      'A neural-network opponent trained on simulated games. Its style is less consistent than Oracle or Classic.',
+      'A neural-network opponent trained from Classic-labelled simulated games. Its style is less consistent than Oracle or Classic.',
   },
 ] as const;
 

@@ -9,7 +9,7 @@
   <hr />
 </div>
 
-An offline-first implementation of the ancient Royal Game of Ur with search, self-play, and solved-game-distilled opponents. The React interface runs all three Rust/WebAssembly AIs locally in one lazy Web Worker and is served by a Cloudflare Worker with Static Assets.
+An offline-first implementation of the ancient Royal Game of Ur with search, Classic-distilled, and solved-game-distilled opponents. The React interface runs all three Rust/WebAssembly AIs locally in one lazy Web Worker and is served by a Cloudflare Worker with Static Assets.
 
 ## Play Now
 
@@ -17,7 +17,7 @@ An offline-first implementation of the ancient Royal Game of Ur with search, sel
 
 ## Features
 
-- **Three distinct AIs**: Classic expectiminimax, a self-play neural network, and Oracle AI distilled from the solved game, all running locally through Rust and WebAssembly
+- **Three distinct AIs**: Classic expectiminimax, a neural network trained from Classic, and Oracle AI distilled from the solved game, all running locally through Rust and WebAssembly
 - **Configurable AI matches**: choose any two of the three opponents and watch them play
 - **Non-blocking play**: one lazily created Web Worker hosts every AI engine, keeping search, inference, and model loading off the UI thread
 - **Offline-first**: HTML plus its hashed JS/CSS shell are installed atomically while larger AI assets are cached opportunistically
