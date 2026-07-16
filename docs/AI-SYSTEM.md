@@ -85,7 +85,7 @@ The architecture is defined in `ml/config/training.json` and `worker/rust_ai_cor
 
 ### Training
 
-The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized Player 2 evaluation target and a one-hot best-move target for the value and policy networks. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves. Two training backends share the same presets:
+The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters and alternates the starting player between games. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized Player 2 evaluation target and a one-hot best-move target for the value and policy networks. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves. Two training backends share the same presets:
 
 | Backend | Hardware                      | Notes                           |
 | ------- | ----------------------------- | ------------------------------- |
@@ -106,7 +106,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) and [ml/README.md](../ml/README.md) for t
 
 `ml/data/weights/ml_ai_weights_pytorch_v5.json` is the production source model. Its verified metadata records 2,000 simulated games, 100 epochs, seed 42, 303,228 training samples, and the best validation loss. The Fast, V4, and Hybrid files in the same directory are comparison fixtures for the AI matrix, not deployment sources; their legacy metadata is not treated as authoritative provenance.
 
-`npm run load:ml-weights` validates and publishes the selected production source. `ml/model-manifest.json` records its source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
+`npm run load:ml-weights` validates and publishes the selected production source. Every artifact declares the `input-output-row-major-v1` matrix layout used by Rust. PyTorch export transposes its native output-by-input matrices into that layout; a shared fixture checks the same linear layer in Python and Rust. `ml/model-manifest.json` records the layout, source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject an undeclared layout, incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
 
 ## Oracle AI
 

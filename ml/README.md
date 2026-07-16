@@ -99,7 +99,7 @@ Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.
 
 ### Self-play ML
 
-The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. Rust self-play uses the embedded evolved evaluation parameters, passes the turn after a zero roll or blocked position, derives an independent random stream for each game from the configured seed and game index, then preserves game-index order when collecting parallel results. The generated corpus therefore does not depend on Rayon scheduling or core allocation.
+The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. Rust self-play alternates the starting player, uses the embedded evolved evaluation parameters, passes the turn after a zero roll or blocked position, derives an independent random stream for each game from the configured seed and game index, then preserves game-index order when collecting parallel results. The generated corpus therefore does not depend on Rayon scheduling or core allocation.
 
 New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. PyTorch trains the policy head from logits and restores the lowest-validation-loss checkpoint before saving. GPU kernels can still vary across hardware, so the seed makes CPU data generation reproducible and supports repeatable investigation, but it is not a promise of byte-identical GPU retraining.
 
@@ -107,6 +107,7 @@ The checked-in `model-manifest.json` is the production artifact contract. It rec
 
 - the exact source-model, deployed JSON, and deterministic-gzip hashes and sizes;
 - exact value and policy weight counts and hashes;
+- the explicit `input-output-row-major-v1` matrix layout consumed by Rust;
 - the normalized network architecture and original training metadata;
 - the commit that last changed the production source model;
 - hashes for the training configuration, Python project, and lockfile.
@@ -127,7 +128,7 @@ npm run load:ml-weights
   ml/data/weights/my_production_model.json
 ```
 
-Promotion fails if architecture, metadata, numeric values, or exact weight counts do not match. Verification requires the deployed JSON to match the production source byte-for-byte and the deterministic gzip file to decompress to those same bytes. Review and commit the source model, both deployed artifacts, and manifest together.
+Promotion fails if the layout is missing, or if architecture, metadata, numeric values, or exact weight counts do not match. PyTorch's native output-by-input matrices are transposed during export; `test-fixtures/ml-weight-layout.json` is evaluated by both Python and Rust to keep that boundary aligned. Verification requires the deployed JSON to match the production source byte-for-byte and the deterministic gzip file to decompress to those same bytes. Review and commit the source model, both deployed artifacts, and manifest together.
 
 ### Oracle AI
 

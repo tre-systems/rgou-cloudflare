@@ -21,6 +21,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
+from weight_layout import RUNTIME_WEIGHT_LAYOUT, serialize_pytorch_linear
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -547,20 +549,26 @@ class PyTorchTrainer:
         """Save trained weights and metadata"""
         logger.info("💾 Saving weights to %r...", str(filename))
 
-        # Get weights as lists
-        value_weights = []
-        policy_weights = []
+        def runtime_weights(network: nn.Module) -> list[float]:
+            weights: list[float] = []
+            for layer in network.modules():
+                if isinstance(layer, nn.Linear):
+                    weights.extend(
+                        serialize_pytorch_linear(
+                            layer.weight.detach().cpu().tolist(),
+                            layer.bias.detach().cpu().tolist(),
+                        )
+                    )
+            return weights
 
-        for param in self.value_network.parameters():
-            value_weights.extend(param.data.cpu().numpy().flatten().tolist())
-
-        for param in self.policy_network.parameters():
-            policy_weights.extend(param.data.cpu().numpy().flatten().tolist())
+        value_weights = runtime_weights(self.value_network)
+        policy_weights = runtime_weights(self.policy_network)
 
         # Create weights data using unified configuration
         weights_data = {
             "value_weights": value_weights,
             "policy_weights": policy_weights,
+            "weight_layout": RUNTIME_WEIGHT_LAYOUT,
             "metadata": metadata,
             "network_config": self.config.unified_config["network_architecture"],
         }

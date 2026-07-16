@@ -54,26 +54,29 @@ export default function ModeSelection({
 
   return (
     <motion.section
-      className="mt-6 w-full sm:mt-8"
+      className="mt-5 w-full sm:mt-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.15, duration: 0.35, ease: 'easeOut' }}
       aria-labelledby="opponent-selection-title"
     >
       <div
-        className="surface-panel w-full rounded-2xl p-5 sm:p-7 lg:p-8"
+        className="surface-panel w-full rounded-2xl p-4 sm:p-7 lg:p-8"
         data-testid="ai-model-selection"
       >
-        <div className="flex flex-col gap-4 border-b border-line pb-5 text-left sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-line pb-4 text-left sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:pb-5">
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
               Play or watch
             </div>
-            <h2 id="opponent-selection-title" className="display-title text-3xl text-bone">
+            <h2
+              id="opponent-selection-title"
+              className="display-title text-2xl text-bone sm:text-3xl"
+            >
               Choose a game
             </h2>
           </div>
-          <div className="flex items-center gap-4 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto sm:gap-4">
             <button
               type="button"
               onClick={() => setDetailsOpen(true)}
@@ -94,7 +97,7 @@ export default function ModeSelection({
           </div>
         </div>
         <motion.div
-          className="grid gap-2.5 pt-5 sm:grid-cols-2"
+          className="grid gap-2 pt-4 sm:grid-cols-2 sm:gap-2.5 sm:pt-5"
           variants={CARDS_CONTAINER}
           initial="hidden"
           animate="show"

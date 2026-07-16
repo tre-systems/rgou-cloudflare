@@ -4,19 +4,24 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
-const OUTPUT_FILE = path.resolve(
-  __dirname,
-  process.env.AI_MATRIX_OUTPUT ?? '../docs/AI-MATRIX-RESULTS.md'
-);
-const OUTPUT_DIR = path.dirname(OUTPUT_FILE);
-const REPORT_TITLE = process.env.AI_MATRIX_TITLE ?? 'AI Matrix Test Results';
-const REPORT_COMMAND = process.env.AI_MATRIX_COMMAND ?? 'npm run test:ai-matrix:md';
-
-function ensureDirSync(dir) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+function resolveReportName(value) {
+  if (value === undefined || value === 'matrix') return 'matrix';
+  if (value === 'deployed') return 'deployed';
+  throw new Error(`Unknown AI matrix report: ${value}`);
 }
+
+const REPORT_NAME = resolveReportName(process.env.AI_MATRIX_REPORT);
+const IS_DEPLOYED_REPORT = REPORT_NAME === 'deployed';
+const OUTPUT_FILE = path.join(
+  __dirname,
+  IS_DEPLOYED_REPORT ? '../docs/AI-DEPLOYED-RESULTS.md' : '../docs/AI-MATRIX-RESULTS.md'
+);
+const REPORT_TITLE = IS_DEPLOYED_REPORT
+  ? 'Deployed AI Matchup Results'
+  : 'AI Matrix Test Results';
+const REPORT_COMMAND = IS_DEPLOYED_REPORT
+  ? 'npm run test:ai-deployed:md'
+  : 'npm run test:ai-matrix:md';
 
 function parseSections(lines) {
   const sections = {
@@ -171,6 +176,14 @@ function formatFacts(lines) {
     .join('\n');
 }
 
+function validateSections(sections) {
+  for (const name of ['config', 'matrix', 'perf', 'speed']) {
+    if (sections[name].length === 0) {
+      throw new Error(`AI matrix output is missing the ${name} section`);
+    }
+  }
+}
+
 async function main() {
   console.log('Starting AI matrix test formatting...');
 
@@ -180,8 +193,7 @@ async function main() {
 
   console.log(`Parsing ${lines.length} lines of output...`);
   const sections = parseSections(lines);
-
-  ensureDirSync(OUTPUT_DIR);
+  validateSections(sections);
 
   fs.writeFileSync(OUTPUT_FILE, formatMarkdown(sections), 'utf8');
   console.log(`AI matrix results saved to ${OUTPUT_FILE}`);
@@ -225,4 +237,4 @@ function formatMarkdown(sections) {
 
 if (require.main === module) void main();
 
-module.exports = { formatMarkdown, parseSections };
+module.exports = { formatMarkdown, parseSections, resolveReportName, validateSections };

@@ -90,6 +90,7 @@ const DualNetworkConfigSchema = z.object({
 export const MLWeightsSchema = z.object({
   value_weights: z.array(z.number().finite()).length(VALUE_WEIGHT_COUNT),
   policy_weights: z.array(z.number().finite()).length(POLICY_WEIGHT_COUNT),
+  weight_layout: z.literal('input-output-row-major-v1'),
   metadata: z.object({
     version: z.string().min(1),
     training_date: z.string().min(1),

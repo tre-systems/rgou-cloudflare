@@ -5,7 +5,9 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "model_provenance.py"
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+SCRIPT = SCRIPTS / "model_provenance.py"
 SPEC = importlib.util.spec_from_file_location("model_provenance", SCRIPT)
 assert SPEC and SPEC.loader
 model_provenance = importlib.util.module_from_spec(SPEC)
@@ -49,6 +51,12 @@ class ModelProvenanceTests(unittest.TestCase):
     def test_rejects_wrong_weight_count(self):
         with self.assertRaisesRegex(ValueError, "expected 2"):
             model_provenance.validate_weights("value", [0.0], 2)
+
+    def test_requires_the_runtime_weight_layout(self):
+        self.assertEqual(
+            model_provenance.RUNTIME_WEIGHT_LAYOUT,
+            "input-output-row-major-v1",
+        )
 
     def test_uses_recorded_training_source_commit(self):
         revision = "a" * 40

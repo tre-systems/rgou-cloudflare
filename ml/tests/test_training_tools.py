@@ -26,6 +26,7 @@ def load_script(name: str):
 
 
 convert_weights = load_script("convert_weights")
+weight_layout = load_script("weight_layout")
 train = load_script("train")
 train_pytorch = load_script("train_pytorch") if torch is not None else None
 
@@ -76,6 +77,17 @@ class PyTorchTrainingTests(unittest.TestCase):
 
 
 class WeightConverterTests(unittest.TestCase):
+    def test_shared_fixture_matches_pytorch_and_runtime_layouts(self):
+        fixture_path = Path(__file__).resolve().parents[2] / "test-fixtures/ml-weight-layout.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+        serialized = weight_layout.serialize_pytorch_linear(
+            fixture["pytorch_weight_rows"], fixture["biases"]
+        )
+
+        self.assertEqual(serialized, fixture["runtime_weights"])
+        self.assertEqual(fixture["weight_layout"], weight_layout.RUNTIME_WEIGHT_LAYOUT)
+
     def test_round_trips_unified_and_rust_formats(self):
         architecture = {
             "input_size": 2,
@@ -93,6 +105,7 @@ class WeightConverterTests(unittest.TestCase):
             unified = {
                 "value_weights": [0.0] * 9,
                 "policy_weights": [0.0] * 12,
+                "weight_layout": weight_layout.RUNTIME_WEIGHT_LAYOUT,
                 "metadata": {"version": "test"},
                 "network_config": architecture,
             }
@@ -102,6 +115,49 @@ class WeightConverterTests(unittest.TestCase):
             restored = converter.convert_to_unified(rust, "rust")
 
         self.assertEqual(restored, unified)
+
+    def test_converts_legacy_pytorch_matrices_to_runtime_order(self):
+        architecture = {
+            "input_size": 2,
+            "hidden_sizes": [],
+            "value_output_size": 3,
+            "policy_output_size": 3,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "training.json"
+            config.write_text(
+                json.dumps({"network_architecture": architecture}), encoding="utf-8"
+            )
+            converter = convert_weights.WeightConverter(config)
+            legacy = {
+                "value_weights": [1, 2, 3, 4, 5, 6, 0.5, -0.5, 1],
+                "policy_weights": [1, 2, 3, 4, 5, 6, 0.5, -0.5, 1],
+                "metadata": {},
+                "network_config": architecture,
+            }
+
+            converted = converter.convert_to_unified(
+                legacy,
+                "unified",
+                weight_layout.PYTORCH_WEIGHT_LAYOUT,
+            )
+
+        self.assertEqual(
+            converted["value_weights"],
+            [1, 3, 5, 2, 4, 6, 0.5, -0.5, 1],
+        )
+        self.assertEqual(converted["weight_layout"], weight_layout.RUNTIME_WEIGHT_LAYOUT)
+
+    def test_rejects_undeclared_legacy_layout(self):
+        converter = convert_weights.WeightConverter()
+        model = {
+            "value_weights": [],
+            "policy_weights": [],
+            "network_config": converter.config["network_architecture"],
+        }
+
+        with self.assertRaisesRegex(ValueError, "missing weight_layout"):
+            converter.convert_to_unified(model, "unified")
 
     def test_rejects_files_without_both_weight_arrays(self):
         with self.assertRaisesRegex(ValueError, "missing"):

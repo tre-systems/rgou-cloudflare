@@ -55,8 +55,8 @@
     "load:oracle-weights": "python3 ml/scripts/oracle_provenance.py promote",
     "evolve:genetic-params": "cd worker/rust_ai_core && caffeinate cargo run --release --bin evolve_params",
     "validate:genetic-params": "cd worker/rust_ai_core && caffeinate cargo test test_genetic_params_comparison -- --nocapture",
-    "test:ai-matrix:md": "cd worker/rust_ai_core && NUM_GAMES=50 cargo test test_ai_matrix -- --nocapture | node ../../scripts/format-ai-matrix-md.cjs",
-    "test:ai-deployed:md": "cd worker/rust_ai_core && AI_MATRIX_DEPLOYED_ONLY=1 NUM_GAMES=400 cargo test test_ai_matrix -- --nocapture | AI_MATRIX_OUTPUT=../docs/AI-DEPLOYED-RESULTS.md AI_MATRIX_TITLE='Deployed AI Matchup Results' AI_MATRIX_COMMAND='npm run test:ai-deployed:md' node ../../scripts/format-ai-matrix-md.cjs"
+    "test:ai-matrix:md": "NUM_GAMES=50 ./scripts/write-ai-matrix-report.sh matrix",
+    "test:ai-deployed:md": "NUM_GAMES=400 ./scripts/write-ai-matrix-report.sh deployed"
   },
   "dependencies": {
     "@sentry/browser": "^10.65.0",

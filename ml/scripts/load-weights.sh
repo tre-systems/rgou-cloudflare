@@ -17,6 +17,7 @@ Usage: ml/scripts/load-weights.sh [--promote [MODEL]]
 
 With no arguments, promotes the configured production model. Conversion options:
   --format {unified|pytorch|rust}
+  --source-weight-layout {runtime|pytorch}
   --validate
   --output FILE
 EOF

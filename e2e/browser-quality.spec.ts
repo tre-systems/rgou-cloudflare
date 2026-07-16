@@ -175,7 +175,7 @@ test('Oracle AI project note explains the model and returns to the game', async 
   await expect(page.getByText('137,892,016')).toBeVisible();
   await expect(page.getByText('0.344 points')).toBeVisible();
   await expect(page.getByText('85%')).toBeVisible();
-  await expect(page.getByText('96%')).toBeVisible();
+  await expect(page.getByText('88%')).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'Implementation and reproducibility notes' })
   ).toHaveAttribute('rel', /noopener/);

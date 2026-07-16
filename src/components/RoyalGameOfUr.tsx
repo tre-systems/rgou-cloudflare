@@ -124,8 +124,8 @@ export default function RoyalGameOfUr() {
   return (
     <>
       <SiteBackdrop />
-      <main className="relative z-10 min-h-screen w-full">
-        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-4 sm:px-6 sm:py-8">
+      <main className="relative z-10 min-h-dvh w-full">
+        <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 py-3 sm:px-6 sm:py-8">
           <div className="hidden h-10 items-center justify-end md:flex">
             {!isStandalone && (
               <button
@@ -209,8 +209,8 @@ export default function RoyalGameOfUr() {
             </motion.div>
           </div>
 
-          <footer className="flex flex-col items-center justify-between gap-3 border-t border-line-soft pt-4 text-xs text-muted sm:flex-row sm:pt-5">
-            <span>Open source · Built for the web</span>
+          <footer className="flex items-center justify-center border-t border-line-soft pt-3 text-xs text-muted sm:justify-between sm:pt-5">
+            <span className="hidden sm:inline">Open source · Built for the web</span>
             <div className="flex items-center gap-5">
               <a
                 href="/oracle-ai"

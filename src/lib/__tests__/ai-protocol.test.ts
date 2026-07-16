@@ -157,7 +157,9 @@ describe('AI protocol', () => {
   it('accepts the exact production model artifact', () => {
     const artifact = JSON.parse(readFileSync(resolve('public/ml-weights.json'), 'utf8')) as unknown;
 
-    expect(parseMLWeights(artifact).metadata.version).toBeTruthy();
+    const parsed = parseMLWeights(artifact);
+    expect(parsed.metadata.version).toBeTruthy();
+    expect(parsed.weight_layout).toBe('input-output-row-major-v1');
   });
 
   it('accepts only Oracle artifacts matching the deployed architecture', () => {

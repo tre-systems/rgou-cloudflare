@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from weight_layout import RUNTIME_WEIGHT_LAYOUT
+
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL = Path("ml/data/weights/ml_ai_weights_pytorch_v5.json")
@@ -148,6 +150,10 @@ def validate_source_model(model_path: Path) -> dict[str, Any]:
     absolute_model = repository_path(model_path)
     model_bytes = absolute_model.read_bytes()
     model = json.loads(model_bytes)
+    if model.get("weight_layout") != RUNTIME_WEIGHT_LAYOUT:
+        raise ValueError(
+            f"model weight_layout must be {RUNTIME_WEIGHT_LAYOUT!r}"
+        )
     architecture = normalize_architecture(model.get("network_config", {}))
     training_config_path = repository_path(TRAINING_CONFIG)
     training_config = json.loads(training_config_path.read_text(encoding="utf-8"))
@@ -212,10 +218,11 @@ def build_manifest(
         raise ValueError("deployed gzip does not contain the production source model")
 
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "model": {
             "path": display_path(absolute_model),
             "format": "rgou-dual-network-json-v1",
+            "weight_layout": RUNTIME_WEIGHT_LAYOUT,
             "size_bytes": absolute_model.stat().st_size,
             "sha256": sha256_file(absolute_model),
             "weights": {

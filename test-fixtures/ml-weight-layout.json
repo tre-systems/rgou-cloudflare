@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "weight_layout": "input-output-row-major-v1",
+  "input": [2.0, -1.0],
+  "pytorch_weight_rows": [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]],
+  "biases": [0.5, -0.5, 1.0],
+  "runtime_weights": [1.0, 3.0, 5.0, 2.0, 4.0, 6.0, 0.5, -0.5, 1.0],
+  "expected_linear_output": [0.5, 1.5, 5.0]
+}

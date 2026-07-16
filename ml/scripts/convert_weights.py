@@ -13,6 +13,11 @@ from model_provenance import (
     normalize_architecture,
     validate_weights,
 )
+from weight_layout import (
+    PYTORCH_WEIGHT_LAYOUT,
+    RUNTIME_WEIGHT_LAYOUT,
+    convert_pytorch_network_weights,
+)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -41,7 +46,10 @@ class WeightConverter:
         return "unified" if "network_config" in weights else "legacy"
 
     def convert_to_unified(
-        self, weights: dict[str, Any], model_format: str
+        self,
+        weights: dict[str, Any],
+        model_format: str,
+        source_layout: str | None = None,
     ) -> dict[str, Any]:
         if model_format == "unified":
             architecture = normalize_architecture(weights["network_config"])
@@ -57,25 +65,60 @@ class WeightConverter:
         else:
             raise ValueError(f"unsupported model format: {model_format}")
 
+        declared_layout = weights.get("weight_layout")
+        if declared_layout is not None and declared_layout != RUNTIME_WEIGHT_LAYOUT:
+            raise ValueError(f"unsupported weight_layout: {declared_layout}")
+
+        if declared_layout == RUNTIME_WEIGHT_LAYOUT:
+            value_weights = weights["value_weights"]
+            policy_weights = weights["policy_weights"]
+        elif source_layout == PYTORCH_WEIGHT_LAYOUT:
+            value_weights = convert_pytorch_network_weights(
+                weights["value_weights"],
+                architecture["input_size"],
+                architecture["hidden_sizes"],
+                architecture["value_output_size"],
+            )
+            policy_weights = convert_pytorch_network_weights(
+                weights["policy_weights"],
+                architecture["input_size"],
+                architecture["hidden_sizes"],
+                architecture["policy_output_size"],
+            )
+        elif source_layout == RUNTIME_WEIGHT_LAYOUT or model_format == "rust":
+            value_weights = weights["value_weights"]
+            policy_weights = weights["policy_weights"]
+        else:
+            raise ValueError(
+                "model is missing weight_layout; specify --source-weight-layout"
+            )
+
         return {
-            "value_weights": weights["value_weights"],
-            "policy_weights": weights["policy_weights"],
+            "value_weights": value_weights,
+            "policy_weights": policy_weights,
+            "weight_layout": RUNTIME_WEIGHT_LAYOUT,
             "metadata": weights.get("metadata", {}),
             "network_config": architecture,
         }
 
     def convert_to_pytorch(
-        self, weights: dict[str, Any], model_format: str
+        self,
+        weights: dict[str, Any],
+        model_format: str,
+        source_layout: str | None = None,
     ) -> dict[str, Any]:
-        return self.convert_to_unified(weights, model_format)
+        return self.convert_to_unified(weights, model_format, source_layout)
 
     def convert_to_rust(
-        self, weights: dict[str, Any], model_format: str
+        self,
+        weights: dict[str, Any],
+        model_format: str,
+        source_layout: str | None = None,
     ) -> dict[str, Any]:
-        if model_format == "rust":
+        if model_format == "rust" and weights.get("weight_layout") == RUNTIME_WEIGHT_LAYOUT:
             return weights
 
-        unified = self.convert_to_unified(weights, model_format)
+        unified = self.convert_to_unified(weights, model_format, source_layout)
         architecture = unified["network_config"]
         common = {
             "input_size": architecture["input_size"],
@@ -84,6 +127,7 @@ class WeightConverter:
         return {
             "value_weights": unified["value_weights"],
             "policy_weights": unified["policy_weights"],
+            "weight_layout": RUNTIME_WEIGHT_LAYOUT,
             "metadata": unified["metadata"],
             "value_network_config": {
                 **common,
@@ -95,8 +139,13 @@ class WeightConverter:
             },
         }
 
-    def validate(self, weights: dict[str, Any], model_format: str) -> None:
-        unified = self.convert_to_unified(weights, model_format)
+    def validate(
+        self,
+        weights: dict[str, Any],
+        model_format: str,
+        source_layout: str | None = None,
+    ) -> None:
+        unified = self.convert_to_unified(weights, model_format, source_layout)
         architecture = unified["network_config"]
         validate_weights(
             "value",
@@ -139,20 +188,30 @@ def main() -> int:
         help="Output format",
     )
     parser.add_argument("--validate", action="store_true", help="Validate weights")
+    parser.add_argument(
+        "--source-weight-layout",
+        choices=["runtime", "pytorch"],
+        help="Required when converting an artifact without weight_layout",
+    )
     args = parser.parse_args()
 
     try:
         converter = WeightConverter()
         weights, model_format = converter.load_weights(args.input_file)
+        source_layout = {
+            None: None,
+            "runtime": RUNTIME_WEIGHT_LAYOUT,
+            "pytorch": PYTORCH_WEIGHT_LAYOUT,
+        }[args.source_weight_layout]
         if args.validate:
-            converter.validate(weights, model_format)
+            converter.validate(weights, model_format, source_layout)
 
         conversion = {
             "unified": converter.convert_to_unified,
             "pytorch": converter.convert_to_pytorch,
             "rust": converter.convert_to_rust,
         }[args.format]
-        converted = conversion(weights, model_format)
+        converted = conversion(weights, model_format, source_layout)
 
         input_path = Path(args.input_file)
         output_file = (

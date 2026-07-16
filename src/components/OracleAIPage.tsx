@@ -122,7 +122,7 @@ export default function OracleAIPage() {
                         <p className="mt-1 text-sm leading-5 text-muted">wins against Classic AI</p>
                       </div>
                       <div className="border-l-2 border-brass/70 pl-4">
-                        <p className="text-2xl font-semibold text-bone">96%</p>
+                        <p className="text-2xl font-semibold text-bone">88%</p>
                         <p className="mt-1 text-sm leading-5 text-muted">
                           wins against Machine Learning AI
                         </p>

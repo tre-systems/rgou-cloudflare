@@ -119,7 +119,7 @@ gzip           ac86b5d2dd47aeb7913389102c523b1e15c17f0a34098522ce2a29d8318ce2e9
 
 The current broad matrix plays 50 games for each of 45 pairings, alternating seats. Oracle averages **94.4%** across its nine opponents, including **94%** against the production self-play ML model and **82%** against depth-3 expectiminimax. The broad matrix is useful for direction, not precise margins.
 
-The separate [deployed benchmark](./AI-DEPLOYED-RESULTS.md) uses the three browser opponents only, 400 games per pairing, deterministic dice, and 200 games from each seat. Oracle won **85%** against Classic and **96%** against ML. It also records relative native timings; browser responsiveness is governed by the Worker budget, not those hardware-specific measurements.
+The separate [deployed benchmark](./AI-DEPLOYED-RESULTS.md) uses the three browser opponents only, 400 games per pairing, deterministic dice, and 200 games from each seat. Oracle won **85%** against Classic and **88%** against the corrected ML artifact. It also records relative native timings; browser responsiveness is governed by the Worker budget, not those hardware-specific measurements.
 
 ## Evaluation and promotion
 

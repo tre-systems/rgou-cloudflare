@@ -42,12 +42,13 @@
 }
 
 html {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-ink);
 }
 
 body {
-  min-height: 100vh;
+  box-sizing: border-box;
+  min-height: 100dvh;
   margin: 0;
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);

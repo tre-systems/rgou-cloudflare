@@ -1,7 +1,26 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { formatMarkdown, parseSections } = require('./format-ai-matrix-md.cjs');
+const {
+  formatMarkdown,
+  parseSections,
+  resolveReportName,
+  validateSections,
+} = require('./format-ai-matrix-md.cjs');
+
+test('accepts only the two repository-owned report destinations', () => {
+  assert.equal(resolveReportName(undefined), 'matrix');
+  assert.equal(resolveReportName('matrix'), 'matrix');
+  assert.equal(resolveReportName('deployed'), 'deployed');
+  assert.throws(() => resolveReportName('../outside'), /Unknown AI matrix report/);
+});
+
+test('refuses to overwrite a report from incomplete test output', () => {
+  assert.throws(
+    () => validateSections(parseSections(['error: could not compile'])),
+    /missing the config section/
+  );
+});
 
 test('generated matrix documentation keeps facts and omits synthetic recommendations', () => {
   const sections = parseSections([

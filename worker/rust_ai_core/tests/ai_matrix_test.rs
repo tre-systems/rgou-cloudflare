@@ -2,7 +2,7 @@ use rand::{rngs::StdRng, SeedableRng};
 use rayon::prelude::*;
 use rgou_ai_core::{
     dice, genetic_params::GeneticParams, ml_ai::MLAI, oracle_ai::OracleAI, GameState, Player, AI,
-    BROWSER_CLASSIC_AI_DEPTH,
+    BROWSER_CLASSIC_AI_DEPTH, RUNTIME_WEIGHT_LAYOUT,
 };
 use std::collections::HashMap;
 use std::time::Instant;
@@ -214,7 +214,8 @@ impl MLAIPlayer {
             return Err(format!("Weights file not found: {}", weights_file).into());
         }
 
-        let (value_weights, policy_weights) = load_ml_weights(weights_file)?;
+        let require_layout = matches!(ai_type, AIType::MLPyTorchV5);
+        let (value_weights, policy_weights) = load_ml_weights(weights_file, require_layout)?;
         let mut ai = MLAI::new();
         ai.load_pretrained(&value_weights, &policy_weights)?;
 
@@ -253,9 +254,18 @@ fn evaluate_position(game_state: &GameState, player: Player) -> f32 {
     score
 }
 
-fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
+fn load_ml_weights(
+    weights_file: &str,
+    require_layout: bool,
+) -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(weights_file)?;
     let data: serde_json::Value = serde_json::from_str(&content)?;
+
+    if require_layout && data["weight_layout"].as_str() != Some(RUNTIME_WEIGHT_LAYOUT) {
+        return Err(
+            format!("{weights_file} must declare weight_layout {RUNTIME_WEIGHT_LAYOUT}").into(),
+        );
+    }
 
     let value_weights = data["value_weights"]
         .as_array()
