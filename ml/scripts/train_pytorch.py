@@ -77,6 +77,7 @@ class TrainingConfig:
     learning_rate: float = 0.001
     validation_split: float = 0.2
     depth: int = 3
+    exploration_rate: float = 0.1
     seed: int = 42
     output_file: str = "ml_ai_weights_pytorch.json"
     temp_data_file: str = "temp_training_data.json"
@@ -88,6 +89,8 @@ class TrainingConfig:
             raise ValueError("learning_rate and depth must be positive")
         if not 0 < self.validation_split < 1:
             raise ValueError("validation_split must be between 0 and 1")
+        if not 0 <= self.exploration_rate <= 1:
+            raise ValueError("exploration_rate must be between 0 and 1")
 
         self.unified_config = self.load_unified_config()
 
@@ -160,6 +163,16 @@ class PolicyNetwork(nn.Module):
         return self.network(x)
 
 
+@dataclass(frozen=True)
+class EpochLosses:
+    value: float
+    policy: float
+
+    @property
+    def total(self) -> float:
+        return self.value + self.policy
+
+
 class PyTorchTrainer:
     def __init__(self, config: TrainingConfig):
         self.config = config
@@ -188,12 +201,17 @@ class PyTorchTrainer:
         self.value_network = ValueNetwork(network_config).to(self.device)
         self.policy_network = PolicyNetwork(network_config).to(self.device)
 
-        # Initialize optimizers
-        self.value_optimizer = optim.Adam(
-            self.value_network.parameters(), lr=config.learning_rate
+        self.value_optimizer = optim.AdamW(
+            self.value_network.parameters(), lr=config.learning_rate, weight_decay=1e-4
         )
-        self.policy_optimizer = optim.Adam(
-            self.policy_network.parameters(), lr=config.learning_rate
+        self.policy_optimizer = optim.AdamW(
+            self.policy_network.parameters(), lr=config.learning_rate, weight_decay=1e-4
+        )
+        self.value_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.value_optimizer, factor=0.5, patience=5, min_lr=1e-5
+        )
+        self.policy_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.policy_optimizer, factor=0.5, patience=5, min_lr=1e-5
         )
 
         # Loss functions
@@ -229,6 +247,7 @@ class PyTorchTrainer:
             "learning_rate": self.config.learning_rate,
             "validation_split": self.config.validation_split,
             "depth": self.config.depth,
+            "exploration_rate": self.config.exploration_rate,
             "seed": self.config.seed,
             "output_file": self.config.temp_data_file,
         }
@@ -348,12 +367,13 @@ class PyTorchTrainer:
         )
         return train_loader, val_loader
 
-    def train_epoch(self, train_loader: DataLoader) -> float:
+    def train_epoch(self, train_loader: DataLoader) -> EpochLosses:
         """Train for one epoch"""
         self.value_network.train()
         self.policy_network.train()
 
-        total_loss = 0.0
+        total_value_loss = 0.0
+        total_policy_loss = 0.0
         num_batches = 0
 
         for batch_idx, (features, value_targets, policy_targets) in enumerate(
@@ -379,7 +399,8 @@ class PyTorchTrainer:
             self.value_optimizer.step()
             self.policy_optimizer.step()
 
-            total_loss += total_loss_batch.item()
+            total_value_loss += value_loss.item()
+            total_policy_loss += policy_loss.item()
             num_batches += 1
 
             # Progress reporting
@@ -388,14 +409,18 @@ class PyTorchTrainer:
                     f"   📊 Batch {batch_idx}/{len(train_loader)} | Loss: {total_loss_batch.item():.4f}"
                 )
 
-        return total_loss / num_batches
+        return EpochLosses(
+            value=total_value_loss / num_batches,
+            policy=total_policy_loss / num_batches,
+        )
 
-    def validate_epoch(self, val_loader: DataLoader) -> float:
+    def validate_epoch(self, val_loader: DataLoader) -> EpochLosses:
         """Validate for one epoch"""
         self.value_network.eval()
         self.policy_network.eval()
 
-        total_loss = 0.0
+        total_value_loss = 0.0
+        total_policy_loss = 0.0
         num_batches = 0
 
         with torch.no_grad():
@@ -411,12 +436,14 @@ class PyTorchTrainer:
                 # Calculate losses
                 value_loss = self.value_criterion(value_outputs, value_targets)
                 policy_loss = self.policy_criterion(policy_logits, policy_targets)
-                total_loss_batch = value_loss + policy_loss
-
-                total_loss += total_loss_batch.item()
+                total_value_loss += value_loss.item()
+                total_policy_loss += policy_loss.item()
                 num_batches += 1
 
-        return total_loss / num_batches
+        return EpochLosses(
+            value=total_value_loss / num_batches,
+            policy=total_policy_loss / num_batches,
+        )
 
     def train(self, training_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Main training loop"""
@@ -428,6 +455,8 @@ class PyTorchTrainer:
 
         # Training loop
         best_val_loss = float("inf")
+        best_value_loss = float("inf")
+        best_policy_loss = float("inf")
         patience_counter = 0
         patience = 20
         loss_history = []
@@ -445,6 +474,8 @@ class PyTorchTrainer:
 
             # Validate
             val_loss = self.validate_epoch(val_loader)
+            self.value_scheduler.step(val_loss.value)
+            self.policy_scheduler.step(val_loss.policy)
 
             epoch_time = time.time() - epoch_start
             loss_history.append((train_loss, val_loss))
@@ -461,18 +492,24 @@ class PyTorchTrainer:
 
                 loss_improvement = 0.0
                 if len(loss_history) > 1:
-                    prev_val_loss = loss_history[-2][1]
-                    loss_improvement = val_loss - prev_val_loss
+                    prev_val_loss = loss_history[-2][1].total
+                    loss_improvement = val_loss.total - prev_val_loss
 
                 logger.info(
                     f"⏱️  Epoch {epochs_completed}/{self.config.epochs} ({epoch_time:.0f}s) | "
-                    f"Train: {train_loss:.4f} | Val: {val_loss:.4f} | Δ: {loss_improvement:+.4f} | "
+                    f"Train: {train_loss.total:.4f} | Val: {val_loss.total:.4f} "
+                    f"(value {val_loss.value:.4f}, policy {val_loss.policy:.4f}) | "
+                    f"Δ: {loss_improvement:+.4f} | "
                     f"ETA: {eta_minutes:.1f}m"
                 )
 
                 if len(loss_history) >= 3:
-                    recent_train_trend = [loss_history[i][0] for i in range(-3, 0)]
-                    recent_val_trend = [loss_history[i][1] for i in range(-3, 0)]
+                    recent_train_trend = [
+                        loss_history[i][0].total for i in range(-3, 0)
+                    ]
+                    recent_val_trend = [
+                        loss_history[i][1].total for i in range(-3, 0)
+                    ]
 
                     train_trend = (
                         "📉" if recent_train_trend[-1] < recent_train_trend[0] else "📈"
@@ -486,8 +523,10 @@ class PyTorchTrainer:
                     )
 
             # Early stopping
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            if val_loss.total < best_val_loss:
+                best_val_loss = val_loss.total
+                best_value_loss = val_loss.value
+                best_policy_loss = val_loss.policy
                 patience_counter = 0
                 best_value_state = copy.deepcopy(self.value_network.state_dict())
                 best_policy_state = copy.deepcopy(self.policy_network.state_dict())
@@ -511,7 +550,7 @@ class PyTorchTrainer:
         logger.info(f"📊 Final validation loss: {best_val_loss:.4f}")
 
         if loss_history:
-            initial_val_loss = loss_history[0][1]
+            initial_val_loss = loss_history[0][1].total
             improvement = (initial_val_loss - best_val_loss) / initial_val_loss * 100.0
             logger.info(f"📈 Loss improvement: {improvement:.2f}%")
 
@@ -519,7 +558,7 @@ class PyTorchTrainer:
 
         return {
             "training_date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "version": "pytorch_v1",
+            "version": "pytorch_v6_classic_distillation",
             "num_games": self.config.num_games,
             "num_training_samples": len(training_data),
             "epochs": len(loss_history),
@@ -528,20 +567,25 @@ class PyTorchTrainer:
             "batch_size": self.config.batch_size,
             "validation_split": self.config.validation_split,
             "depth": self.config.depth,
+            "exploration_rate": self.config.exploration_rate,
             "seed": self.config.seed,
             "training_time_seconds": training_time,
             "best_validation_loss": best_val_loss,
+            "best_validation_value_loss": best_value_loss,
+            "best_validation_policy_loss": best_policy_loss,
+            "optimizer": "AdamW",
+            "weight_decay": 1e-4,
             "source_revision": self.source_revision,
             "source_committed_at": self.source_committed_at,
             "python_version": platform.python_version(),
             "numpy_version": np.__version__,
             "torch_version": torch.__version__,
             "improvements": [
-                "PyTorch-based training for maximum speed",
-                "GPU acceleration when available",
-                "Leverages existing Rust data generation",
-                "Optimized neural network architecture",
-                "Early stopping and learning rate scheduling",
+                "Depth-limited Classic AI teacher without solved-game data",
+                "Tied equivalent moves share policy targets",
+                "Forced moves receive searched value targets",
+                "Exploratory rollouts cover recovery positions",
+                "AdamW with separate value and policy learning-rate schedules",
             ],
         }
 
@@ -606,6 +650,13 @@ def main():
         default="ml_ai_weights_pytorch.json",
         help="Output file",
     )
+    parser.add_argument(
+        "--exploration-rate",
+        type=float,
+        default=0.1,
+        help="Chance of following a random legal rollout move",
+    )
+    parser.add_argument("--seed", type=int, default=42, help="Training seed")
 
     args = parser.parse_args()
 
@@ -616,6 +667,8 @@ def main():
         learning_rate=args.learning_rate,
         batch_size=args.batch_size,
         depth=args.depth,
+        exploration_rate=args.exploration_rate,
+        seed=args.seed,
         output_file=args.output_file,
     )
 
@@ -626,6 +679,8 @@ def main():
     logger.info(f"  Learning Rate: {config.learning_rate}")
     logger.info(f"  Batch Size: {config.batch_size}")
     logger.info(f"  Search Depth: {config.depth}")
+    logger.info(f"  Exploration Rate: {config.exploration_rate}")
+    logger.info(f"  Seed: {config.seed}")
     logger.info("  Output: %r", config.output_file)
     logger.info("  Training Data Directory: %r", str(config.training_data_dir))
 

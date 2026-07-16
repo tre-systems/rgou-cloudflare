@@ -58,7 +58,8 @@ enum AIType {
     MLFast,
     MLV4,
     MLHybrid,
-    MLPyTorchV5,
+    MLProduction,
+    MLCandidate,
     OracleV1,
     BrowserClassic,
 }
@@ -75,7 +76,8 @@ impl AIType {
             AIType::MLFast => "ML-Fast",
             AIType::MLV4 => "ML-V4",
             AIType::MLHybrid => "ML-Hybrid",
-            AIType::MLPyTorchV5 => "ML-PyTorch-V5",
+            AIType::MLProduction => "ML-Classic",
+            AIType::MLCandidate => "ML-Candidate",
             AIType::OracleV1 => "Oracle-V1",
             AIType::BrowserClassic => "Classic-Browser",
         }
@@ -86,7 +88,8 @@ impl AIType {
             AIType::MLFast => Some("../../ml/data/weights/ml_ai_weights_fast.json"),
             AIType::MLV4 => Some("../../ml/data/weights/ml_ai_weights_v4.json"),
             AIType::MLHybrid => Some("../../ml/data/weights/ml_ai_weights_hybrid.json"),
-            AIType::MLPyTorchV5 => Some("../../ml/data/weights/ml_ai_weights_pytorch_v5.json"),
+            AIType::MLProduction => Some("../../ml/data/weights/ml_ai_weights_pytorch_v5.json"),
+            AIType::MLCandidate => Some("../../ml/data/weights/ml_ai_weights_candidate.json"),
             _ => None,
         }
     }
@@ -214,7 +217,7 @@ impl MLAIPlayer {
             return Err(format!("Weights file not found: {}", weights_file).into());
         }
 
-        let require_layout = matches!(ai_type, AIType::MLPyTorchV5);
+        let require_layout = matches!(ai_type, AIType::MLProduction | AIType::MLCandidate);
         let (value_weights, policy_weights) = load_ml_weights(weights_file, require_layout)?;
         let mut ai = MLAI::new();
         ai.load_pretrained(&value_weights, &policy_weights)?;
@@ -318,8 +321,10 @@ fn load_single_network_weights(
 #[derive(Debug)]
 struct GameResult {
     winner: Player,
-    ai1_time_ms: u64,
-    ai2_time_ms: u64,
+    ai1_time_ns: u128,
+    ai2_time_ns: u128,
+    ai1_decisions: u32,
+    ai2_decisions: u32,
 }
 
 fn play_game(
@@ -331,8 +336,10 @@ fn play_game(
     let evolved_params = GeneticParams::evolved();
     let mut game_state = GameState::with_genetic_params(evolved_params);
     let mut moves_played = 0;
-    let mut ai1_time_ms = 0;
-    let mut ai2_time_ms = 0;
+    let mut ai1_time_ns = 0;
+    let mut ai2_time_ns = 0;
+    let mut ai1_decisions = 0;
+    let mut ai2_decisions = 0;
     let max_moves = 200; // Prevent infinite games
 
     while !game_state.is_game_over() && moves_played < max_moves {
@@ -343,35 +350,22 @@ fn play_game(
             continue;
         }
 
-        let best_move = if game_state.current_player == Player::Player1 {
-            if ai1_plays_first {
-                let start = Instant::now();
-                let move_result = ai1.get_move(&game_state);
-                let duration = start.elapsed();
-                ai1_time_ms += duration.as_millis() as u64;
-                move_result
-            } else {
-                let start = Instant::now();
-                let move_result = ai2.get_move(&game_state);
-                let duration = start.elapsed();
-                ai2_time_ms += duration.as_millis() as u64;
-                move_result
-            }
+        let ai1_turn = (game_state.current_player == Player::Player1) == ai1_plays_first;
+        let start = Instant::now();
+        let best_move = if ai1_turn {
+            ai1.get_move(&game_state)
         } else {
-            if ai1_plays_first {
-                let start = Instant::now();
-                let move_result = ai2.get_move(&game_state);
-                let duration = start.elapsed();
-                ai2_time_ms += duration.as_millis() as u64;
-                move_result
-            } else {
-                let start = Instant::now();
-                let move_result = ai1.get_move(&game_state);
-                let duration = start.elapsed();
-                ai1_time_ms += duration.as_millis() as u64;
-                move_result
-            }
+            ai2.get_move(&game_state)
         };
+        let elapsed_ns = start.elapsed().as_nanos();
+
+        if ai1_turn {
+            ai1_time_ns += elapsed_ns;
+            ai1_decisions += 1;
+        } else {
+            ai2_time_ns += elapsed_ns;
+            ai2_decisions += 1;
+        }
 
         if let Some(move_index) = best_move {
             if game_state.make_move(move_index as u8).is_err() {
@@ -412,8 +406,10 @@ fn play_game(
 
     GameResult {
         winner,
-        ai1_time_ms,
-        ai2_time_ms,
+        ai1_time_ns,
+        ai2_time_ns,
+        ai1_decisions,
+        ai2_decisions,
     }
 }
 
@@ -442,7 +438,6 @@ fn create_ai_player(ai_type: &AIType) -> Result<Box<dyn AIPlayer>, Box<dyn std::
     }
 }
 
-// Matrix result structure
 #[derive(Debug)]
 struct MatrixResult {
     ai1: String,
@@ -453,62 +448,6 @@ struct MatrixResult {
     ai1_wins_as_player1: u32,
     ai1_wins_as_player2: u32,
     games_per_seat: u32,
-}
-
-// Enhanced recommendations generation
-fn generate_recommendations(
-    ai_performance: &HashMap<String, f64>,
-    ai_speeds: &HashMap<String, f64>,
-) -> Vec<String> {
-    let mut recommendations = Vec::new();
-
-    // Find best performing AI
-    if let Some((best_ai, win_rate)) = ai_performance
-        .iter()
-        .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
-    {
-        if *win_rate > 70.0 {
-            recommendations.push(format!(
-                "{} shows excellent performance ({:.1}% avg win rate) and is ready for production",
-                best_ai, win_rate
-            ));
-        } else if *win_rate > 60.0 {
-            recommendations.push(format!(
-                "{} shows good performance ({:.1}% avg win rate) and could be used in production",
-                best_ai, win_rate
-            ));
-        } else {
-            recommendations.push(format!(
-                "{} shows moderate performance ({:.1}% avg win rate), consider further training",
-                best_ai, win_rate
-            ));
-        }
-    }
-
-    // Find fastest AI
-    if let Some((fastest_ai, avg_time)) = ai_speeds
-        .iter()
-        .min_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
-    {
-        if *avg_time < 1.0 {
-            recommendations.push(format!(
-                "{} is very fast ({:.1}ms/move) and suitable for real-time play",
-                fastest_ai, avg_time
-            ));
-        } else if *avg_time < 10.0 {
-            recommendations.push(format!(
-                "{} is fast ({:.1}ms/move) and suitable for interactive play",
-                fastest_ai, avg_time
-            ));
-        }
-    }
-
-    // General recommendations
-    recommendations.push("Use EMM-Depth3 for best performance/speed balance".to_string());
-    recommendations.push("Use Random AI for baseline testing".to_string());
-    recommendations.push("Use Heuristic AI for educational purposes".to_string());
-
-    recommendations
 }
 
 #[test]
@@ -535,11 +474,19 @@ fn test_ai_matrix() {
     );
     println!();
 
+    let compare_candidate = std::env::var("AI_MATRIX_COMPARE_CANDIDATE").is_ok();
     let deployed_only = std::env::var("AI_MATRIX_DEPLOYED_ONLY").is_ok();
-    let mut ai_types = if deployed_only {
+    let mut ai_types = if compare_candidate {
         vec![
             AIType::BrowserClassic,
-            AIType::MLPyTorchV5,
+            AIType::MLProduction,
+            AIType::MLCandidate,
+            AIType::OracleV1,
+        ]
+    } else if deployed_only {
+        vec![
+            AIType::BrowserClassic,
+            AIType::MLProduction,
             AIType::OracleV1,
         ]
     } else {
@@ -552,16 +499,19 @@ fn test_ai_matrix() {
             AIType::MLFast,
             AIType::MLV4,
             AIType::MLHybrid,
-            AIType::MLPyTorchV5,
+            AIType::MLProduction,
             AIType::OracleV1,
         ]
     };
 
-    if !deployed_only && std::env::var("RUN_SLOW_TESTS").is_ok() {
+    if !deployed_only && !compare_candidate && std::env::var("RUN_SLOW_TESTS").is_ok() {
         ai_types.push(AIType::EMMDepth4);
     }
 
-    if deployed_only {
+    if compare_candidate {
+        println!("  Scope: candidate promotion comparison");
+        println!("  Classic search depth: {BROWSER_CLASSIC_AI_DEPTH}");
+    } else if deployed_only {
         println!("  Scope: browser-deployed opponents only");
         println!("  Classic search depth: {BROWSER_CLASSIC_AI_DEPTH}");
     }
@@ -603,8 +553,10 @@ fn test_ai_matrix() {
 
             let mut ai1_wins = 0;
             let mut ai2_wins = 0;
-            let mut ai1_total_time = 0;
-            let mut ai2_total_time = 0;
+            let mut ai1_total_time_ns = 0;
+            let mut ai2_total_time_ns = 0;
+            let mut ai1_total_decisions = 0;
+            let mut ai2_total_decisions = 0;
             let mut ai1_wins_as_player1 = 0;
             let mut ai1_wins_as_player2 = 0;
             let mut rng = StdRng::seed_from_u64(0x5247_4F55_2026_0000 + match_index as u64);
@@ -614,9 +566,10 @@ fn test_ai_matrix() {
                 let ai1_first = game % 2 == 0; // Alternate who goes first
                 let result = play_game(&mut ai1, &mut ai2, ai1_first, &mut rng);
 
-                // Track moves for statistics
-                ai1_total_time += result.ai1_time_ms;
-                ai2_total_time += result.ai2_time_ms;
+                ai1_total_time_ns += result.ai1_time_ns;
+                ai2_total_time_ns += result.ai2_time_ns;
+                ai1_total_decisions += result.ai1_decisions;
+                ai2_total_decisions += result.ai2_decisions;
 
                 let ai1_won = if ai1_first {
                     result.winner == Player::Player1
@@ -654,8 +607,8 @@ fn test_ai_matrix() {
             }
 
             let ai1_win_rate = (ai1_wins as f64 / num_games as f64) * 100.0;
-            let ai1_avg_time = ai1_total_time as f64 / num_games as f64;
-            let ai2_avg_time = ai2_total_time as f64 / num_games as f64;
+            let ai1_avg_time = ai1_total_time_ns as f64 / ai1_total_decisions as f64 / 1_000_000.0;
+            let ai2_avg_time = ai2_total_time_ns as f64 / ai2_total_decisions as f64 / 1_000_000.0;
 
             MatrixResult {
                 ai1: ai_type1.name().to_string(),
@@ -685,7 +638,7 @@ fn test_ai_matrix() {
             100.0 - result.ai1_win_rate
         );
         println!(
-            "  Average time: {} {:.1}ms, {} {:.1}ms",
+            "  Average move time: {} {:.1}ms, {} {:.1}ms",
             result.ai1, result.ai1_avg_time_ms, result.ai2, result.ai2_avg_time_ms
         );
         println!(
@@ -824,23 +777,6 @@ fn test_ai_matrix() {
             "Slow"
         };
         println!("{}: {:.1}ms/move ({})", ai_name, avg_time, speed_category);
-    }
-    println!();
-
-    // Enhanced recommendations
-    println!("💡 RECOMMENDATIONS:");
-    println!("{}", "-".repeat(40));
-
-    // Calculate average win rates for recommendations
-    let mut ai_avg_performance = HashMap::new();
-    for (ai_name, total_win_rate) in &ai_performance {
-        let avg_win_rate = *total_win_rate / (ai_types.len() - 1) as f64;
-        ai_avg_performance.insert(ai_name.clone(), avg_win_rate);
-    }
-
-    let recommendations = generate_recommendations(&ai_avg_performance, &ai_speeds);
-    for recommendation in &recommendations {
-        println!("• {}", recommendation);
     }
     println!();
 

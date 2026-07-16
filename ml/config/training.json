@@ -7,26 +7,33 @@
   },
   "training_defaults": {
     "num_games": 1000,
-    "epochs": 50,
-    "batch_size": 32,
+    "epochs": 60,
+    "batch_size": 256,
     "learning_rate": 0.001,
     "validation_split": 0.2,
     "depth": 3,
+    "exploration_rate": 0.1,
     "seed": 42
   },
   "production_settings": {
-    "num_games": 2000,
-    "epochs": 100,
-    "batch_size": 64,
+    "num_games": 6000,
+    "epochs": 120,
+    "batch_size": 512,
     "learning_rate": 0.001,
-    "depth": 4
+    "validation_split": 0.2,
+    "depth": 4,
+    "exploration_rate": 0.1,
+    "seed": 20260716
   },
   "quick_test_settings": {
     "num_games": 100,
-    "epochs": 10,
-    "batch_size": 32,
+    "epochs": 15,
+    "batch_size": 128,
     "learning_rate": 0.001,
-    "depth": 3
+    "validation_split": 0.2,
+    "depth": 3,
+    "exploration_rate": 0.1,
+    "seed": 42
   },
   "output_formats": {
     "pytorch": "ml_ai_weights_pytorch.json",

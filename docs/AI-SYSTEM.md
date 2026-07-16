@@ -85,7 +85,7 @@ The architecture is defined in `ml/config/training.json` and `worker/rust_ai_cor
 
 ### Training
 
-The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters and alternates the starting player between games. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized Player 2 evaluation target and a one-hot best-move target for the value and policy networks. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves. Two training backends share the same presets:
+The data generator uses depth-limited Classic expectiminimax as its only teacher; it does not use the Oracle tablebase or solved-game model. It alternates the starting player between games, and a zero roll or blocked position passes the turn exactly as it does in the game. Each playable position is searched once. The best score becomes a normalized Player 2 value target, forced moves retain their searched value, and equally scored piece choices share the policy target. After recording the label, ten per cent of rollouts take a different legal move so the corpus includes recovery positions. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves.
 
 | Backend | Hardware                      | Notes                           |
 | ------- | ----------------------------- | ------------------------------- |
@@ -96,15 +96,17 @@ Rust self-play derives an independent random stream for each game from the confi
 
 | Preset     | Games | Epochs | Batch |
 | ---------- | ----- | ------ | ----- |
-| quick      | 100   | 10     | 32    |
-| default    | 1000  | 50     | 32    |
-| production | 2000  | 100    | 64    |
+| quick      | 100   | 15     | 128   |
+| default    | 1000  | 60     | 256   |
+| production | 6000  | 120    | 512   |
+
+The PyTorch backend uses AdamW and independent validation-driven learning-rate schedules for the value and policy networks. It restores the checkpoint with the lowest combined validation loss. Candidate models are compared with the current production model, Classic, and Oracle using fixed dice streams and alternating seats before promotion.
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) and [ml/README.md](../ml/README.md) for training commands.
 
 ### Model contract
 
-`ml/data/weights/ml_ai_weights_pytorch_v5.json` is the production source model. Its verified metadata records 2,000 simulated games, 100 epochs, seed 42, 303,228 training samples, and the best validation loss. The Fast, V4, and Hybrid files in the same directory are comparison fixtures for the AI matrix, not deployment sources; their legacy metadata is not treated as authoritative provenance.
+`ml/data/weights/ml_ai_weights_pytorch_v5.json` is the stable path for the production source model; the filename is retained so deployment code does not depend on experiment names. The current model was distilled from depth-4 Classic AI without Oracle or tablebase data. Its verified metadata records 6,000 simulated games, 980,660 labelled positions, 120 epochs, seed 20260716, and a best validation loss of 0.6061. The Fast, V4, and Hybrid files in the same directory are comparison fixtures for the AI matrix, not deployment sources; their legacy metadata is not treated as authoritative provenance.
 
 `npm run load:ml-weights` validates and publishes the canonical production source to fixed repository-owned destinations. Every artifact declares the `input-output-row-major-v1` matrix layout used by Rust. PyTorch export transposes its native output-by-input matrices into that layout; a shared fixture checks the same linear layer in Python and Rust. `ml/model-manifest.json` records the layout, source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject an undeclared layout, incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
 

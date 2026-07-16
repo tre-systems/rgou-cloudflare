@@ -13,15 +13,15 @@
   "deployment": {
     "gzip": {
       "content_encoding": "gzip",
-      "decompressed_sha256": "0a4a98f73ed5b210db529bfebae35fb911dcaf8a7a7cf5d689c6f8a55657bbbf",
+      "decompressed_sha256": "f3ba7cb85050c9b639c4ecd70033e6f582b03520f2e9e410e296a554587d4cfc",
       "path": "public/ml-weights.json.gz",
-      "sha256": "829eb00fb49efaa149b97fbe9f9138b0db2ce1b9f6f4bbc6b3911d26649cd8d3",
-      "size_bytes": 1548672
+      "sha256": "120ef16bc2505d851d3b317de4e1294447c153d569a8ccc0d0683307dae4bf0b",
+      "size_bytes": 1553202
     },
     "json": {
       "path": "public/ml-weights.json",
-      "sha256": "0a4a98f73ed5b210db529bfebae35fb911dcaf8a7a7cf5d689c6f8a55657bbbf",
-      "size_bytes": 4199903
+      "sha256": "f3ba7cb85050c9b639c4ecd70033e6f582b03520f2e9e410e296a554587d4cfc",
+      "size_bytes": 4213469
     }
   },
   "inputs": {
@@ -35,52 +35,62 @@
     },
     "training_config": {
       "path": "ml/config/training.json",
-      "sha256": "b17eb90e4cd44144b94128c924e098d18afb2fbab2e59a0f01b20535a1385159"
+      "sha256": "01855f6149d5c95e4cf160ab83a06dc488a2b381da1f807c91c185020017c84c"
     }
   },
   "model": {
     "format": "rgou-dual-network-json-v1",
     "path": "ml/data/weights/ml_ai_weights_pytorch_v5.json",
-    "sha256": "0a4a98f73ed5b210db529bfebae35fb911dcaf8a7a7cf5d689c6f8a55657bbbf",
-    "size_bytes": 4199903,
+    "sha256": "f3ba7cb85050c9b639c4ecd70033e6f582b03520f2e9e410e296a554587d4cfc",
+    "size_bytes": 4213469,
     "weight_layout": "input-output-row-major-v1",
     "weights": {
       "policy": {
         "count": 82119,
-        "sha256": "61d6b7d92b9d6d4af691f0332ffc140559239040ac0e6354d38d29af803eb8ea"
+        "sha256": "35b283add6fc2e375f9162491793e87c4d4c71ae9dcc5b516da4970addc9a63e"
       },
       "value": {
         "count": 81921,
-        "sha256": "ba7bb0f0c61a93c909316741ce1f9bbe80709c8d74991f19684373d3e6e3df3e"
+        "sha256": "c76335f573de6c144fa0293624ecd7fa6e5fb0a6ef8a7346addc7b015a0426d2"
       }
     }
   },
   "schema_version": 3,
   "source": {
-    "committed_at": "2025-07-20T22:01:01+01:00",
+    "committed_at": "2026-07-16T12:50:51+01:00",
     "kind": "training_source_commit",
-    "revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4"
+    "revision": "14c957dc797903eb298e837bd044c5085e019cb7"
   },
   "training": {
-    "batch_size": 64,
-    "best_validation_loss": 1.6501182404500019,
-    "epochs": 100,
+    "batch_size": 512,
+    "best_validation_loss": 0.6061461842312401,
+    "best_validation_policy_loss": 0.60590079628552,
+    "best_validation_value_loss": 0.0002453879457201917,
+    "depth": 4,
+    "epochs": 120,
+    "exploration_rate": 0.1,
     "improvements": [
-      "PyTorch-based training for maximum speed",
-      "GPU acceleration when available",
-      "Leverages existing Rust data generation",
-      "Optimized neural network architecture",
-      "Early stopping and learning rate scheduling"
+      "Depth-limited Classic AI teacher without solved-game data",
+      "Tied equivalent moves share policy targets",
+      "Forced moves receive searched value targets",
+      "Exploratory rollouts cover recovery positions",
+      "AdamW with separate value and policy learning-rate schedules"
     ],
     "learning_rate": 0.001,
-    "num_games": 2000,
-    "num_training_samples": 303228,
-    "seed": 42,
-    "source_committed_at": "2025-07-20T22:01:01+01:00",
-    "source_revision": "ea166cb287d26daccf8f0c87c89dc2e4845778e4",
-    "training_date": "2025-07-20 21:50:41",
-    "training_time_seconds": 3297.1347529888153,
+    "num_games": 6000,
+    "num_training_samples": 980660,
+    "numpy_version": "2.5.1",
+    "optimizer": "AdamW",
+    "python_version": "3.12.13",
+    "requested_epochs": 120,
+    "seed": 20260716,
+    "source_committed_at": "2026-07-16T12:50:51+01:00",
+    "source_revision": "14c957dc797903eb298e837bd044c5085e019cb7",
+    "torch_version": "2.13.0",
+    "training_date": "2026-07-16T13:00:54Z",
+    "training_time_seconds": 2469.897012233734,
     "validation_split": 0.2,
-    "version": "pytorch_v1"
+    "version": "pytorch_v6_classic_distillation",
+    "weight_decay": 0.0001
   }
 }

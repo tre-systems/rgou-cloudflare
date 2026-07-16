@@ -418,6 +418,24 @@ impl AI {
         state: &GameState,
         depth: u8,
     ) -> (Option<u8>, Vec<MoveEvaluation>) {
+        self.get_best_move_internal(state, depth, false)
+    }
+
+    #[cfg(feature = "training")]
+    pub fn get_teacher_move(
+        &mut self,
+        state: &GameState,
+        depth: u8,
+    ) -> (Option<u8>, Vec<MoveEvaluation>) {
+        self.get_best_move_internal(state, depth, true)
+    }
+
+    fn get_best_move_internal(
+        &mut self,
+        state: &GameState,
+        depth: u8,
+        evaluate_forced_move: bool,
+    ) -> (Option<u8>, Vec<MoveEvaluation>) {
         self.nodes_evaluated = 0;
         self.transposition_hits = 0;
 
@@ -427,7 +445,7 @@ impl AI {
             return (None, vec![]);
         }
 
-        if valid_moves.len() == 1 {
+        if valid_moves.len() == 1 && !evaluate_forced_move {
             return (Some(valid_moves[0]), vec![]);
         }
 

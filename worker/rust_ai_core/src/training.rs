@@ -10,6 +10,7 @@
 //!         learning_rate: 0.001,
 //!         validation_split: 0.2,
 //!         depth: 1,
+//!         exploration_rate: 0.1,
 //!         seed: 42,
 //!         output_file: "ml_ai_weights.json".to_string(),
 //!     };
@@ -23,7 +24,7 @@
 
 use crate::features::GameFeatures;
 use crate::neural_network::{NetworkConfig, NeuralNetwork};
-use crate::{GameState, GeneticParams, Player, AI, PIECES_PER_PLAYER};
+use crate::{GameState, GeneticParams, MoveEvaluation, Player, AI, PIECES_PER_PLAYER};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Once;
@@ -59,18 +60,17 @@ pub struct TrainingSample {
 
     /// Target value for the value network (game state evaluation)
     ///
-    /// This is a scalar value between -1 and 1 representing:
-    /// - 1.0: Current player has a winning position
+    /// This is a scalar value between -1 and 1 from Player 2's perspective:
+    /// - 1.0: Player 2 has a winning position
     /// - 0.0: Neutral/balanced position
-    /// - -1.0: Current player has a losing position
+    /// - -1.0: Player 1 has a winning position
     pub value_target: f32,
 
     /// Target probabilities for the policy network (move selection)
     ///
     /// This is a 7-dimensional vector representing the probability
-    /// distribution over all possible moves (0-6). The expert move
-    /// (determined by expectiminimax search) gets probability 1.0,
-    /// while all other moves get 0.0.
+    /// distribution over all possible moves (0-6). Moves with the same
+    /// expectiminimax score share the target probability equally.
     pub policy_target: Vec<f32>,
 }
 
@@ -120,6 +120,13 @@ pub struct TrainingConfig {
     /// This affects the quality of the training targets.
     /// Typical values: 3 (default), 4 (production), 5+ (high quality)
     pub depth: u8,
+
+    /// Chance of following a random legal move after recording the teacher target
+    ///
+    /// This exposes the model to recoverable mistakes without weakening the
+    /// target itself. Use 0.0 for pure teacher trajectories.
+    #[serde(default)]
+    pub exploration_rate: f32,
 
     /// Random seed for reproducible self-play data
     ///
@@ -272,6 +279,12 @@ pub struct TrainingMetadata {
     /// Fraction of data reserved for validation (e.g., 0.2 for 20% validation).
     pub validation_split: f32,
 
+    /// Search depth used to produce Classic AI targets
+    pub depth: u8,
+
+    /// Fraction of recorded states followed by a random legal rollout move
+    pub exploration_rate: f32,
+
     /// Random seed used for self-play data generation
     ///
     /// A non-zero value identifies a reproducible generated game corpus. It
@@ -282,6 +295,9 @@ pub struct TrainingMetadata {
     ///
     /// Includes both data generation and neural network training time.
     pub training_time_seconds: f64,
+
+    /// Lowest combined validation loss observed during training
+    pub best_validation_loss: f32,
 
     /// List of improvements or notes about this training run
     ///
@@ -344,6 +360,7 @@ impl Trainer {
     ///     learning_rate: 0.001,
     ///     validation_split: 0.2,
     ///     depth: 1,
+    ///     exploration_rate: 0.1,
     ///     seed: 42,
     ///     output_file: "ml_ai_weights.json".to_string(),
     /// };
@@ -358,6 +375,11 @@ impl Trainer {
     /// - **High-core systems**: Uses most cores but leaves 1-2 for system tasks
     /// - **Standard systems**: Uses all available cores
     pub fn new(config: TrainingConfig) -> Self {
+        assert!(
+            (0.0..=1.0).contains(&config.exploration_rate),
+            "exploration_rate must be between 0 and 1"
+        );
+
         // Configure optimal thread pool for training
         Self::configure_thread_pool();
 
@@ -592,6 +614,7 @@ impl Trainer {
     ///     learning_rate: 0.001,
     ///     validation_split: 0.2,
     ///     depth: 1,
+    ///     exploration_rate: 0.1,
     ///     seed: 42,
     ///     output_file: "test_weights.json".to_string(),
     /// };
@@ -742,12 +765,13 @@ impl Trainer {
                 continue;
             }
 
-            let (expert_move, _) = ai.get_best_move(&game_state, self.config.depth);
+            let (expert_move, move_evaluations) =
+                ai.get_teacher_move(&game_state, self.config.depth);
 
             if let Some(move_idx) = expert_move {
                 let features = GameFeatures::from_game_state(&game_state);
-                let value_target = self.calculate_value_target(&game_state);
-                let policy_target = self.create_policy_target(&game_state, move_idx);
+                let value_target = self.calculate_value_target(&game_state, &move_evaluations);
+                let policy_target = self.create_policy_target(&move_evaluations);
 
                 samples.push(TrainingSample {
                     features: features.to_array().to_vec(),
@@ -755,7 +779,8 @@ impl Trainer {
                     policy_target,
                 });
 
-                let _ = game_state.make_move(move_idx);
+                let rollout_move = self.choose_rollout_move(move_idx, &valid_moves, rng);
+                let _ = game_state.make_move(rollout_move);
                 turn_count += 1;
             } else {
                 turn_count += 1;
@@ -775,22 +800,49 @@ impl Trainer {
         }
     }
 
-    fn calculate_value_target(&self, game_state: &GameState) -> f32 {
-        let mut ai = AI::new();
-        let (_, move_evaluations) = ai.get_best_move(game_state, self.config.depth);
-
-        let evaluation = if let Some(best_move) = move_evaluations.first() {
-            best_move.score
+    fn choose_rollout_move(&self, expert_move: u8, valid_moves: &[u8], rng: &mut GameRng) -> u8 {
+        if valid_moves.len() > 1
+            && (rng.next_u64() as f64 / u64::MAX as f64) < self.config.exploration_rate as f64
+        {
+            let alternatives = valid_moves
+                .iter()
+                .copied()
+                .filter(|move_idx| *move_idx != expert_move)
+                .collect::<Vec<_>>();
+            alternatives[rng.next_u64() as usize % alternatives.len()]
         } else {
-            0.0
-        };
-
-        (evaluation / 10000.0).clamp(-1.0, 1.0)
+            expert_move
+        }
     }
 
-    fn create_policy_target(&self, _game_state: &GameState, expert_move: u8) -> Vec<f32> {
+    fn calculate_value_target(
+        &self,
+        game_state: &GameState,
+        move_evaluations: &[MoveEvaluation],
+    ) -> f32 {
+        let evaluation = move_evaluations
+            .first()
+            .map(|best_move| best_move.score)
+            .unwrap_or(0.0);
+
+        (evaluation / game_state.genetic_params.win_score as f32).clamp(-1.0, 1.0)
+    }
+
+    fn create_policy_target(&self, move_evaluations: &[MoveEvaluation]) -> Vec<f32> {
         let mut policy = vec![0.0; PIECES_PER_PLAYER];
-        policy[expert_move as usize] = 1.0;
+        let Some(best) = move_evaluations.first() else {
+            return policy;
+        };
+
+        let tied_moves = move_evaluations
+            .iter()
+            .take_while(|evaluation| (evaluation.score - best.score).abs() <= 1e-5)
+            .collect::<Vec<_>>();
+        let probability = 1.0 / tied_moves.len() as f32;
+        for evaluation in tied_moves {
+            policy[evaluation.piece_index as usize] = probability;
+        }
+
         policy
     }
 
@@ -846,6 +898,7 @@ impl Trainer {
     ///     learning_rate: 0.001,
     ///     validation_split: 0.2,
     ///     depth: 1,
+    ///     exploration_rate: 0.1,
     ///     seed: 42,
     ///     output_file: "test_weights.json".to_string(),
     /// };
@@ -1002,8 +1055,11 @@ impl Trainer {
             learning_rate: self.config.learning_rate,
             batch_size: self.config.batch_size,
             validation_split: self.config.validation_split,
+            depth: self.config.depth,
+            exploration_rate: self.config.exploration_rate,
             seed: self.config.seed,
             training_time_seconds: training_time,
+            best_validation_loss: best_val_loss,
             improvements: vec![
                 "Rust-native training pipeline".to_string(),
                 "Eliminated Python subprocess overhead".to_string(),
@@ -1144,6 +1200,7 @@ impl Trainer {
     ///     learning_rate: 0.001,
     ///     validation_split: 0.2,
     ///     depth: 1,
+    ///     exploration_rate: 0.1,
     ///     seed: 42,
     ///     output_file: "test_weights.json".to_string(),
     /// };
@@ -1226,6 +1283,7 @@ impl Trainer {
     ///     learning_rate: 0.001,
     ///     validation_split: 0.2,
     ///     depth: 1,
+    ///     exploration_rate: 0.1,
     ///     seed: 42,
     ///     output_file: "test_weights.json".to_string(),
     /// };
@@ -1268,6 +1326,16 @@ impl Trainer {
 mod tests {
     use super::*;
 
+    fn move_evaluation(piece_index: u8, score: f32) -> MoveEvaluation {
+        MoveEvaluation {
+            piece_index,
+            score,
+            move_type: "move".to_string(),
+            from_square: -1,
+            to_square: Some(0),
+        }
+    }
+
     fn reproducibility_config(seed: u64) -> TrainingConfig {
         TrainingConfig {
             num_games: 4,
@@ -1276,6 +1344,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.1,
             seed,
             output_file: "test_output.json".to_string(),
         }
@@ -1290,6 +1359,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1308,6 +1378,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1340,20 +1411,23 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
 
         let trainer = Trainer::new(config);
-        let game_state = GameState::new();
-        let policy_target = trainer.create_policy_target(&game_state, 3);
+        let evaluations = vec![
+            move_evaluation(3, -100.0),
+            move_evaluation(5, -100.0),
+            move_evaluation(1, 50.0),
+        ];
+        let policy_target = trainer.create_policy_target(&evaluations);
 
         assert_eq!(policy_target.len(), PIECES_PER_PLAYER);
-        assert_eq!(policy_target[3], 1.0);
-        assert_eq!(
-            policy_target.iter().filter(|&&x| x == 0.0).count(),
-            PIECES_PER_PLAYER - 1
-        );
+        assert_eq!(policy_target[3], 0.5);
+        assert_eq!(policy_target[5], 0.5);
+        assert_eq!(policy_target.iter().sum::<f32>(), 1.0);
     }
 
     #[test]
@@ -1365,16 +1439,48 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
 
         let trainer = Trainer::new(config);
-        let game_state = GameState::new();
-        let value_target = trainer.calculate_value_target(&game_state);
+        let game_state = GameState::with_genetic_params(GeneticParams::evolved());
+        let evaluations = vec![move_evaluation(
+            0,
+            game_state.genetic_params.win_score as f32 / 2.0,
+        )];
+        let value_target = trainer.calculate_value_target(&game_state, &evaluations);
 
-        // Value target should be in [-1, 1] range
-        assert!((-1.0..=1.0).contains(&value_target));
+        assert_eq!(value_target, 0.5);
+    }
+
+    #[test]
+    fn test_forced_moves_receive_teacher_targets() {
+        let mut game_state = GameState::with_genetic_params(GeneticParams::evolved());
+        for piece in game_state.player1_pieces.iter_mut().take(6) {
+            piece.square = 20;
+        }
+        game_state.dice_roll = 1;
+
+        let mut ai = AI::new();
+        let (best_move, evaluations) = ai.get_teacher_move(&game_state, 1);
+
+        assert_eq!(best_move, Some(6));
+        assert_eq!(evaluations.len(), 1);
+        assert_eq!(evaluations[0].piece_index, 6);
+    }
+
+    #[test]
+    fn test_exploration_chooses_a_non_teacher_move() {
+        let mut config = reproducibility_config(42);
+        config.exploration_rate = 1.0;
+        let trainer = Trainer::new(config);
+        let mut rng = GameRng::new(42);
+
+        let rollout_move = trainer.choose_rollout_move(1, &[1, 3, 5], &mut rng);
+
+        assert!(matches!(rollout_move, 3 | 5));
     }
 
     #[test]
@@ -1386,6 +1492,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1416,6 +1523,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1432,12 +1540,11 @@ mod tests {
             assert!(sample.value_target >= -1.0 && sample.value_target <= 1.0);
             assert_eq!(sample.policy_target.len(), PIECES_PER_PLAYER);
 
-            // Policy target should be one-hot or close to it
-            let max_prob = sample.policy_target.iter().fold(0.0_f32, |a, &b| a.max(b));
-            assert!(
-                max_prob > 0.5,
-                "Policy target should have a clear preferred move"
-            );
+            assert!((sample.policy_target.iter().sum::<f32>() - 1.0).abs() < 1e-6);
+            assert!(sample
+                .policy_target
+                .iter()
+                .all(|probability| *probability >= 0.0));
         }
     }
 
@@ -1476,6 +1583,7 @@ mod tests {
             learning_rate: 0.01,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1510,6 +1618,7 @@ mod tests {
             learning_rate: 0.01,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1544,6 +1653,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1572,6 +1682,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_weights.json".to_string(),
         };
@@ -1604,8 +1715,11 @@ mod tests {
             learning_rate: 0.001,
             batch_size: 1,
             validation_split: 0.2,
+            depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             training_time_seconds: 1.0,
+            best_validation_loss: 1.0,
             improvements: vec!["test".to_string()],
         };
 
@@ -1639,6 +1753,7 @@ mod tests {
             learning_rate: 0.01,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };
@@ -1678,6 +1793,7 @@ mod tests {
             learning_rate: 0.001,
             validation_split: 0.2,
             depth: 1,
+            exploration_rate: 0.0,
             seed: 42,
             output_file: "test_output.json".to_string(),
         };

@@ -12,9 +12,9 @@ For runtime architecture and model contracts, see [AI-SYSTEM.md](../docs/AI-SYST
 ```bash
 uv sync --project ml --locked
 
-npm run train:pytorch:quick       # quick test (100 games, 10 epochs)
-npm run train:pytorch             # default (1000 games, 50 epochs)
-npm run train:pytorch:production  # production (2000 games, 100 epochs)
+npm run train:pytorch:quick       # quick test (100 games, 15 epochs)
+npm run train:pytorch             # default (1000 games, 60 epochs)
+npm run train:pytorch:production  # production (6000 games, up to 120 epochs)
 
 ls ml/data/weights/               # trained weights land here
 ```
@@ -88,7 +88,8 @@ ml/
 ## Custom runs
 
 ```bash
-./ml/scripts/train.sh --backend pytorch --num-games 1500 --epochs 75
+./ml/scripts/train.sh --backend pytorch --num-games 1500 --epochs 75 \
+  --exploration-rate 0.1 --seed 20260716
 ./ml/scripts/train.sh --backend rust --preset quick
 npm run load:ml-weights
 ```
@@ -99,9 +100,17 @@ Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.
 
 ### Self-play ML
 
-The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. Rust self-play alternates the starting player, uses the embedded evolved evaluation parameters, passes the turn after a zero roll or blocked position, derives an independent random stream for each game from the configured seed and game index, then preserves game-index order when collecting parallel results. The generated corpus therefore does not depend on Rayon scheduling or core allocation.
+The ML run uses the depth-limited Classic AI as its only teacher. It does not read the Oracle tablebase or solved-game model. Expectiminimax labels each position once; forced moves are searched rather than assigned a neutral value, and equally scored piece choices share the policy target. Ten per cent of rollouts follow a different legal move after recording the teacher label, which adds positions reached through ordinary mistakes without weakening the label.
 
-New model metadata also records actual completed epochs, search depth, Python, NumPy, and PyTorch versions. PyTorch trains the policy head from logits and restores the lowest-validation-loss checkpoint before saving. GPU kernels can still vary across hardware, so the seed makes CPU data generation reproducible and supports repeatable investigation, but it is not a promise of byte-identical GPU retraining.
+The PyTorch trainer requires its ML and Rust training sources to be committed before a run, then records that revision. It seeds Python, NumPy, PyTorch, CUDA, and data-loader shuffling. Rust generation alternates the starting player, uses the embedded evolved evaluation parameters, passes the turn after a zero roll or blocked position, derives an independent random stream for each game from the configured seed and game index, then preserves game-index order when collecting parallel results. The generated corpus therefore does not depend on Rayon scheduling or core allocation.
+
+New model metadata records actual completed epochs, search depth, exploration rate, separate value and policy validation losses, and Python, NumPy, and PyTorch versions. PyTorch uses AdamW, reduces each head's learning rate from its own validation loss, and restores the lowest combined-validation-loss checkpoint before saving. GPU kernels can still vary across hardware, so the seed makes CPU data generation reproducible and supports repeatable investigation, but it is not a promise of byte-identical GPU retraining.
+
+Write an unpromoted model to `ml_ai_weights_candidate.json`, then compare it with the production ML model, Classic, and Oracle using deterministic dice and alternating seats:
+
+```bash
+npm run test:ai-candidate
+```
 
 The checked-in `model-manifest.json` is the production artifact contract. It records:
 
