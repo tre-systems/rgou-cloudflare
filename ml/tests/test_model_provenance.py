@@ -1,6 +1,7 @@
 import gzip
 import importlib.util
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -100,6 +101,17 @@ class ModelProvenanceTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "inside the repository"):
                 model_provenance.repository_path(relative_link / "outside.json")
+
+    def test_cli_uses_only_the_canonical_artifact_paths(self):
+        result = subprocess.run(
+            [sys.executable, SCRIPT, "verify", "--model", "../outside.json"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unrecognized arguments", result.stderr)
 
 
 if __name__ == "__main__":

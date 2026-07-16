@@ -90,7 +90,7 @@ ml/
 ```bash
 ./ml/scripts/train.sh --backend pytorch --num-games 1500 --epochs 75
 ./ml/scripts/train.sh --backend rust --preset quick
-./ml/scripts/load-weights.sh --promote ml/data/weights/my_weights.json
+npm run load:ml-weights
 ```
 
 Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.md](../docs/AI-SYSTEM.md#evaluation-parameters).
@@ -119,13 +119,10 @@ Validate the currently promoted model without installing PyTorch:
   ml/scripts/model_provenance.py verify
 ```
 
-When promoting a replacement, preserve its training metadata and run the single promotion command. It validates the model before changing public assets, writes byte-identical JSON and deterministic gzip variants, regenerates the manifest, and verifies the result:
+When promoting a replacement, review it and replace the canonical source at `ml/data/weights/ml_ai_weights_pytorch_v5.json`, preserving its training metadata. The promotion command reads and writes only the fixed production paths. It validates the model before changing public assets, writes byte-identical JSON and deterministic gzip variants, regenerates the manifest, and verifies the result:
 
 ```bash
 npm run load:ml-weights
-
-./ml/scripts/load-weights.sh --promote \
-  ml/data/weights/my_production_model.json
 ```
 
 Promotion fails if the layout is missing, or if architecture, metadata, numeric values, or exact weight counts do not match. PyTorch's native output-by-input matrices are transposed during export; `test-fixtures/ml-weight-layout.json` is evaluated by both Python and Rust to keep that boundary aligned. Verification requires the deployed JSON to match the production source byte-for-byte and the deterministic gzip file to decompress to those same bytes. Review and commit the source model, both deployed artifacts, and manifest together.

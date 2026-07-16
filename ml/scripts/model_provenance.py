@@ -341,33 +341,29 @@ def main() -> int:
         description="Promote, generate, or verify production-model provenance"
     )
     parser.add_argument("command", choices=("promote", "generate", "verify"))
-    parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
-    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    parser.add_argument("--deployed-json", type=Path, default=DEFAULT_DEPLOYED_JSON)
-    parser.add_argument("--deployed-gzip", type=Path, default=DEFAULT_DEPLOYED_GZIP)
     args = parser.parse_args()
 
     try:
         if args.command == "promote":
             promote_model(
-                args.model,
-                args.manifest,
-                args.deployed_json,
-                args.deployed_gzip,
+                DEFAULT_MODEL,
+                DEFAULT_MANIFEST,
+                DEFAULT_DEPLOYED_JSON,
+                DEFAULT_DEPLOYED_GZIP,
             )
         elif args.command == "generate":
             write_manifest(
-                args.model,
-                args.manifest,
-                args.deployed_json,
-                args.deployed_gzip,
+                DEFAULT_MODEL,
+                DEFAULT_MANIFEST,
+                DEFAULT_DEPLOYED_JSON,
+                DEFAULT_DEPLOYED_GZIP,
             )
         else:
             verify_manifest(
-                args.model,
-                args.manifest,
-                args.deployed_json,
-                args.deployed_gzip,
+                DEFAULT_MODEL,
+                DEFAULT_MANIFEST,
+                DEFAULT_DEPLOYED_JSON,
+                DEFAULT_DEPLOYED_GZIP,
             )
     except (
         OSError,

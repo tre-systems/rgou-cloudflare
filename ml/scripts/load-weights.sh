@@ -12,7 +12,7 @@ fi
 
 show_usage() {
     cat <<'EOF'
-Usage: ml/scripts/load-weights.sh [--promote [MODEL]]
+Usage: ml/scripts/load-weights.sh [--promote]
        ml/scripts/load-weights.sh WEIGHTS [CONVERSION OPTIONS]
 
 With no arguments, promotes the configured production model. Conversion options:
@@ -37,13 +37,9 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ "$1" = "--promote" ]; then
-    if [ $# -gt 2 ]; then
-        echo "--promote accepts at most one model path" >&2
+    if [ $# -ne 1 ]; then
+        echo "--promote does not accept a model path; replace the canonical source first" >&2
         exit 1
-    fi
-
-    if [ $# -eq 2 ]; then
-        exec "$PYTHON" ml/scripts/model_provenance.py promote --model "$2"
     fi
     exec "$PYTHON" ml/scripts/model_provenance.py promote
 fi
