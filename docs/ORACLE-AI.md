@@ -2,7 +2,7 @@
 
 Oracle AI is a small neural opponent trained from the published strong solution of the Finkel ruleset. It sits alongside Classic search and the Classic-distilled ML model; the existing options remain available.
 
-This document records how it was trained, what is deployed, and how the result was checked. The shorter [project note](https://gameofur.org/oracle-ai) covers the same work without the implementation detail.
+This document records how it was trained, what is deployed, and how the result was checked. The shorter [AI guide](https://gameofur.org/ai) introduces all three opponents and explains the current benchmark without the implementation detail.
 
 ## Approach
 
