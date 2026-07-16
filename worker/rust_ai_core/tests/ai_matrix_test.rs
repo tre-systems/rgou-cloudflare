@@ -59,6 +59,7 @@ enum AIType {
     MLV4,
     MLHybrid,
     MLPyTorchV5,
+    MLCandidate,
     OracleV1,
     BrowserClassic,
 }
@@ -76,6 +77,7 @@ impl AIType {
             AIType::MLV4 => "ML-V4",
             AIType::MLHybrid => "ML-Hybrid",
             AIType::MLPyTorchV5 => "ML-PyTorch-V5",
+            AIType::MLCandidate => "ML-Candidate",
             AIType::OracleV1 => "Oracle-V1",
             AIType::BrowserClassic => "Classic-Browser",
         }
@@ -87,6 +89,7 @@ impl AIType {
             AIType::MLV4 => Some("../../ml/data/weights/ml_ai_weights_v4.json"),
             AIType::MLHybrid => Some("../../ml/data/weights/ml_ai_weights_hybrid.json"),
             AIType::MLPyTorchV5 => Some("../../ml/data/weights/ml_ai_weights_pytorch_v5.json"),
+            AIType::MLCandidate => Some("../../ml/data/weights/ml_ai_weights_candidate.json"),
             _ => None,
         }
     }
@@ -214,7 +217,7 @@ impl MLAIPlayer {
             return Err(format!("Weights file not found: {}", weights_file).into());
         }
 
-        let require_layout = matches!(ai_type, AIType::MLPyTorchV5);
+        let require_layout = matches!(ai_type, AIType::MLPyTorchV5 | AIType::MLCandidate);
         let (value_weights, policy_weights) = load_ml_weights(weights_file, require_layout)?;
         let mut ai = MLAI::new();
         ai.load_pretrained(&value_weights, &policy_weights)?;
@@ -535,8 +538,16 @@ fn test_ai_matrix() {
     );
     println!();
 
+    let compare_candidate = std::env::var("AI_MATRIX_COMPARE_CANDIDATE").is_ok();
     let deployed_only = std::env::var("AI_MATRIX_DEPLOYED_ONLY").is_ok();
-    let mut ai_types = if deployed_only {
+    let mut ai_types = if compare_candidate {
+        vec![
+            AIType::BrowserClassic,
+            AIType::MLPyTorchV5,
+            AIType::MLCandidate,
+            AIType::OracleV1,
+        ]
+    } else if deployed_only {
         vec![
             AIType::BrowserClassic,
             AIType::MLPyTorchV5,
@@ -557,11 +568,14 @@ fn test_ai_matrix() {
         ]
     };
 
-    if !deployed_only && std::env::var("RUN_SLOW_TESTS").is_ok() {
+    if !deployed_only && !compare_candidate && std::env::var("RUN_SLOW_TESTS").is_ok() {
         ai_types.push(AIType::EMMDepth4);
     }
 
-    if deployed_only {
+    if compare_candidate {
+        println!("  Scope: candidate promotion comparison");
+        println!("  Classic search depth: {BROWSER_CLASSIC_AI_DEPTH}");
+    } else if deployed_only {
         println!("  Scope: browser-deployed opponents only");
         println!("  Classic search depth: {BROWSER_CLASSIC_AI_DEPTH}");
     }

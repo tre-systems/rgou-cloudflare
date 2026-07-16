@@ -1,5 +1,6 @@
 use rgou_ai_core::training::{Trainer, TrainingConfig};
 use std::env;
+use std::io::{BufWriter, Write};
 use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -43,6 +44,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .get(7)
                 .cloned()
                 .unwrap_or_else(|| "ml_ai_weights_rust.json".to_string());
+            let exploration_rate = args
+                .get(8)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(0.1);
+            let seed = args
+                .get(9)
+                .map(|value| value.parse())
+                .transpose()?
+                .unwrap_or(42);
 
             println!("=== Rust ML AI Training ===");
             println!("Games: {num_games}");
@@ -50,6 +61,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Learning Rate: {learning_rate}");
             println!("Batch Size: {batch_size}");
             println!("Search Depth: {depth}");
+            println!("Exploration Rate: {exploration_rate}");
+            println!("Seed: {seed}");
             println!("Output: {output_file}");
             println!("==========================");
 
@@ -62,7 +75,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 learning_rate,
                 validation_split: 0.2,
                 depth,
-                seed: 42,
+                exploration_rate,
+                seed,
                 output_file: "temp_training_data.json".to_string(),
             };
 
@@ -105,6 +119,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("=== Rust Data Generation ===");
             println!("Games: {}", config.num_games);
             println!("Depth: {}", config.depth);
+            println!("Exploration Rate: {}", config.exploration_rate);
+            println!("Seed: {}", config.seed);
             println!("Output: {}", config.output_file);
             println!("===========================");
 
@@ -116,8 +132,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let training_data = trainer.generate_training_data();
 
             println!("\n💾 Saving training data...");
-            let output_data = serde_json::to_string_pretty(&training_data)?;
-            std::fs::write(&config.output_file, output_data)?;
+            let output_file = std::fs::File::create(&config.output_file)?;
+            let mut writer = BufWriter::new(output_file);
+            serde_json::to_writer(&mut writer, &training_data)?;
+            writer.flush()?;
 
             let generation_time = start_time.elapsed();
 

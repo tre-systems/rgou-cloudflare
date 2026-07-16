@@ -70,6 +70,8 @@ class UnifiedTrainer:
             str(params["batch_size"]),
             str(params["depth"]),
             str(output_file),
+            str(params["exploration_rate"]),
+            str(params["seed"]),
         ]
 
         try:
@@ -97,6 +99,10 @@ class UnifiedTrainer:
                 str(params["batch_size"]),
                 str(params["depth"]),
                 str(output_file),
+                "--exploration-rate",
+                str(params["exploration_rate"]),
+                "--seed",
+                str(params["seed"]),
             ]
 
             subprocess.run(
@@ -205,6 +211,12 @@ def main():
     parser.add_argument("--learning-rate", type=positive_float, help="Learning rate")
     parser.add_argument("--batch-size", type=positive_int, help="Batch size")
     parser.add_argument("--depth", type=positive_int, help="Search depth")
+    parser.add_argument(
+        "--exploration-rate",
+        type=float,
+        help="Chance of following a random legal rollout move",
+    )
+    parser.add_argument("--seed", type=positive_int, help="Training seed")
 
     args = parser.parse_args()
 
@@ -219,6 +231,12 @@ def main():
         overrides["batch_size"] = args.batch_size
     if args.depth is not None:
         overrides["depth"] = args.depth
+    if args.exploration_rate is not None:
+        if not 0 <= args.exploration_rate <= 1:
+            parser.error("--exploration-rate must be between 0 and 1")
+        overrides["exploration_rate"] = args.exploration_rate
+    if args.seed is not None:
+        overrides["seed"] = args.seed
 
     try:
         trainer = UnifiedTrainer()

@@ -74,6 +74,14 @@ class PyTorchTrainingTests(unittest.TestCase):
         assert train_pytorch is not None
         with self.assertRaisesRegex(ValueError, "must be positive"):
             train_pytorch.TrainingConfig(num_games=0)
+        with self.assertRaisesRegex(ValueError, "exploration_rate"):
+            train_pytorch.TrainingConfig(exploration_rate=1.1)
+
+    def test_epoch_losses_report_each_head_and_total(self):
+        assert train_pytorch is not None
+        losses = train_pytorch.EpochLosses(value=0.25, policy=0.75)
+
+        self.assertEqual(losses.total, 1.0)
 
 
 class WeightConverterTests(unittest.TestCase):

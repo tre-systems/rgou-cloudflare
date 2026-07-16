@@ -85,7 +85,7 @@ The architecture is defined in `ml/config/training.json` and `worker/rust_ai_cor
 
 ### Training
 
-The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters and alternates the starting player between games. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized Player 2 evaluation target and a one-hot best-move target for the value and policy networks. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves. Two training backends share the same presets:
+The data generator uses depth-limited Classic expectiminimax as its only teacher; it does not use the Oracle tablebase or solved-game model. It alternates the starting player between games, and a zero roll or blocked position passes the turn exactly as it does in the game. Each playable position is searched once. The best score becomes a normalized Player 2 value target, forced moves retain their searched value, and equally scored piece choices share the policy target. After recording the label, ten per cent of rollouts take a different legal move so the corpus includes recovery positions. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves.
 
 | Backend | Hardware                      | Notes                           |
 | ------- | ----------------------------- | ------------------------------- |
@@ -96,9 +96,11 @@ Rust self-play derives an independent random stream for each game from the confi
 
 | Preset     | Games | Epochs | Batch |
 | ---------- | ----- | ------ | ----- |
-| quick      | 100   | 10     | 32    |
-| default    | 1000  | 50     | 32    |
-| production | 2000  | 100    | 64    |
+| quick      | 100   | 15     | 128   |
+| default    | 1000  | 60     | 256   |
+| production | 6000  | 120    | 512   |
+
+The PyTorch backend uses AdamW and independent validation-driven learning-rate schedules for the value and policy networks. It restores the checkpoint with the lowest combined validation loss. Candidate models are compared with the current production model, Classic, and Oracle using fixed dice streams and alternating seats before promotion.
 
 See [DEVELOPMENT.md](./DEVELOPMENT.md) and [ml/README.md](../ml/README.md) for training commands.
 
