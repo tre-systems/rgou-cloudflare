@@ -28,7 +28,7 @@ flowchart LR
 
 ## Why the tablebase is suitable
 
-Padraig Lamont and Jeroen Olieslagers strongly solved the Finkel ruleset in 2025 using Bellman value iteration. Their artifact stores the light-player win probability for every reachable pre-roll state. Player symmetry reduces roughly 276 million reachable states to **137,892,016 stored entries**.
+Padraig Lamont and Jeroen Olieslagers [strongly solved](https://en.wikipedia.org/wiki/Solved_game) the Finkel ruleset in 2025 using [Bellman value iteration](https://en.wikipedia.org/wiki/Bellman_equation). Their artifact stores the light-player win probability for every reachable pre-roll state. Player symmetry reduces roughly 276 million reachable states to **137,892,016 stored entries**.
 
 The tablebase header declares the configuration used by this application: a standard board, Bell's path, seven pieces, four binary dice, safe rosettes, extra rolls on rosettes, and no extra roll for captures. The trainer rejects different settings and pins the 827,352,312-byte artifact by SHA-256:
 
@@ -68,6 +68,11 @@ The schema contains no colour identity, dice roll, handcrafted strategy score, d
 
 The network is `32 → 128 → 128 → 64 → 1`, with ReLU hidden layers and a tanh output mapped to a probability. It has 29,057 learned parameters. This shape was selected by the pilot, not chosen after the production result was known.
 
+```mermaid
+flowchart LR
+    IN["32 canonical<br/>features"] --> H1["128<br/>ReLU"] --> H2["128<br/>ReLU"] --> H3["64<br/>ReLU"] --> OUT["1 tanh →<br/>win probability"]
+```
+
 ## Move selection
 
 For a known roll, Rust enumerates every legal move and evaluates its resulting pre-roll state:
@@ -75,6 +80,20 @@ For a known roll, Rust enumerates every legal move and evaluates its resulting p
 - An immediate winning move has value `1`.
 - After a normal move, the opponent becomes current, so the mover's value is `1 - V(successor)`.
 - After landing on a rosette, the mover stays current, so the value is `V(successor)`.
+
+```mermaid
+flowchart TD
+    ROLL["Known roll"] --> ENUM["Rules engine enumerates<br/>every legal move"]
+    ENUM --> SUCC["Successor pre-roll position"]
+    SUCC --> WIN{"Immediate win?"}
+    WIN -->|Yes| ONE["Value = 1"]
+    WIN -->|No| ROS{"Landed on a rosette?"}
+    ROS -->|"Yes — mover stays current"| SAME["Value = V(successor)"]
+    ROS -->|"No — turn passes"| FLIP["Value = 1 − V(successor)"]
+    ONE --> PICK["Highest value wins"]
+    SAME --> PICK
+    FLIP --> PICK
+```
 
 The highest value wins. Equivalent reserve pieces produce equivalent successors, with the lowest stable piece index as the deterministic tie-break. No capture, finish, rosette, or policy bonus is added after training.
 
@@ -93,11 +112,11 @@ npm run train:oracle:production
 2. memory-maps the file and samples without replacement with seed `20250715`;
 3. partitions that sample into disjoint train, validation, and test sets;
 4. cross-checks vectorized feature extraction against the reference decoder;
-5. trains every configured architecture, loss, and seed with early stopping and best-checkpoint restoration;
+5. trains every configured architecture, loss, and seed with [early stopping](https://en.wikipedia.org/wiki/Early_stopping) and best-checkpoint restoration;
 6. selects the lowest validation MAE and evaluates the test set once; and
 7. exports matrices in Rust's expected order with configuration, code, tablebase, sample, and source identities.
 
-The pilot uses 200,000 training, 25,000 validation, and 25,000 test positions across two network shapes, MSE and Huber loss, and two seeds. It selected the current architecture with Huber loss and seed 42. Its held-out test MAE was **0.00658** and p95 absolute error was **0.01672**. In a 900-game exploratory matrix it averaged **87.2%** against the other nine engines; that small stochastic run justified scaling but is not the final comparison.
+The pilot uses 200,000 training, 25,000 validation, and 25,000 test positions across two network shapes, MSE and [Huber loss](https://en.wikipedia.org/wiki/Huber_loss), and two seeds. It selected the current architecture with Huber loss and seed 42. Its held-out test MAE was **0.00658** and p95 absolute error was **0.01672**. In a 900-game exploratory matrix it averaged **87.2%** against the other nine engines; that small stochastic run justified scaling but is not the final comparison.
 
 The production preset uses 2,000,000 training, 100,000 validation, and 100,000 test positions, with three seeds. The wrapper uses `caffeinate` on macOS so a long run is not interrupted by system sleep.
 
@@ -157,3 +176,4 @@ The model runs entirely in the browser. No position, move, or personal result is
 - [RoyalUr solved-model repository](https://huggingface.co/sothatsit/RoyalUrModels)
 - [RoyalUr Python reference implementation](https://github.com/RosetteGames/royalur-python)
 - [Distilling the Knowledge in a Neural Network](https://arxiv.org/abs/1503.02531)
+- [Solved game](https://en.wikipedia.org/wiki/Solved_game) — what ultra-weak, weak, and strong solutions claim
