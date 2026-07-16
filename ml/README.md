@@ -39,7 +39,7 @@ The Oracle trainer deliberately uses this fixed scratch path and a fixed reposit
 
 ## Prerequisites
 
-- **uv** for the locked Python training environment
+- **[uv](https://docs.astral.sh/uv/)** for the locked Python training environment
 - **Python 3.12.13**, selected from `ml/.python-version` by uv
 - **Rust & Cargo** (data generation, and the CPU backend)
 - **GPU** for PyTorch: Apple Metal (MPS) or NVIDIA CUDA
@@ -97,6 +97,17 @@ npm run load:ml-weights
 Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.md](../docs/AI-SYSTEM.md#evaluation-parameters).
 
 ## Reproducibility and model promotion
+
+Both learned models promote through the same shape: a versioned source model, provenance validation, byte-identical public artifacts, and a manifest that CI re-verifies.
+
+```mermaid
+flowchart LR
+    TRAIN["Training run"] --> SRC["Versioned source model<br/>ml/data/weights/"]
+    SRC --> VAL["Provenance validation"]
+    VAL --> PUB["Byte-identical JSON +<br/>deterministic gzip assets"]
+    PUB --> MAN["Model manifest"]
+    MAN --> VER["npm run test:model-provenance<br/>re-verifies in CI"]
+```
 
 ### Classic-distilled ML
 
