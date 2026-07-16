@@ -48,6 +48,7 @@ The game opens at the URL printed by Vite, normally <http://localhost:5173>.
 ```bash
 npm run check                    # docs, lint, diagrams, types, Rust, unit, and e2e tests
 npm run test:ai-comparison:fast  # quick AI comparison
+npm run test:ai-deployed         # browser-opponent benchmark
 ```
 
 See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and troubleshooting.
@@ -59,6 +60,7 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for the full command reference and t
 - **[AI-SYSTEM.md](./docs/AI-SYSTEM.md)** — AI execution, algorithms, model contract, and genetic evolution
 - **[ORACLE-AI.md](./docs/ORACLE-AI.md)** — Oracle AI rationale, distillation, implementation, evidence, and reproducibility
 - **[AI-MATRIX-RESULTS.md](./docs/AI-MATRIX-RESULTS.md)** — generated AI win-rate and speed results
+- **[AI-DEPLOYED-RESULTS.md](./docs/AI-DEPLOYED-RESULTS.md)** — generated results for the three browser opponents
 - **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** — commands, testing, and troubleshooting
 - **[GAME-GUIDE.md](./docs/GAME-GUIDE.md)** — rules, strategy, and history
 - **[ml/README.md](./ml/README.md)** — ML training quick start

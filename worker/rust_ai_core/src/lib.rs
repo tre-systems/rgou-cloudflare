@@ -17,6 +17,7 @@ pub mod training;
 
 pub const PIECES_PER_PLAYER: usize = 7;
 pub const BOARD_SIZE: usize = 21;
+pub const BROWSER_CLASSIC_AI_DEPTH: u8 = 3;
 const MAX_TRANSPOSITION_ENTRIES: usize = 50_000;
 const ROSETTE_SQUARES: [u8; 5] = [0, 7, 13, 15, 16];
 const PLAYER1_TRACK: [u8; 14] = [3, 2, 1, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];

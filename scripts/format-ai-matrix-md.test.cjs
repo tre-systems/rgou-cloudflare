@@ -31,3 +31,19 @@ test('generated matrix documentation keeps facts and omits synthetic recommendat
   assert.match(markdown, /\| Heuristic \| 0\.1 \|/);
   assert.doesNotMatch(markdown, /Recommendations|Very Fast|Use Heuristic AI/);
 });
+
+test('deployed reports include the seat-balanced matchup split', () => {
+  const sections = parseSections([
+    'Configuration:',
+    '  Scope: browser-deployed opponents only',
+    'Testing 2 AI types:',
+    'SEAT BALANCE:',
+    'Classic-Browser vs Oracle-V1: Player 1 14.0%, Player 2 16.0%',
+  ]);
+  sections.date = 'test date';
+
+  const markdown = formatMarkdown(sections);
+
+  assert.match(markdown, /## Seat balance/);
+  assert.match(markdown, /Classic-Browser vs Oracle-V1 \| 14.0% \| 16.0%/);
+});

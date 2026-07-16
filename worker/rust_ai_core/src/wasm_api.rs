@@ -1,4 +1,7 @@
-use super::{genetic_params::GeneticParams, GameState, HeuristicAI, PiecePosition, Player, AI};
+use super::{
+    genetic_params::GeneticParams, GameState, HeuristicAI, PiecePosition, Player, AI,
+    BROWSER_CLASSIC_AI_DEPTH,
+};
 use crate::{dice, ml_ai::MLAI, oracle_ai::OracleAI, MoveEvaluation};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -133,7 +136,7 @@ pub fn get_ai_move_wasm(game_state_request_js: JsValue) -> Result<JsValue, JsVal
 
     let start_time = js_sys::Date::now();
     let game_state = convert_request_to_game_state(&game_state_request);
-    let ai_depth = 4;
+    let ai_depth = BROWSER_CLASSIC_AI_DEPTH;
     let mut ai = AI::new();
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
     let evaluation = game_state.evaluate();
@@ -357,7 +360,7 @@ pub fn get_classic_ai_move_optimized(game_state_request_js: JsValue) -> Result<J
         JsValue::from_str("Classic AI not initialized. Call init_classic_ai() first.")
     })?;
 
-    let ai_depth = 4;
+    let ai_depth = BROWSER_CLASSIC_AI_DEPTH;
 
     let (ai_move, move_evaluations) = ai.get_best_move(&game_state, ai_depth);
     let evaluation = game_state.evaluate();

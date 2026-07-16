@@ -1,9 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bug, ChevronDown, ChevronRight, ExternalLink, Github, Heart, Scale } from 'lucide-react';
+import { ExternalLink, Github, Heart, Scale } from 'lucide-react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
-import { cn, isDevelopment, getAIName } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { soundEffects } from '@/lib/sound-effects';
 import GameBoard from './GameBoard';
 import HowToPlayPanel from './HowToPlayPanel';
@@ -13,8 +13,6 @@ import { getModeConfiguration } from '@/lib/game-mode';
 import type { OpponentMode, WatchMatchup } from '@/lib/types';
 import { useGameAudio } from '@/hooks/useGameAudio';
 import { useGameTurnScheduler } from '@/hooks/useGameTurnScheduler';
-
-const AIDiagnosticsPanel = lazy(() => import('./AIDiagnosticsPanel'));
 
 function isStandalonePWA() {
   if (typeof window === 'undefined') return false;
@@ -35,15 +33,11 @@ export default function RoyalGameOfUr() {
     createNearWinningState: createNearWinningStateAction,
   } = useGameActions();
   const aiThinking = useGameStore(state => state.aiThinking);
-  const lastAIDiagnostics = useGameStore(state => state.lastAIDiagnostics);
-  const lastAIMoveDuration = useGameStore(state => state.lastAIMoveDuration);
   const lastMoveType = useGameStore(state => state.lastMoveType);
   const lastMovePlayer = useGameStore(state => state.lastMovePlayer);
 
   const uiStore = useUIStore();
   const {
-    reset: resetUI,
-    setDiagnosticsPanelOpen,
     setHowToPlayOpen,
     setSelectedMode,
     setShowModelOverlay,
@@ -57,7 +51,6 @@ export default function RoyalGameOfUr() {
   const aiSourceP1 = modeConfiguration?.player1 ?? null;
   const aiSourceP2 = modeConfiguration?.player2 ?? 'ml';
   const soundEnabled = uiStore.soundEnabled;
-  const diagnosticsPanelOpen = uiStore.diagnosticsPanelOpen;
   const howToPlayOpen = uiStore.howToPlayOpen;
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -98,9 +91,11 @@ export default function RoyalGameOfUr() {
     [gameState.canMove, gameState.validMoves, gameState.currentPlayer, makeMove, selectedMode]
   );
 
-  const handleReset = () => {
+  const handleQuitGame = () => {
     reset();
-    resetUI();
+    setHowToPlayOpen(false);
+    setSelectedMode(null);
+    setShowModelOverlay(true);
   };
 
   const toggleSound = () => {
@@ -126,57 +121,12 @@ export default function RoyalGameOfUr() {
     processDiceRoll();
   };
 
-  const diagnosticsPanelOrPlaceholder = isDevelopment() ? (
-    lastAIDiagnostics ? (
-      <Suspense fallback={null}>
-        <AIDiagnosticsPanel
-          lastAIDiagnostics={lastAIDiagnostics}
-          lastAIMoveDuration={lastAIMoveDuration}
-          isOpen={diagnosticsPanelOpen}
-          onToggle={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
-          gameState={gameState}
-        />
-      </Suspense>
-    ) : (
-      <div className="surface-panel rounded-lg p-3">
-        <button
-          type="button"
-          className="w-full text-left flex justify-between items-center"
-          onClick={() => setDiagnosticsPanelOpen(!diagnosticsPanelOpen)}
-          aria-expanded={diagnosticsPanelOpen}
-        >
-          <div className="flex items-center space-x-2">
-            <Bug className="w-4 h-4 text-green-400" />
-            <span className="font-semibold text-sm text-white/90">AI Diagnostics</span>
-            <span className="text-xs text-white/60">(Waiting for AI move)</span>
-          </div>
-          {diagnosticsPanelOpen ? (
-            <ChevronDown className="w-5 h-5 text-white/70" />
-          ) : (
-            <ChevronRight className="w-5 h-5 text-white/70" />
-          )}
-        </button>
-        {diagnosticsPanelOpen && (
-          <div className="mt-3 text-xs text-white/70">
-            <p>No AI diagnostics available yet. Make a move to see AI analysis.</p>
-            <p className="mt-2">
-              Current AI source:{' '}
-              {selectedMode === 'watch'
-                ? `${getAIName(aiSourceP1)} vs ${getAIName(aiSourceP2)}`
-                : getAIName(aiSourceP2)}
-            </p>
-          </div>
-        )}
-      </div>
-    )
-  ) : null;
-
   return (
     <>
       <SiteBackdrop />
       <main className="relative z-10 min-h-screen w-full">
-        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-8">
-          <div className="flex h-10 items-center justify-end">
+        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-4 sm:px-6 sm:py-8">
+          <div className="hidden h-10 items-center justify-end md:flex">
             {!isStandalone && (
               <button
                 type="button"
@@ -196,15 +146,12 @@ export default function RoyalGameOfUr() {
             )}
           </div>
 
-          {isDevelopment() && (
-            <div className="absolute left-4 top-1/2 hidden w-80 -translate-y-1/2 xl:block">
-              {diagnosticsPanelOrPlaceholder}
-            </div>
-          )}
-
-          <div className="flex flex-1 flex-col py-4 sm:py-6">
+          <div className="flex flex-1 flex-col pb-4 md:py-6">
             <motion.div
-              className={cn('mx-auto my-auto w-full', showModelOverlay ? 'max-w-4xl' : 'max-w-md')}
+              className={cn(
+                'mx-auto w-full md:my-auto',
+                showModelOverlay ? 'max-w-4xl' : 'max-w-md'
+              )}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -246,7 +193,7 @@ export default function RoyalGameOfUr() {
                     gameState={gameState}
                     onPieceClick={handlePieceClick}
                     aiThinking={aiThinking}
-                    onResetGame={handleReset}
+                    onQuitGame={handleQuitGame}
                     soundEnabled={soundEnabled}
                     onToggleSound={toggleSound}
                     onShowHowToPlay={showHowToPlay}
@@ -259,14 +206,10 @@ export default function RoyalGameOfUr() {
                   />
                 </div>
               )}
-
-              {isDevelopment() && (
-                <div className="mt-4 xl:hidden">{diagnosticsPanelOrPlaceholder}</div>
-              )}
             </motion.div>
           </div>
 
-          <footer className="flex flex-col items-center justify-between gap-3 border-t border-line-soft pt-5 text-xs text-muted sm:flex-row">
+          <footer className="flex flex-col items-center justify-between gap-3 border-t border-line-soft pt-4 text-xs text-muted sm:flex-row sm:pt-5">
             <span>Open source · Built for the web</span>
             <div className="flex items-center gap-5">
               <a

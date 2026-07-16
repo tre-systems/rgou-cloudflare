@@ -13,13 +13,12 @@ import { WasmAiService } from './wasm-ai-service';
 import { MLAIService } from './ml-ai-service';
 import { OracleAIService } from './oracle-ai-service';
 import { useStatsStore } from './stats-store';
-import type { AISource, GameState, Player, MoveType, AIResponse, WatchMatchup } from './types';
+import type { AISource, GameState, Player, MoveType, WatchMatchup } from './types';
 import { createId } from './utils';
 import { useUIStore } from './ui-store';
 import { getBrowserStorage, parsePersistedGameState } from './persist-storage';
 import { gameCompletedUsage, gameStartedUsage, reportUsage, type GameUsageMode } from './usage';
 import { captureException } from './observability';
-import type { MLAIResponse, OracleAIResponse } from './ai-protocol';
 
 const LATEST_VERSION = 4;
 
@@ -37,8 +36,6 @@ type GameStore = {
   gameId: string;
   gameState: GameState;
   aiThinking: boolean;
-  lastAIDiagnostics: AIResponse | null;
-  lastAIMoveDuration: number | null;
   lastMoveType: MoveType | null;
   lastMovePlayer: Player | null;
   usageStarted: boolean;
@@ -64,61 +61,11 @@ function createGameSession(): GameSession {
     gameId: createId('game'),
     gameState: { ...initializeGame(), startTime: Date.now() },
     aiThinking: false,
-    lastAIDiagnostics: null,
-    lastAIMoveDuration: null,
     lastMoveType: null,
     lastMovePlayer: null,
     usageStarted: false,
     usageStartedBy: null,
     usageCompleted: false,
-  };
-}
-
-function normalizeValueResponse(
-  response: MLAIResponse | OracleAIResponse,
-  aiType: 'ml' | 'oracle'
-): AIResponse {
-  return {
-    move: response.move,
-    evaluation: Math.round(response.evaluation * 1000),
-    thinking: response.thinking,
-    timings: response.timings,
-    diagnostics: {
-      searchDepth: aiType === 'ml' ? 4 : 0,
-      validMoves: response.diagnostics.valid_moves,
-      moveEvaluations: response.diagnostics.move_evaluations.map(evaluation => ({
-        pieceIndex: evaluation.piece_index,
-        score: evaluation.score,
-        moveType: evaluation.move_type,
-        fromSquare: evaluation.from_square,
-        toSquare: evaluation.to_square ?? null,
-      })),
-      transpositionHits: 0,
-      nodesEvaluated: 1,
-    },
-    aiType,
-  };
-}
-
-function fallbackAIResponse(
-  move: number,
-  duration: number,
-  validMoves: number[],
-  reason: string
-): AIResponse {
-  return {
-    move,
-    evaluation: 0,
-    thinking: `Deterministic fallback: ${reason}`,
-    timings: { aiMoveCalculation: duration, totalHandlerTime: duration },
-    diagnostics: {
-      searchDepth: 0,
-      validMoves,
-      moveEvaluations: [],
-      transpositionHits: 0,
-      nodesEvaluated: 0,
-    },
-    aiType: 'fallback',
   };
 }
 
@@ -186,7 +133,6 @@ export const useGameStore = create<GameStore>()(
             state.aiThinking = true;
           });
 
-          const startTime = performance.now();
           const isCurrentTurn = () => {
             const current = get();
             return (
@@ -198,47 +144,25 @@ export const useGameStore = create<GameStore>()(
           };
 
           try {
-            let aiResponse: AIResponse;
+            let aiMove: number | null;
 
             if (aiSource === 'ml') {
-              aiResponse = normalizeValueResponse(await mlAiService.getAIMove(gameState), 'ml');
+              aiMove = (await mlAiService.getAIMove(gameState)).move;
             } else if (aiSource === 'oracle') {
-              aiResponse = normalizeValueResponse(
-                await oracleAiService.getAIMove(gameState),
-                'oracle'
-              );
+              aiMove = (await oracleAiService.getAIMove(gameState)).move;
             } else if (aiSource === 'heuristic') {
-              const heuristicResponse = await wasmAiService.getHeuristicAIMove(gameState);
-              aiResponse = { ...heuristicResponse, aiType: 'heuristic' as const };
+              aiMove = (await wasmAiService.getHeuristicAIMove(gameState)).move;
             } else {
-              const wasmResponse = await wasmAiService.getAIMove(gameState);
-              aiResponse = { ...wasmResponse, aiType: 'classic' as const };
+              aiMove = (await wasmAiService.getAIMove(gameState)).move;
             }
-
-            const duration = performance.now() - startTime;
 
             if (!isCurrentTurn()) {
               return;
             }
 
-            set(state => {
-              state.lastAIMoveDuration = duration;
-              state.lastAIDiagnostics = aiResponse;
-            });
-
-            const { move: aiMove } = aiResponse;
-
             if (aiMove === null || !gameState.validMoves.includes(aiMove)) {
               if (gameState.validMoves.length > 0) {
                 const fallbackMove = gameState.validMoves[0];
-                set(state => {
-                  state.lastAIDiagnostics = fallbackAIResponse(
-                    fallbackMove,
-                    duration,
-                    gameState.validMoves,
-                    'AI returned an invalid move'
-                  );
-                });
                 actions.makeMove(fallbackMove);
               }
             } else {
@@ -253,17 +177,7 @@ export const useGameStore = create<GameStore>()(
             });
             if (isCurrentTurn() && gameState.validMoves.length > 0) {
               const fallbackMove = gameState.validMoves[0];
-              const duration = performance.now() - startTime;
               console.warn('GameStore: Using deterministic fallback move:', fallbackMove);
-              set(state => {
-                state.lastAIMoveDuration = duration;
-                state.lastAIDiagnostics = fallbackAIResponse(
-                  fallbackMove,
-                  duration,
-                  gameState.validMoves,
-                  'AI request failed'
-                );
-              });
               actions.makeMove(fallbackMove);
             }
           } finally {

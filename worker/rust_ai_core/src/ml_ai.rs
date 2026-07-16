@@ -33,6 +33,14 @@ pub struct MLAI {
     policy_network: NeuralNetwork,
 }
 
+fn value_for_player(player: crate::Player, value_from_player2_perspective: f32) -> f32 {
+    if player == crate::Player::Player2 {
+        value_from_player2_perspective
+    } else {
+        -value_from_player2_perspective
+    }
+}
+
 impl Default for MLAI {
     fn default() -> Self {
         Self::new()
@@ -165,7 +173,8 @@ impl MLAI {
                 "move".to_string()
             };
 
-            let mut score = next_value[0] * 0.7 + policy_outputs[move_idx as usize] * 0.3;
+            let mut score = value_for_player(state.current_player, next_value[0]) * 0.7
+                + policy_outputs[move_idx as usize] * 0.3;
 
             if move_type == "finish" {
                 score += 2.0;
@@ -230,6 +239,12 @@ mod tests {
         let ai = MLAI::new();
         assert!(ai.value_network.num_layers() > 0);
         assert!(ai.policy_network.num_layers() > 0);
+    }
+
+    #[test]
+    fn test_value_score_uses_the_movers_perspective() {
+        assert_eq!(value_for_player(Player::Player2, 0.4), 0.4);
+        assert_eq!(value_for_player(Player::Player1, 0.4), -0.4);
     }
 
     #[test]

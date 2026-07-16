@@ -1,28 +1,27 @@
 import { motion } from 'framer-motion';
 import { Cpu, Trophy } from 'lucide-react';
-import { getAISubtitle } from '@/lib/utils';
 import type { GameMode, GameState } from '@/lib/types';
 import { useGameStats } from '@/lib/stats-store';
 
 interface GameCompletionOverlayProps {
   gameState: GameState;
-  onResetGame: () => void;
+  onQuitGame: () => void;
   gameMode: GameMode;
+  winnerName?: string;
 }
 
 export default function GameCompletionOverlay({
   gameState,
-  onResetGame,
+  onQuitGame,
   gameMode,
+  winnerName,
 }: GameCompletionOverlayProps) {
   const gameStats = useGameStats();
   const isPlayer1Winner = gameState.winner === 'player1';
   const isWatchMode = gameMode === 'watch';
-  const winnerName = isPlayer1Winner ? 'Classic' : 'Machine Learning';
-
-  const title = isWatchMode ? `${winnerName} wins` : isPlayer1Winner ? 'You won' : 'The AI won';
+  const title = isWatchMode ? `${winnerName ?? 'The winner'} wins` : isPlayer1Winner ? 'You won' : 'The AI won';
   const message = isWatchMode
-    ? `${winnerName} brought every piece home first.`
+    ? `${winnerName ?? 'The winner'} brought every piece home first.`
     : isPlayer1Winner
       ? 'Every piece made it safely around the board.'
       : 'A close race. Choose an opponent and play again.';
@@ -54,11 +53,6 @@ export default function GameCompletionOverlay({
           )}
         </div>
 
-        {isWatchMode && (
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-            {getAISubtitle(isPlayer1Winner ? 'classic' : 'ml')}
-          </div>
-        )}
         <h2
           id="game-completion-title"
           className="display-title text-4xl text-bone"
@@ -107,7 +101,7 @@ export default function GameCompletionOverlay({
         <button
           type="button"
           autoFocus
-          onClick={onResetGame}
+          onClick={onQuitGame}
           className="mt-6 w-full rounded-lg border border-brass bg-brass px-6 py-3 text-sm font-semibold text-ink transition-colors hover:border-brass-light hover:bg-brass-light"
           data-testid="reset-game-button"
         >

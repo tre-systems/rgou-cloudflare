@@ -16,7 +16,6 @@ export type {
   MoveEvaluation,
   Diagnostics,
   Timings,
-  AIResponse,
   EngineAIResponse,
 } from './schemas';
 
@@ -38,7 +37,6 @@ export {
   MoveEvaluationSchema,
   DiagnosticsSchema,
   TimingsSchema,
-  AIResponseSchema,
   EngineAIResponseSchema,
   MAX_GAME_HISTORY,
   GameConstants,

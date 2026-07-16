@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, Brain, Cpu, Eye, Scale } from 'lucide-react';
+import { BookOpen, Brain, Cpu, Eye, Info, Scale } from 'lucide-react';
 import type { OpponentMode, WatchMatchup } from '@/lib/types';
 import ModeSelectionCard from './ModeSelectionCard';
+import OpponentDetailsPanel from './OpponentDetailsPanel';
 import WatchMatchSelection from './WatchMatchSelection';
 
 interface ModeSelectionProps {
@@ -14,34 +15,26 @@ interface ModeSelectionProps {
 const MODE_OPTIONS = [
   {
     key: 'oracle',
-    index: '01',
     label: 'Oracle AI',
-    description: 'A compact value network trained from the solved game.',
-    subtitle: 'Solved-game model',
+    description: 'The strongest opponent.',
     icon: Scale,
   },
   {
     key: 'classic',
-    index: '02',
     label: 'Classic AI',
-    description: 'A deliberate tactical opponent that searches the possible outcomes of each move.',
-    subtitle: 'Expectiminimax · depth 4',
+    description: 'A careful opponent that plans ahead.',
     icon: Cpu,
   },
   {
     key: 'ml',
-    index: '03',
     label: 'Machine Learning AI',
-    description: 'A quick, instinctive opponent trained on positions generated through self-play.',
-    subtitle: 'Neural network',
+    description: 'An experimental opponent with a less predictable style.',
     icon: Brain,
   },
   {
     key: 'watch',
-    index: '04',
     label: 'Watch a Match',
-    description: 'Choose any two AI opponents and watch them play a complete game.',
-    subtitle: 'AI vs AI',
+    description: 'Choose two opponents and watch them play.',
     icon: Eye,
   },
 ] as const;
@@ -57,10 +50,11 @@ export default function ModeSelection({
   onShowHowToPlay,
 }: ModeSelectionProps) {
   const [watchSetupOpen, setWatchSetupOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   return (
     <motion.section
-      className="mt-8 w-full"
+      className="mt-6 w-full sm:mt-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.15, duration: 0.35, ease: 'easeOut' }}
@@ -70,7 +64,7 @@ export default function ModeSelection({
         className="surface-panel w-full rounded-2xl p-5 sm:p-7 lg:p-8"
         data-testid="ai-model-selection"
       >
-        <div className="flex flex-col gap-4 border-b border-line pb-6 text-left sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-4 border-b border-line pb-5 text-left sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brass">
               Play or watch
@@ -79,17 +73,28 @@ export default function ModeSelection({
               Choose a game
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onShowHowToPlay}
-            className="inline-flex items-center gap-2 self-start text-sm font-medium text-bone-muted transition-colors hover:text-bone sm:self-auto"
-          >
-            <BookOpen className="h-4 w-4" />
-            How to play
-          </button>
+          <div className="flex items-center gap-4 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setDetailsOpen(true)}
+              className="inline-flex items-center gap-2 text-sm font-medium text-bone-muted transition-colors hover:text-bone"
+              data-testid="opponent-details-button"
+            >
+              <Info className="h-4 w-4" aria-hidden="true" />
+              About the AIs
+            </button>
+            <button
+              type="button"
+              onClick={onShowHowToPlay}
+              className="inline-flex items-center gap-2 text-sm font-medium text-bone-muted transition-colors hover:text-bone"
+            >
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+              How to play
+            </button>
+          </div>
         </div>
         <motion.div
-          className="grid gap-3 pt-5 md:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-2.5 pt-5 sm:grid-cols-2"
           variants={CARDS_CONTAINER}
           initial="hidden"
           animate="show"
@@ -100,8 +105,6 @@ export default function ModeSelection({
               icon={mode.icon}
               title={mode.label}
               description={mode.description}
-              subtitle={mode.subtitle}
-              index={mode.index}
               onClick={() => (mode.key === 'watch' ? setWatchSetupOpen(true) : onSelect(mode.key))}
               data-testid={`mode-select-${mode.key}`}
             />
@@ -115,6 +118,9 @@ export default function ModeSelection({
               onStart={matchup => onSelect('watch', matchup)}
             />
           )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {detailsOpen && <OpponentDetailsPanel onClose={() => setDetailsOpen(false)} />}
         </AnimatePresence>
       </div>
     </motion.section>

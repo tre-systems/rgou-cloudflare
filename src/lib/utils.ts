@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { AIResponse } from './types';
+import type { AISource } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,7 +15,7 @@ export function createId(prefix: 'game'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
-export function getAIName(aiSource: AIResponse['aiType'] | null): string {
+export function getAIName(aiSource: AISource | null): string {
   if (!aiSource) return 'Unknown';
   switch (aiSource) {
     case 'classic':
@@ -24,27 +24,10 @@ export function getAIName(aiSource: AIResponse['aiType'] | null): string {
       return 'ML AI';
     case 'oracle':
       return 'Oracle AI';
-    case 'fallback':
-      return 'Fallback';
     case 'heuristic':
       return 'Heuristic';
     default:
       return 'Unknown';
-  }
-}
-
-export function getAISubtitle(aiSource: AIResponse['aiType'] | null): string {
-  switch (aiSource) {
-    case 'classic':
-      return 'Expectiminimax algorithm';
-    case 'ml':
-      return 'Neural network model';
-    case 'oracle':
-      return 'Exact-solution distillation';
-    case 'heuristic':
-      return 'Immediate evaluation';
-    default:
-      return '';
   }
 }
 

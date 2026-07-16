@@ -116,11 +116,22 @@ export default function OracleAIPage() {
                       On 100,000 test positions that were not used for training, 95% of predictions
                       were within 0.884 percentage points of the tablebase value.
                     </p>
+                    <div className="grid gap-3 sm:grid-cols-2" aria-label="Browser opponent results">
+                      <div className="border-l-2 border-brass/70 pl-4">
+                        <p className="text-2xl font-semibold text-bone">85%</p>
+                        <p className="mt-1 text-sm leading-5 text-muted">wins against Classic AI</p>
+                      </div>
+                      <div className="border-l-2 border-brass/70 pl-4">
+                        <p className="text-2xl font-semibold text-bone">96%</p>
+                        <p className="mt-1 text-sm leading-5 text-muted">
+                          wins against Machine Learning AI
+                        </p>
+                      </div>
+                    </div>
                     <p>
-                      In the current 2,250-game comparison, Oracle won 88% against the deployed ML
-                      model and 92% against Classic at search depth 3. It averaged 1.6 ms per move
-                      on the test machine. Match results include the luck of the dice, so the
-                      held-out tablebase error is the more useful measure of model quality.
+                      These are 400-game, seat-balanced matchups using the same three opponents
+                      available here. Dice still matter, so the held-out tablebase error is the more
+                      useful measure of model quality.
                     </p>
                   </div>
                 </div>
@@ -152,6 +163,15 @@ export default function OracleAIPage() {
                   More detail
                 </h2>
                 <div className="grid gap-3 text-sm">
+                  <a
+                    href="https://github.com/tre-systems/rgou-cloudflare/blob/main/docs/AI-DEPLOYED-RESULTS.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between border-b border-line pb-3 text-bone-muted transition-colors hover:text-bone"
+                  >
+                    Current browser-opponent results
+                    <Github className="h-4 w-4 text-faint" aria-hidden="true" />
+                  </a>
                   <a
                     href="https://github.com/tre-systems/rgou-cloudflare/blob/main/docs/ORACLE-AI.md"
                     target="_blank"

@@ -99,7 +99,6 @@ describe('GameStore', () => {
 
       const state = useGameStore.getState();
       expect(state.aiThinking).toBe(false);
-      expect(state.lastAIDiagnostics).toBe(null);
     });
   });
 
@@ -189,7 +188,6 @@ describe('GameStore', () => {
       expect(aiThinking).toBe(false);
       expect(getClassicAIMoveMock).toHaveBeenCalledOnce();
       expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
-      expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('classic');
     });
 
     it('should handle ML AI move successfully', async () => {
@@ -209,7 +207,6 @@ describe('GameStore', () => {
       expect(aiThinking).toBe(false);
       expect(getMLAIMoveMock).toHaveBeenCalledOnce();
       expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
-      expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('ml');
     });
 
     it('should handle Oracle AI moves through the dedicated service', async () => {
@@ -226,10 +223,6 @@ describe('GameStore', () => {
 
       expect(getOracleAIMoveMock).toHaveBeenCalledOnce();
       expect(useGameStore.getState().gameState.player2Pieces[0].square).toBe(18);
-      expect(useGameStore.getState().lastAIDiagnostics).toMatchObject({
-        aiType: 'oracle',
-        diagnostics: { searchDepth: 0 },
-      });
     });
 
     it('should use fallback when AI returns invalid move', async () => {
@@ -249,7 +242,6 @@ describe('GameStore', () => {
       const { gameState } = useGameStore.getState();
       // fallback is to take first valid move, which is piece 1
       expect(gameState.player2Pieces[1].square).not.toBe(-1);
-      expect(useGameStore.getState().lastAIDiagnostics?.aiType).toBe('fallback');
     });
 
     it('ignores an AI response after the game is reset', async () => {
@@ -276,7 +268,6 @@ describe('GameStore', () => {
 
       expect(useGameStore.getState().gameId).toBe(resetGameId);
       expect(useGameStore.getState().gameState.history).toEqual([]);
-      expect(useGameStore.getState().lastAIDiagnostics).toBeNull();
     });
   });
 
@@ -284,21 +275,6 @@ describe('GameStore', () => {
     it('should reset game state completely', () => {
       useGameStore.setState(state => {
         state.aiThinking = true;
-        state.lastAIDiagnostics = {
-          move: 0,
-          evaluation: 0.5,
-          thinking: 'test',
-          timings: { aiMoveCalculation: 100, totalHandlerTime: 150 },
-          diagnostics: {
-            searchDepth: 4,
-            validMoves: [0],
-            moveEvaluations: [],
-            transpositionHits: 0,
-            nodesEvaluated: 100,
-          },
-          aiType: 'classic' as const,
-        };
-        state.lastAIMoveDuration = 100;
         state.lastMoveType = 'move';
         state.lastMovePlayer = 'player1';
       });
@@ -308,8 +284,6 @@ describe('GameStore', () => {
 
       const state = useGameStore.getState();
       expect(state.aiThinking).toBe(false);
-      expect(state.lastAIDiagnostics).toBe(null);
-      expect(state.lastAIMoveDuration).toBe(null);
       expect(state.lastMoveType).toBe(null);
       expect(state.lastMovePlayer).toBe(null);
     });

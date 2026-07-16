@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 import type { WatchAISource, WatchMatchup } from '@/lib/types';
 
 const WATCH_OPTIONS = [
-  { source: 'oracle', label: 'Oracle', detail: 'Solved-game model' },
-  { source: 'classic', label: 'Classic', detail: 'Depth-4 search' },
-  { source: 'ml', label: 'ML AI', detail: 'Self-play model' },
+  { source: 'oracle', label: 'Oracle', detail: 'Strongest' },
+  { source: 'classic', label: 'Classic', detail: 'Plans ahead' },
+  { source: 'ml', label: 'ML AI', detail: 'Unpredictable' },
 ] as const satisfies readonly {
   source: WatchAISource;
   label: string;
