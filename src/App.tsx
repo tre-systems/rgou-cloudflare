@@ -8,22 +8,22 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import RoyalGameOfUr from './components/RoyalGameOfUr';
 import ServiceWorkerUpdate from './components/ServiceWorkerUpdate';
 
-const OracleAIPage = lazy(() => import('./components/OracleAIPage'));
+const AIPage = lazy(() => import('./components/AIPage'));
 
 export default function App() {
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
   const content =
     pathname === '/offline' ? (
       <OfflinePage />
-    ) : pathname === '/oracle-ai' ? (
+    ) : pathname === '/ai' || pathname === '/oracle-ai' ? (
       <Suspense
         fallback={
           <main className="min-h-screen bg-ink" aria-busy="true">
-            <span className="sr-only">Loading Oracle AI</span>
+            <span className="sr-only">Loading AI guide</span>
           </main>
         }
       >
-        <OracleAIPage />
+        <AIPage />
       </Suspense>
     ) : (
       <>

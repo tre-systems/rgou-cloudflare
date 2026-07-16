@@ -6,7 +6,7 @@ The game has three AI opponents, all written in Rust and compiled to WebAssembly
 - **ML AI** — a value + policy neural network trained from expectiminimax-labelled simulated games
 - **Oracle AI** — a compact value network distilled from the published strong solution of the game
 
-These are preserved as separate strategies: Classic searches at runtime, ML captures the earlier self-play experiment, and Oracle approximates exact tablebase values. The broad [AI matrix](./AI-MATRIX-RESULTS.md) compares research fixtures; [deployed matchup results](./AI-DEPLOYED-RESULTS.md) compare the three opponents available in the browser. For Oracle's research, design, and evidence, see [ORACLE-AI.md](./ORACLE-AI.md).
+These are preserved as separate strategies: Classic searches at runtime, ML distils depth-limited Classic search, and Oracle approximates exact tablebase values. The public [AI guide](https://gameofur.org/ai) introduces the three approaches. The broad [AI matrix](./AI-MATRIX-RESULTS.md) compares research fixtures; [deployed matchup results](./AI-DEPLOYED-RESULTS.md) compare the three opponents available in the browser. For Oracle's research, design, and evidence, see [ORACLE-AI.md](./ORACLE-AI.md).
 
 Watch mode accepts an independent choice for each side from Classic, ML, and Oracle. The selected pairing uses the same typed mode policy as normal games and is retained across a page reload.
 

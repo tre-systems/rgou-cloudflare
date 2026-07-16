@@ -96,6 +96,13 @@ describe('Worker routing', () => {
     expect(redirect.status).toBe(301);
     expect(redirect.headers.get('location')).toBe('https://gameofur.org/offline?source=test');
 
+    const legacyPage = await worker.fetch(
+      new Request('https://gameofur.org/oracle-ai?source=test'),
+      environment
+    );
+    expect(legacyPage.status).toBe(301);
+    expect(legacyPage.headers.get('location')).toBe('https://gameofur.org/ai?source=test');
+
     const request = new Request('https://gameofur.org/manifest.json');
     const asset = await worker.fetch(request, environment);
     expect(await asset.text()).toBe('asset');

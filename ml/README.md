@@ -2,12 +2,12 @@
 
 Reproducible training for the two learned opponents:
 
-- **ML AI** learns value and policy targets from expectiminimax-labelled self-play.
+- **ML AI** learns value and policy targets from Classic expectiminimax-labelled simulated games.
 - **Oracle AI** learns exact win probabilities sampled from the solved-game tablebase.
 
 For runtime architecture and model contracts, see [AI-SYSTEM.md](../docs/AI-SYSTEM.md). For Oracle's rationale, features, evidence, and limitations, see [ORACLE-AI.md](../docs/ORACLE-AI.md).
 
-## Self-play ML quick start
+## Classic-distilled ML quick start
 
 ```bash
 uv sync --project ml --locked
@@ -98,7 +98,7 @@ Genetic parameters for the Classic AI are evolved separately — see [AI-SYSTEM.
 
 ## Reproducibility and model promotion
 
-### Self-play ML
+### Classic-distilled ML
 
 The ML run uses the depth-limited Classic AI as its only teacher. It does not read the Oracle tablebase or solved-game model. Expectiminimax labels each position once; forced moves are searched rather than assigned a neutral value, and equally scored piece choices share the policy target. Ten per cent of rollouts follow a different legal move after recording the teacher label, which adds positions reached through ordinary mistakes without weakening the label.
 

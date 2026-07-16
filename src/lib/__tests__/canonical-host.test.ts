@@ -20,4 +20,13 @@ describe('canonical host', () => {
       'https://gameofur.org/offline?source=old'
     );
   });
+
+  it('redirects the old Oracle article to the general AI guide in one hop', () => {
+    expect(getCanonicalRedirectUrl('https://www.gameofur.net/oracle-ai?source=old')).toBe(
+      'https://gameofur.org/ai?source=old'
+    );
+    expect(getCanonicalRedirectUrl('http://localhost:5173/oracle-ai')).toBe(
+      'http://localhost:5173/ai'
+    );
+  });
 });

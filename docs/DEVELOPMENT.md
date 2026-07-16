@@ -70,6 +70,7 @@ npm run test:e2e                 # end-to-end (Playwright)
 npm run test:e2e:ui              # Playwright UI
 npm run test:ai-comparison:fast  # quick AI matrix
 npm run test:ai-deployed         # 400-game benchmark of browser opponents
+npm run test:ai-candidate        # compare an unpromoted ML candidate with production opponents
 ```
 
 The two rule implementations share `test-fixtures/rules-conformance.json`. Every rule change must update or extend this corpus and pass both `src/lib/__tests__/rules-conformance.test.ts` and `worker/rust_ai_core/tests/rules_conformance.rs`. Use injected `RandomSource` values or explicit dice rolls when a test must be reproducible.

@@ -213,12 +213,12 @@ export default function RoyalGameOfUr() {
             <span className="hidden sm:inline">Open source · Built for the web</span>
             <div className="flex items-center gap-5">
               <a
-                href="/oracle-ai"
+                href="/ai"
                 className="inline-flex items-center gap-1.5 transition-colors hover:text-bone"
-                data-testid="oracle-ai-link"
+                data-testid="ai-guide-link"
               >
                 <Scale className="h-3.5 w-3.5" aria-hidden="true" />
-                Oracle AI
+                About the AIs
               </a>
               <a
                 href="https://github.com/tre-systems/rgou-cloudflare"

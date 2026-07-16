@@ -23,6 +23,7 @@ test('core navigation is semantic and keyboard-operable @cross-browser', async (
   await expect(page.getByRole('button', { name: /^Oracle AI/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Watch a Match/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'How to play' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'About the AIs' })).toHaveAttribute('href', '/ai');
   await expect(page.getByRole('link', { name: 'GitHub Repository' })).toHaveAttribute(
     'rel',
     /noopener/
@@ -54,7 +55,7 @@ test('keeps opponent choices simple and provides optional AI details', async ({ 
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText('Value network · solved-game training');
   await expect(dialog).toContainText('Expectiminimax · depth 3');
-  await expect(dialog).toContainText('Policy and value networks · self-play');
+  await expect(dialog).toContainText('Policy and value networks · Classic-trained');
 
   const closeButton = page.getByRole('button', { name: 'Close AI details' });
   await expect(closeButton).toBeFocused();
@@ -157,35 +158,35 @@ test('keeps the mobile opening compact and player panels stable between turns', 
   }
 });
 
-test('Oracle AI project note explains the model and returns to the game', async ({ page }) => {
-  await page.goto('/oracle-ai');
+test('AI article explains the opponents and returns to the game', async ({ page }) => {
+  await page.goto('/ai');
 
-  await expect(page).toHaveTitle('Oracle AI · Royal Game of Ur');
+  await expect(page).toHaveTitle('About the AIs · Royal Game of Ur');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
-    'https://gameofur.org/oracle-ai'
+    'https://gameofur.org/ai'
   );
-  await expect(page.getByTestId('oracle-ai-page')).toBeVisible();
+  await expect(page.getByTestId('ai-page')).toBeVisible();
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Using the solved game to build a better opponent',
+      name: 'Three different ways to play Ur',
     })
   ).toBeVisible();
-  await expect(page.getByText('137,892,016')).toBeVisible();
-  await expect(page.getByText('0.344 points')).toBeVisible();
-  await expect(page.getByText('85%')).toBeVisible();
-  await expect(page.getByText('88%')).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Deployed AI win rates' })).toContainText('85.0%');
   await expect(
-    page.getByRole('link', { name: 'Implementation and reproducibility notes' })
+    page.getByRole('link', { name: 'Current browser-opponent results' })
   ).toHaveAttribute('rel', /noopener/);
-  await expect(page.getByRole('link', { name: 'Current browser-opponent results' })).toHaveAttribute(
-    'rel',
-    /noopener/
-  );
 
   await page.getByRole('link', { name: 'Play the game' }).click();
   await expect(page.getByTestId('ai-model-selection')).toBeVisible();
+});
+
+test('redirects the old Oracle article URL to the AI guide', async ({ page }) => {
+  await page.goto('/oracle-ai?source=old');
+
+  await expect(page).toHaveURL('/ai?source=old');
+  await expect(page.getByTestId('ai-page')).toBeVisible();
 });
 
 test('honors the reduced-motion preference', async ({ page }) => {
