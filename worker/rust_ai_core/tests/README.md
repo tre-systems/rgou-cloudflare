@@ -9,10 +9,11 @@ cargo test                              # all fast tests (runs in seconds)
 cargo test -- --nocapture               # with output
 cargo test test_ai_matrix -- --nocapture          # AI-vs-AI matrix
 NUM_GAMES=50 cargo test test_ai_matrix -- --nocapture   # more games per match
+AI_MATRIX_DEPLOYED_ONLY=1 NUM_GAMES=400 cargo test test_ai_matrix -- --nocapture # browser opponents
 RUN_SLOW_TESTS=1 cargo test --features slow_tests -- --nocapture # include depth-4 tests
 ```
 
-From the repo root these are also exposed as `npm run test:rust`, `test:rust:slow`, and `test:ai-comparison:fast`.
+From the repo root these are also exposed as `npm run test:rust`, `test:rust:slow`, `test:ai-comparison:fast`, and `test:ai-deployed`.
 
 ## Test layout
 
@@ -29,6 +30,7 @@ From the repo root these are also exposed as `npm run test:rust`, `test:rust:slo
 ## Useful environment variables
 
 - `NUM_GAMES` — games per matrix match (default 10)
+- `AI_MATRIX_DEPLOYED_ONLY=1` — compare only the browser Classic, ML, and Oracle opponents with deterministic dice and alternating seats; `NUM_GAMES` must be even
 - `RUN_SLOW_TESTS=1` with `--features slow_tests` — add depth-4 matrix coverage
 
 The AI matrix runs matches in parallel across CPU cores and resets AI state periodically; lower `NUM_GAMES` if you hit memory pressure.

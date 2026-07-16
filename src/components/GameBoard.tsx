@@ -9,12 +9,13 @@ import GameCompletionOverlay from './game/GameCompletionOverlay';
 import GameControls from './game/GameControls';
 import GameStatus from './game/GameStatus';
 import GameDice from './game/GameDice';
+import { getAIName } from '@/lib/utils';
 
 interface GameBoardProps {
   gameState: GameState;
   onPieceClick: (pieceIndex: number) => void;
   aiThinking?: boolean;
-  onResetGame: () => void;
+  onQuitGame: () => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
@@ -60,7 +61,7 @@ export default function GameBoard({
   gameState,
   onPieceClick,
   aiThinking = false,
-  onResetGame,
+  onQuitGame,
   soundEnabled,
   onToggleSound,
   onShowHowToPlay,
@@ -131,8 +132,13 @@ export default function GameBoard({
         {gameState.gameStatus === 'finished' && (
           <GameCompletionOverlay
             gameState={gameState}
-            onResetGame={onResetGame}
+            onQuitGame={onQuitGame}
             gameMode={gameMode}
+            winnerName={
+              watchMode
+                ? getAIName(gameState.winner === 'player1' ? aiSourceP1 : aiSourceP2)
+                : undefined
+            }
           />
         )}
       </AnimatePresence>
@@ -200,7 +206,7 @@ export default function GameBoard({
             soundEnabled={soundEnabled}
             onToggleSound={onToggleSound}
             onShowHowToPlay={onShowHowToPlay}
-            onResetGame={onResetGame}
+            onQuitGame={onQuitGame}
             onCreateNearWinningState={onCreateNearWinningState}
             diceElement={<GameDice gameState={gameState} />}
           />

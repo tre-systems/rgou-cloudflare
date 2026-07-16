@@ -9,14 +9,12 @@ type UIStore = {
   selectedMode: OpponentMode | null;
   watchMatchup: WatchMatchup;
   soundEnabled: boolean;
-  diagnosticsPanelOpen: boolean;
   howToPlayOpen: boolean;
   actions: {
     setShowModelOverlay: (show: boolean) => void;
     setSelectedMode: (mode: OpponentMode | null) => void;
     setWatchMatchup: (matchup: WatchMatchup) => void;
     setSoundEnabled: (enabled: boolean) => void;
-    setDiagnosticsPanelOpen: (open: boolean) => void;
     setHowToPlayOpen: (open: boolean) => void;
     reset: () => void;
   };
@@ -27,7 +25,6 @@ const INITIAL_UI_STATE = {
   selectedMode: null,
   watchMatchup: DEFAULT_WATCH_MATCHUP,
   soundEnabled: true,
-  diagnosticsPanelOpen: false,
   howToPlayOpen: false,
 } satisfies Omit<UIStore, 'actions'>;
 
@@ -40,7 +37,6 @@ export const useUIStore = create<UIStore>()(
         setSelectedMode: mode => set({ selectedMode: mode }),
         setWatchMatchup: matchup => set({ watchMatchup: matchup }),
         setSoundEnabled: enabled => set({ soundEnabled: enabled }),
-        setDiagnosticsPanelOpen: open => set({ diagnosticsPanelOpen: open }),
         setHowToPlayOpen: open => set({ howToPlayOpen: open }),
         reset: () => set(INITIAL_UI_STATE),
       },
@@ -71,13 +67,3 @@ export const useUIStore = create<UIStore>()(
     }
   )
 );
-
-export const useUIState = () =>
-  useUIStore(state => ({
-    showModelOverlay: state.showModelOverlay,
-    selectedMode: state.selectedMode,
-    watchMatchup: state.watchMatchup,
-    soundEnabled: state.soundEnabled,
-    diagnosticsPanelOpen: state.diagnosticsPanelOpen,
-    howToPlayOpen: state.howToPlayOpen,
-  }));

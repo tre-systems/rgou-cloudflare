@@ -117,7 +117,9 @@ source + JSON  4bd7e1e6ca8b8cc5147c702f11bf38a1e8e942cab9cf0891bbf270fb7a956b7d
 gzip           ac86b5d2dd47aeb7913389102c523b1e15c17f0a34098522ce2a29d8318ce2e9
 ```
 
-The final generated matrix played 50 games for each of 45 pairings, alternating seats. Oracle averaged **93.1%** across its nine opponents, including **88%** against the deployed self-play ML model and **92%** against expectiminimax depth 3. It averaged **1.6 ms per move** on the test machine, versus 79.2 ms for the deployed ML model and 24.6 ms for depth 3. These stochastic cells establish a large practical difference; they are not precise estimates of small matchup edges.
+The current broad matrix plays 50 games for each of 45 pairings, alternating seats. Oracle averages **94.4%** across its nine opponents, including **94%** against the production self-play ML model and **82%** against depth-3 expectiminimax. The broad matrix is useful for direction, not precise margins.
+
+The separate [deployed benchmark](./AI-DEPLOYED-RESULTS.md) uses the three browser opponents only, 400 games per pairing, deterministic dice, and 200 games from each seat. Oracle won **85%** against Classic and **88%** against the corrected ML artifact. It also records relative native timings; browser responsiveness is governed by the Worker budget, not those hardware-specific measurements.
 
 ## Evaluation and promotion
 
@@ -131,7 +133,7 @@ A candidate is promoted only when all of these independent checks pass:
 6. Browser latency and compressed size improve on the existing ML model.
 7. Source model, public JSON, deterministic gzip, configuration, code, sample, and tablebase identities agree.
 
-The checked-in [AI matrix](./AI-MATRIX-RESULTS.md) is generated, not hand-edited. Its normal 50-game cells have wide uncertainty and demonstrate broad differences, not statistical proof of small advantages. Tablebase error is the primary quality measure because it compares predictions with the exact teacher directly.
+The checked-in [AI matrix](./AI-MATRIX-RESULTS.md) and [deployed benchmark](./AI-DEPLOYED-RESULTS.md) are generated, not hand-edited. The broad matrix's normal 50-game cells have wide uncertainty; the deployed benchmark's 400-game pairings better estimate the public opponents, but neither is statistical proof of small advantages. Tablebase error is the primary quality measure because it compares predictions with the exact teacher directly.
 
 ## Alternatives considered
 

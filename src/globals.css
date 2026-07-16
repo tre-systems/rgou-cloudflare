@@ -42,12 +42,13 @@
 }
 
 html {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-ink);
 }
 
 body {
-  min-height: 100vh;
+  box-sizing: border-box;
+  min-height: 100dvh;
   margin: 0;
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
@@ -193,10 +194,10 @@ a:focus-visible,
 }
 
 .player-area-current {
-  border-color: var(--color-line-strong);
+  border-color: var(--color-brass);
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.22),
-    inset 3px 0 var(--color-brass);
+    0 0 0 1px rgba(199, 166, 93, 0.42);
 }
 
 @keyframes move-hint {

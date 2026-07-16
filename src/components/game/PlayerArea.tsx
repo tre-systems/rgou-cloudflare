@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { CircleUserRound, Cpu } from 'lucide-react';
-import { cn, getAIName, getAISubtitle } from '@/lib/utils';
+import { cn, getAIName } from '@/lib/utils';
 import type { AISource, PiecePosition, Player } from '@/lib/types';
 import GamePiece from './GamePiece';
 
@@ -33,8 +33,6 @@ export default function PlayerArea({
         'surface-panel relative overflow-hidden rounded-xl p-3.5',
         isCurrentPlayer && 'player-area-current'
       )}
-      layout
-      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       data-testid={`${player}-area`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -44,7 +42,7 @@ export default function PlayerArea({
           ) : (
             <CircleUserRound className="h-4 w-4 shrink-0 text-lapis-light" />
           )}
-          <div className="flex min-w-0 items-baseline gap-2">
+          <div className="min-w-0">
             <h3
               className={cn(
                 'truncate text-sm font-semibold',
@@ -54,19 +52,18 @@ export default function PlayerArea({
             >
               {isAI ? getAIName(aiType) : 'You'}
             </h3>
-            {isAI && (
-              <span className="hidden truncate text-[11px] text-muted min-[380px]:inline">
-                {getAISubtitle(aiType)}
-              </span>
-            )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {isCurrentPlayer && (
-            <span className="rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-brass-light">
-              Turn
-            </span>
-          )}
+          <span
+            className={cn(
+              'rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-brass-light',
+              !isCurrentPlayer && 'invisible'
+            )}
+            aria-hidden={!isCurrentPlayer}
+          >
+            Turn
+          </span>
           <span className="font-mono text-xs text-brass">{finishedPieces.length}/7 home</span>
         </div>
       </div>

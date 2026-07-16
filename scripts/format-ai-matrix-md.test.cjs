@@ -1,7 +1,26 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { formatMarkdown, parseSections } = require('./format-ai-matrix-md.cjs');
+const {
+  formatMarkdown,
+  parseSections,
+  resolveReportName,
+  validateSections,
+} = require('./format-ai-matrix-md.cjs');
+
+test('accepts only the two repository-owned report destinations', () => {
+  assert.equal(resolveReportName(undefined), 'matrix');
+  assert.equal(resolveReportName('matrix'), 'matrix');
+  assert.equal(resolveReportName('deployed'), 'deployed');
+  assert.throws(() => resolveReportName('../outside'), /Unknown AI matrix report/);
+});
+
+test('refuses to overwrite a report from incomplete test output', () => {
+  assert.throws(
+    () => validateSections(parseSections(['error: could not compile'])),
+    /missing the config section/
+  );
+});
 
 test('generated matrix documentation keeps facts and omits synthetic recommendations', () => {
   const sections = parseSections([
@@ -30,4 +49,20 @@ test('generated matrix documentation keeps facts and omits synthetic recommendat
   assert.match(markdown, /Each cell is the row AI's win rate/);
   assert.match(markdown, /\| Heuristic \| 0\.1 \|/);
   assert.doesNotMatch(markdown, /Recommendations|Very Fast|Use Heuristic AI/);
+});
+
+test('deployed reports include the seat-balanced matchup split', () => {
+  const sections = parseSections([
+    'Configuration:',
+    '  Scope: browser-deployed opponents only',
+    'Testing 2 AI types:',
+    'SEAT BALANCE:',
+    'Classic-Browser vs Oracle-V1: Player 1 14.0%, Player 2 16.0%',
+  ]);
+  sections.date = 'test date';
+
+  const markdown = formatMarkdown(sections);
+
+  assert.match(markdown, /## Seat balance/);
+  assert.match(markdown, /Classic-Browser vs Oracle-V1 \| 14.0% \| 16.0%/);
 });

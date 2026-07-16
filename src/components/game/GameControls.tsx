@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Volume2, VolumeX, HelpCircle, RefreshCcw, Dice1 } from 'lucide-react';
+import { Volume2, VolumeX, HelpCircle, LogOut, Dice1 } from 'lucide-react';
 import { isDevelopment } from '@/lib/utils';
 
 interface GameControlsProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onShowHowToPlay: () => void;
-  onResetGame: () => void;
+  onQuitGame: () => void;
   onCreateNearWinningState: () => void;
   diceElement: ReactNode;
 }
@@ -16,7 +16,7 @@ export default function GameControls({
   soundEnabled,
   onToggleSound,
   onShowHowToPlay,
-  onResetGame,
+  onQuitGame,
   onCreateNearWinningState,
   diceElement,
 }: GameControlsProps) {
@@ -45,15 +45,17 @@ export default function GameControls({
         <div className="flex items-center gap-2">
           <motion.button
             type="button"
-            onClick={onResetGame}
-            className="icon-button"
+            onClick={onQuitGame}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-2.5 text-xs font-medium text-bone-muted transition-colors hover:border-line-strong hover:bg-surface-raised hover:text-bone"
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.96 }}
-            aria-label="Choose another opponent"
-            title="Choose another opponent"
-            data-testid="change-opponent"
+            aria-label="Quit game and choose another opponent"
+            title="Quit game and choose another opponent"
+            data-testid="quit-game"
           >
-            <RefreshCcw className="h-4 w-4" />
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            <span className="min-[380px]:hidden">Quit</span>
+            <span className="hidden min-[380px]:inline">Quit game</span>
           </motion.button>
           <motion.button
             type="button"

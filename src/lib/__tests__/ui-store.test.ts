@@ -14,7 +14,6 @@ describe('UIStore', () => {
       selectedMode: null,
       watchMatchup: { player1: 'oracle', player2: 'classic' },
       soundEnabled: true,
-      diagnosticsPanelOpen: false,
       howToPlayOpen: false,
     });
   });
@@ -26,7 +25,6 @@ describe('UIStore', () => {
     actions.setSelectedMode('classic');
     actions.setWatchMatchup({ player1: 'ml', player2: 'oracle' });
     actions.setSoundEnabled(false);
-    actions.setDiagnosticsPanelOpen(true);
     actions.setHowToPlayOpen(true);
 
     expect(useUIStore.getState()).toMatchObject({
@@ -34,7 +32,6 @@ describe('UIStore', () => {
       selectedMode: 'classic',
       watchMatchup: { player1: 'ml', player2: 'oracle' },
       soundEnabled: false,
-      diagnosticsPanelOpen: true,
       howToPlayOpen: true,
     });
   });
@@ -45,7 +42,6 @@ describe('UIStore', () => {
     actions.setSelectedMode('ml');
     actions.setWatchMatchup({ player1: 'classic', player2: 'ml' });
     actions.setSoundEnabled(false);
-    actions.setDiagnosticsPanelOpen(true);
     actions.setHowToPlayOpen(true);
 
     actions.reset();
@@ -55,7 +51,6 @@ describe('UIStore', () => {
       selectedMode: null,
       watchMatchup: { player1: 'oracle', player2: 'classic' },
       soundEnabled: true,
-      diagnosticsPanelOpen: false,
       howToPlayOpen: false,
     });
   });

@@ -41,14 +41,14 @@ test.describe('Core Game Functionality', () => {
 
   test('can start a classic game and see initial state', async ({ page }) => {
     await startGame(page, 'classic');
-    await expect(page.getByTestId('game-status-text')).toContainText('Your turn');
+    await expect(page.getByTestId('player2-name')).toHaveText('Classic');
     await expect(page.getByTestId('dice-display')).toBeVisible();
     await expect(page.getByTestId('game-board')).toBeVisible();
   });
 
   test('can start ML game and see AI opponent', async ({ page }) => {
     await startGame(page, 'ml');
-    await expect(page.getByTestId('game-status-text')).toContainText('Your turn');
+    await expect(page.getByTestId('player2-name')).toHaveText('ML AI');
     await expect(page.getByTestId('dice-display')).toBeVisible();
   });
 
@@ -77,8 +77,8 @@ test.describe('Core Game Functionality', () => {
 
     await expect.poll(() => modelRequests, { timeout: 10000 }).toBeGreaterThan(0);
     await expect
-      .poll(() => page.evaluate(() => window.useGameStore.getState().lastAIDiagnostics?.aiType))
-      .toBe('oracle');
+      .poll(() => page.evaluate(() => window.useGameStore.getState().gameState.winner))
+      .toBe('player1');
     expect(failures).toEqual([]);
   });
 
@@ -104,10 +104,10 @@ test.describe('Core Game Functionality', () => {
     await expect(page.getByTestId('player2-name')).toHaveText('Oracle AI');
     await expect(page.getByTestId('game-status-text')).toContainText("'s turn");
     await expect
-      .poll(() => page.evaluate(() => window.useGameStore.getState().lastAIDiagnostics?.aiType), {
+      .poll(() => page.evaluate(() => window.useGameStore.getState().gameState.history.length), {
         timeout: 10000,
       })
-      .toMatch(/^(ml|oracle)$/);
+      .toBeGreaterThan(0);
     expect(await page.evaluate(() => window.localStorage.getItem('rgou-ui-storage'))).toContain(
       '"player1":"ml","player2":"oracle"'
     );
@@ -162,7 +162,7 @@ test.describe('Game Interactions', () => {
   });
 
   test('can return to opponent selection', async ({ page }) => {
-    await page.getByTestId('change-opponent').click();
+    await page.getByTestId('quit-game').click();
 
     await expect(page.getByTestId('ai-model-selection')).toBeVisible();
     await expect(page.getByTestId('game-board')).not.toBeVisible();

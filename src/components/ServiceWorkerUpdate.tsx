@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { LoaderCircle, RefreshCw } from 'lucide-react';
 
 export default function ServiceWorkerUpdate() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -39,33 +41,56 @@ export default function ServiceWorkerUpdate() {
     };
   }, []);
 
-  if (!waiting) return null;
-
   const applyUpdate = () => {
-    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), {
-      once: true,
-    });
+    if (!waiting || isApplying) return;
+
+    setIsApplying(true);
+    const reload = () => window.location.reload();
+    const fallback = window.setTimeout(reload, 4_000);
+    const handleControllerChange = () => {
+      window.clearTimeout(fallback);
+      reload();
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, { once: true });
     waiting.postMessage({ type: 'SKIP_WAITING' });
   };
 
+  if (!waiting) return null;
+
   return (
     <aside
-      className="surface-panel fixed left-1/2 top-4 z-[10000] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl px-5 py-4 text-bone"
+      className="surface-panel fixed inset-x-4 top-4 z-[10000] mx-auto max-w-md rounded-2xl border-brass/35 p-3.5 text-bone shadow-xl shadow-black/25 sm:left-auto sm:right-5 sm:mx-0 sm:w-[26rem]"
       role="status"
+      aria-live="polite"
     >
-      <p className="mb-3">A new version is available.</p>
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-brass/30 bg-brass/10 text-brass-light">
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-bone">Update ready</p>
+          <p className="text-xs leading-5 text-bone-muted">
+            {isApplying ? 'Restarting with the latest version…' : 'A newer version is ready to use.'}
+          </p>
+        </div>
         <button
           type="button"
           onClick={applyUpdate}
-          className="rounded-lg bg-brass px-4 py-2 font-semibold text-ink hover:bg-brass-light"
+          disabled={isApplying}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-brass px-3 text-sm font-semibold text-ink transition-colors hover:bg-brass-light disabled:cursor-wait disabled:opacity-75"
         >
-          Update now
+          {isApplying && <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+          {isApplying ? 'Updating…' : 'Update'}
         </button>
         <button
           type="button"
-          onClick={() => setWaiting(null)}
-          className="px-3 py-2 text-bone-muted underline underline-offset-4 hover:text-bone"
+          onClick={() => {
+            setIsApplying(false);
+            setWaiting(null);
+          }}
+          disabled={isApplying}
+          className="h-9 shrink-0 rounded-lg px-1.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone disabled:cursor-wait disabled:opacity-60"
         >
           Later
         </button>

@@ -6,7 +6,7 @@ The game has three AI opponents, all written in Rust and compiled to WebAssembly
 - **ML AI** — a value + policy neural network trained from expectiminimax-labelled simulated games
 - **Oracle AI** — a compact value network distilled from the published strong solution of the game
 
-These are preserved as separate strategies: Classic searches at runtime, ML captures the earlier self-play experiment, and Oracle approximates exact tablebase values. For measured win rates and speed across every matchup, see [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md). For Oracle's research, design, and evidence, see [ORACLE-AI.md](./ORACLE-AI.md).
+These are preserved as separate strategies: Classic searches at runtime, ML captures the earlier self-play experiment, and Oracle approximates exact tablebase values. The broad [AI matrix](./AI-MATRIX-RESULTS.md) compares research fixtures; [deployed matchup results](./AI-DEPLOYED-RESULTS.md) compare the three opponents available in the browser. For Oracle's research, design, and evidence, see [ORACLE-AI.md](./ORACLE-AI.md).
 
 Watch mode accepts an independent choice for each side from Classic, ML, and Oracle. The selected pairing uses the same typed mode policy as normal games and is retained across a page reload.
 
@@ -40,7 +40,7 @@ Four binary dice give a roll of 0–4:
 
 ### Search depth
 
-The browser Classic AI searches to **depth 4** (`worker/rust_ai_core/src/wasm_api.rs`). The normal AI matrix benchmarks depths 1–3; slow tests add depth 4.
+The browser Classic AI searches to **depth 3** (`BROWSER_CLASSIC_AI_DEPTH`). This keeps the deliberate search opponent responsive in the Worker. The normal AI matrix benchmarks depths 1–3; slow tests add depth 4 for research only.
 
 The optimized browser instance retains a transposition table across requests. A position hash includes all seven pieces for both players, current player, and genetic parameters. The table is bounded at 50,000 entries and clears before inserting beyond the ceiling, preventing an unbounded long-lived Worker cache.
 
@@ -79,13 +79,13 @@ The search runs 50 generations of 50 individuals with 100 games per evaluation. 
 - **Input**: the same 150-feature game-state vector is supplied to both networks
 - **Networks**: independent value and policy MLPs, each with 256 → 128 → 64 → 32 hidden units (ReLU)
 - **Outputs**: the value network emits 1 tanh unit estimating normalized expectiminimax evaluation; the policy network emits a 7-way softmax over piece choices
-- Move scoring combines next-position value, current policy probability, and fixed finish/capture/rosette bonuses
+- Move scoring combines the successor value from the mover's perspective, current policy probability, and fixed finish/capture/rosette bonuses
 
 The architecture is defined in `ml/config/training.json` and `worker/rust_ai_core/src/features.rs`.
 
 ### Training
 
-The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized evaluation target and a one-hot best-move target for the value and policy networks. Two training backends share the same presets:
+The data generator plays expectiminimax against itself using the embedded evolved evaluation parameters and alternates the starting player between games. A zero roll or position with no legal move passes the turn exactly as it does in the game. At each playable position, expectiminimax supplies a normalized Player 2 evaluation target and a one-hot best-move target for the value and policy networks. Runtime move selection converts successor values back to the mover's perspective before ranking legal moves. Two training backends share the same presets:
 
 | Backend | Hardware                      | Notes                           |
 | ------- | ----------------------------- | ------------------------------- |
@@ -106,7 +106,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) and [ml/README.md](../ml/README.md) for t
 
 `ml/data/weights/ml_ai_weights_pytorch_v5.json` is the production source model. Its verified metadata records 2,000 simulated games, 100 epochs, seed 42, 303,228 training samples, and the best validation loss. The Fast, V4, and Hybrid files in the same directory are comparison fixtures for the AI matrix, not deployment sources; their legacy metadata is not treated as authoritative provenance.
 
-`npm run load:ml-weights` validates and publishes the selected production source. `ml/model-manifest.json` records its source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
+`npm run load:ml-weights` validates and publishes the selected production source. Every artifact declares the `input-output-row-major-v1` matrix layout used by Rust. PyTorch export transposes its native output-by-input matrices into that layout; a shared fixture checks the same linear layer in Python and Rust. `ml/model-manifest.json` records the layout, source revision, training-input hashes, architecture, exact weight counts, and hashes for the source, JSON fallback, and deterministic gzip artifact. `npm run test:model-provenance` prevents those forms from drifting. TypeScript and Rust reject an undeclared layout, incomplete metadata, the wrong architecture, non-finite values, and short or oversized weight arrays.
 
 ## Oracle AI
 
@@ -120,9 +120,10 @@ The model is an approximation of an exact teacher, not a perfect-play claim. The
 
 ## Testing
 
-The Rust test suite covers game logic, the full position hash, the bounded transposition table, every AI type, Oracle symmetry and shared Python/Rust feature fixtures, TypeScript/Rust rule-conformance fixtures, and an AI-vs-AI matrix. See [worker/rust_ai_core/tests/README.md](../worker/rust_ai_core/tests/README.md) for how to run it, and [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for the generated results.
+The Rust test suite covers game logic, the full position hash, the bounded transposition table, every AI type, Oracle symmetry and shared Python/Rust feature fixtures, TypeScript/Rust rule-conformance fixtures, and AI matchups. The deployed benchmark uses deterministic dice, an even number of games, and alternating seats. See [worker/rust_ai_core/tests/README.md](../worker/rust_ai_core/tests/README.md) for commands, [AI-DEPLOYED-RESULTS.md](./AI-DEPLOYED-RESULTS.md) for browser-opponent results, and [AI-MATRIX-RESULTS.md](./AI-MATRIX-RESULTS.md) for the broader matrix.
 
 ```bash
 npm run test:ai-comparison:fast            # quick matrix (10 games per match)
 npm run test:ai-comparison:comprehensive   # 100 games per match, plus slow tests
+npm run test:ai-deployed                    # 400 games per browser-opponent pairing
 ```

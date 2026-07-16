@@ -202,17 +202,13 @@ export const TimingsSchema = z.object({
 });
 export type Timings = z.infer<typeof TimingsSchema>;
 
-export const AIResponseSchema = z.object({
+export const EngineAIResponseSchema = z.object({
   move: z.number().int().min(0).max(6).nullable(),
   evaluation: z.number().finite(),
   thinking: z.string(),
   timings: TimingsSchema,
   diagnostics: DiagnosticsSchema,
-  aiType: z.enum(['classic', 'fallback', 'ml', 'oracle', 'heuristic']),
 });
-export type AIResponse = z.infer<typeof AIResponseSchema>;
-
-export const EngineAIResponseSchema = AIResponseSchema.omit({ aiType: true });
 export type EngineAIResponse = z.infer<typeof EngineAIResponseSchema>;
 
 export const GameConstants = {

@@ -1,6 +1,8 @@
+use rand::{rngs::StdRng, SeedableRng};
 use rayon::prelude::*;
 use rgou_ai_core::{
     dice, genetic_params::GeneticParams, ml_ai::MLAI, oracle_ai::OracleAI, GameState, Player, AI,
+    BROWSER_CLASSIC_AI_DEPTH, RUNTIME_WEIGHT_LAYOUT,
 };
 use std::collections::HashMap;
 use std::time::Instant;
@@ -58,6 +60,7 @@ enum AIType {
     MLHybrid,
     MLPyTorchV5,
     OracleV1,
+    BrowserClassic,
 }
 
 impl AIType {
@@ -74,6 +77,7 @@ impl AIType {
             AIType::MLHybrid => "ML-Hybrid",
             AIType::MLPyTorchV5 => "ML-PyTorch-V5",
             AIType::OracleV1 => "Oracle-V1",
+            AIType::BrowserClassic => "Classic-Browser",
         }
     }
 
@@ -210,7 +214,8 @@ impl MLAIPlayer {
             return Err(format!("Weights file not found: {}", weights_file).into());
         }
 
-        let (value_weights, policy_weights) = load_ml_weights(weights_file)?;
+        let require_layout = matches!(ai_type, AIType::MLPyTorchV5);
+        let (value_weights, policy_weights) = load_ml_weights(weights_file, require_layout)?;
         let mut ai = MLAI::new();
         ai.load_pretrained(&value_weights, &policy_weights)?;
 
@@ -249,9 +254,18 @@ fn evaluate_position(game_state: &GameState, player: Player) -> f32 {
     score
 }
 
-fn load_ml_weights(weights_file: &str) -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
+fn load_ml_weights(
+    weights_file: &str,
+    require_layout: bool,
+) -> Result<(Vec<f32>, Vec<f32>), Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(weights_file)?;
     let data: serde_json::Value = serde_json::from_str(&content)?;
+
+    if require_layout && data["weight_layout"].as_str() != Some(RUNTIME_WEIGHT_LAYOUT) {
+        return Err(
+            format!("{weights_file} must declare weight_layout {RUNTIME_WEIGHT_LAYOUT}").into(),
+        );
+    }
 
     let value_weights = data["value_weights"]
         .as_array()
@@ -312,6 +326,7 @@ fn play_game(
     ai1: &mut Box<dyn AIPlayer>,
     ai2: &mut Box<dyn AIPlayer>,
     ai1_plays_first: bool,
+    rng: &mut StdRng,
 ) -> GameResult {
     let evolved_params = GeneticParams::evolved();
     let mut game_state = GameState::with_genetic_params(evolved_params);
@@ -321,7 +336,7 @@ fn play_game(
     let max_moves = 200; // Prevent infinite games
 
     while !game_state.is_game_over() && moves_played < max_moves {
-        game_state.dice_roll = dice::roll_dice();
+        game_state.dice_roll = dice::roll_dice_with_rng(rng);
 
         if game_state.dice_roll == 0 {
             game_state.current_player = game_state.current_player.opponent();
@@ -409,6 +424,7 @@ fn create_ai_player(ai_type: &AIType) -> Result<Box<dyn AIPlayer>, Box<dyn std::
         AIType::EMMDepth1 => Ok(Box::new(ExpectiminimaxAI::new(1))),
         AIType::EMMDepth2 => Ok(Box::new(ExpectiminimaxAI::new(2))),
         AIType::EMMDepth3 => Ok(Box::new(ExpectiminimaxAI::new(3))),
+        AIType::BrowserClassic => Ok(Box::new(ExpectiminimaxAI::new(BROWSER_CLASSIC_AI_DEPTH))),
         AIType::EMMDepth4 => {
             // Only run depth 4 if explicitly requested
             if std::env::var("RUN_SLOW_TESTS").is_ok() {
@@ -434,6 +450,9 @@ struct MatrixResult {
     ai1_win_rate: f64,
     ai1_avg_time_ms: f64,
     ai2_avg_time_ms: f64,
+    ai1_wins_as_player1: u32,
+    ai1_wins_as_player2: u32,
+    games_per_seat: u32,
 }
 
 // Enhanced recommendations generation
@@ -503,6 +522,10 @@ fn test_ai_matrix() {
         .unwrap_or_else(|_| "10".to_string())
         .parse::<u32>()
         .unwrap_or(10);
+    assert!(
+        num_games > 0 && num_games % 2 == 0,
+        "NUM_GAMES must be a positive even number"
+    );
 
     println!("Configuration:");
     println!("  Games per match: {}", num_games);
@@ -512,23 +535,35 @@ fn test_ai_matrix() {
     );
     println!();
 
-    // Define AI types to test
-    let mut ai_types = vec![
-        AIType::Random,
-        AIType::Heuristic,
-        AIType::EMMDepth1,
-        AIType::EMMDepth2,
-        AIType::EMMDepth3,
-        AIType::MLFast,
-        AIType::MLV4,
-        AIType::MLHybrid,
-        AIType::MLPyTorchV5,
-        AIType::OracleV1,
-    ];
+    let deployed_only = std::env::var("AI_MATRIX_DEPLOYED_ONLY").is_ok();
+    let mut ai_types = if deployed_only {
+        vec![
+            AIType::BrowserClassic,
+            AIType::MLPyTorchV5,
+            AIType::OracleV1,
+        ]
+    } else {
+        vec![
+            AIType::Random,
+            AIType::Heuristic,
+            AIType::EMMDepth1,
+            AIType::EMMDepth2,
+            AIType::EMMDepth3,
+            AIType::MLFast,
+            AIType::MLV4,
+            AIType::MLHybrid,
+            AIType::MLPyTorchV5,
+            AIType::OracleV1,
+        ]
+    };
 
-    // Add depth 4 only if slow tests are enabled
-    if std::env::var("RUN_SLOW_TESTS").is_ok() {
+    if !deployed_only && std::env::var("RUN_SLOW_TESTS").is_ok() {
         ai_types.push(AIType::EMMDepth4);
+    }
+
+    if deployed_only {
+        println!("  Scope: browser-deployed opponents only");
+        println!("  Classic search depth: {BROWSER_CLASSIC_AI_DEPTH}");
     }
 
     println!("Testing {} AI types:", ai_types.len());
@@ -557,7 +592,8 @@ fn test_ai_matrix() {
 
     let results: Vec<MatrixResult> = match_combinations
         .into_par_iter()
-        .map(|(ai_type1, ai_type2)| {
+        .enumerate()
+        .map(|(match_index, (ai_type1, ai_type2))| {
             println!("🏆 Testing {} vs {}", ai_type1.name(), ai_type2.name());
 
             let mut ai1 = create_ai_player(&ai_type1)
@@ -569,11 +605,14 @@ fn test_ai_matrix() {
             let mut ai2_wins = 0;
             let mut ai1_total_time = 0;
             let mut ai2_total_time = 0;
+            let mut ai1_wins_as_player1 = 0;
+            let mut ai1_wins_as_player2 = 0;
+            let mut rng = StdRng::seed_from_u64(0x5247_4F55_2026_0000 + match_index as u64);
 
             // Play games with periodic AI state reset
             for game in 0..num_games {
                 let ai1_first = game % 2 == 0; // Alternate who goes first
-                let result = play_game(&mut ai1, &mut ai2, ai1_first);
+                let result = play_game(&mut ai1, &mut ai2, ai1_first, &mut rng);
 
                 // Track moves for statistics
                 ai1_total_time += result.ai1_time_ms;
@@ -587,6 +626,11 @@ fn test_ai_matrix() {
 
                 if ai1_won {
                     ai1_wins += 1;
+                    if ai1_first {
+                        ai1_wins_as_player1 += 1;
+                    } else {
+                        ai1_wins_as_player2 += 1;
+                    }
                 } else {
                     ai2_wins += 1;
                 }
@@ -619,6 +663,9 @@ fn test_ai_matrix() {
                 ai1_win_rate,
                 ai1_avg_time_ms: ai1_avg_time,
                 ai2_avg_time_ms: ai2_avg_time,
+                ai1_wins_as_player1,
+                ai1_wins_as_player2,
+                games_per_seat: num_games / 2,
             }
         })
         .collect();
@@ -640,6 +687,14 @@ fn test_ai_matrix() {
         println!(
             "  Average time: {} {:.1}ms, {} {:.1}ms",
             result.ai1, result.ai1_avg_time_ms, result.ai2, result.ai2_avg_time_ms
+        );
+        println!(
+            "  {} seat split: Player 1 {}/{}, Player 2 {}/{}",
+            result.ai1,
+            result.ai1_wins_as_player1,
+            result.games_per_seat,
+            result.ai1_wins_as_player2,
+            result.games_per_seat
         );
         println!();
     }
@@ -698,6 +753,18 @@ fn test_ai_matrix() {
         println!();
     }
     println!("{}", "-".repeat(80));
+    println!();
+
+    println!("🪑 SEAT BALANCE:");
+    println!("{}", "-".repeat(40));
+    for result in &results {
+        let player1_rate = result.ai1_wins_as_player1 as f64 / result.games_per_seat as f64 * 100.0;
+        let player2_rate = result.ai1_wins_as_player2 as f64 / result.games_per_seat as f64 * 100.0;
+        println!(
+            "{} vs {}: Player 1 {:.1}%, Player 2 {:.1}%",
+            result.ai1, result.ai2, player1_rate, player2_rate
+        );
+    }
     println!();
 
     // Performance summary

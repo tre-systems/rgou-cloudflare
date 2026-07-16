@@ -23,7 +23,7 @@
 
 use crate::features::GameFeatures;
 use crate::neural_network::{NetworkConfig, NeuralNetwork};
-use crate::{GameState, GeneticParams, AI, PIECES_PER_PLAYER};
+use crate::{GameState, GeneticParams, Player, AI, PIECES_PER_PLAYER};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::sync::Once;
@@ -674,7 +674,7 @@ impl Trainer {
 
                 let mut ai = AI::new();
                 let mut rng = GameRng::new(Self::game_seed(run_seed, game_id));
-                self.simulate_game(&mut ai, &mut rng)
+                self.simulate_game(&mut ai, &mut rng, Self::starting_player_for_game(game_id))
             })
             .collect();
         let training_data = games_training_data
@@ -711,8 +711,22 @@ impl Trainer {
         mixer.next_u64()
     }
 
-    fn simulate_game(&self, ai: &mut AI, rng: &mut GameRng) -> Vec<TrainingSample> {
+    fn starting_player_for_game(game_id: usize) -> Player {
+        if game_id.is_multiple_of(2) {
+            Player::Player1
+        } else {
+            Player::Player2
+        }
+    }
+
+    fn simulate_game(
+        &self,
+        ai: &mut AI,
+        rng: &mut GameRng,
+        starting_player: Player,
+    ) -> Vec<TrainingSample> {
         let mut game_state = GameState::with_genetic_params(GeneticParams::evolved());
+        game_state.current_player = starting_player;
         let mut samples = Vec::new();
         let mut turn_count = 0;
         let max_turns = 200;
@@ -1159,6 +1173,7 @@ impl Trainer {
         let weights_data = serde_json::json!({
             "value_weights": value_weights,
             "policy_weights": policy_weights,
+            "weight_layout": crate::RUNTIME_WEIGHT_LAYOUT,
             "metadata": metadata,
         });
 
@@ -1378,7 +1393,7 @@ mod tests {
         let trainer = Trainer::new(config);
         let mut ai = AI::new();
         let mut rng = GameRng::new(Trainer::game_seed(42, 0));
-        let samples = trainer.simulate_game(&mut ai, &mut rng);
+        let samples = trainer.simulate_game(&mut ai, &mut rng, Player::Player1);
 
         // Should generate some training samples
         assert!(!samples.is_empty());
@@ -1424,6 +1439,13 @@ mod tests {
                 "Policy target should have a clear preferred move"
             );
         }
+    }
+
+    #[test]
+    fn test_training_games_alternate_starting_player() {
+        assert_eq!(Trainer::starting_player_for_game(0), Player::Player1);
+        assert_eq!(Trainer::starting_player_for_game(1), Player::Player2);
+        assert_eq!(Trainer::starting_player_for_game(2), Player::Player1);
     }
 
     #[test]
@@ -1663,7 +1685,7 @@ mod tests {
         let trainer = Trainer::new(config);
         let mut ai = AI::new();
         let mut rng = GameRng::new(Trainer::game_seed(42, 0));
-        let samples = trainer.simulate_game(&mut ai, &mut rng);
+        let samples = trainer.simulate_game(&mut ai, &mut rng, Player::Player1);
 
         // Check that features are consistent across samples
         for (sample_idx, sample) in samples.iter().enumerate() {

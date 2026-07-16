@@ -370,6 +370,28 @@ mod tests {
     }
 
     #[test]
+    fn test_shared_pytorch_weight_layout_fixture() {
+        #[derive(serde::Deserialize)]
+        struct Fixture {
+            weight_layout: String,
+            input: Vec<f32>,
+            runtime_weights: Vec<f32>,
+            expected_linear_output: Vec<f32>,
+        }
+
+        let fixture: Fixture =
+            serde_json::from_str(include_str!("../../../test-fixtures/ml-weight-layout.json"))
+                .unwrap();
+        assert_eq!(fixture.weight_layout, crate::RUNTIME_WEIGHT_LAYOUT);
+
+        let mut layer = Layer::new(2, 3);
+        assert_eq!(layer.load_weights(&fixture.runtime_weights), 9);
+        let output = layer.forward_linear(&Array1::from_vec(fixture.input));
+
+        assert_eq!(output.to_vec(), fixture.expected_linear_output);
+    }
+
+    #[test]
     fn test_network_creation() {
         let config = NetworkConfig {
             input_size: 10,

@@ -13,15 +13,15 @@
   "deployment": {
     "gzip": {
       "content_encoding": "gzip",
-      "decompressed_sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
+      "decompressed_sha256": "0a4a98f73ed5b210db529bfebae35fb911dcaf8a7a7cf5d689c6f8a55657bbbf",
       "path": "public/ml-weights.json.gz",
-      "sha256": "a8e12c499f838a978e1d38485675d2c6d83f9e0025a3cb835abee3dd69872e1f",
-      "size_bytes": 1553417
+      "sha256": "829eb00fb49efaa149b97fbe9f9138b0db2ce1b9f6f4bbc6b3911d26649cd8d3",
+      "size_bytes": 1548672
     },
     "json": {
       "path": "public/ml-weights.json",
-      "sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
-      "size_bytes": 4200026
+      "sha256": "0a4a98f73ed5b210db529bfebae35fb911dcaf8a7a7cf5d689c6f8a55657bbbf",
+      "size_bytes": 4199903
     }
   },
   "inputs": {
@@ -41,20 +41,21 @@
   "model": {
     "format": "rgou-dual-network-json-v1",
     "path": "ml/data/weights/ml_ai_weights_pytorch_v5.json",
-    "sha256": "a0875904d6c8461981663f2f4d9ba08cd19405e3e333d32b56b99a689e8284e1",
-    "size_bytes": 4200026,
+    "sha256": "0a4a98f73ed5b210db529bfebae35fb911dcaf8a7a7cf5d689c6f8a55657bbbf",
+    "size_bytes": 4199903,
+    "weight_layout": "input-output-row-major-v1",
     "weights": {
       "policy": {
         "count": 82119,
-        "sha256": "9ffb6fab229f5624d4e3b661afbd6800c2350f67ada9c0b8280494c4af767920"
+        "sha256": "61d6b7d92b9d6d4af691f0332ffc140559239040ac0e6354d38d29af803eb8ea"
       },
       "value": {
         "count": 81921,
-        "sha256": "c7c3f768d6b102bc217abd86a331a5bca2442fafcdcb12bf660a41f1ddd1c294"
+        "sha256": "ba7bb0f0c61a93c909316741ce1f9bbe80709c8d74991f19684373d3e6e3df3e"
       }
     }
   },
-  "schema_version": 2,
+  "schema_version": 3,
   "source": {
     "committed_at": "2025-07-20T22:01:01+01:00",
     "kind": "training_source_commit",

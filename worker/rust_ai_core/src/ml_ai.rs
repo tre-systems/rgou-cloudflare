@@ -33,6 +33,23 @@ pub struct MLAI {
     policy_network: NeuralNetwork,
 }
 
+fn value_for_player(player: crate::Player, value_from_player2_perspective: f32) -> f32 {
+    if player == crate::Player::Player2 {
+        value_from_player2_perspective
+    } else {
+        -value_from_player2_perspective
+    }
+}
+
+fn tactical_move_bonus(move_type: &str) -> f32 {
+    match move_type {
+        "finish" => 5.0,
+        "capture" => 1.5,
+        "rosette" => 2.5,
+        _ => 0.0,
+    }
+}
+
 impl Default for MLAI {
     fn default() -> Self {
         Self::new()
@@ -125,7 +142,6 @@ impl MLAI {
         for &move_idx in &valid_moves {
             let mut next_state = state.clone();
             next_state.make_move(move_idx).unwrap();
-
             let next_features = GameFeatures::from_game_state(&next_state);
             let next_value = self.value_network.forward(&next_features.to_array());
 
@@ -165,21 +181,9 @@ impl MLAI {
                 "move".to_string()
             };
 
-            let mut score = next_value[0] * 0.7 + policy_outputs[move_idx as usize] * 0.3;
-
-            if move_type == "finish" {
-                score += 2.0;
-            } else if move_type == "capture" {
-                score += 1.5;
-            } else if move_type == "rosette" {
-                score += 1.0;
-            }
-
-            if to_square == 20 {
-                score += 3.0;
-            } else if GameState::is_rosette(to_square) {
-                score += 1.5;
-            }
+            let score = value_for_player(state.current_player, next_value[0]) * 0.7
+                + policy_outputs[move_idx as usize] * 0.3
+                + tactical_move_bonus(&move_type);
 
             move_evaluations.push(MLMoveEvaluation {
                 piece_index: move_idx,
@@ -230,6 +234,20 @@ mod tests {
         let ai = MLAI::new();
         assert!(ai.value_network.num_layers() > 0);
         assert!(ai.policy_network.num_layers() > 0);
+    }
+
+    #[test]
+    fn test_value_score_uses_the_movers_perspective() {
+        assert_eq!(value_for_player(Player::Player2, 0.4), 0.4);
+        assert_eq!(value_for_player(Player::Player1, 0.4), -0.4);
+    }
+
+    #[test]
+    fn test_tactical_move_bonuses_are_explicit() {
+        assert_eq!(tactical_move_bonus("finish"), 5.0);
+        assert_eq!(tactical_move_bonus("capture"), 1.5);
+        assert_eq!(tactical_move_bonus("rosette"), 2.5);
+        assert_eq!(tactical_move_bonus("move"), 0.0);
     }
 
     #[test]
@@ -519,6 +537,10 @@ mod tests {
         let content = std::fs::read_to_string(weights_path).expect("production model must exist");
         let weights: serde_json::Value =
             serde_json::from_str(&content).expect("production model must contain valid JSON");
+        assert_eq!(
+            weights["weight_layout"],
+            serde_json::Value::String(crate::RUNTIME_WEIGHT_LAYOUT.to_string())
+        );
         let parse = |name: &str| {
             weights[name]
                 .as_array()

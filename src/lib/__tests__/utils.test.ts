@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cn, getAIName, getAISubtitle, isDevelopment } from '../utils';
+import { cn, getAIName, isDevelopment } from '../utils';
 
 describe('Utils', () => {
   afterEach(() => {
@@ -14,22 +14,15 @@ describe('Utils', () => {
     });
   });
 
-  describe('getAIName and getAISubtitle', () => {
-    it('should return correct AI names and subtitles', () => {
+  describe('getAIName', () => {
+    it('returns player-facing AI names', () => {
       expect(getAIName('classic')).toBe('Classic');
-      expect(getAISubtitle('classic')).toBe('Expectiminimax algorithm');
 
       expect(getAIName('ml')).toBe('ML AI');
-      expect(getAISubtitle('ml')).toBe('Neural network model');
 
       expect(getAIName('oracle')).toBe('Oracle AI');
-      expect(getAISubtitle('oracle')).toBe('Exact-solution distillation');
-
-      expect(getAIName('fallback')).toBe('Fallback');
-      expect(getAISubtitle('fallback')).toBe('');
 
       expect(getAIName(null)).toBe('Unknown');
-      expect(getAISubtitle(null)).toBe('');
     });
   });
 
