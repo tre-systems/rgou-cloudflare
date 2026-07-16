@@ -1,6 +1,8 @@
 import gzip
 import importlib.util
+import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -86,6 +88,18 @@ class ModelProvenanceTests(unittest.TestCase):
             model_provenance.repository_path(Path("../outside.json"))
         with self.assertRaisesRegex(ValueError, "inside the repository"):
             model_provenance.repository_path(Path("/tmp/outside.json"))
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symlinks are unavailable")
+    def test_rejects_symlinks_outside_the_repository(self):
+        with tempfile.TemporaryDirectory(
+            dir=model_provenance.REPOSITORY_ROOT
+        ) as directory:
+            link = Path(directory) / "outside"
+            link.symlink_to(Path(tempfile.gettempdir()), target_is_directory=True)
+            relative_link = link.relative_to(model_provenance.REPOSITORY_ROOT)
+
+            with self.assertRaisesRegex(ValueError, "inside the repository"):
+                model_provenance.repository_path(relative_link / "outside.json")
 
 
 if __name__ == "__main__":

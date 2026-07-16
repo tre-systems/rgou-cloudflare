@@ -5,6 +5,7 @@ import gzip
 import hashlib
 import json
 import math
+import os
 import re
 import sys
 from pathlib import Path
@@ -39,9 +40,11 @@ def canonical_hash(value: Any) -> str:
 
 
 def repository_path(path: Path) -> Path:
-    if path.is_absolute() or ".." in path.parts:
+    candidate = Path(os.path.realpath(REPOSITORY_ROOT / path))
+    repository_prefix = f"{REPOSITORY_ROOT}{os.sep}"
+    if candidate != REPOSITORY_ROOT and not str(candidate).startswith(repository_prefix):
         raise ValueError(f"path must stay inside the repository: {path}")
-    return REPOSITORY_ROOT / path
+    return candidate
 
 
 def display_path(path: Path) -> str:
