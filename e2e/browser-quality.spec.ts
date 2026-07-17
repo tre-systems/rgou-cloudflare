@@ -162,7 +162,7 @@ test('AI article explains the opponents and returns to the game', async ({ page 
   await page.goto('/ai');
 
   await expect(page).toHaveTitle(
-    "The world's oldest board game was solved last year · Royal Game of Ur"
+    "Three ways to teach a computer the world's oldest board game · Royal Game of Ur"
   );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
@@ -172,7 +172,7 @@ test('AI article explains the opponents and returns to the game', async ({ page 
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: "The world's oldest board game was solved last year. I only just found out.",
+      name: "Three ways to teach a computer the world's oldest board game",
     })
   ).toBeVisible();
   await expect(page.getByRole('table', { name: 'Deployed AI win rates' })).toContainText('85.0%');
