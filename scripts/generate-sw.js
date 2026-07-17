@@ -39,6 +39,7 @@ const REQUIRED_ASSETS = [
 ];
 
 const OPTIONAL_ASSETS = [
+  '/ai',
   '/wasm/rgou_ai_core.js',
   '/wasm/rgou_ai_worker_bg.wasm',
   '/ml-weights.json.gz',

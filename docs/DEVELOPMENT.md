@@ -25,6 +25,7 @@ npm run build:wasm-assets   # build the Rust AI to WASM and copy into public/was
 npm run build:wasm          # WASM only
 npm run build:rust-ai       # native Rust build
 npm run generate:sw         # service worker (CI commit SHA or local timestamp cache version)
+npm run generate:ai-page    # static /ai article from its template and the deployed benchmark
 ```
 
 The production build keeps the application, animation runtime, and lazy error-monitoring code in separate chunks. Its final service-worker generation step precaches every built static asset so lazy chunks remain available offline. Treat a new Vite chunk-size warning as a design signal; split the responsible boundary instead of raising the warning threshold.
