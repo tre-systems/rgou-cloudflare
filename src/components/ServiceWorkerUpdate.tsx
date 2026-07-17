@@ -1,19 +1,29 @@
 import { useEffect, useState } from 'react';
 import { LoaderCircle, RefreshCw } from 'lucide-react';
+import {
+  activateWaitingServiceWorker,
+  checkForServiceWorkerUpdate,
+  installUpdateCheckTriggers,
+  shouldCheckForUpdate,
+} from '../lib/service-worker-update';
 
 export default function ServiceWorkerUpdate() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
   const [isApplying, setIsApplying] = useState(false);
+  const [isDeferred, setIsDeferred] = useState(false);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     let active = true;
+    let checking = false;
+    let lastCheckAt = 0;
     let registration: ServiceWorkerRegistration | undefined;
     let installingWorker: ServiceWorker | null = null;
 
     const handleStateChange = () => {
       if (active && installingWorker?.state === 'installed' && navigator.serviceWorker.controller) {
         setWaiting(installingWorker);
+        setIsDeferred(false);
       }
     };
 
@@ -23,6 +33,34 @@ export default function ServiceWorkerUpdate() {
       installingWorker?.addEventListener('statechange', handleStateChange);
     };
 
+    const checkForUpdate = async (force = false) => {
+      if (
+        !active ||
+        checking ||
+        !registration ||
+        !navigator.onLine ||
+        document.visibilityState !== 'visible'
+      ) {
+        return;
+      }
+      const now = Date.now();
+      if (!force && !shouldCheckForUpdate(now, lastCheckAt)) return;
+
+      checking = true;
+      lastCheckAt = now;
+      try {
+        await checkForServiceWorkerUpdate({registration});
+        if (registration.waiting) setWaiting(registration.waiting);
+      } catch {
+        // Update discovery is best-effort; normal app requests surface connectivity.
+      } finally {
+        checking = false;
+      }
+    };
+    const removeTriggers = installUpdateCheckTriggers({
+      check: () => void checkForUpdate(),
+    });
+
     void navigator.serviceWorker
       .register('/sw.js')
       .then(async currentRegistration => {
@@ -30,12 +68,13 @@ export default function ServiceWorkerUpdate() {
         registration = currentRegistration;
         if (registration.waiting) setWaiting(registration.waiting);
         registration.addEventListener('updatefound', handleUpdateFound);
-        await registration.update();
+        await checkForUpdate(true);
       })
       .catch(error => console.warn('Service worker registration failed:', error));
 
     return () => {
       active = false;
+      removeTriggers();
       registration?.removeEventListener('updatefound', handleUpdateFound);
       installingWorker?.removeEventListener('statechange', handleStateChange);
     };
@@ -45,18 +84,23 @@ export default function ServiceWorkerUpdate() {
     if (!waiting || isApplying) return;
 
     setIsApplying(true);
-    const reload = () => window.location.reload();
-    const fallback = window.setTimeout(reload, 4_000);
-    const handleControllerChange = () => {
-      window.clearTimeout(fallback);
-      reload();
-    };
-
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, { once: true });
-    waiting.postMessage({ type: 'SKIP_WAITING' });
+    activateWaitingServiceWorker({worker: waiting});
   };
 
   if (!waiting) return null;
+
+  if (isDeferred) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsDeferred(false)}
+        className="surface-panel fixed bottom-4 right-4 z-[10000] rounded-full border-brass/35 px-4 py-2 text-sm font-semibold text-brass-light shadow-xl shadow-black/25"
+        aria-label="Update ready. Show update options"
+      >
+        Update ready
+      </button>
+    );
+  }
 
   return (
     <aside
@@ -87,7 +131,7 @@ export default function ServiceWorkerUpdate() {
           type="button"
           onClick={() => {
             setIsApplying(false);
-            setWaiting(null);
+            setIsDeferred(true);
           }}
           disabled={isApplying}
           className="h-9 shrink-0 rounded-lg px-1.5 text-sm font-medium text-bone-muted transition-colors hover:text-bone disabled:cursor-wait disabled:opacity-60"
