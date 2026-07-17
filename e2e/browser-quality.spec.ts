@@ -231,7 +231,10 @@ test.describe('offline service worker', () => {
     await context.setOffline(true);
     try {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      expect(failedRequests).toEqual([]);
+      // The update lifecycle deliberately probes the worker entry point with a
+      // no-store request. That best-effort request may fail after the browser
+      // has entered offline mode; the cached application shell still must not.
+      expect(failedRequests.filter(path => path !== '/sw.js')).toEqual([]);
       await expect(page.getByRole('heading', { level: 1, name: 'Royal Game of Ur' })).toBeVisible();
       await expect(page.getByTestId('ai-model-selection')).toBeVisible();
     } finally {
