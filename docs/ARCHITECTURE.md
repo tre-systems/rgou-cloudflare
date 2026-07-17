@@ -170,6 +170,8 @@ The application deploys as a Cloudflare Worker with Static Assets through the Cl
 
 The Worker permanently redirects `www.gameofur.org`, `gameofur.net`, `www.gameofur.net`, and `rgou.tre.systems` while preserving path and query. It also redirects the retired `/oracle-ai` article to `/ai`. It owns `/api/usage` and delegates all other requests to Static Assets with SPA fallback. No D1 or R2 binding is required.
 
+`/ai` is a static, crawlable article rather than an SPA route: `npm run generate:ai-page` renders `public/ai.html` from `scripts/ai-page.template.html` and the deployed benchmark in [AI-DEPLOYED-RESULTS.md](./AI-DEPLOYED-RESULTS.md), and `check:docs` fails when the committed page drifts from those inputs. `public/robots.txt` and `public/sitemap.xml` list the canonical pages for crawlers.
+
 Regular single-threaded WebAssembly does not require cross-origin isolation. The application deliberately does not send COOP/COEP merely for `.wasm` files: those response headers would not isolate the top-level browsing context. If shared memory or threaded WASM is introduced, isolation must be enabled for the document and every participating resource, then verified with `crossOriginIsolated`. The current deployment uses CSP, HSTS, MIME sniffing protection, frame denial, a same-origin resource policy, and a restrictive permissions policy. It does not opt into cross-origin isolation.
 
 The usage route accepts only same-origin JSON POSTs, rejects encoded and oversized bodies, validates the parsed event against a strict schema, and fails closed when Analytics Engine is unavailable. Error reports strip request bodies, query strings, identity, nested game data, credentials, and URL queries before leaving the browser.

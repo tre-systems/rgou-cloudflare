@@ -13,6 +13,9 @@
 /
   Cache-Control: no-cache, must-revalidate
 
+/ai
+  Cache-Control: no-cache, must-revalidate
+
 /*.html
   Cache-Control: no-cache, must-revalidate
 

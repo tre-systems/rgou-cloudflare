@@ -161,7 +161,9 @@ test('keeps the mobile opening compact and player panels stable between turns', 
 test('AI article explains the opponents and returns to the game', async ({ page }) => {
   await page.goto('/ai');
 
-  await expect(page).toHaveTitle('About the AIs · Royal Game of Ur');
+  await expect(page).toHaveTitle(
+    "Three ways to teach a computer the world's oldest board game · Royal Game of Ur"
+  );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
     'https://gameofur.org/ai'
@@ -170,13 +172,14 @@ test('AI article explains the opponents and returns to the game', async ({ page 
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Three different ways to play Ur',
+      name: "Three ways to teach a computer the world's oldest board game",
     })
   ).toBeVisible();
   await expect(page.getByRole('table', { name: 'Deployed AI win rates' })).toContainText('85.0%');
-  await expect(
-    page.getByRole('link', { name: 'Current browser-opponent results' })
-  ).toHaveAttribute('rel', /noopener/);
+  await expect(page.getByRole('link', { name: 'AI-SYSTEM.md' })).toHaveAttribute(
+    'rel',
+    /noopener/
+  );
 
   await page.getByRole('link', { name: 'Play the game' }).click();
   await expect(page.getByTestId('ai-model-selection')).toBeVisible();
