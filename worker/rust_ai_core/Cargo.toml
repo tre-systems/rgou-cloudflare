@@ -46,7 +46,7 @@ serde-wasm-bindgen = { version = "0.6.5", optional = true }
 console_error_panic_hook = { version = "0.1.7", optional = true }
 js-sys = { version = "0.3", optional = true }
 web-sys = { version = "0.3", optional = true, features = ["console"] }
-ndarray = "0.15"
+ndarray = "0.17"
 chrono = { version = "0.4", features = ["serde"], optional = true }
 rayon = { version = "1.8", optional = true }
 
