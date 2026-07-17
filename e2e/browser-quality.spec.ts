@@ -161,7 +161,9 @@ test('keeps the mobile opening compact and player panels stable between turns', 
 test('AI article explains the opponents and returns to the game', async ({ page }) => {
   await page.goto('/ai');
 
-  await expect(page).toHaveTitle('About the AIs · Royal Game of Ur');
+  await expect(page).toHaveTitle(
+    "The world's oldest board game was solved last year · Royal Game of Ur"
+  );
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
     'https://gameofur.org/ai'
@@ -170,13 +172,14 @@ test('AI article explains the opponents and returns to the game', async ({ page 
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Three different ways to play Ur',
+      name: "The world's oldest board game was solved last year. I only just found out.",
     })
   ).toBeVisible();
   await expect(page.getByRole('table', { name: 'Deployed AI win rates' })).toContainText('85.0%');
-  await expect(
-    page.getByRole('link', { name: 'Current browser-opponent results' })
-  ).toHaveAttribute('rel', /noopener/);
+  await expect(page.getByRole('link', { name: 'AI-SYSTEM.md' })).toHaveAttribute(
+    'rel',
+    /noopener/
+  );
 
   await page.getByRole('link', { name: 'Play the game' }).click();
   await expect(page.getByTestId('ai-model-selection')).toBeVisible();
@@ -231,7 +234,10 @@ test.describe('offline service worker', () => {
     await context.setOffline(true);
     try {
       await page.reload({ waitUntil: 'domcontentloaded' });
-      expect(failedRequests).toEqual([]);
+      // The update lifecycle deliberately probes the worker entry point with a
+      // no-store request. That best-effort request may fail after the browser
+      // has entered offline mode; the cached application shell still must not.
+      expect(failedRequests.filter(path => path !== '/sw.js')).toEqual([]);
       await expect(page.getByRole('heading', { level: 1, name: 'Royal Game of Ur' })).toBeVisible();
       await expect(page.getByTestId('ai-model-selection')).toBeVisible();
     } finally {
