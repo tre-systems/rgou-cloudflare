@@ -105,7 +105,9 @@ fn main() {
         .collect();
 
     println!("Classic expectiminimax depth ladder vs depth-{BASELINE_DEPTH} baseline");
-    println!("Paired seat-swapped games, deterministic dice, evolved weights, native release build");
+    println!(
+        "Paired seat-swapped games, deterministic dice, evolved weights, native release build"
+    );
     println!();
     println!(
         "{:>5} {:>7} {:>10} {:>14} {:>14} {:>16}",
@@ -120,10 +122,7 @@ fn main() {
             .into_par_iter()
             .flat_map(|pair| {
                 let seed = SEED_BASE + u64::from(pair);
-                [
-                    play_game(depth, true, seed),
-                    play_game(depth, false, seed),
-                ]
+                [play_game(depth, true, seed), play_game(depth, false, seed)]
             })
             .collect();
 
