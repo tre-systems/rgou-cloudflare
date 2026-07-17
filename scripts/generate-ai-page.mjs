@@ -40,18 +40,19 @@ function parseBenchmark(markdown) {
         .map(cell => cell.trim())
     );
   const header = rows[0];
-  const winRates = {};
+  const winRates = new Map();
   for (const row of rows.slice(2)) {
     const [rowId, ...cells] = row;
-    winRates[rowId] = {};
+    const rowRates = new Map();
+    winRates.set(rowId, rowRates);
     cells.forEach((cell, index) => {
       const columnId = header[index + 1];
-      winRates[rowId][columnId] = cell === '-' ? null : Number(cell);
+      rowRates.set(columnId, cell === '-' ? null : Number(cell));
     });
   }
 
   function rate(rowId, columnId) {
-    const value = winRates[rowId]?.[columnId];
+    const value = winRates.get(rowId)?.get(columnId);
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) {
       throw new Error(`Missing or invalid win rate for ${rowId} vs ${columnId}`);
     }
