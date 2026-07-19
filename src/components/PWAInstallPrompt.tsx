@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
-const DISMISSED_KEY = 'pwa-install-dismissed';
+import {
+  dismissInstallPrompt,
+  isInstallDismissed,
+  isInstallPromptEvent,
+  type InstallPromptEvent,
+} from '../lib/pwa-install';
 
 export default function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<InstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     let promptTimeoutId: number | undefined;
 
-    const handleBeforeInstallPrompt = (event: BeforeInstallPromptEvent) => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      if (!isInstallPromptEvent(event)) return;
       event.preventDefault();
       setDeferredPrompt(event);
 
       window.clearTimeout(promptTimeoutId);
       promptTimeoutId = window.setTimeout(() => {
-        if (!localStorage.getItem(DISMISSED_KEY)) {
+        if (!isInstallDismissed()) {
           setShowPrompt(true);
         }
       }, 5000);
@@ -32,33 +32,33 @@ export default function PWAInstallPrompt() {
       setDeferredPrompt(null);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       window.clearTimeout(promptTimeoutId);
     };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    const prompt = deferredPrompt;
+    if (!prompt) return;
+    setDeferredPrompt(null);
+    setShowPrompt(false);
 
     try {
-      await deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
+      await prompt.prompt();
+      await prompt.userChoice;
     } catch (error) {
       console.error('Error during PWA installation:', error);
     }
-
-    setDeferredPrompt(null);
-    setShowPrompt(false);
   };
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem(DISMISSED_KEY, 'true');
+    dismissInstallPrompt();
   };
 
   if (!showPrompt || !deferredPrompt) {

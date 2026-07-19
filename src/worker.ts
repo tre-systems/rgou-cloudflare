@@ -1,4 +1,5 @@
 import { getCanonicalRedirectUrl } from './lib/canonical-host';
+import { isScannerPath } from './lib/scanner-path';
 import { parseUsageEvent, usageDataPoint } from './lib/usage';
 
 const MAX_USAGE_BODY_BYTES = 256;
@@ -108,6 +109,11 @@ async function recordUsage(request: Request, env: Env): Promise<Response> {
 
 export default {
   fetch(request: Request, env: Env): Response | Promise<Response> {
+    const pathname = new URL(request.url).pathname;
+    if (isScannerPath(pathname)) {
+      return textResponse(404, request.method === 'HEAD' ? '' : 'Not found');
+    }
+
     const redirectUrl = getCanonicalRedirectUrl(request.url);
     if (redirectUrl) {
       return new Response(null, {
@@ -116,7 +122,6 @@ export default {
       });
     }
 
-    const pathname = new URL(request.url).pathname;
     if (pathname === '/healthz') return healthResponse(request);
     if (pathname === '/api/usage') return recordUsage(request, env);
     return env.ASSETS.fetch(request);

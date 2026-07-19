@@ -108,6 +108,23 @@ describe('Worker routing', () => {
     expect(await asset.text()).toBe('asset');
     expect(environment.ASSETS.fetch).toHaveBeenCalledWith(request);
   });
+
+  it('rejects scanner paths before the SPA fallback', async () => {
+    const environment = env();
+
+    for (const url of [
+      'https://gameofur.org/.env',
+      'https://gameofur.org/wp-admin/css/wp-login.php',
+      'https://gameofur.org/serviceAccountKey.json',
+      'https://rgou.tre.systems/.git/config',
+    ]) {
+      const response = await worker.fetch(new Request(url), environment);
+      expect(response.status).toBe(404);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+    }
+
+    expect(environment.ASSETS.fetch).not.toHaveBeenCalled();
+  });
 });
 
 describe('health Worker endpoint', () => {
