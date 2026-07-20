@@ -162,7 +162,29 @@ flowchart LR
 
 In-progress games, settings, the selected watch matchup, and personal win/loss statistics are stored only in browser local storage. Watch-mode matches are excluded from personal statistics.
 
-The app has no database. It reports only `game_started` and `game_completed` events to the shared account-level Analytics Engine dataset `app_usage`, indexed by `rgou`. [Analytics Engine retains data for three months](https://developers.cloudflare.com/analytics/analytics-engine/limits/#data-retention); this dataset is operational aggregate telemetry, not historical product data. Events contain mode, anonymous participant categories, starting side, and—on completion—winner, move count, and duration. They contain no player identifier, user agent, board state, or move history.
+The app has no database. It reports only `game_started` and `game_completed` events to the shared account-level Analytics Engine dataset `app_usage`, indexed by `rgou`. [Analytics Engine retains data for three months](https://developers.cloudflare.com/analytics/analytics-engine/limits/#data-retention); this dataset is operational product telemetry, not financial or permanent historical data. Events contain mode, anonymous participant categories, starting side, and—on completion—winner, move count and duration, plus random anonymous device and rolling 30-minute session ids. These ids make directional return and start-to-completion measurement possible. Events contain no account, name, email, user agent, browser fingerprint, board state, move history, or user content. Automated browsers are rejected. Visiting with `?telemetry=off` opts the browser out; `?telemetry=on` opts it back in.
+
+Schema `2` stores the anonymous device id in `blob7`, session id in `blob8`,
+and schema version in `blob9`. A directional seven-day completion query is:
+
+```sql
+WITH sessions AS (
+  SELECT blob8 AS session_id,
+         SUM(IF(blob1 = 'game_started', _sample_interval, 0)) AS starts,
+         SUM(IF(blob1 = 'game_completed', _sample_interval, 0)) AS completions
+  FROM app_usage
+  WHERE timestamp > NOW() - INTERVAL '7' DAY
+    AND index1 = 'rgou' AND blob9 = '2'
+  GROUP BY session_id
+)
+SELECT countIf(starts > 0) AS started_sessions,
+       countIf(completions > 0) AS completed_sessions
+FROM sessions
+```
+
+Daily distinct `blob7` values provide directional anonymous return evidence.
+Never print or export raw ids in a report, and do not use Analytics Engine
+sampling for billing or exact financial counts.
 
 ## Deployment
 

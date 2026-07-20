@@ -4,8 +4,10 @@ import {
   gameCompletedUsage,
   gameStartedUsage,
   parseUsageEvent,
+  parseUsagePayload,
   reportUsage,
   usageDataPoint,
+  type UsagePayload,
 } from '../usage';
 import { MAX_GAME_HISTORY } from '../schemas';
 
@@ -23,9 +25,25 @@ describe('usage reporting', () => {
       player2: 'classic',
       startedBy: 'player1',
     });
-    expect(usageDataPoint(started)).toEqual({
+    const payload = {
+      ...started,
+      deviceId: '00000000-0000-4000-8000-000000000001',
+      sessionId: '00000000-0000-4000-8000-000000000002',
+    } satisfies UsagePayload;
+    expect(parseUsagePayload(payload)).toEqual(payload);
+    expect(usageDataPoint(payload)).toEqual({
       indexes: ['rgou'],
-      blobs: ['game_started', 'classic', 'human', 'classic', 'player1', ''],
+      blobs: [
+        'game_started',
+        'classic',
+        'human',
+        'classic',
+        'player1',
+        '',
+        payload.deviceId,
+        payload.sessionId,
+        '2',
+      ],
       doubles: [1, 0, 0],
     });
   });

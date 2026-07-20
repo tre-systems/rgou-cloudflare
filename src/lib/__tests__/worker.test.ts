@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import worker, { type Env } from '../../worker';
-import { gameStartedUsage } from '../usage';
+import { gameStartedUsage, type UsageEvent, type UsagePayload } from '../usage';
 
 function env(writeDataPoint = vi.fn()): Env {
   return {
@@ -15,23 +15,42 @@ function usageRequest(body: unknown, headers: Record<string, string> = {}) {
     headers: {
       'Content-Type': 'application/json',
       Origin: 'https://gameofur.org',
+      'User-Agent': 'Mozilla/5.0',
       ...headers,
     },
     body: JSON.stringify(body),
   });
 }
 
+function payload(event: UsageEvent): UsagePayload {
+  return {
+    ...event,
+    deviceId: '00000000-0000-4000-8000-000000000001',
+    sessionId: '00000000-0000-4000-8000-000000000002',
+  };
+}
+
 describe('usage Worker endpoint', () => {
   it('validates and writes an anonymous event', async () => {
     const writeDataPoint = vi.fn();
     const response = await worker.fetch(
-      usageRequest(gameStartedUsage('classic', 'player1')),
+      usageRequest(payload(gameStartedUsage('classic', 'player1'))),
       env(writeDataPoint)
     );
     expect(response.status).toBe(202);
     expect(writeDataPoint).toHaveBeenCalledWith({
       indexes: ['rgou'],
-      blobs: ['game_started', 'classic', 'human', 'classic', 'player1', ''],
+      blobs: [
+        'game_started',
+        'classic',
+        'human',
+        'classic',
+        'player1',
+        '',
+        '00000000-0000-4000-8000-000000000001',
+        '00000000-0000-4000-8000-000000000002',
+        '2',
+      ],
       doubles: [1, 0, 0],
     });
   });
@@ -40,13 +59,15 @@ describe('usage Worker endpoint', () => {
     expect(
       (
         await worker.fetch(
-          usageRequest(gameStartedUsage('ml', 'player1'), { Origin: 'https://example.com' }),
+          usageRequest(payload(gameStartedUsage('ml', 'player1')), {
+            Origin: 'https://example.com',
+          }),
           env()
         )
       ).status
     ).toBe(403);
     expect((await worker.fetch(usageRequest({ event: 'page_view' }), env())).status).toBe(400);
-    expect((await worker.fetch(usageRequest({ value: 'x'.repeat(300) }), env())).status).toBe(413);
+    expect((await worker.fetch(usageRequest({ value: 'x'.repeat(600) }), env())).status).toBe(413);
   });
 
   it('enforces method and media-type boundaries', async () => {
@@ -62,7 +83,9 @@ describe('usage Worker endpoint', () => {
     expect(
       (
         await worker.fetch(
-          usageRequest(gameStartedUsage('ml', 'player1'), { 'Content-Type': 'text/plain' }),
+          usageRequest(payload(gameStartedUsage('ml', 'player1')), {
+            'Content-Type': 'text/plain',
+          }),
           environment
         )
       ).status
@@ -70,7 +93,9 @@ describe('usage Worker endpoint', () => {
     expect(
       (
         await worker.fetch(
-          usageRequest(gameStartedUsage('ml', 'player1'), { 'Content-Encoding': 'gzip' }),
+          usageRequest(payload(gameStartedUsage('ml', 'player1')), {
+            'Content-Encoding': 'gzip',
+          }),
           environment
         )
       ).status
@@ -81,7 +106,8 @@ describe('usage Worker endpoint', () => {
     const unavailable = env();
     delete unavailable.APP_USAGE;
     expect(
-      (await worker.fetch(usageRequest(gameStartedUsage('watch', 'player2')), unavailable)).status
+      (await worker.fetch(usageRequest(payload(gameStartedUsage('watch', 'player2'))), unavailable))
+        .status
     ).toBe(503);
   });
 });

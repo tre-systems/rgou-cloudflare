@@ -1,8 +1,10 @@
 import { getCanonicalRedirectUrl } from './lib/canonical-host';
 import { isScannerPath } from './lib/scanner-path';
-import { parseUsageEvent, usageDataPoint } from './lib/usage';
+import { parseUsagePayload, usageDataPoint } from './lib/usage';
 
-const MAX_USAGE_BODY_BYTES = 256;
+const MAX_USAGE_BODY_BYTES = 512;
+const AUTOMATED_USER_AGENT =
+  /bot|crawler|spider|headlesschrome|lighthouse|pagespeed|claude|electron/i;
 const APP_RELEASE = import.meta.env.VITE_SENTRY_RELEASE || 'development';
 const SECURITY_HEADERS = {
   'Cross-Origin-Resource-Policy': 'same-origin',
@@ -76,6 +78,10 @@ async function recordUsage(request: Request, env: Env): Promise<Response> {
   if (request.headers.get('Origin') !== new URL(request.url).origin) {
     return textResponse(403, 'Forbidden');
   }
+  const userAgent = request.headers.get('User-Agent');
+  if (!userAgent || AUTOMATED_USER_AGENT.test(userAgent)) {
+    return textResponse(202, 'Accepted');
+  }
   const mediaType = request.headers.get('Content-Type')?.split(';', 1)[0]?.trim().toLowerCase();
   if (mediaType !== 'application/json') {
     return textResponse(415, 'Unsupported media type');
@@ -95,7 +101,7 @@ async function recordUsage(request: Request, env: Env): Promise<Response> {
     return textResponse(error instanceof RangeError ? 413 : 400, 'Invalid request');
   }
 
-  const event = parseUsageEvent(body);
+  const event = parseUsagePayload(body);
   if (!event) return textResponse(400, 'Invalid request');
   if (!env.APP_USAGE) return textResponse(503, 'Usage reporting unavailable');
 

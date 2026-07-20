@@ -15,6 +15,16 @@ async function waitForGameCompletion(page: Page) {
 
 async function captureUsage(page: Page) {
   const events: Array<Record<string, unknown>> = [];
+  // Product telemetry deliberately ignores driven browsers. These tests opt
+  // their isolated page into exercising the client boundary; requests are
+  // intercepted below and never reach Analytics Engine.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { configurable: true, get: () => false });
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      get: () => 'Mozilla/5.0 Chrome/128 Safari/537.36',
+    });
+  });
   await page.route('**/api/usage', async route => {
     events.push(JSON.parse(route.request().postData() ?? '{}') as Record<string, unknown>);
     await route.fulfill({ status: 202, body: 'Accepted' });
