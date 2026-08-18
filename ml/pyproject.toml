@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Reproducible PyTorch training environment for the Royal Game of Ur AI"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "numpy>=2.2,<3",
+    "numpy>=2.5.2,<3",
     "torch>=2.7,<3",
 ]
 
