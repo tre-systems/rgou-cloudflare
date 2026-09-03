@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Github, Heart, Scale } from 'lucide-react';
+import { Code2, ExternalLink, Heart, Scale } from 'lucide-react';
 import { useGameStore, useGameState, useGameActions } from '@/lib/game-store';
 import { useUIStore } from '@/lib/ui-store';
 import { cn } from '@/lib/utils';
@@ -228,7 +228,7 @@ export default function RoyalGameOfUr() {
                 className="inline-flex items-center gap-1.5 transition-colors hover:text-bone"
                 data-testid="github-link"
               >
-                <Github className="h-3.5 w-3.5" />
+                <Code2 className="h-3.5 w-3.5" />
                 Source
               </a>
               <a
