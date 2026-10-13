@@ -72,7 +72,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.56.0",
+    "@cloudflare/vite-plugin": "^1.63.1",
     "@cloudflare/workers-types": "5.20260919.1",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.63.0",
@@ -95,7 +95,7 @@
     "typescript-eslint": "^8.70.0",
     "vite": "^8.3.0",
     "vitest": "^5.0.0",
-    "wrangler": "4.135.0"
+    "wrangler": "4.149.0"
   },
   "overrides": {
     "@esbuild-kit/core-utils": {
