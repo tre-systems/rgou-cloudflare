@@ -60,7 +60,7 @@
     "test:ai-deployed:md": "NUM_GAMES=400 ./scripts/write-ai-matrix-report.sh deployed"
   },
   "dependencies": {
-    "@sentry/browser": "^10.75.0",
+    "@sentry/browser": "^11.8.0",
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.0",
     "immer": "^11.1.21",
