@@ -27,7 +27,7 @@
   "inputs": {
     "python_lock": {
       "path": "ml/uv.lock",
-      "sha256": "d933eaee453dfd9bc4e1c954d58a374fbe4eee072b619b69e93256f81edcbe2f"
+      "sha256": "cd1669414dc5a0a867b4c834c71693e18404bf6fcc9f5211fa2ad7d838d0da18"
     },
     "python_project": {
       "path": "ml/pyproject.toml",

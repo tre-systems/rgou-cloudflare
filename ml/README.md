@@ -132,6 +132,14 @@ The checked-in `model-manifest.json` is the production artifact contract. It rec
 - the commit that last changed the production source model;
 - hashes for the training configuration, Python project, and lockfile.
 
+The input hashes describe the checked-in validation environment. The source
+revision and original training metadata identify the model's training run.
+Updating the validation lockfile does not retrain the model or change that
+recorded training environment. After a lockfile-only update, regenerate the
+manifest with `python ml/scripts/model_provenance.py generate` and verify that
+only `inputs.python_lock.sha256` changes; model and deployed asset bytes remain
+unchanged.
+
 Validate the currently promoted model without installing PyTorch:
 
 ```bash
